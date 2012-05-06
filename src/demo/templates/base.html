@@ -1,0 +1,51 @@
+$def with (content)
+<!doctype HTML>
+<html>
+<head>
+  <title>$content.title</title>
+  <link rel="stylesheet" type="text/css" href="/static/demo.css">
+  $:content.stylesheet
+</head>
+<body>
+  <div id="masthead">
+    <strong>S</strong>tructured <strong>P</strong>age <strong>F</strong>ragments
+    <span class="counter">
+      Last refresh: <span id="_timer">0</span>s ago
+    </span>
+  </div>
+  <div id="nav">
+    <!-- demo pages for testing navigation -->
+    <ul style="float:right">
+      <li><a class="spf-link" href="/page/1">Page 1</a></li>
+      <li><a class="spf-link" href="/page/2">Page 2</a></li>
+      <li><a class="spf-link" href="/page/3">Page 3</a></li>
+      <li><a class="spf-link" href="/page/4">Page 4</a></li>
+      <li><a class="spf-link" href="/page/5">Page 5</a></li>
+      <li><a class="spf-link" href="/page/6">Page 6</a></li>
+    </ul>
+    <ul>
+      <li><a class="spf-link" href="/">Overview</a></li>
+      <li><a class="spf-link" href="/spec">Spec</a></li>
+    </ul>
+  </div>
+  <div id="content" class="spf-transition">
+    $:content
+  </div>
+  </div>
+  <div id="footer">
+    Etc.
+  </div>
+  <script type="text/javascript">
+    var _start = +(new Date());
+    setInterval(function() {
+      var time = Math.floor((+(new Date()) - _start) / 1000);
+      document.getElementById('_timer').innerHTML = time;
+    }, 500);
+  </script>
+  <script src="/static/spf-debug.js"></script>
+  <script type="text/javascript">
+    spf.init();
+  </script>
+  $:content.javascript
+</body>
+</html>

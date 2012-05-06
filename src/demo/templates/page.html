@@ -1,0 +1,40 @@
+$def with (page_num)
+
+$if page_num == '1':
+  $ page_color = 'red'
+$elif page_num == '2':
+  $ page_color = 'orange'
+$elif page_num == '3':
+  $ page_color = 'yellow'
+$elif page_num == '4':
+  $ page_color = 'green'
+$elif page_num == '5':
+  $ page_color = 'blue'
+$elif page_num == '6':
+  $ page_color = 'purple'
+$else:
+  $ page_color = 'black'
+
+$def _stylesheet():
+  <!-- This style is limited to this page only for demo purposes. -->
+  <style type="text/css">
+    .page$page_num h1 { color: $page_color; }
+    .page h1 { text-shadow: 0 0 .15em rgba(0, 0, 0, 0.4); }
+  </style>
+
+$def _javascript():
+  <script type="text/javascript">
+    console.log('demo: loaded page $page_num');
+  </script>
+
+$var title: Demo Page $page_num
+$var stylesheet: $:_stylesheet()
+$var javascript: $:_javascript()
+
+<div id="page" class="pane page page$page_num">
+  <h1>Demo Page $page_num</h1>
+
+  <p>
+    The title should be $page_color.
+  </p>
+</div>

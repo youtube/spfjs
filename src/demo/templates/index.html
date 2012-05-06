@@ -1,0 +1,19 @@
+$def _javascript():
+  <script type="text/javascript">
+    console.log('demo: loaded home');
+  </script>
+
+$var title: Home
+$var javascript: $:_javascript()
+
+<div id="home" class="pane">
+  <h1>SPF: Structured Page Fragments</h1>
+
+  <p>
+    <abbr title="Structured Page Fragments">SPF</abbr> is both a protocol for
+    requesting and representing portions of page in an
+    <abbr title="XMLHttpRequest">XHR</abbr> as well as a framework for
+    dynamically making and handling those requests in place of traditional
+    full-page navigation.
+  </p>
+</div>
