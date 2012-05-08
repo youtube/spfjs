@@ -10,7 +10,7 @@ $def with (content)
   <div id="masthead">
     <strong>S</strong>tructured <strong>P</strong>age <strong>F</strong>ragments
     <span class="counter">
-      Last refresh: <span id="_timer">0</span>s ago
+      Last refresh: <span id="demo-timer">0</span>s ago
     </span>
   </div>
   <div id="nav">
@@ -35,16 +35,18 @@ $def with (content)
   <div id="footer">
     Etc.
   </div>
+  <script src="/static/demo.js"></script>
+  <!-- Use "spf-debug.js" for more debug output and active development. -->
+  <script src="/static/spf.js"></script>
   <script type="text/javascript">
-    var _start = +(new Date());
-    setInterval(function() {
-      var time = Math.floor((+(new Date()) - _start) / 1000);
-      document.getElementById('_timer').innerHTML = time;
-    }, 500);
-  </script>
-  <script src="/static/spf-debug.js"></script>
-  <script type="text/javascript">
-    spf.init();
+    demo.init();
+    var config = {
+      'callback-click': demo.handleClick,
+      'callback-navigate': demo.handleNavigate,
+      'callback-request': demo.handleRequest,
+      'callback-load': demo.handleLoad
+    }
+    spf.init(config);
   </script>
   $:content.javascript
 </body>

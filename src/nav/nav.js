@@ -107,6 +107,7 @@ spf.nav.handleNavigate = function(url, opt_state) {
   spf.debug.info('nav.handleNavigate: ', 'url=', url, 'state=', opt_state);
   // Publish to callbacks.
   spf.pubsub.publish('callback-navigate', url);
+  // Make the request for the URL.
   spf.nav.request(url, reverse);
 };
 
@@ -155,6 +156,9 @@ spf.nav.request = function(url, opt_reverse) {
         return;
       }
       response = /** @type {spf.nav.Response} */ (response);
+      // Publish to callbacks.
+      spf.pubsub.publish('callback-request', url, response);
+      // Load the requested response.
       spf.nav.load(response, url, opt_reverse);
   };
   spf.nav.activeRequest_ = spf.net.xhr.get(xhrUrl, {
@@ -167,7 +171,7 @@ spf.nav.request = function(url, opt_reverse) {
 
 
 /**
- * Loads the response using the SPF protocol.  The response object should be
+ * Loads the response using the SPF protocol.  The response object should
  * already have been unserialized by {@link #request}.
  *
  * @param {spf.nav.Response} response The SPF response object to load.
@@ -192,8 +196,6 @@ spf.nav.load = function(response, url, opt_reverse) {
   // Delay to allow the DOM to update, then begin the load.
   setTimeout(function() {
     var reverse = !!opt_reverse;
-    // Publish to callbacks.
-    spf.pubsub.publish('callback-load', response, url, reverse);
     // Install styles.
     spf.net.styles.install(response['css']);
     // Update title.
@@ -266,7 +268,8 @@ spf.nav.load = function(response, url, opt_reverse) {
     }
     // Execute scripts
     spf.net.scripts.execute(response['js'], function() {
-      spf.pubsub.publish('callback-done');
+      // Publish to callbacks.
+      spf.pubsub.publish('callback-load', url, response);
     });
   }, 0);
 };

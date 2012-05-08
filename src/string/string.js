@@ -47,7 +47,7 @@ spf.string.startsWith = function(str, prefix) {
  */
 spf.string.hashCode = function(str) {
   var result = 0;
-  for (var i = 0; i < str.length; ++i) {
+  for (var i = 0, l = str.length; i < l; ++i) {
     result = 31 * result + str.charCodeAt(i);
     // Normalize to 4 byte range, 0 ... 2^32.
     result %= 0x100000000;
