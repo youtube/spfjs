@@ -79,3 +79,24 @@ spf.dom.inflateElement = function(element, parent) {
   }
 };
 
+
+/**
+ * Walks up the DOM hierarchy returning the first ancestor that passes the
+ * matcher function.
+ *
+ * @param {Node} element The DOM node to start with.
+ * @param {function(Node) : boolean} matcher A function that returns true if the
+ *     passed node matches the desired criteria.
+ * @return {Node} DOM node that matched the matcher, or null if there was
+ *     no match.
+ */
+spf.dom.getAncestor = function(element, matcher) {
+  while (element) {
+    if (matcher(element)) {
+      return element;
+    }
+    element = element.parentNode;
+  }
+  // Reached the root of the DOM without a match
+  return null;
+};

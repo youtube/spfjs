@@ -68,11 +68,14 @@ spf.nav.dispose = function() {
  */
 spf.nav.handleClick = function(evt) {
   spf.debug.info('nav.handleClick', evt);
-  // TODO(nicksay): Update click handling to support children
   // TODO(nicksay): Update click handling to support fragment links
   // TODO(nicksay): Update click handling to support modifier keys
-  if (evt.target && spf.dom.classes.has(evt.target, spf.config['link-class'])) {
-    var url = evt.target.href;
+  var target = spf.dom.getAncestor(evt.target, function(node) {
+    return spf.dom.classes.has(node, spf.config['link-class']);
+  });
+  if (target) {
+    spf.debug.debug('found target', target);
+    var url = target.href;
     // Ignore clicks to the same page.
     if (url == window.location.href) {
       // Prevent the default browser navigation.
@@ -80,7 +83,7 @@ spf.nav.handleClick = function(evt) {
       return;
     }
     // Publish to callbacks.
-    spf.pubsub.publish('callback-click', evt.target);
+    spf.pubsub.publish('callback-click', target);
     try {
       // Add the URL to the history stack, (calls back to handleNavigate).
       spf.history.add(url);

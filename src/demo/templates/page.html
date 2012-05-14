@@ -20,6 +20,8 @@ $def _stylesheet():
   <style type="text/css">
     .page$page_num h1 { color: $page_color; }
     .page h1 { text-shadow: 0 0 .15em rgba(0, 0, 0, 0.4); }
+    .page .sun { display: inline-block; text-align: center; border: 1px solid #FFF; }
+    .page a:hover .sun { border-color: #000; }
   </style>
 
 $def _javascript():
@@ -35,6 +37,34 @@ $var javascript: $:_javascript()
   <h1>Demo Page $page_num</h1>
 
   <p>
+    This page is for demonstration purposes only.
     The title should be $page_color.
+  </p>
+
+  <p>
+    Sample non-SPF links:
+    <br>
+    <a href="/">Overview</a>
+    <a href="/spec">Spec</a>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <a href="/page/1">Page 1</a>
+    <a href="/page/2">Page 2</a>
+    <a href="/page/3">Page 3</a>
+    <a href="/page/4">Page 4</a>
+    <a href="/page/5">Page 5</a>
+    <a href="/page/6">Page 6</a>
+  </p>
+  <p>
+    Sample SPF link with children elements:
+    <br>
+    <a href="/" class="spf-link">
+      <span class="sun">
+        <img src="/static/sun.png"><br>
+        Overview
+      </span>
+    </a>
+  </p>
+  <p>
+
   </p>
 </div>
