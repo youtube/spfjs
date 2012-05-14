@@ -30,11 +30,19 @@ html, body {
   font-size: 1.2em;
   font-weight: normal;
 }
-#masthead .counter {
+#masthead .info {
   float: right;
   line-height: 2em;
   font-size: .6em;
   color: #DDD;
+}
+#demo-status {
+  color: #F00;
+  font-weight: bold;
+  text-shadow: 0 0 .1em #000;
+}
+#demo-status.enabled {
+  color: #19B319;
 }
 #nav {
   font-size: 1.2em;
@@ -64,39 +72,7 @@ html, body {
 #content {
   height: 100%;
 }
-#content.spf-transition {
-  position: relative;
-}
-#content.spf-transition .spf-current,
-#content.spf-transition .spf-forward,
-#content.spf-transition .spf-reverse {
-  position: absolute;
-  top: 0;
-  width: 100%;
-  -webkit-transition: left 400ms ease;
-}
-#content.spf-transition .spf-current {
-  left: 0%;
-}
-#content.spf-transition .spf-forward {
-  left: 120%;
-}
-#content.spf-transition .spf-reverse {
-  left: -120%;
-}
-#content.spf-transition-forward .spf-current {
-  left: -120%;
-}
-#content.spf-transition-forward .spf-forward {
-  left: 0%;
-}
-#content.spf-transition-reverse .spf-current {
-  left: 120%;
-}
-#content.spf-transition-reverse .spf-reverse {
-  left: 0%;
-}
-.pane {
+#content .pane {
   padding: 0 2em;
 }
 #footer {
@@ -104,4 +80,37 @@ html, body {
   font-size: .8em;
   color: #CCC;
   padding: .2em .6em;
+}
+
+.spf-transition {
+  position: relative;
+}
+.spf-transition .spf-current,
+.spf-transition .spf-forward,
+.spf-transition .spf-reverse {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  -webkit-transition: left 400ms ease;
+}
+.spf-transition .spf-current {
+  left: 0%;
+}
+.spf-transition .spf-forward {
+  left: 120%;
+}
+.spf-transition .spf-reverse {
+  left: -120%;
+}
+.spf-transition-forward .spf-current {
+  left: -120%;
+}
+.spf-transition-forward .spf-forward {
+  left: 0%;
+}
+.spf-transition-reverse .spf-current {
+  left: 120%;
+}
+.spf-transition-reverse .spf-reverse {
+  left: 0%;
 }

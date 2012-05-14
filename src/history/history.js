@@ -17,7 +17,7 @@ goog.require('spf.history.Monitor');
  * {@see spf.history.Monitor#enable}
  *
  * @param {function(string, Object=)} callback The function to handle
- *     a navigation event. The first parameter will be the URL
+ *     a history event. The first parameter will be the URL
  *     the user is browsing to.  The second parameter will be an optional
  *     state object associated with that URL.
  */
@@ -52,9 +52,9 @@ spf.history.dispose = function() {
  *     the browser.  This can be either a relative or an absolute URL, and if
  *     omitted, the current browser URL will be used.
  * @param {Object=} opt_state The state object associated with this history
- *     entry.  When the user navigates to entry, the "state" property of the
+ *     entry.  When the user returns to this entry, the "state" property of the
  *     event will contain a copy of this object.
- * @param {boolean=} opt_skipCallback Whether to skip calling the navCallback.
+ * @param {boolean=} opt_skipCallback Whether to skip calling the callback.
  * @throws {Error} If the state object is too large. For example, Firefox will
  *     pass the object to JSON.stringify and impose a 640k character limit.
  * @throws {Error} If the URL is not in the same domain, a SECURITY_ERR

@@ -97,181 +97,287 @@ spf.nav.handleClick = function(evt) {
 
 
 /**
- * Handles navigation callbacks when the active history entry changes.
+ * Handles callbacks when the active history entry changes.
  *
  * @param {string} url The URL the user is browsing to.
  * @param {Object=} opt_state An optional state object associated with the URL.
  */
-spf.nav.handleNavigate = function(url, opt_state) {
+spf.nav.handleHistory = function(url, opt_state) {
   var reverse = !!(opt_state && opt_state['spf-back']);
   spf.debug.info('nav.handleNavigate: ', 'url=', url, 'state=', opt_state);
   // Publish to callbacks.
-  spf.pubsub.publish('callback-navigate', url);
-  // Make the request for the URL.
-  spf.nav.request(url, reverse);
+  spf.pubsub.publish('callback-history', url);
+  // Navigate to the URL.
+  spf.nav.navigate(url, reverse);
 };
 
 
 /**
- * Requests a URL using the SPF protocol.  The content returned by successful
- * requests will be loaded by {@link #load}.
+ * Navigates to a URL using the SPF protocol.  First, the content is requested
+ * by {@link #request}.  If the reponse is sucessfully parsed, it is processed
+ * by {@link #process}.  If not, the browser is redirected to the URL. Only a
+ * single navigation request can be in flight at once.  If a second URL is
+ * navigated to while a first is still pending, the first will be cancelled.
  *
- * @param {string} url The requested URL, without the SPF identifier.
+ * @param {string} url The URL to navigate to, without the SPF identifier.
  * @param {boolean=} opt_reverse Whether this is "backwards" navigation. True
  *     when the "back" button is clicked and a request is in response to a
  *     popState event.
  */
-spf.nav.request = function(url, opt_reverse) {
-  spf.debug.info('nav.request', url, opt_reverse);
-  if (spf.nav.activeRequest_) {
-    spf.debug.warn('    >> aborting previous request', spf.nav.activeRequest_);
-    spf.nav.activeRequest_.abort();
-    spf.nav.activeRequest_ = null;
+spf.nav.navigate = function(url, opt_reverse) {
+  spf.debug.info('nav.navigate', url, opt_reverse);
+  if (!spf.nav.initialized_) {
+    spf.debug.error('>> nav not initialized');
+    return;
   }
-  var xhrUrl = url;
-  var ident = spf.config['url-identifier'];
-  if (!spf.string.contains(xhrUrl, ident)) {
-    if (spf.string.startsWith(ident, '?')) {
-      if (!spf.string.contains(xhrUrl, '?')) {
-        xhrUrl += ident;
-      } else {
-        xhrUrl += ident.replace('?', '&');
-      }
-    }
+  if (spf.nav.active_) {
+    spf.debug.warn('    >> aborting previous navigate', spf.nav.active_);
+    spf.nav.active_.abort();
+    spf.nav.active_ = null;
   }
-  var onError = function(xhr) {
-    spf.nav.activeRequest_ = null;
+  var navigateError = function(url) {
+    spf.nav.active_ = null;
     window.location.href = url;
   };
-  var onSuccess = function(xhr) {
-    spf.nav.activeRequest_ = null;
-      try {
-        if (JSON) {
-          var response = JSON.parse(xhr.responseText);
-        } else {
-          var response = eval('(' + xhr.responseText + ')');
-        }
-      } catch (err) {
-        onError(xhr);
-        return;
-      }
-      response = /** @type {spf.nav.Response} */ (response);
-      // Publish to callbacks.
-      spf.pubsub.publish('callback-request', url, response);
-      // Load the requested response.
-      spf.nav.load(response, url, opt_reverse);
+  var navigateSuccess = function(url, response) {
+    spf.nav.active_ = null;
+    // Process the requested response.
+    spf.nav.process(response, opt_reverse);
   };
-  spf.nav.activeRequest_ = spf.net.xhr.get(xhrUrl, {
-    timeoutMs: spf.config['request-timeout'],
-    onSuccess: onSuccess,
-    onError: onError,
-    onTimeout: onError
-  });
+  var xhr = spf.nav.request(url, navigateSuccess, navigateError);
+  spf.nav.active_ = xhr;
 };
 
 
 /**
- * Loads the response using the SPF protocol.  The response object should
+ * Loads a URL using the SPF protocol.  Similar to {@link #navigate}, but
+ * intended for traditional content updates, not page navigation.  Not subject
+ * to restrictions on the number of simultaneous requests.  The content is
+ * requested by {@link #request}.  If the response is successfully parsed, it
+ * is processed by {@link #process}, and the URL and response object are passed
+ * to the optional {@code opt_onSuccess} callback.  If not, the URL is passed
+ * to the optional {@code opt_onError} callback.
+ *
+ * @param {string} url The URL to load, without the SPF identifier.
+ * @param {function(string, !Object)=} opt_onSuccess The callback to execute if
+ *     the load succeeds.
+ * @param {function(string)=} opt_onError The callback to execute if the
+ *     load fails.
+ */
+spf.nav.load = function(url, opt_onSuccess, opt_onError) {
+  spf.debug.info('nav.load', url);
+  var loadError = function(url) {
+    if (opt_onError) {
+      opt_onError(url);
+    }
+  };
+  var loadSuccess = function(url, response) {
+    // Process the requested response.
+    spf.nav.process(response);
+    if (opt_onSuccess) {
+      opt_onSuccess(url, response);
+    }
+  }
+  spf.nav.request(url, loadSuccess, loadError);
+};
+
+
+/**
+ * Requests a URL using the SPF protocol and parses the response.  If
+ * successful, the URL and response object are passed to the optional
+ * {@code opt_onSuccess} callback.  If not, the URL is passed to the optional
+ * {@code opt_onError} callback.
+ *
+ * @param {string} url The requested URL, without the SPF identifier.
+ * @param {function(string, !Object)=} opt_onSuccess The callback to execute if
+ *     the request succeeds.
+ * @param {function(string)=} opt_onError The callback to execute if the
+ *     request fails.
+ * @return {XMLHttpRequest} The XHR of the current request.
+ */
+spf.nav.request = function(url, opt_onSuccess, opt_onError) {
+  spf.debug.info('nav.request', url);
+  var requestUrl = url;
+  var ident = spf.config['url-identifier'];
+  if (!spf.string.contains(requestUrl, ident)) {
+    if (spf.string.startsWith(ident, '?')) {
+      if (!spf.string.contains(requestUrl, '?')) {
+        requestUrl += ident;
+      } else {
+        requestUrl += ident.replace('?', '&');
+      }
+    }
+  }
+  var requestError = function(xhr) {
+    if (opt_onError) {
+      opt_onError(url);
+    }
+  };
+  var requestSuccess = function(xhr) {
+    try {
+      if ('JSON' in window) {
+        var response = JSON.parse(xhr.responseText);
+      } else {
+        var response = eval('(' + xhr.responseText + ')');
+      }
+    } catch (err) {
+      requestError(xhr);
+      return;
+    }
+    response = /** @type {spf.nav.Response} */ (response);
+    // Publish to callbacks.
+    spf.pubsub.publish('callback-request', url, response);
+    if (opt_onSuccess) {
+      opt_onSuccess(url, response);
+    }
+  };
+  var xhr = spf.net.xhr.get(requestUrl, {
+    timeoutMs: spf.config['request-timeout'],
+    onSuccess: requestSuccess,
+    onError: requestError,
+    onTimeout: requestError
+  });
+  return xhr;
+};
+
+
+/**
+ * Process the response using the SPF protocol.  The response object should
  * already have been unserialized by {@link #request}.
  *
  * @param {spf.nav.Response} response The SPF response object to load.
- * @param {string} url The URL for the response, without the SPF identifier.
  * @param {boolean=} opt_reverse Whether this is "backwards" navigation. True
  *     when the "back" button is clicked and a request is in response to a
  *     popState event.
  */
-spf.nav.load = function(response, url, opt_reverse) {
-  spf.debug.info('nav.load', response, url, opt_reverse);
-  // If an existing transition is in progress, complete it immediately.
-  if (spf.nav.activeTransition_) {
-    spf.debug.warn('    >> clearing previous transition',
-                   spf.nav.activeTransition_);
-    while (spf.nav.activeTransition_.queue.length > 0) {
-      var fn = spf.nav.activeTransition_.queue.shift();
-      fn();
-    }
-    clearTimeout(spf.nav.activeTransition_.timer);
-    spf.nav.activeTransition_ = null;
+spf.nav.process = function(response, opt_reverse) {
+  spf.debug.info('nav.process', response, opt_reverse);
+  // Install styles.
+  spf.net.styles.install(response['css']);
+  // Update title.
+  if (response['title']) {
+    document.title = response['title'];
   }
-  // Delay to allow the DOM to update, then begin the load.
-  setTimeout(function() {
-    var reverse = !!opt_reverse;
-    // Install styles.
-    spf.net.styles.install(response['css']);
-    // Update title.
-    if (response['title']) {
-      document.title = response['title'];
+  // Tally the number of content updates need.
+  var remaining = 0;
+  var html = response['html'] || {};
+  if (Object.keys) {
+    remaining = Object.keys(html).length;
+  } else {
+    for (var id in html) {
+      remaining++;
     }
-    // Update content.
-    for (var id in response['html']) {
-      var content = document.getElementById(id);
-      if (!spf.dom.classes.has(content, spf.config['transition-class'])) {
-        //  If the target element isn't enabled for transitions, just replace.
-        content.innerHTML = response['html'][id];
+  }
+  // Set up to execute scripts after the content loads.
+  var executeScripts = function() {
+      // Only execute when remaining is 0, to avoid early execution.
+    if (remaining == 0) {
+      spf.net.scripts.execute(response['js'], function() {
+        // Publish to callbacks.
+        spf.pubsub.publish('callback-process', response);
+      });
+      // Prevent double execution.
+      remaining--;
+    }
+  };
+  // Update content.
+  for (var id in html) {
+    var content = document.getElementById(id);
+    if (!content) {
+      continue;
+    }
+    var key = spf.getKey(content);
+    if (!spf.dom.classes.has(content, spf.config['transition-class'])) {
+      // If the target element isn't enabled for transitions, just replace.
+      content.innerHTML = response['html'][id];
+      remaining--;
+      executeScripts();
+    } else {
+      // Otherwise, check for a previous transition before continuing.
+      spf.nav.process_(key, true);
+      // Define variables used throughout the transition steps.
+      var queue = [];
+      var data = {};
+      data.reverse = !!opt_reverse;
+      data.parentEl = content;
+      data.currentClass = spf.config['transition-current-child-class'];
+      if (data.reverse) {
+        data.pendingClass = spf.config['transition-reverse-child-class'];
+        data.parentClass = spf.config['transition-reverse-parent-class'];
       } else {
-        var currentClass = spf.config['transition-current-child-class'];
-        if (reverse) {
-          var childClass = spf.config['transition-reverse-child-class'];
-          var parentClass = spf.config['transition-reverse-parent-class'];
-        } else {
-          var childClass = spf.config['transition-forward-child-class'];
-          var parentClass = spf.config['transition-forward-parent-class'];
-        }
-        var current, pending;
-        spf.nav.activeTransition_ = {timer: 0, queue: []};
-        var prepareTransition = function() {
-          // Reparent the existing elements.
-          current = document.createElement('div');
-          current.className = currentClass;
-          spf.dom.inflateElement(content, current);
-          // Add the new content.
-          pending = document.createElement('div');
-          pending.className = childClass;
-          pending.innerHTML = response['html'][id];
-          if (reverse) {
-            spf.dom.insertSiblingBefore(pending, current);
-          } else {
-            spf.dom.insertSiblingAfter(pending, current);
-          }
-        };
-        var doTransition = function() {
-          spf.dom.classes.add(content, parentClass);
-        };
-        var completeTransition = function() {
-          // When done, remove the old content.
-          content.removeChild(current);
-          // End the transition.
-          spf.dom.classes.remove(content, parentClass);
-          // Reparent the new elements.
-          spf.dom.flattenElement(pending);
-        };
-        spf.nav.activeTransition_.queue.push(prepareTransition);
-        spf.nav.activeTransition_.queue.push(doTransition);
-        spf.nav.activeTransition_.queue.push(completeTransition);
-        var executeNextCall = function() {
-          if (spf.nav.activeTransition_.queue.length > 0) {
-            var fn = spf.nav.activeTransition_.queue.shift();
-            fn();
-          }
-        };
-        // Prepare the transition.
-        executeNextCall();
-        // Delay to allow the DOM to update, then do the transition.
-        spf.nav.activeTransition_.timer = setTimeout(function() {
-          executeNextCall();
-          // Delay to allow the transition to complete, then clean up.
-          spf.nav.activeTransition_.timer = setTimeout(function() {
-            executeNextCall();
-          }, spf.config['transition-duration']);
-        }, 0);
+        data.pendingClass = spf.config['transition-forward-child-class'];
+        data.parentClass = spf.config['transition-forward-parent-class'];
       }
+      // Transition Step 1: Insert new (timeout = 0).
+      queue.push([function(data) {
+        // Reparent the existing elements.
+        data.currentEl = document.createElement('div');
+        data.currentEl.className = data.currentClass;
+        spf.dom.inflateElement(data.parentEl, data.currentEl);
+        // Add the new content.
+        data.pendingEl = document.createElement('div');
+        data.pendingEl.className = data.pendingClass;
+        data.pendingEl.innerHTML = response['html'][data.parentEl.id];
+        if (data.reverse) {
+          spf.dom.insertSiblingBefore(data.pendingEl, data.currentEl);
+        } else {
+          spf.dom.insertSiblingAfter(data.pendingEl, data.currentEl);
+        }
+      }, 0]);
+      // Transition Step 2: Switch between old and new (timeout = 0).
+      queue.push([function(data) {
+        spf.dom.classes.add(data.parentEl, data.parentClass);
+      }, 0]);
+      // Transition Step 3: Remove old (timeout = config duration).
+      queue.push([function(data) {
+        // When done, remove the old content.
+        data.parentEl.removeChild(data.currentEl);
+        // End the transition.
+        spf.dom.classes.remove(data.parentEl, data.parentClass);
+        // Reparent the new elements.
+        spf.dom.flattenElement(data.pendingEl);
+      }, spf.config['transition-duration']]);
+      // Transition Step 4: Execute scripts (timeout = 0).
+      queue.push([function(data) {
+        remaining--;
+        executeScripts();
+      }, 0]);
+      // Store the steps so the transition can be cleared, if needed.
+      spf.nav.transitions_[key] = {timer: 0, queue: queue, data: data};
+      // Execute the steps in order.
+      spf.nav.process_(key);
     }
-    // Execute scripts
-    spf.net.scripts.execute(response['js'], function() {
-      // Publish to callbacks.
-      spf.pubsub.publish('callback-load', url, response);
-    });
-  }, 0);
+  }
+  // Attempt to execute scripts, in case no content is returned.
+  executeScripts();
+};
+
+
+/**
+ * See {@link #process}.
+ *
+ * @param {string} key The transition key.
+ * @private
+ */
+spf.nav.process_ = function(key, opt_quick) {
+  var transitions = spf.nav.transitions_;
+  if (key in transitions) {
+    if (transitions[key].queue.length > 0) {
+      var step = transitions[key].queue.shift();
+      if (opt_quick) {
+        step[0](transitions[key].data);
+        spf.nav.process_(key, opt_quick);
+      } else {
+        transitions[key].timer = setTimeout(function() {
+          step[0](transitions[key].data);
+          spf.nav.process_(key, opt_quick);
+        }, step[1]);
+      }
+    } else {
+      clearTimeout(transitions[key].timer)
+      delete transitions[key];
+    }
+  }
 };
 
 
@@ -286,11 +392,11 @@ spf.nav.initialized_ = false;
  * @type {XMLHttpRequest}
  * @private
  */
-spf.nav.activeRequest_;
+spf.nav.active_;
 
 
 /**
- * @type {?{timer: number, queue: !Array}}
+ * @type {!Object.<string, ?{timer: number, queue: !Array, data: !Object}>}
  * @private
  */
-spf.nav.activeTransition_;
+spf.nav.transitions_ = {};

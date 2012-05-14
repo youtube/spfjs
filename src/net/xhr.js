@@ -76,7 +76,7 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
   var onTimeout = options.onTimeout || function() {};
   var timer;
 
-  var xhr = new XMLHttpRequest();
+  var xhr = spf.net.xhr.create();
   xhr.open(method, url, true);
 
   // Overload the abort method to handle the timer.
@@ -113,3 +113,16 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
   xhr.send(null);
   return xhr;
 };
+
+
+/**
+ * Creates a new XMLHttpRequest object.
+ * @return {XMLHttpRequest} The new XHR object.
+ */
+spf.net.xhr.create = (function() {
+  if ('XMLHttpRequest' in window) {
+    return function() { return new XMLHttpRequest(); };
+  } else if ('ActiveXObject' in window) {
+    return function() { return new ActiveXObject('Microsoft.XMLHTTP'); };
+  }
+})();

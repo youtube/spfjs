@@ -27,10 +27,24 @@ spf.dom.classes.get = function(node) {
  * @param {string} cls Class name to test for.
  * @return {boolean} Whether node has the class.
  */
-spf.dom.classes.has = function(node, cls) {
-  var classes = spf.dom.classes.get(node);
-  return Array.prototype.indexOf.call(classes, cls) != -1;
-};
+spf.dom.classes.has = (function() {
+  if (Array.prototype.indexOf) {
+    return function(node, cls) {
+      var classes = spf.dom.classes.get(node);
+      return Array.prototype.indexOf.call(classes, cls) != -1;
+    };
+  } else {
+    return function(node, cls) {
+      var classes = spf.dom.classes.get(node);
+      for (var i = 0, l = classes.length; i < l; i++) {
+        if (classes[i] == cls) {
+          return true;
+        }
+      }
+      return false;
+    };
+  }
+})();
 
 
 /**
@@ -52,10 +66,25 @@ spf.dom.classes.add = function(node, cls) {
  * @param {Node|EventTarget} node DOM node to remove class from.
  * @param {string} cls Class name to remove.
  */
-spf.dom.classes.remove = function(node, cls) {
-  var classes = spf.dom.classes.get(node);
-  classes = Array.prototype.filter.call(classes, function(item) {
-    return item != cls;
-  });
-  node.className = classes.join(' ');
-};
+spf.dom.classes.remove = (function() {
+  if (Array.prototype.filter) {
+    return function(node, cls) {
+      var classes = spf.dom.classes.get(node);
+      classes = Array.prototype.filter.call(classes, function(item) {
+        return item != cls;
+      });
+      node.className = classes.join(' ');
+    };
+  } else {
+    return function(node, cls) {
+      var classes = spf.dom.classes.get(node);
+      var newClasses = [];
+      for (var i = 0, l = classes.length; i < l; i++) {
+        if (classes[i] != cls) {
+          newClasses.push(classes[i]);
+        }
+      }
+      node.className = newClasses.join(' ');
+    };
+  }
+})();

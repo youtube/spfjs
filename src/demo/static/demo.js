@@ -18,8 +18,16 @@ var demo = demo || {};
  * Initialize the demo app.
  */
 demo.init = function() {
-  demo.start_ = +(new Date());
+  demo.start_ = +new Date();
   demo.timer_ = window.setInterval(demo.updateTime, 500);
+  var config = {
+    'callback-click': demo.handleClick,
+    'callback-history': demo.handleHistory,
+    'callback-request': demo.handleRequest,
+    'callback-process': demo.handleProcess
+  };
+  demo.enabled = spf.init(config);
+  demo.updateStatus();
 };
 
 
@@ -29,6 +37,26 @@ demo.init = function() {
 demo.dispose = function() {
   window.clearInterval(demo.timer_);
   demo.start_ = 0;
+  demo.enabled = false;
+  demo.updateStatus();
+  demo.updateTime();
+};
+
+
+/**
+ * Update the display showing whether SPF is enabled.
+ */
+demo.updateStatus = function() {
+  var statusEl = document.getElementById('demo-status');
+  if (statusEl) {
+    if (demo.enabled) {
+      statusEl.innerHTML = 'Enabled';
+      statusEl.className = 'enabled';
+    } else {
+      statusEl.innerHTML = 'Disabled';
+      statusEl.className = 'disabled';
+    }
+  }
 };
 
 
@@ -39,7 +67,7 @@ demo.updateTime = function() {
   var timerEl = document.getElementById('demo-timer');
   if (timerEl) {
     if (demo.start_) {
-      var time = Math.floor((+(new Date()) - demo.start_) / 1000);
+      var time = Math.floor((+new Date() - demo.start_) / 1000);
       timerEl.innerHTML = time;
     } else {
       timerEl.innerHTML = ''
@@ -49,20 +77,20 @@ demo.updateTime = function() {
 
 
 /**
- * Callback for clicks.
+ * Callback for click events.
  * @param {Element} el The clicked element.
  */
 demo.handleClick = function(el) {
-  window.console.log('demo: clicked', el);
+  window.console.log('demo: clicked on', el);
 };
 
 
 /**
- * Callback for navigations.
- * @param {string} url The URL that was navigated to.
+ * Callback for history events.
+ * @param {string} url The new URL.
  */
-demo.handleNavigate = function(url) {
-  window.console.log('demo: navigated', url);
+demo.handleHistory = function(url) {
+  window.console.log('demo: history changed to', url);
 };
 
 
@@ -77,13 +105,19 @@ demo.handleRequest = function(url, response) {
 
 
 /**
- * Callback for loads.
- * @param {string} url The loaded URL, without the SPF identifier.
- * @param {Object} response The loaded SPF response object.
+ * Callback for response processing.
+ * @param {Object} response The processed SPF response object.
  */
-demo.handleLoad = function(url, response) {
-  window.console.log('demo: loaded', url, response);
+demo.handleProcess = function(response) {
+  window.console.log('demo: processed', response);
 };
+
+
+/**
+ * Whether SPF is enabled for the demo app.
+ * @type {boolean}
+  */
+demo.enabled = false;
 
 
 /**
@@ -100,3 +134,34 @@ demo.start_ = 0;
  * @private
  */
 demo.timer_ = 0;
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+/**
+ * The demo app namespace for the home page.
+ * @type {Object}
+ */
+demo.home = demo.home || {};
+
+
+/**
+ * Initialize the demo app home page.
+ */
+demo.home.init = function() {
+  // Show the correct support notice.
+  var id = demo.enabled ? 'home-full' : 'home-partial';
+  document.getElementById(id).style.display = '';
+  // Enable the extra content button.
+  var buttonEl = document.getElementById('home-ajax-get');
+  buttonEl.onclick = demo.home.onGetExtra;
+};
+
+
+/**
+ * Event handler for the extra content button.
+ */
+demo.home.onGetExtra = function() {
+  spf.load('/index_ajax');
+};

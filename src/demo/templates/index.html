@@ -1,19 +1,89 @@
+$def _stylesheet():
+  <style type="text/css">
+    #home .col {
+      width: 50%;
+      float: left;
+      margin-bottom: 2em;
+    }
+    #home .col p {
+      padding-right: 1em;
+    }
+    #home .extra {
+      clear: left;
+      border-top: 1px solid #E3E3E3;
+    }
+    #home-full, #home-partial {
+      padding: .5em;
+      border: 1px solid #CCC;
+    }
+    #home-full {
+      border-color: #19B319;
+    }
+    #home-partial {
+      border-color: #F00;
+    }
+  </style>
+
 $def _javascript():
   <script type="text/javascript">
     console.log('demo: inline javascript - home');
+    demo.home.init();
   </script>
 
 $var title: Home
+$var stylesheet: $:_stylesheet()
 $var javascript: $:_javascript()
 
 <div id="home" class="pane">
   <h1>SPF: Structured Page Fragments</h1>
 
+  <div id="home-left" class="col spf-transition">
   <p>
     <abbr title="Structured Page Fragments">SPF</abbr> is both a protocol for
-    requesting and representing portions of page in an
-    <abbr title="XMLHttpRequest">XHR</abbr> as well as a framework for
-    dynamically making and handling those requests in place of traditional
-    full-page navigation.
+    representing portions of an <a href="http://developer.mozilla.org/en/HTML"><abbr title="HyperText Markup Language">HTML</abbr></a>
+    document in <a href="http://developer.mozilla.org/en/JSON"><abbr title="JavaScript Object Notation">JSON</abbr></a>
+    format and a framework to automatically replace traditional navigation
+    with a dynamic <a href="http://developer.mozilla.org/en/AJAX"><abbr title="Asynchronous JavaScript and XML">AJAX</abbr></a>-based
+    system to request and load only sections of pages.
   </p>
+  <p>
+    The SPF framework only uses standard URLs&mdash;not fragments&mdash;so it
+    is compatible with traditional navigation for browsers that don't support
+    the dynamic system.  Furthermore, the back button and bookmarking both work
+    as expected without any changes.
+  </p>
+  </div>
+
+  <div id="home-right" class="col spf-transition">
+  <p id="home-full" style="display: none">
+    <strong>Your browser fully supports SPF!</strong>
+    <br><br>
+    Try it out!  Browse around this site using the menu at the top of the page,
+    and pages will fluidly load without a refresh.  Links to other sites
+    (such as those to the left), will work as normal.
+  </p>
+  <p id="home-partial" style="display: none">
+    <strong>Your browser does not fully support SPF.</strong>
+    <br><br>
+    Links will act normally.  However, you can use still use standard AJAX
+    updates (see below).
+    <br><br>
+    Upgrade to a <a href="http://www.google.com/chrome">new browser</a>!
+  </p>
+  </div>
+
+  <div class="extra">
+    <h3>Regular AJAX Updates Too!</h3>
+
+    <p>
+      An added benefit of the SPF framework is that you can use the same
+      protocol for standard AJAX updates too!  This functionality is supported
+      by all browsers, even if they don't support the dynamic system.  Try it
+      out below!
+    </p>
+
+    <button id="home-ajax-get">Get your lucky number!</button>
+    <ul id="home_ajax_out"></ul>
+  </div>
+
 </div>

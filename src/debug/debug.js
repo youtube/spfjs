@@ -10,9 +10,13 @@
 
 goog.provide('spf.debug');
 
+goog.require('spf');
+
 
 /**
- * Log to the browser console using "debug", the low priority method.
+ * Log to the browser console using "debug", the low priority method.  Output
+ * using this method will be prefixed with the millisecond duration since
+ * start.
  *
  * @param {...*} var_args Items to log.
  */
@@ -62,11 +66,17 @@ spf.debug.error = function(var_args) {
  */
 spf.debug.log = function(method, args) {
   if (spf.DEBUG && window.console) {
-    if (window.console[method]) {
-      var fnArgs = 'spf_debug_' + (+new Date());
+    args = Array.prototype.slice.call(args, 0);
+    var timestamp = spf.now();
+    var duration = timestamp - spf.debug.start_;
+    if (method == 'debug') {
+      args.unshift('  >  ' + duration + 'ms: ');
+    }
+    if (spf.debug.advanced_) {
+      var fnArgs = 'spf_debug_' + timestamp;
       window[fnArgs] = args;
       var fnStr = 'window.console.' + method + '(';
-      for (var i = 0; i < args.length; i++) {
+      for (var i = 0, l = args.length; i < l; i++) {
         fnStr += (i > 0) ? ',' : '';
         fnStr += fnArgs + '[' + i + ']';
       }
@@ -77,3 +87,19 @@ spf.debug.log = function(method, args) {
     }
   }
 };
+
+
+/**
+ * The timestamp of when debugging was initialize, for logging duration.
+ * @type {number}
+ * @private
+ */
+spf.debug.start_ = spf.now();
+
+
+/**
+ * Whether to suppor the advanced console API.
+ * @type {boolean}
+ * @private
+ */
+spf.debug.advanced_ = !!(window.console && !eval('/*@cc_on!@*/false'));

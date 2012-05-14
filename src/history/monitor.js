@@ -3,8 +3,8 @@
 /**
  * @fileoverview A History management class for detecting and creating
  * history entries using the HTML5 history modification API.  It enables
- * browser history navigation (e.g. back/forward) without leaving the current
- * page, as long as the url is within the same domain.
+ * browser history (e.g. back/forward) without leaving the current page,
+ * as long as the url is within the same domain.
  * See {@link http://www.w3.org/TR/html5/history.html}.
  *
  * @author nicksay@google.com (Alex Nicksay)
@@ -21,14 +21,14 @@ goog.require('spf.debug');
  * history modification API.
  *
  * @param {function(string, Object=)} callback The function to handle
- *     a navigation event. The first parameter will be the URL
+ *     a history event. The first parameter will be the URL
  *     the user is browsing to.  The second parameter will be an optional
  *     state object associated with that URL.
  * @constructor
  */
 spf.history.Monitor = function(callback) {
   /**
-   * A callback to handle navigation events.
+   * A callback to handle history events.
    * @type {function(string, Object=)}
    * @private
    */
@@ -62,9 +62,8 @@ spf.history.Monitor = function(callback) {
 
 
 /**
- * Starts managing history entries.  The navigation callback will be immediately
- * executed for the current url unless disabled by the {@code opt_skipCallback}
- * argument.
+ * Starts managing history entries.  The callback will be immediately executed
+ * for the current url unless disabled by the {@code opt_skipCallback} argument.
  *
  * @param {boolean=} opt_skipCallback Whether to skip the callback.
  */
@@ -91,8 +90,8 @@ spf.history.Monitor.prototype.disable = function() {
 spf.history.Monitor.prototype.handlePop = function(evt) {
   var url = window.location.href;
   spf.debug.info('spf.history.handlePop: ', 'url=', url, 'evt=', evt);
-  spf.debug.debug('    > new url: ', url != this.url_);
-  spf.debug.debug('    > current timestamp: ', this.timestamp_);
+  spf.debug.debug('new url: ', url != this.url_);
+  spf.debug.debug('current timestamp: ', this.timestamp_);
   // Avoid the initial event on first load by for a state.
   if (evt.state) {
     var state = evt.state;
@@ -101,13 +100,13 @@ spf.history.Monitor.prototype.handlePop = function(evt) {
     // the state to the original.
     if (url == this.url_) {
       this.timestamp_ = state['spf-timestamp'];
-      spf.debug.debug('    > replacing: ', 'url=', url, 'state=', state);
+      spf.debug.debug('replace: ', 'url=', url, 'state=', state);
       window.history.replaceState(state, '', url);
     } else {
       var timestamp = state['spf-timestamp'];
       state['spf-back'] = !!(timestamp < this.timestamp_);
       this.timestamp_ = timestamp;
-      spf.debug.debug('    > navigating: ', 'url=', url, 'state=', state);
+      spf.debug.debug('callback: ', 'url=', url, 'state=', state);
       this.url_ = url;
       this.callback_(url, state);
     }
@@ -122,9 +121,9 @@ spf.history.Monitor.prototype.handlePop = function(evt) {
  *     the browser.  This can be either a relative or an absolute URL, and if
  *     omitted, the current browser URL will be used.
  * @param {Object=} opt_state The state object associated with this history
- *     entry.  When the user navigates to entry, the "state" property of the
+ *     entry.  When the user returns to this entry, the "state" property of the
  *     event will contain a copy of this object.
- * @param {boolean=} opt_skipCallback Whether to skip the navigation callback.
+ * @param {boolean=} opt_skipCallback Whether to skip calling the callback.
  * @throws {Error} If the state object is too large. For example, Firefox will
  *     pass the object to JSON.stringify and impose a 640k character limit.
  * @throws {Error} If the URL is not in the same domain, a SECURITY_ERR
@@ -144,9 +143,9 @@ spf.history.Monitor.prototype.add = function(opt_url, opt_state,
  *     the browser.  This can be either a relative or an absolute URL, and if
  *     omitted, the current browser URL will be used.
  * @param {Object=} opt_state The state object associated with this history
- *     entry.  When the user navigates to entry, the "state" property of the
+ *     entry.  When the user returns to this entry, the "state" property of the
  *     event will contain a copy of this object.
- * @param {boolean=} opt_skipCallback Whether to skip the navigation callback.
+ * @param {boolean=} opt_skipCallback Whether to skip calling the callback.
  * @throws {Error} If the state object is too large. For example, Firefox will
  *     pass the object to JSON.stringify and impose a 640k character limit.
  * @throws {Error} If the URL is not in the same domain, a SECURITY_ERR
@@ -165,24 +164,24 @@ spf.history.Monitor.prototype.replace = function(opt_url, opt_state,
  * @param {boolean} replace Whether to replace the previous entry.
  * @param {?string=} opt_url The URL associated with this entry.
  * @param {Object=} opt_state The state object associated with this entry.
- * @param {boolean=} opt_skipCallback Whether to skip the navigation callback.
+ * @param {boolean=} opt_skipCallback Whether to skip the callback.
  * @private
  */
-spf.history.Monitor.prototype.push_ = function(replace, opt_url,
-                                               opt_state, opt_skipCallback) {
+spf.history.Monitor.prototype.push_ = function(replace, opt_url, opt_state,
+                                               opt_skipCallback) {
   if (!opt_url && !opt_state) {
     return;
   }
   var url = opt_url || window.location.href;
   var state = opt_state || {};
-  this.timestamp_ = +new Date();
+  this.timestamp_ = spf.now();
   state['spf-timestamp'] = this.timestamp_;
   if (replace) {
     window.history.replaceState(state, '', url);
   } else {
     window.history.pushState(state, '', url);
   }
-  spf.debug.debug('    > entry:  ', 'url=', url, 'state=', state);
+  spf.debug.debug('entry:  ', 'url=', url, 'state=', state);
   this.url_ = url;
   if (!opt_skipCallback) {
     this.callback_(url, state);
