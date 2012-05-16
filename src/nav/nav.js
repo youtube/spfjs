@@ -68,33 +68,37 @@ spf.nav.dispose = function() {
  */
 spf.nav.handleClick = function(evt) {
   spf.debug.info('nav.handleClick', evt);
-  // TODO(nicksay): Update click handling to support fragment links
-  // TODO(nicksay): Update click handling to support modifier keys
+  // Ignore clicks with modifier keys.
+  if (evt.metaKey || evt.altKey || evt.ctrlKey || evt.shiftKey) {
+    spf.debug.warn('ignoring click with modifier key');
+    return;
+  }
+  // Ignore clicks on targets without the SPF link class.
   var target = spf.dom.getAncestor(evt.target, function(node) {
     return spf.dom.classes.has(node, spf.config['link-class']);
   });
-  if (target) {
-    spf.debug.debug('found target', target);
-    var url = target.href;
-    // Ignore clicks to the same page.
-    if (url == window.location.href) {
-      // Prevent the default browser navigation.
-      evt.preventDefault();
-      return;
-    }
-    // Publish to callbacks.
-    spf.pubsub.publish('callback-click', target);
-    try {
-      // Add the URL to the history stack, (calls back to handleNavigate).
-      spf.history.add(url);
-      // Prevent the default browser navigation.
-      evt.preventDefault();
-    } catch (err) {
-      // A SECURITY_ERR exception is thrown if the URL passed to pushState
-      // doesn't match the same domain.  In this case, do nothing to allow
-      // the default browser navigation to take effect.
-      spf.debug.error('    >> error caught, ignoring click', err);
-    }
+  if (!target) {
+    return;
+  }
+  // Ignore clicks to the same page.
+  var url = target.href;
+  if (url == window.location.href) {
+    // Prevent the default browser navigation to avoid hard refreshes.
+    evt.preventDefault();
+    return;
+  }
+  // Publish to callbacks.
+  spf.pubsub.publish('callback-click', target);
+  try {
+    // Add the URL to the history stack, (calls back to handleNavigate).
+    spf.history.add(url);
+    // Prevent the default browser navigation.
+    evt.preventDefault();
+  } catch (err) {
+    // A SECURITY_ERR exception is thrown if the URL passed to pushState
+    // doesn't match the same domain.  In this case, do nothing to allow
+    // the default browser navigation to take effect.
+    spf.debug.error('>> error caught, ignoring click', err);
   }
 };
 
@@ -133,22 +137,22 @@ spf.nav.navigate = function(url, opt_reverse) {
     spf.debug.error('>> nav not initialized');
     return;
   }
-  if (spf.nav.active_) {
-    spf.debug.warn('    >> aborting previous navigate', spf.nav.active_);
-    spf.nav.active_.abort();
-    spf.nav.active_ = null;
+  if (spf.nav.request_) {
+    spf.debug.warn('    >> aborting previous navigate', spf.nav.request_);
+    spf.nav.request_.abort();
+    spf.nav.request_ = null;
   }
   var navigateError = function(url) {
-    spf.nav.active_ = null;
+    spf.nav.request_ = null;
     window.location.href = url;
   };
   var navigateSuccess = function(url, response) {
-    spf.nav.active_ = null;
+    spf.nav.request_ = null;
     // Process the requested response.
     spf.nav.process(response, opt_reverse);
   };
   var xhr = spf.nav.request(url, navigateSuccess, navigateError);
-  spf.nav.active_ = xhr;
+  spf.nav.request_ = xhr;
 };
 
 
@@ -290,7 +294,8 @@ spf.nav.process = function(response, opt_reverse) {
       continue;
     }
     var key = spf.getKey(content);
-    if (!spf.dom.classes.has(content, spf.config['transition-class'])) {
+    if (!spf.nav.animate_ ||
+        !spf.dom.classes.has(content, spf.config['transition-class'])) {
       // If the target element isn't enabled for transitions, just replace.
       content.innerHTML = response['html'][id];
       remaining--;
@@ -395,7 +400,7 @@ spf.nav.initialized_ = false;
  * @type {XMLHttpRequest}
  * @private
  */
-spf.nav.active_;
+spf.nav.request_;
 
 
 /**
@@ -403,3 +408,20 @@ spf.nav.active_;
  * @private
  */
 spf.nav.transitions_ = {};
+
+
+/**
+ * Whether the browser supports animation via CSS Transitions.
+ * @type {boolean}
+ * @private
+ */
+spf.nav.animate_ = (function() {
+  var testEl = document.createElement('div');
+  var prefixes = ['WebKit', 'Moz', 'Ms', 'O', 'Khtml'];
+  for (var i = 0, l = prefixes.length; i < l; i++) {
+    if (prefixes[i] + 'Transition' in testEl.style) {
+      return true;
+    }
+  };
+  return false;
+})();

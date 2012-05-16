@@ -20,8 +20,9 @@ $def _stylesheet():
   <style type="text/css">
     .page$page_num h1 { color: $page_color; }
     .page h1 { text-shadow: 0 0 .15em rgba(0, 0, 0, 0.4); }
-    .page .sun { display: inline-block; text-align: center; border: 1px solid #FFF; }
+    .page .sun { display: inline-block; border: 1px solid #FFF; padding: 0.5em; }
     .page a:hover .sun { border-color: #000; }
+    .page .sun img { height: 3em; vertical-align: middle; }
   </style>
 
 $def _javascript():
@@ -59,12 +60,21 @@ $var javascript: $:_javascript()
     <br>
     <a href="/" class="spf-link">
       <span class="sun">
-        <img src="/static/sun.png"><br>
-        Overview
+        <img src="/static/sun.png">Overview
       </span>
     </a>
   </p>
   <p>
-
+    Sample buttons to load content via JavaScript without navigation:
+    <br>
+    <button onclick="spf.load('/')">Overview</button>
+    <button onclick="spf.load('/spec')">Spec</button>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <button onclick="spf.load('/page/1')">Page 1</button>
+    <button onclick="spf.load('/page/2')">Page 2</button>
+    <button onclick="spf.load('/page/3')">Page 3</button>
+    <button onclick="spf.load('/page/4')">Page 4</button>
+    <button onclick="spf.load('/page/5')">Page 5</button>
+    <button onclick="spf.load('/page/6')">Page 6</button>
   </p>
 </div>

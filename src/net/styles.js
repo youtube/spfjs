@@ -19,9 +19,15 @@ goog.require('spf.string');
  */
 spf.net.styles.eval = function(text) {
   var styleEl = document.createElement('style');
-  styleEl.appendChild(document.createTextNode(text));
   var head = document.getElementsByTagName('head')[0];
+  // IE requires the Style element to be in the document before accessing
+  // the StyleSheet object.
   head.appendChild(styleEl);
+  if ('styleSheet' in styleEl) {
+    styleEl.styleSheet.cssText = text;
+  } else {
+    styleEl.appendChild(document.createTextNode(text));
+  }
 };
 
 
