@@ -5,7 +5,7 @@ $def _stylesheet():
 
 $def _javascript():
   <script type="text/javascript">
-    console.log('demo: inline javascript - spec');
+    console.log('demo: page javascript - spec');
   </script>
 
 $var title: Spec
@@ -14,6 +14,9 @@ $var javascript: $:_javascript()
 
 <div id="spec" class="pane">
   <h1>Spec</h1>
+  <script type="text/javascript">
+    console.log('demo: embedded javascript - spec');
+  </script>
 
   <pre>
     {

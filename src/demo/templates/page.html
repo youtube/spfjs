@@ -27,7 +27,7 @@ $def _stylesheet():
 
 $def _javascript():
   <script type="text/javascript">
-    console.log('demo: inline javascript - page $page_num');
+    console.log('demo: page javascript - page $page_num');
   </script>
 
 $var title: Demo Page $page_num
@@ -36,6 +36,9 @@ $var javascript: $:_javascript()
 
 <div id="page" class="pane page page$page_num">
   <h1>Demo Page $page_num</h1>
+  <script type="text/javascript">
+    console.log('demo: embedded javascript - page $page_num');
+  </script>
 
   <p>
     This page is for demonstration purposes only.

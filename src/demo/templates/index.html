@@ -26,7 +26,7 @@ $def _stylesheet():
 
 $def _javascript():
   <script type="text/javascript">
-    console.log('demo: inline javascript - home');
+    console.log('demo: page javascript - home');
     demo.home.init();
   </script>
 
@@ -36,6 +36,9 @@ $var javascript: $:_javascript()
 
 <div id="home" class="pane">
   <h1>SPF: Structured Page Fragments</h1>
+  <script type="text/javascript">
+    console.log('demo: embedded javascript - home');
+  </script>
 
   <div id="home-left" class="col spf-transition">
   <p>

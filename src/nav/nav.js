@@ -259,7 +259,7 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError) {
  */
 spf.nav.process = function(response, opt_reverse) {
   spf.debug.info('nav.process', response, opt_reverse);
-  // Install styles.
+  // Install page styles.
   spf.net.styles.install(response['css']);
   // Update title.
   if (response['title']) {
@@ -276,7 +276,7 @@ spf.nav.process = function(response, opt_reverse) {
     }
   }
   // Set up to execute scripts after the content loads.
-  var executeScripts = function() {
+  var maybeExecutePageScripts = function() {
       // Only execute when remaining is 0, to avoid early execution.
     if (remaining == 0) {
       spf.net.scripts.execute(response['js'], function() {
@@ -298,8 +298,11 @@ spf.nav.process = function(response, opt_reverse) {
         !spf.dom.classes.has(content, spf.config['transition-class'])) {
       // If the target element isn't enabled for transitions, just replace.
       content.innerHTML = response['html'][id];
-      remaining--;
-      executeScripts();
+      // Execute embedded scripts before continuing.
+      spf.net.scripts.execute(response['html'][id], function() {
+        remaining--;
+        maybeExecutePageScripts();
+      });
     } else {
       // Otherwise, check for a previous transition before continuing.
       spf.nav.process_(key, true);
@@ -317,7 +320,7 @@ spf.nav.process = function(response, opt_reverse) {
         data.parentClass = spf.config['transition-forward-parent-class'];
       }
       // Transition Step 1: Insert new (timeout = 0).
-      queue.push([function(data) {
+      queue.push([function(data, next) {
         // Reparent the existing elements.
         data.currentEl = document.createElement('div');
         data.currentEl.className = data.currentClass;
@@ -331,24 +334,31 @@ spf.nav.process = function(response, opt_reverse) {
         } else {
           spf.dom.insertSiblingAfter(data.pendingEl, data.currentEl);
         }
+        next();
       }, 0]);
       // Transition Step 2: Switch between old and new (timeout = 0).
-      queue.push([function(data) {
+      queue.push([function(data, next) {
         spf.dom.classes.add(data.parentEl, data.parentClass);
+        next();
       }, 0]);
       // Transition Step 3: Remove old (timeout = config duration).
-      queue.push([function(data) {
+      queue.push([function(data, next) {
         // When done, remove the old content.
         data.parentEl.removeChild(data.currentEl);
         // End the transition.
         spf.dom.classes.remove(data.parentEl, data.parentClass);
         // Reparent the new elements.
         spf.dom.flattenElement(data.pendingEl);
+        next();
       }, spf.config['transition-duration']]);
       // Transition Step 4: Execute scripts (timeout = 0).
-      queue.push([function(data) {
-        remaining--;
-        executeScripts();
+      queue.push([function(data, next) {
+        // Execute embedded scripts before continuing.
+        spf.net.scripts.execute(response['html'][data.parentEl.id], function() {
+          remaining--;
+          maybeExecutePageScripts();
+          next();
+        });
       }, 0]);
       // Store the steps so the transition can be cleared, if needed.
       spf.nav.transitions_[key] = {timer: 0, queue: queue, data: data};
@@ -356,8 +366,8 @@ spf.nav.process = function(response, opt_reverse) {
       spf.nav.process_(key);
     }
   }
-  // Attempt to execute scripts, in case no content is returned.
-  executeScripts();
+  // Attempt to execute page scripts, in case no content is returned.
+  maybeExecutePageScripts();
 };
 
 
@@ -373,12 +383,14 @@ spf.nav.process_ = function(key, opt_quick) {
     if (transitions[key].queue.length > 0) {
       var step = transitions[key].queue.shift();
       if (opt_quick) {
-        step[0](transitions[key].data);
-        spf.nav.process_(key, opt_quick);
+        step[0](transitions[key].data, function() {
+          spf.nav.process_(key, opt_quick);
+        });
       } else {
         transitions[key].timer = setTimeout(function() {
-          step[0](transitions[key].data);
-          spf.nav.process_(key, opt_quick);
+          step[0](transitions[key].data, function() {
+            spf.nav.process_(key, opt_quick);
+          });
         }, step[1]);
       }
     } else {
