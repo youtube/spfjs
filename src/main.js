@@ -52,27 +52,20 @@ spf.main.dispose = function() {
 };
 
 
-/**
- * @type {!Object.<string, Function>}
- * @private
- */
-spf.main.exports_ = {
-  'init': spf.main.init,
-  'dispose': spf.main.dispose,
-  'navigate': spf.nav.navigate,
-  'load': spf.nav.load
-};
+// Create the external API.
+spf.init = spf.main.init;
+spf.dispose = spf.main.dispose;
+spf.navigate = spf.nav.navigate;
+spf.load = spf.nav.load;
 
-
-if (spf.DEBUG) {
-  // When SPF is compiled for a development build, all methods are exposed.
-  // The methods exported here are for compatibility with production.
-  for (var method in spf.main.exports_) {
-    window['spf'][method] = spf.main.exports_[method];
-  }
-} else {
+if (!spf.DEBUG) {
   // When SPF is compiled for a production build, all methods are renamed by
   // the compiler and wrapped in an anonymous function to prevent namespace
   // pollution.  Only the methods exported here will be exposed to the page.
-  window['spf'] = spf.main.exports_;
+  window['spf'] = {
+    'init': spf.init,
+    'dispose': spf.dispose,
+    'navigate': spf.navigate,
+    'load': spf.load
+  }
 }
