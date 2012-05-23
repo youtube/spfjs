@@ -91,7 +91,7 @@ html, body {
   position: absolute;
   top: 0;
   width: 100%;
-  -webkit-transition: left 400ms ease;
+  -webkit-transition: left 300ms ease;
 }
 .spf-transition .spf-current {
   left: 0%;
