@@ -88,7 +88,7 @@ spf.nav.handleClick = function(evt) {
     return;
   }
   // Publish to callbacks.
-  spf.pubsub.publish('callback-click', target);
+  spf.pubsub.publish('navigate-link-clicked-callback', target);
   try {
     // Add the URL to the history stack, (calls back to handleNavigate).
     spf.history.add(url);
@@ -113,7 +113,7 @@ spf.nav.handleHistory = function(url, opt_state) {
   var reverse = !!(opt_state && opt_state['spf-back']);
   spf.debug.info('nav.handleNavigate: ', 'url=', url, 'state=', opt_state);
   // Publish to callbacks.
-  spf.pubsub.publish('callback-history', url);
+  spf.pubsub.publish('navigate-history-changed-callback', url);
   // Navigate to the URL.
   spf.nav.navigate(url, reverse);
 };
@@ -149,9 +149,10 @@ spf.nav.navigate = function(url, opt_reverse) {
   var navigateSuccess = function(url, response) {
     spf.nav.request_ = null;
     // Process the requested response.
-    spf.nav.process(response, opt_reverse);
+    spf.nav.process(response, opt_reverse, 'navigate-processed-callback');
   };
-  var xhr = spf.nav.request(url, navigateSuccess, navigateError);
+  var xhr = spf.nav.request(url, navigateSuccess, navigateError,
+                            'navigate-requested-callback');
   spf.nav.request_ = xhr;
 };
 
@@ -180,12 +181,12 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
   };
   var loadSuccess = function(url, response) {
     // Process the requested response.
-    spf.nav.process(response);
+    spf.nav.process(response, false, 'load-processed-callback');
     if (opt_onSuccess) {
       opt_onSuccess(url, response);
     }
   }
-  spf.nav.request(url, loadSuccess, loadError);
+  spf.nav.request(url, loadSuccess, loadError, 'load-requested-callback');
 };
 
 
@@ -200,9 +201,11 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
  *     the request succeeds.
  * @param {function(string)=} opt_onError The callback to execute if the
  *     request fails.
+ * @param {string=} opt_notification The notification to publish if the
+ *     request succeeds.
  * @return {XMLHttpRequest} The XHR of the current request.
  */
-spf.nav.request = function(url, opt_onSuccess, opt_onError) {
+spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
   spf.debug.info('nav.request', url);
   var requestUrl = url;
   var ident = spf.config['url-identifier'];
@@ -232,8 +235,10 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError) {
       return;
     }
     response = /** @type {spf.nav.Response} */ (response);
-    // Publish to callbacks.
-    spf.pubsub.publish('callback-request', url, response);
+    if (opt_notification) {
+      // Publish to callbacks.
+      spf.pubsub.publish(opt_notification, url, response);
+    }
     if (opt_onSuccess) {
       opt_onSuccess(url, response);
     }
@@ -256,8 +261,10 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError) {
  * @param {boolean=} opt_reverse Whether this is "backwards" navigation. True
  *     when the "back" button is clicked and a request is in response to a
  *     popState event.
+ * @param {string=} opt_notification The notification to publish if the
+ *     request succeeds.
  */
-spf.nav.process = function(response, opt_reverse) {
+spf.nav.process = function(response, opt_reverse, opt_notification) {
   spf.debug.info('nav.process', response, opt_reverse);
   // Install page styles.
   spf.net.styles.install(response['css']);
@@ -280,8 +287,10 @@ spf.nav.process = function(response, opt_reverse) {
       // Only execute when remaining is 0, to avoid early execution.
     if (remaining == 0) {
       spf.net.scripts.execute(response['js'], function() {
-        // Publish to callbacks.
-        spf.pubsub.publish('callback-process', response);
+        if (opt_notification) {
+          // Publish to callbacks.
+          spf.pubsub.publish(opt_notification, response);
+        }
       });
       // Prevent double execution.
       remaining--;

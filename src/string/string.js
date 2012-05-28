@@ -34,6 +34,19 @@ spf.string.startsWith = function(str, prefix) {
 
 
 /**
+ * Fast suffix-checker.
+ *
+ * @param {string} str The string to check.
+ * @param {string} suffix A string to look for at the end of {@code str}.
+ * @return {boolean} True if {@code str} ends with {@code suffix}.
+ */
+spf.string.endsWith = function(str, suffix) {
+  var l = str.length - suffix.length;
+  return l >= 0 && str.indexOf(suffix, l) == l;
+};
+
+
+/**
  * String hash function similar to java.lang.String.hashCode().
  * The hash code for a string is computed as
  * s[0] * 31 ^ (n - 1) + s[1] * 31 ^ (n - 2) + ... + s[n - 1],

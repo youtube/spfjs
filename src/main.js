@@ -25,11 +25,13 @@ goog.require('spf.string');
  */
 spf.main.init = function(opt_config) {
   var enable = !!(window.history.pushState);
+  spf.debug.info('main.init', enable, opt_config);
   var config = opt_config || {};
   for (var key in spf.defaults) {
     var value = (key in config) ? config[key] : spf.defaults[key];
     spf.config[key] = value;
-    if (enable && value && spf.string.startsWith(key, 'callback-')) {
+    if (enable && value && spf.string.endsWith(key, '-callback')) {
+      spf.debug.debug('subscribing: ', key, value);
       spf.pubsub.subscribe(key, value);
     }
   }
