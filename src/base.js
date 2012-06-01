@@ -33,7 +33,7 @@ spf.defaults = {
   'load-requested-callback': null,
   'load-processed-callback': null,
   'transition-class': 'spf-transition',
-  'transition-duration': 325,
+  'transition-duration': 425,
   'transition-forward-parent-class': 'spf-transition-forward',
   'transition-reverse-parent-class': 'spf-transition-reverse',
   'transition-current-child-class': 'spf-current',
