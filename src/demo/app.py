@@ -5,12 +5,11 @@
 __author__ = 'nicksay@google.com (Alex Nicksay)'
 
 
-
 import json
 import os
 import random
-import web
 
+import web
 
 
 # Set up the basic app config.

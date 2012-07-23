@@ -1,7 +1,7 @@
 // Copyright 2012 Google Inc. All Rights Reserved.
 
 /**
- * @fileoverview Functions for dynamically styles.
+ * @fileoverview Functions for dynamically loading styles.
  *
  * @author nicksay@google.com (Alex Nicksay)
  */

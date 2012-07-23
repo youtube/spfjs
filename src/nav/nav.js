@@ -10,6 +10,7 @@
 goog.provide('spf.nav');
 
 goog.require('spf');
+goog.require('spf.cache');
 goog.require('spf.debug');
 goog.require('spf.dom');
 goog.require('spf.dom.classes');
@@ -235,6 +236,8 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
       return;
     }
     response = /** @type {spf.nav.Response} */ (response);
+    // Cache the response for future requests.
+    spf.cache.set(url, response, spf.config['cache-lifetime']);
     if (opt_notification) {
       // Publish to callbacks.
       spf.pubsub.publish(opt_notification, url, response);
@@ -243,13 +246,27 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
       opt_onSuccess(url, response);
     }
   };
-  var xhr = spf.net.xhr.get(requestUrl, {
-    timeoutMs: spf.config['request-timeout'],
-    onSuccess: requestSuccess,
-    onError: requestError,
-    onTimeout: requestError
-  });
-  return xhr;
+  // Try to find a cached response for the request before sending a new XHR.
+  var cachedResponse = /** @type {spf.nav.Response} */ (spf.cache.get(url));
+  if (cachedResponse) {
+    spf.debug.info('    >> cached response found', cachedResponse);
+    if (opt_notification) {
+      // Publish to callbacks.
+      spf.pubsub.publish(opt_notification, url, cachedResponse);
+    }
+    if (opt_onSuccess) {
+      opt_onSuccess(url, cachedResponse);
+    }
+  } else {
+    spf.debug.info('    >> fetching XHR');
+    var xhr = spf.net.xhr.get(requestUrl, {
+      timeoutMs: spf.config['request-timeout'],
+      onSuccess: requestSuccess,
+      onError: requestError,
+      onTimeout: requestError
+    });
+    return xhr;
+  }
 };
 
 
@@ -438,7 +455,7 @@ spf.nav.transitions_ = {};
  */
 spf.nav.animate_ = (function() {
   var testEl = document.createElement('div');
-  var prefixes = ['WebKit', 'Moz', 'Ms', 'O', 'Khtml'];
+  var prefixes = ['Webkit', 'Moz', 'Ms', 'O', 'Khtml'];
   for (var i = 0, l = prefixes.length; i < l; i++) {
     if (prefixes[i] + 'Transition' in testEl.style) {
       return true;
