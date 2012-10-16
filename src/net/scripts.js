@@ -67,7 +67,7 @@ spf.net.scripts.eval = function(text, opt_callback) {
  * @return {Element} The dynamically created script element.
  */
 spf.net.scripts.load = function(url, opt_callback) {
-  var id = 'spf-js-' + spf.string.hashCode(url);
+  var id = spf.net.scripts.ID_PREFIX + spf.string.hashCode(url);
   var scriptEl = document.getElementById(id);
   var isLoaded = scriptEl && spf.dom.dataset.get(scriptEl, 'loaded');
   var isLoading = scriptEl && !isLoaded;
@@ -136,6 +136,24 @@ spf.net.scripts.load_ = function(url, id, fn) {
 
 
 /**
+ * "Unloads" a script URL by finding a previously created element and
+ * removing it from the document.  This will allow a URL to be loaded again
+ * if needed.  Calling unload will stop execution of a pending callback, but
+ * will not stop loading a pending script.
+ *
+ * @param {string} url Url of the script.
+ */
+spf.net.scripts.unload = function(url) {
+  var id = spf.net.scripts.ID_PREFIX + spf.string.hashCode(url);
+  var scriptEl = document.getElementById(id);
+  if (scriptEl) {
+    spf.pubsub.clear(id);
+    scriptEl.parentNode.removeChild(scriptEl);
+  }
+};
+
+
+/**
  * Parses scripts from an HTML string and executes them in the current
  * document.
  *
@@ -150,9 +168,9 @@ spf.net.scripts.execute = function(html, opt_callback) {
   }
   var queue = [];
   // Extract the scripts.
-  html = html.replace(/\x3cscript([\s\S]*?)\x3e([\s\S]*?)\x3c\/script\x3e/ig,
+  html = html.replace(spf.net.scripts.SCRIPT_TAG_REGEXP,
       function(fullMatch, attr, text) {
-        var url = attr.match(/src="([\S]+)"/);
+        var url = attr.match(spf.net.scripts.SRC_ATTR_REGEXP);
           if (url) {
             queue.push([url[1], true]);
           } else {
@@ -179,3 +197,31 @@ spf.net.scripts.execute = function(html, opt_callback) {
   };
   getNextScript();
 };
+
+
+/**
+ * @type {string} The ID prefix for dynamically created script elements.
+ * @const
+ */
+spf.net.scripts.ID_PREFIX = 'js-';
+
+
+/**
+ * Regular expression used to locate script tags in a string.
+ * See {@link #execute}.
+ *
+ * @type {RegExp}
+ * @const
+ */
+spf.net.scripts.SCRIPT_TAG_REGEXP =
+    /\x3cscript([\s\S]*?)\x3e([\s\S]*?)\x3c\/script\x3e/ig;
+
+
+/**
+ * Regular expression used to locate src attributes in a string.
+ * See {@link #execute}.
+ *
+ * @type {RegExp}
+ * @const
+ */
+spf.net.scripts.SRC_ATTR_REGEXP = /src="([\S]+)"/;

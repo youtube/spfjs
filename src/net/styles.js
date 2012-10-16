@@ -40,7 +40,7 @@ spf.net.styles.eval = function(text) {
  * @return {Element} The dynamically created link element.
  */
 spf.net.styles.load = function(url) {
-  var id = 'spf-css-' + spf.string.hashCode(url);
+  var id = spf.net.styles.ID_PREFIX + spf.string.hashCode(url);
   var linkEl = document.getElementById(id);
   // If the stylesheet is already installed, return.
   if (linkEl) {
@@ -58,6 +58,22 @@ spf.net.styles.load = function(url) {
 
 
 /**
+ * "Unloads" a stylesheet URL by finding a previously created element and
+ * removing it from the document.  This will remove the styles and allow a
+ * URL to be loaded again if needed.
+ *
+ * @param {string} url Url of the script.
+ */
+spf.net.styles.unload = function(url) {
+  var id = spf.net.styles.ID_PREFIX + spf.string.hashCode(url);
+  var linkEl = document.getElementById(id);
+  if (linkEl) {
+    linkEl.parentNode.removeChild(linkEl);
+  }
+};
+
+
+/**
  * Parses styles from an HTML string and installs them in the current
  * document.
  *
@@ -68,20 +84,58 @@ spf.net.styles.install = function(html) {
   if (!html) {
     return;
   }
-  html.replace(/\x3clink([\s\S]*?)\x3e/ig,
+  html.replace(spf.net.styles.LINK_TAG_REGEXP,
       function(fullMatch, attr) {
         var isStyleSheet = spf.string.contains(attr, 'rel="stylesheet"');
         if (isStyleSheet) {
-          var url = attr.match(/href="([\S]+)"/);
+          var url = attr.match(spf.net.styles.HREF_ATTR_REGEXP);
           if (url) {
             spf.net.styles.load(url[1]);
           }
         }
       });
-  html.replace(/\x3cstyle([\s\S]*?)\x3e([\s\S]*?)\x3c\/style/ig,
+  html.replace(spf.net.styles.STYLE_TAG_REGEXP,
       function(fullMatch, attr, text) {
         if (text) {
           spf.net.styles.eval(text);
         }
       });
 };
+
+
+/**
+ * @type {string} The ID prefix for dynamically created style elements.
+ * @const
+ */
+spf.net.styles.ID_PREFIX = 'css-';
+
+
+/**
+ * Regular expression used to locate link tags in a string.
+ * See {@link #install}.
+ *
+ * @type {RegExp}
+ * @const
+ */
+spf.net.styles.LINK_TAG_REGEXP = /\x3clink([\s\S]*?)\x3e/ig;
+
+
+/**
+ * Regular expression used to locate style tags in a string.
+ * See {@link #install}.
+ *
+ * @type {RegExp}
+ * @const
+ */
+spf.net.styles.STYLE_TAG_REGEXP =
+    /\x3cstyle([\s\S]*?)\x3e([\s\S]*?)\x3c\/style/ig;
+
+
+/**
+ * Regular expression used to locate href attributes in a string.
+ * See {@link #install}.
+ *
+ * @type {RegExp}
+ * @const
+ */
+spf.net.styles.HREF_ATTR_REGEXP = /href="([\S]+)"/;
