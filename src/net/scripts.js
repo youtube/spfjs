@@ -119,7 +119,7 @@ spf.net.scripts.load_ = function(url, id, fn) {
     switch (scriptEl.readyState) {
       case 'loaded':
       case 'complete':
-        scriptEl.onload();
+        scriptEl.onload(null);
     }
   };
   // Set the onload and onreadystatechange handlers before setting the src
