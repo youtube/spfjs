@@ -23,9 +23,9 @@ demo.init = function() {
   var config = {
     'navigate-link-clicked-callback': demo.handleLinkClicked,
     'navigate-history-changed-callback': demo.handleHistoryChanged,
-    'navigate-requested-callback': demo.handleNavigateRequested,
+    'navigate-received-callback': demo.handleNavigateReceived,
     'navigate-processed-callback': demo.handleNavigateProcessed,
-    'load-requested-callback': demo.handleLoadRequested,
+    'load-received-callback': demo.handleLoadReceived,
     'load-processed-callback': demo.handleLoadProcessed
   };
   demo.enabled = spf.init(config);
@@ -101,8 +101,8 @@ demo.handleHistoryChanged = function(url) {
  * @param {string} url The reqested URL, without the SPF identifier.
  * @param {Object} response The requested SPF response object.
  */
-demo.handleNavigateRequested = function(url, response) {
-  window.console.log('demo: navigate requested', url, response);
+demo.handleNavigateReceived = function(url, response) {
+  window.console.log('demo: navigate received', url, response);
 };
 
 
@@ -120,8 +120,8 @@ demo.handleNavigateProcessed = function(response) {
  * @param {string} url The reqested URL, without the SPF identifier.
  * @param {Object} response The requested SPF response object.
  */
-demo.handleLoadRequested = function(url, response) {
-  window.console.log('demo: load requested', url, response);
+demo.handleLoadReceived = function(url, response) {
+  window.console.log('demo: load received', url, response);
 };
 
 

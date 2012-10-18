@@ -153,7 +153,7 @@ spf.nav.navigate = function(url, opt_reverse) {
     spf.nav.process(response, opt_reverse, 'navigate-processed-callback');
   };
   var xhr = spf.nav.request(url, navigateSuccess, navigateError,
-                            'navigate-requested-callback');
+                            'navigate-received-callback');
   spf.nav.request_ = xhr;
 };
 
@@ -187,7 +187,7 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
       opt_onSuccess(url, response);
     }
   }
-  spf.nav.request(url, loadSuccess, loadError, 'load-requested-callback');
+  spf.nav.request(url, loadSuccess, loadError, 'load-received-callback');
 };
 
 
