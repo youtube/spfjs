@@ -172,6 +172,7 @@ spf.nav.navigate = function(url, opt_reverse) {
  *     the load succeeds.
  * @param {function(string)=} opt_onError The callback to execute if the
  *     load fails.
+ * @return {XMLHttpRequest} The XHR of the current request.
  */
 spf.nav.load = function(url, opt_onSuccess, opt_onError) {
   spf.debug.info('nav.load', url);
@@ -187,7 +188,7 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
       opt_onSuccess(url, response);
     }
   }
-  spf.nav.request(url, loadSuccess, loadError, 'load-received-callback');
+  return spf.nav.request(url, loadSuccess, loadError, 'load-received-callback');
 };
 
 
@@ -209,8 +210,8 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
 spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
   spf.debug.info('nav.request', url);
   var requestUrl = url;
-  var ident = spf.config['url-identifier'];
-  if (!spf.string.contains(requestUrl, ident)) {
+  var ident = spf.config['url-identifier'] || '';
+  if (ident && !spf.string.contains(requestUrl, ident)) {
     if (spf.string.startsWith(ident, '?')) {
       if (!spf.string.contains(requestUrl, '?')) {
         requestUrl += ident;

@@ -59,6 +59,7 @@ spf.init = spf.main.init;
 spf.dispose = spf.main.dispose;
 spf.navigate = spf.nav.navigate;
 spf.load = spf.nav.load;
+spf.process = spf.nav.process;
 
 if (!spf.DEBUG) {
   // When SPF is compiled for a production build, all methods are renamed by
@@ -68,6 +69,7 @@ if (!spf.DEBUG) {
     'init': spf.init,
     'dispose': spf.dispose,
     'navigate': spf.navigate,
-    'load': spf.load
+    'load': spf.load,
+    'process': spf.process
   }
 }
