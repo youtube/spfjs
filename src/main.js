@@ -61,15 +61,14 @@ spf.navigate = spf.nav.navigate;
 spf.load = spf.nav.load;
 spf.process = spf.nav.process;
 
-if (!spf.DEBUG) {
-  // When SPF is compiled for a production build, all methods are renamed by
-  // the compiler and wrapped in an anonymous function to prevent namespace
-  // pollution.  Only the methods exported here will be exposed to the page.
-  window['spf'] = {
-    'init': spf.init,
-    'dispose': spf.dispose,
-    'navigate': spf.navigate,
-    'load': spf.load,
-    'process': spf.process
-  }
+
+// When SPF is compiled for a production build, all methods are renamed by
+// the compiler and wrapped in an anonymous function to prevent namespace
+// pollution.  Only the methods exported here will be exposed to the page.
+window['spf'] = {
+  'init': spf.init,
+  'dispose': spf.dispose,
+  'navigate': spf.navigate,
+  'load': spf.load,
+  'process': spf.process
 }
