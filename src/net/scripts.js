@@ -112,14 +112,19 @@ spf.net.scripts.load_ = function(url, id, fn) {
   var scriptEl = document.createElement('script');
   scriptEl.id = id;
   // Safari/Chrome and Firefox support the onload event for scripts.
-  scriptEl.onload = fn;
-  // IE supports the onreadystatechange event; have it call the onload
-  // handler when appropriate.
+  scriptEl.onload = function() {
+    // IE10 has a bug where it will synchronously call load handlers for
+    // cached resources, we must force this to be async.
+    setTimeout(fn, 0);
+  };
+  // IE < 9 does not support the onload handler, so the onreadystatechange event
+  // should be used to manually call onload. This means fn will be called twice
+  // in modern IE, but subsequent invocations are ignored in the callback.
   scriptEl.onreadystatechange = function() {
     switch (scriptEl.readyState) {
       case 'loaded':
       case 'complete':
-        scriptEl.onload(null);
+        scriptEl.onload();
     }
   };
   // Set the onload and onreadystatechange handlers before setting the src
