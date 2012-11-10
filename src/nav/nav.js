@@ -187,7 +187,7 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
     if (opt_onSuccess) {
       opt_onSuccess(url, response);
     }
-  }
+  };
   return spf.nav.request(url, loadSuccess, loadError, 'load-received-callback');
 };
 
@@ -461,6 +461,6 @@ spf.nav.animate_ = (function() {
     if (prefixes[i] + 'Transition' in testEl.style) {
       return true;
     }
-  };
+  }
   return false;
 })();

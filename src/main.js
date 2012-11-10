@@ -71,4 +71,4 @@ window['spf'] = {
   'navigate': spf.navigate,
   'load': spf.load,
   'process': spf.process
-}
+};
