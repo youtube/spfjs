@@ -81,6 +81,15 @@ spf.nav.handleClick = function(evt) {
   if (!target) {
     return;
   }
+  // Ignore clicks on targets within a container with a nolink class.
+  if (spf.config['nolink-container-class']) {
+    var nolinkContainer = spf.dom.getAncestor(target, function(node) {
+      return spf.dom.classes.has(node, spf.config['nolink-container-class']);
+    });
+    if (nolinkContainer) {
+      return;
+    }
+  }
   // Ignore clicks to the same page.
   var url = target.href;
   if (url == window.location.href) {

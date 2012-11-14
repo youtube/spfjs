@@ -21,6 +21,7 @@ demo.init = function() {
   demo.start_ = +new Date();
   demo.timer_ = window.setInterval(demo.updateTime, 500);
   var config = {
+    'nolink-container-class': 'spf-nolink-container',
     'navigate-link-clicked-callback': demo.handleLinkClicked,
     'navigate-history-changed-callback': demo.handleHistoryChanged,
     'navigate-received-callback': demo.handleNavigateReceived,

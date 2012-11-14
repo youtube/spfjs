@@ -25,6 +25,7 @@ spf.DEBUG = true;
 spf.defaults = {
   'url-identifier': '?spf=1',
   'link-class': 'spf-link',
+  'nolink-container-class': null,
   'request-timeout': 4000,
   'cache-lifetime': 60000,
   'navigate-link-clicked-callback': null,
