@@ -81,7 +81,20 @@ $var javascript: $:_javascript()
     <a class="spf-link" href="/page/6">Page 6</a>
   </p>
   <p>
-    Sample buttons to load content via JavaScript without navigation:
+    Sample buttons to load content via JavaScript <em>with</em> navigation:
+    <br>
+    <button onclick="spf.navigate('/')">Overview</button>
+    <button onclick="spf.navigate('/spec')">Spec</button>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <button onclick="spf.navigate('/page/1')">Page 1</button>
+    <button onclick="spf.navigate('/page/2')">Page 2</button>
+    <button onclick="spf.navigate('/page/3')">Page 3</button>
+    <button onclick="spf.navigate('/page/4')">Page 4</button>
+    <button onclick="spf.navigate('/page/5')">Page 5</button>
+    <button onclick="spf.navigate('/page/6')">Page 6</button>
+  </p>
+  <p>
+    Sample buttons to load content via JavaScript <em>without</em> navigation:
     <br>
     <button onclick="spf.load('/')">Overview</button>
     <button onclick="spf.load('/spec')">Spec</button>

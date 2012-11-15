@@ -90,9 +90,9 @@ spf.nav.handleClick = function(evt) {
       return;
     }
   }
-  // Ignore clicks to the same page.
+  // Ignore clicks to the same page or to empty URLs.
   var url = target.href;
-  if (url == window.location.href) {
+  if (!url || url == window.location.href) {
     // Prevent the default browser navigation to avoid hard refreshes.
     evt.preventDefault();
     return;
@@ -100,7 +100,7 @@ spf.nav.handleClick = function(evt) {
   // Publish to callbacks.
   spf.pubsub.publish('navigate-link-clicked-callback', target);
   try {
-    // Add the URL to the history stack, (calls back to handleNavigate).
+    // Add the URL to the history stack, (calls back to handleHistory).
     spf.history.add(url);
     // Prevent the default browser navigation.
     evt.preventDefault();
@@ -121,27 +121,54 @@ spf.nav.handleClick = function(evt) {
  */
 spf.nav.handleHistory = function(url, opt_state) {
   var reverse = !!(opt_state && opt_state['spf-back']);
-  spf.debug.info('nav.handleNavigate: ', 'url=', url, 'state=', opt_state);
+  spf.debug.info('nav.handleHistory: ', 'url=', url, 'state=', opt_state);
   // Publish to callbacks.
   spf.pubsub.publish('navigate-history-changed-callback', url);
   // Navigate to the URL.
-  spf.nav.navigate(url, reverse);
+  spf.nav.navigate_(url, reverse);
 };
 
 
 /**
- * Navigates to a URL using the SPF protocol.  First, the content is requested
- * by {@link #request}.  If the reponse is sucessfully parsed, it is processed
- * by {@link #process}.  If not, the browser is redirected to the URL. Only a
- * single navigation request can be in flight at once.  If a second URL is
- * navigated to while a first is still pending, the first will be cancelled.
+ * Navigates to a URL using the SPF protocol.  A pushState history entry is
+ * added for the URL, and if successful, the navigation is performed.  If not,
+ * the browser is redirected to the URL.
+ *
+ * During the navigation, first the content is requested by {@link #request}.
+ * If the reponse is sucessfully parsed, it is processed by {@link #process}.
+ * If not, the browser is redirected to the URL. Only a single navigation
+ * request can be in flight at once.  If a second URL is navigated to while a
+ * first is still pending, the first will be cancelled.
+ *
+ * @param {string} url The URL to navigate to, without the SPF identifier.
+ */
+spf.nav.navigate = function(url) {
+  // Ignore navigation to the same page or to an empty URL.
+  if (!url || url == window.location.href) {
+    return;
+  }
+  try {
+    // Add the URL to the history stack, (calls back to handleHistory).
+    spf.history.add(url);
+  } catch (err) {
+    // A SECURITY_ERR exception is thrown if the URL passed to pushState
+    // doesn't match the same domain.  In this case, redirect to the URL.
+    spf.debug.error('>> error caught, redirecting', err);
+    window.location.href = url;
+  }
+};
+
+
+/**
+ * Performs navigation to a URL. See {@link #navigate} and {@link #handleClick}.
  *
  * @param {string} url The URL to navigate to, without the SPF identifier.
  * @param {boolean=} opt_reverse Whether this is "backwards" navigation. True
  *     when the "back" button is clicked and a request is in response to a
  *     popState event.
+ * @private.
  */
-spf.nav.navigate = function(url, opt_reverse) {
+spf.nav.navigate_ = function(url, opt_reverse) {
   spf.debug.info('nav.navigate', url, opt_reverse);
   if (!spf.nav.initialized_) {
     spf.debug.error('>> nav not initialized');
