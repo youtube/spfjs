@@ -98,7 +98,7 @@ spf.nav.handleClick = function(evt) {
     return;
   }
   // Publish to callbacks.
-  spf.pubsub.publish('navigate-link-clicked-callback', target);
+  spf.pubsub.publish('navigate-started-callback', url);
   try {
     // Add the URL to the history stack, (calls back to handleHistory).
     spf.history.add(url);
@@ -123,7 +123,7 @@ spf.nav.handleHistory = function(url, opt_state) {
   var reverse = !!(opt_state && opt_state['spf-back']);
   spf.debug.info('nav.handleHistory: ', 'url=', url, 'state=', opt_state);
   // Publish to callbacks.
-  spf.pubsub.publish('navigate-history-changed-callback', url);
+  spf.pubsub.publish('navigate-history-callback', url);
   // Navigate to the URL.
   spf.nav.navigate_(url, reverse);
 };
@@ -147,6 +147,8 @@ spf.nav.navigate = function(url) {
   if (!url || url == window.location.href) {
     return;
   }
+  // Publish to callbacks.
+  spf.pubsub.publish('navigate-started-callback', url);
   try {
     // Add the URL to the history stack, (calls back to handleHistory).
     spf.history.add(url);
@@ -338,7 +340,7 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
   }
   // Set up to execute scripts after the content loads.
   var maybeExecutePageScripts = function() {
-      // Only execute when remaining is 0, to avoid early execution.
+    // Only execute when remaining is 0, to avoid early execution.
     if (remaining == 0) {
       spf.net.scripts.execute(response['js'], function() {
         if (opt_notification) {

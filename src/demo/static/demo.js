@@ -22,8 +22,8 @@ demo.init = function() {
   demo.timer_ = window.setInterval(demo.updateTime, 500);
   var config = {
     'nolink-class': 'spf-nolink',
-    'navigate-link-clicked-callback': demo.handleLinkClicked,
-    'navigate-history-changed-callback': demo.handleHistoryChanged,
+    'navigate-started-callback': demo.handleNavigateStarted,
+    'navigate-history-callback': demo.handleNavigateHistory,
     'navigate-received-callback': demo.handleNavigateReceived,
     'navigate-processed-callback': demo.handleNavigateProcessed,
     'load-received-callback': demo.handleLoadReceived,
@@ -80,11 +80,12 @@ demo.updateTime = function() {
 
 
 /**
- * Callback for link click events.
- * @param {Element} el The clicked element.
+ * Callback for navigate starting (via a link click or calling
+ * spf.navigate).
+ * @param {string} url The new URL.
  */
-demo.handleLinkClicked = function(el) {
-  window.console.log('demo: clicked on link', el);
+demo.handleNavigateStarted = function(url) {
+  window.console.log('demo: navigate started', url);
 };
 
 
@@ -92,8 +93,8 @@ demo.handleLinkClicked = function(el) {
  * Callback for history change events.
  * @param {string} url The new URL.
  */
-demo.handleHistoryChanged = function(url) {
-  window.console.log('demo: history changed to', url);
+demo.handleNavigateHistory = function(url) {
+  window.console.log('demo: navigate history', url);
 };
 
 

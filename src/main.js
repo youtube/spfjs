@@ -9,6 +9,7 @@
 goog.provide('spf.main');
 
 goog.require('spf');
+goog.require('spf.debug');
 goog.require('spf.history');
 goog.require('spf.nav');
 goog.require('spf.pubsub');
@@ -31,7 +32,6 @@ spf.main.init = function(opt_config) {
     var value = (key in config) ? config[key] : spf.defaults[key];
     spf.config[key] = value;
     if (enable && value && spf.string.endsWith(key, '-callback')) {
-      spf.debug.debug('subscribing: ', key, value);
       spf.pubsub.subscribe(key, value);
     }
   }
