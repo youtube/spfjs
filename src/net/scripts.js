@@ -169,6 +169,9 @@ spf.net.scripts.unload = function(url) {
  */
 spf.net.scripts.execute = function(html, opt_callback) {
   if (!html) {
+    if (opt_callback) {
+      opt_callback();
+    }
     return;
   }
   var queue = [];
