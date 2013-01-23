@@ -23,11 +23,14 @@ spf.cache.get = function(key) {
     return;
   }
   var unit = spf.cache.storage_[key];
-  var age = spf.now() - unit.timestamp;
-  // A lifetime of NaN is considered forever; always return the data.
-  // If the age is less than the lifetime, return the data.
-  if (isNaN(unit.lifetime) || age < unit.lifetime) {
-    return unit.data;
+  // Ensure valid data is availabe for the key.
+  if (unit && unit.data) {
+    var age = spf.now() - unit.timestamp;
+    // A lifetime of NaN is considered forever; always return the data.
+    // If the age is less than the lifetime, return the data.
+    if (isNaN(unit.lifetime) || age < unit.lifetime) {
+      return unit.data;
+    }
   }
   // Otherwise, the data should be removed from the cache.
   spf.cache.remove(key);
@@ -52,6 +55,9 @@ spf.cache.set = function(key, data, opt_lifetime) {
     return;
   }
   spf.cache.storage_[key] = new spf.cache.Unit(data, lifetime);
+  // When setting data in the cache, trigger an asynchronous garbage collection
+  // run to prevent unnecessary memory growth.
+  setTimeout(spf.cache.collect, 1000);
 };
 
 
@@ -61,6 +67,39 @@ spf.cache.set = function(key, data, opt_lifetime) {
 spf.cache.remove = function(key) {
   if (spf.cache.storage_ && key in spf.cache.storage_) {
     delete spf.cache.storage_[key];
+  }
+};
+
+
+/**
+ * Removes all data from the cache.
+ */
+spf.cache.clear = function() {
+  delete spf.cache.storage_;
+};
+
+
+/**
+ * Removes expired data from the cache (aka garbage collection). Invalid data
+ * and data with an age exceeding the data lifetime will be removed.
+ */
+spf.cache.collect = function() {
+  if (!spf.cache.storage_) {
+    return;
+  }
+  for (var key in spf.cache.storage_) {
+    var unit = spf.cache.storage_[key];
+    // If invalid data exists, remove.
+    if (!unit || !unit.data) {
+      delete spf.cache.storage_[key];
+    } else {
+      var age = spf.now() - unit.timestamp;
+      // A lifetime of NaN is considered forever; don't remove.
+      // If the age is greater than the lifetime, remove.
+      if (!isNaN(unit.lifetime) && age >= unit.lifetime) {
+        delete spf.cache.storage_[key];
+      }
+    }
   }
 };
 

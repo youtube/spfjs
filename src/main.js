@@ -50,6 +50,7 @@ spf.main.dispose = function() {
   spf.nav.dispose();
   spf.history.dispose();
   spf.pubsub.clear();
+  spf.cache.clear();
   spf.config = {};
 };
 
