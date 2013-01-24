@@ -74,6 +74,11 @@ spf.nav.handleClick = function(evt) {
     spf.debug.warn('ignoring click with modifier key');
     return;
   }
+  // Ignore clicks with alternate buttons (left = 0, middle = 1, right = 2).
+  if (evt.button > 0) {
+    spf.debug.warn('ignoring click with alternate button');
+    return;
+  }
   // Ignore clicks on targets without the SPF link class.
   var target = spf.dom.getAncestor(evt.target, function(node) {
     return spf.dom.classes.has(node, spf.config['link-class']);
