@@ -335,11 +335,11 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
   }
   // Tally the number of content updates need.
   var remaining = 0;
-  var html = response['html'] || {};
+  var fragments = response['html'] || {};
   if (Object.keys) {
-    remaining = Object.keys(html).length;
+    remaining = Object.keys(fragments).length;
   } else {
-    for (var id in html) {
+    for (var id in fragments) {
       remaining++;
     }
   }
@@ -358,18 +358,19 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
     }
   };
   // Update content.
-  for (var id in html) {
-    var content = document.getElementById(id);
-    if (!content) {
+  for (var id in fragments) {
+    var el = document.getElementById(id);
+    if (!el) {
       continue;
     }
-    var key = spf.getKey(content);
+    var html = fragments[id];
+    var key = spf.getKey(el);
     if (!spf.nav.animate_ ||
-        !spf.dom.classes.has(content, spf.config['transition-class'])) {
+        !spf.dom.classes.has(el, spf.config['transition-class'])) {
       // If the target element isn't enabled for transitions, just replace.
-      content.innerHTML = response['html'][id];
+      el.innerHTML = html;
       // Execute embedded scripts before continuing.
-      spf.net.scripts.execute(response['html'][id], function() {
+      spf.net.scripts.execute(html, function() {
         remaining--;
         maybeExecutePageScripts();
       });
@@ -378,17 +379,20 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
       spf.nav.process_(key, true);
       // Define variables used throughout the transition steps.
       var queue = [];
-      var data = {};
-      data.reverse = !!opt_reverse;
-      data.parentEl = content;
-      data.currentClass = spf.config['transition-current-child-class'];
-      if (data.reverse) {
-        data.pendingClass = spf.config['transition-reverse-child-class'];
-        data.parentClass = spf.config['transition-reverse-parent-class'];
-      } else {
-        data.pendingClass = spf.config['transition-forward-child-class'];
-        data.parentClass = spf.config['transition-forward-parent-class'];
-      }
+      var data = {
+        reverse: !!opt_reverse,
+        html: html,
+        currentEl: null,  // Set in Step 1.
+        pendingEl: null,  // Set in Step 1.
+        parentEl: el,
+        currentClass: spf.config['transition-current-child-class'],
+        pendingClass: !!opt_reverse ?
+                          spf.config['transition-reverse-child-class'] :
+                          spf.config['transition-forward-child-class'],
+        parentClass: !!opt_reverse ?
+                         spf.config['transition-reverse-parent-class'] :
+                         spf.config['transition-forward-parent-class']
+      };
       // Transition Step 1: Insert new (timeout = 0).
       queue.push([function(data, next) {
         // Reparent the existing elements.
@@ -398,7 +402,7 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
         // Add the new content.
         data.pendingEl = document.createElement('div');
         data.pendingEl.className = data.pendingClass;
-        data.pendingEl.innerHTML = response['html'][data.parentEl.id];
+        data.pendingEl.innerHTML = data.html;
         if (data.reverse) {
           spf.dom.insertSiblingBefore(data.pendingEl, data.currentEl);
         } else {
@@ -424,7 +428,7 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
       // Transition Step 4: Execute scripts (timeout = 0).
       queue.push([function(data, next) {
         // Execute embedded scripts before continuing.
-        spf.net.scripts.execute(response['html'][data.parentEl.id], function() {
+        spf.net.scripts.execute(data.html, function() {
           remaining--;
           maybeExecutePageScripts();
           next();
