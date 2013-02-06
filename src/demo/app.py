@@ -25,7 +25,7 @@ app = web.application(urls, globals())
 
 
 class servlet(object):
-  def render_spf(self, content, sections=None):
+  def render_spf(self, content, fragments=None):
     for var in ('title', 'javascript', 'stylesheet'):
       if not hasattr(content, var):
         setattr(content, var, '')
@@ -39,10 +39,10 @@ class servlet(object):
     title = str(content.title)
     if title:
       response['title'] = title
-    if sections:
+    if fragments:
       response['html'] = {}
-      for sect in sections:
-        response['html'][sect] = getattr(content, sect)
+      for frag_id in fragments:
+        response['html'][frag_id] = getattr(content, fragments[frag_id])
     else:
       content_str = str(content)
       if content_str:
@@ -71,11 +71,13 @@ class index(servlet):
     content = templates.index()
     return self.render(content)
 
+
 class index_ajax(servlet):
   def GET(self):
     content = templates.index_ajax()
     # Only support an SPF response
-    return self.render_spf(content, sections=['home_ajax_out'])
+    fragments = {'home_ajax_out': 'home_ajax_out'}
+    return self.render_spf(content, fragments=fragments)
 
 
 class spec(servlet):

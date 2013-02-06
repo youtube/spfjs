@@ -20,6 +20,8 @@ $def _stylesheet():
   <style type="text/css">
     .page$page_num h1 { color: $page_color; }
     .page h1 { text-shadow: 0 0 .15em rgba(0, 0, 0, 0.4); }
+    .page .samples { overflow: hidden; }
+    .page p { float: left; width: 44%; height: 9em; margin: 1em; padding: 1em; border: 1px solid #EEE; }
     .page .sun { display: inline-block; border: 1px solid #FFF; padding: 0.5em; }
     .page a:hover .sun { border-color: #000; }
     .page .sun img { height: 3em; vertical-align: middle; }
@@ -40,70 +42,109 @@ $var javascript: $:_javascript()
     console.log('demo: embedded javascript - page $page_num');
   </script>
 
-  <p>
+  <div>
     This page is for demonstration purposes only.
     The title should be $page_color.
-  </p>
+  </div>
 
-  <p>
-    Sample non-SPF links:
-    <br>
-    <a href="/">Overview</a>
-    <a href="/spec">Spec</a>
-    &nbsp;&nbsp;&nbsp;&nbsp;
-    <a href="/page/1">Page 1</a>
-    <a href="/page/2">Page 2</a>
-    <a href="/page/3">Page 3</a>
-    <a href="/page/4">Page 4</a>
-    <a href="/page/5">Page 5</a>
-    <a href="/page/6">Page 6</a>
-  </p>
-  <p>
-    Sample SPF link with children elements:
-    <br>
-    <a href="/" class="spf-link">
-      <span class="sun">
-        <img src="/static/sun.png">Overview
-      </span>
-    </a>
-  </p>
-  <p class="spf-nolink">
-    Sample SPF links in a nolink container:
-    <br>
-    <a class="spf-link" href="/">Overview</a>
-    <a class="spf-link" href="/spec">Spec</a>
-    &nbsp;&nbsp;&nbsp;&nbsp;
-    <a class="spf-link" href="/page/1">Page 1</a>
-    <a class="spf-link" href="/page/2">Page 2</a>
-    <a class="spf-link" href="/page/3">Page 3</a>
-    <a class="spf-link" href="/page/4">Page 4</a>
-    <a class="spf-link" href="/page/5">Page 5</a>
-    <a class="spf-link" href="/page/6">Page 6</a>
-  </p>
-  <p>
-    Sample buttons to load content via JavaScript <em>with</em> navigation:
-    <br>
-    <button onclick="spf.navigate('/')">Overview</button>
-    <button onclick="spf.navigate('/spec')">Spec</button>
-    &nbsp;&nbsp;&nbsp;&nbsp;
-    <button onclick="spf.navigate('/page/1')">Page 1</button>
-    <button onclick="spf.navigate('/page/2')">Page 2</button>
-    <button onclick="spf.navigate('/page/3')">Page 3</button>
-    <button onclick="spf.navigate('/page/4')">Page 4</button>
-    <button onclick="spf.navigate('/page/5')">Page 5</button>
-    <button onclick="spf.navigate('/page/6')">Page 6</button>
-  </p>
-  <p>
-    Sample buttons to load content via JavaScript <em>without</em> navigation:
-    <br>
-    <button onclick="spf.load('/')">Overview</button>
-    <button onclick="spf.load('/spec')">Spec</button>
-    &nbsp;&nbsp;&nbsp;&nbsp;
-    <button onclick="spf.load('/page/1')">Page 1</button>
-    <button onclick="spf.load('/page/2')">Page 2</button>
-    <button onclick="spf.load('/page/3')">Page 3</button>
-    <button onclick="spf.load('/page/4')">Page 4</button>
-    <button onclick="spf.load('/page/5')">Page 5</button>
-    <button onclick="spf.load('/page/6')">Page 6</button>
-  </p>
+  <div class="samples">
+    <p>
+      <strong>Sample SPF links:</strong>
+      <br>
+      A dynamic page transition <em>should</em> occur when clicked.
+      <br>
+      The URL <em>should</em> update.
+      <br>
+      <a class="spf-link" href="/">Overview</a>
+      <a class="spf-link" href="/spec">Spec</a>
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      <a class="spf-link" href="/page/1">Page 1</a>
+      <a class="spf-link" href="/page/2">Page 2</a>
+      <a class="spf-link" href="/page/3">Page 3</a>
+      <a class="spf-link" href="/page/4">Page 4</a>
+      <a class="spf-link" href="/page/5">Page 5</a>
+      <a class="spf-link" href="/page/6">Page 6</a>
+    </p>
+    <p>
+      <strong>Sample non-SPF links:</strong>
+      <br>
+      A dynamic page transition <em>should not</em> occur when clicked.
+      <br>
+      The URL <em>should</em> update.
+      <br>
+      <a href="/">Overview</a>
+      <a href="/spec">Spec</a>
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      <a href="/page/1">Page 1</a>
+      <a href="/page/2">Page 2</a>
+      <a href="/page/3">Page 3</a>
+      <a href="/page/4">Page 4</a>
+      <a href="/page/5">Page 5</a>
+      <a href="/page/6">Page 6</a>
+    </p>
+    <p>
+      <strong>Sample SPF link with children elements:</strong>
+      <br>
+      A dynamic page transition <em>should</em> occur when clicked.
+      <br>
+      The URL <em>should</em> update.
+      <br>
+      <a href="/" class="spf-link">
+        <span class="sun">
+          <img src="/static/sun.png">Overview
+        </span>
+      </a>
+    </p>
+    <p class="spf-nolink">
+      <strong>Sample SPF links in a nolink container:</strong>
+      <br>
+      A dynamic page transition <em>should not</em> occur when clicked.
+      <br>
+      The URL <em>should</em> update.
+      <br>
+      <a class="spf-link" href="/">Overview</a>
+      <a class="spf-link" href="/spec">Spec</a>
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      <a class="spf-link" href="/page/1">Page 1</a>
+      <a class="spf-link" href="/page/2">Page 2</a>
+      <a class="spf-link" href="/page/3">Page 3</a>
+      <a class="spf-link" href="/page/4">Page 4</a>
+      <a class="spf-link" href="/page/5">Page 5</a>
+      <a class="spf-link" href="/page/6">Page 6</a>
+    </p>
+    <p>
+      <strong>Sample buttons to load content via JavaScript <em>with</em> navigation:</strong>
+      <br>
+      A dynamic page transition <em>should</em> occur when clicked.
+      <br>
+      The URL <em>should</em> update.
+      <br>
+      <button onclick="spf.navigate('/')">Overview</button>
+      <button onclick="spf.navigate('/spec')">Spec</button>
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      <button onclick="spf.navigate('/page/1')">Page 1</button>
+      <button onclick="spf.navigate('/page/2')">Page 2</button>
+      <button onclick="spf.navigate('/page/3')">Page 3</button>
+      <button onclick="spf.navigate('/page/4')">Page 4</button>
+      <button onclick="spf.navigate('/page/5')">Page 5</button>
+      <button onclick="spf.navigate('/page/6')">Page 6</button>
+    </p>
+    <p>
+      <strong>Sample buttons to load content via JavaScript <em>without</em> navigation:</strong>
+      <br>
+      A dynamic page transition <em>should</em> occur when clicked.
+      <br>
+      The URL <em>should not</em> update.
+      <br>
+      <button onclick="spf.load('/')">Overview</button>
+      <button onclick="spf.load('/spec')">Spec</button>
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      <button onclick="spf.load('/page/1')">Page 1</button>
+      <button onclick="spf.load('/page/2')">Page 2</button>
+      <button onclick="spf.load('/page/3')">Page 3</button>
+      <button onclick="spf.load('/page/4')">Page 4</button>
+      <button onclick="spf.load('/page/5')">Page 5</button>
+      <button onclick="spf.load('/page/6')">Page 6</button>
+    </p>
+  </div>
 </div>
