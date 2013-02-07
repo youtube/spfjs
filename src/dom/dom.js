@@ -100,3 +100,28 @@ spf.dom.getAncestor = function(element, matcher) {
   // Reached the root of the DOM without a match
   return null;
 };
+
+
+/**
+ * Set attributes on an element from a map of attribute name/value pairs.
+ *
+ * NOTE: IE7 and earlier will need HTML attribute names specified as JS
+ * properties instead (e.g. set "bgColor" as well as "bgcolor") and
+ * does not support adding inline event handlers (e.g. setting "onclick"
+ * is unsupported).  Event handlers should be added directly instead.
+ *
+ * @param {Element} element The element to update.
+ * @param {Object.<string, string>} attributes The map of name/value pairs.
+ */
+spf.dom.setAttributes = function(element, attributes) {
+  for (var name in attributes) {
+    var value = attributes[name];
+    if (name == 'class') {
+      element.className = value;
+    } else if (name == 'style') {
+      element.style.cssText = value;
+    } else {
+      element.setAttribute(name, value);
+    }
+  }
+};

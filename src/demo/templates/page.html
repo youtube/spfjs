@@ -1,42 +1,37 @@
 $def with (page_num)
 
-$if page_num == '1':
-  $ page_color = 'red'
-$elif page_num == '2':
-  $ page_color = 'orange'
-$elif page_num == '3':
-  $ page_color = 'yellow'
-$elif page_num == '4':
-  $ page_color = 'green'
-$elif page_num == '5':
-  $ page_color = 'blue'
-$elif page_num == '6':
-  $ page_color = 'purple'
-$else:
-  $ page_color = 'black'
-
 $def _stylesheet():
-  <!-- This style is limited to this page only for demo purposes. -->
+  <!-- This style is inlined here for demo purposes. -->
   <style type="text/css">
-    .page$page_num h1 { color: $page_color; }
-    .page h1 { text-shadow: 0 0 .15em rgba(0, 0, 0, 0.4); }
     .page .samples { overflow: hidden; }
-    .page p { float: left; width: 44%; height: 9em; margin: 1em; padding: 1em; border: 1px solid #EEE; }
-    .page .sun { display: inline-block; border: 1px solid #FFF; padding: 0.5em; }
+    .page p { float: left;
+              width: 44%; height: 9em;
+              margin: 1em; padding: 1em;
+              border: 1px solid #eee; }
+    .page .sun { display: inline-block;
+                 padding: 0.5em;
+                 border: 1px solid #fff; }
     .page a:hover .sun { border-color: #000; }
-    .page .sun img { height: 3em; vertical-align: middle; }
+    .page .sun img { height: 3em;
+                     vertical-align: middle; }
   </style>
 
 $def _javascript():
   <script type="text/javascript">
-    console.log('demo: page javascript - page $page_num');
+    if (window.console) {
+      window.console.log('demo: page javascript - page $page_num');
+    }
   </script>
+
+$def _attributes():
+  { "nav": { "class": "page$page_num" } }
 
 $var title: Demo Page $page_num
 $var stylesheet: $:_stylesheet()
 $var javascript: $:_javascript()
+$var attributes: $:_attributes()
 
-<div id="page" class="pane page page$page_num">
+<div id="page" class="pane page">
   <h1>Demo Page $page_num</h1>
   <script type="text/javascript">
     console.log('demo: embedded javascript - page $page_num');
@@ -44,7 +39,6 @@ $var javascript: $:_javascript()
 
   <div>
     This page is for demonstration purposes only.
-    The title should be $page_color.
   </div>
 
   <div class="samples">

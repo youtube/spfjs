@@ -26,18 +26,26 @@ $def _stylesheet():
 
 $def _javascript():
   <script type="text/javascript">
-    console.log('demo: page javascript - home');
+    if (window.console) {
+      window.console.log('demo: page javascript - home');
+    }
     demo.home.init();
   </script>
+
+$def _attributes():
+  { "nav": { "class": "home" } }
 
 $var title: Home
 $var stylesheet: $:_stylesheet()
 $var javascript: $:_javascript()
+$var attributes: $:_attributes()
 
 <div id="home" class="pane">
   <h1>SPF: Structured Page Fragments</h1>
   <script type="text/javascript">
-    console.log('demo: embedded javascript - home');
+    if (window.console) {
+      window.console.log('demo: embedded javascript - home');
+    }
   </script>
 
   <div id="home-left" class="col spf-transition">

@@ -1,6 +1,6 @@
 $def _stylesheet():
   <style type="text/css">
-    #spec pre em { background: #EEE; }
+    #spec pre em { background: #DDD; }
   </style>
 
 $def _javascript():
@@ -8,14 +8,20 @@ $def _javascript():
     console.log('demo: page javascript - spec');
   </script>
 
+$def _attributes():
+  { "nav": { "class": "spec" } }
+
 $var title: Spec
 $var stylesheet: $:_stylesheet()
 $var javascript: $:_javascript()
+$var attributes: $:_attributes()
 
 <div id="spec" class="pane">
   <h1>Spec</h1>
   <script type="text/javascript">
-    console.log('demo: embedded javascript - spec');
+    if (window.console) {
+      window.console.log('demo: embedded javascript - spec');
+    }
   </script>
 
   <pre>
@@ -23,11 +29,15 @@ $var javascript: $:_javascript()
       "css":  "&lt;style type=\"text/css\"&gt;<em> CSS Text </em>&lt;/style&gt;
                &lt;link rel=\"stylesheet\" type=\"text/css\" href=\"<em> CSS URL </em>\"&gt;
                <em> &hellip; </em>",
-      "html":  {
-        "<em> DOM ID #1 </em>": "<em> HTML Text </em><em> &hellip; </em>",
-        "<em> DOM ID #2 </em>": "<em> &hellip; </em>",
-        <em> &hellip; </em>
-      }
+      "attr":  {  "<em> DOM ID </em>":  {  "<em> Name </em>": "<em> Value </em>",
+                                  "<em> &hellip; </em>": "<em> &hellip; </em>",
+                               },
+                  <em> &hellip; </em>
+               },
+      "html":  {  "<em> DOM ID </em>": "<em> HTML Text </em><em> &hellip; </em>",
+                  "<em> DOM ID </em>": "<em> &hellip; </em>",
+                  <em> &hellip; </em>
+               },
       "js":  "&lt;script type=\"text/javascript\"&gt;<em> JS Text </em> &lt;/script&gt;
               &lt;script src=\"<em> JS URL </em>\"&gt;&lt;/script&gt;
               <em> &hellip; </em>",

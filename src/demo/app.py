@@ -26,19 +26,19 @@ app = web.application(urls, globals())
 
 class servlet(object):
   def render_spf(self, content, fragments=None):
-    for var in ('title', 'javascript', 'stylesheet'):
-      if not hasattr(content, var):
-        setattr(content, var, '')
     response = {}
-    css = str(content.stylesheet)
+    css = str(getattr(content, 'stylesheet', ''))
     if css:
       response['css'] = css
-    js = str(content.javascript)
+    js = str(getattr(content, 'javascript', ''))
     if js:
       response['js'] = js
-    title = str(content.title)
+    title = str(getattr(content, 'title', ''))
     if title:
       response['title'] = title
+    attr = json.loads(str(getattr(content, 'attributes', '{}')))
+    if attr:
+      response['attr'] = attr
     if fragments:
       response['html'] = {}
       for frag_id in fragments:

@@ -65,9 +65,20 @@ html, body {
   padding: .2em .5em;
   color: #000;
   text-decoration: none;
+  -webkit-transition: background 300ms linear;
 }
 #nav a:hover {
   text-decoration: underline;
+}
+#nav.home .nav-home a,
+#nav.spec .nav-spec a,
+#nav.page1 .nav-page1 a,
+#nav.page2 .nav-page2 a,
+#nav.page3 .nav-page3 a,
+#nav.page4 .nav-page4 a,
+#nav.page5 .nav-page5 a,
+#nav.page6 .nav-page6 a {
+  background: rgba(0, 0, 0, .2);
 }
 #content {
   height: 100%;

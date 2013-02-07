@@ -1,4 +1,18 @@
+$def _stylesheet():
+  <style type="text/css">
+    #home .lucky-num {
+      font-weight: bold;
+    }
+  </style>
+
+$def _attributes():
+  { "home_ajax_out": { "style": "border: 1px solid blue",
+                       "class": "lucky-num",
+                       "title": "You have a lucky number!" } }
+
 $def _home_ajax_out():
   <li>Your lucky number is $random.randint(1, 100).</li>
 
+$var stylesheet: $:_stylesheet()
+$var attributes: $:_attributes()
 $var home_ajax_out: $:_home_ajax_out()

@@ -85,7 +85,9 @@ demo.updateTime = function() {
  * @param {string} url The new URL.
  */
 demo.handleNavigateStarted = function(url) {
-  window.console.log('demo: navigate started', url);
+  if (window.console) {
+    window.console.log('demo: navigate started', url);
+  }
 };
 
 
@@ -94,7 +96,9 @@ demo.handleNavigateStarted = function(url) {
  * @param {string} url The new URL.
  */
 demo.handleNavigateHistory = function(url) {
-  window.console.log('demo: navigate history', url);
+  if (window.console) {
+    window.console.log('demo: navigate history', url);
+  }
 };
 
 
@@ -104,7 +108,9 @@ demo.handleNavigateHistory = function(url) {
  * @param {Object} response The requested SPF response object.
  */
 demo.handleNavigateReceived = function(url, response) {
-  window.console.log('demo: navigate received', url, response);
+  if (window.console) {
+    window.console.log('demo: navigate received', url, response);
+  }
 };
 
 
@@ -113,7 +119,9 @@ demo.handleNavigateReceived = function(url, response) {
  * @param {Object} response The processed SPF response object.
  */
 demo.handleNavigateProcessed = function(response) {
-  window.console.log('demo: navigate processed', response);
+  if (window.console) {
+    window.console.log('demo: navigate processed', response);
+  }
 };
 
 
@@ -123,7 +131,9 @@ demo.handleNavigateProcessed = function(response) {
  * @param {Object} response The requested SPF response object.
  */
 demo.handleLoadReceived = function(url, response) {
-  window.console.log('demo: load received', url, response);
+  if (window.console) {
+    window.console.log('demo: load received', url, response);
+  }
 };
 
 
@@ -132,7 +142,9 @@ demo.handleLoadReceived = function(url, response) {
  * @param {Object} response The processed SPF response object.
  */
 demo.handleLoadProcessed = function(response) {
-  window.console.log('demo: load processed', response);
+  if (window.console) {
+    window.console.log('demo: load processed', response);
+  }
 };
 
 

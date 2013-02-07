@@ -25,14 +25,17 @@ goog.require('spf.string');
 /**
  * Type definition for a SPF response object.
  * - css: HTML string containing <link> and <style> tags of CSS to install.
- * - html: Map of Element IDs and HTML strings containing content with which
+ * - html: Map of Element IDs to HTML strings containing content with which
  *      to update the Elements.
+ * - attr: Map of Element IDs to maps of attibute names to attribute values
+ *      to set on the Elements.
  * - js: HTML string containing <script> tags of JS to execute.
  * - title: String of the new Document title.
  *
  * @typedef {{
  *   css: (string|undefined),
  *   html: (Object.<string, string>|undefined),
+ *   attr: (Object.<string, Object.<string, string>>|undefined),
  *   js: (string|undefined),
  *   title: (string|undefined)
  * }}
@@ -333,6 +336,15 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
   if (response['title']) {
     document.title = response['title'];
   }
+  // Update attributes.
+  var attributes = response['attr'] || {};
+  for (var id in attributes) {
+    var el = document.getElementById(id);
+    if (!el) {
+      continue;
+    }
+    spf.dom.setAttributes(el, attributes[id]);
+  }
   // Tally the number of content updates need.
   var remaining = 0;
   var fragments = response['html'] || {};
@@ -344,9 +356,10 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
     }
   }
   // Set up to execute scripts after the content loads.
-  var maybeExecutePageScripts = function() {
+  var maybeContinueAfterContent = function() {
     // Only execute when remaining is 0, to avoid early execution.
     if (remaining == 0) {
+      // Execute scripts.
       spf.net.scripts.execute(response['js'], function() {
         if (opt_notification) {
           // Publish to callbacks.
@@ -372,7 +385,7 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
       // Execute embedded scripts before continuing.
       spf.net.scripts.execute(html, function() {
         remaining--;
-        maybeExecutePageScripts();
+        maybeContinueAfterContent();
       });
     } else {
       // Otherwise, check for a previous transition before continuing.
@@ -430,7 +443,7 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
         // Execute embedded scripts before continuing.
         spf.net.scripts.execute(data.html, function() {
           remaining--;
-          maybeExecutePageScripts();
+          maybeContinueAfterContent();
           next();
         });
       }, 0]);
@@ -440,8 +453,8 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
       spf.nav.process_(key);
     }
   }
-  // Attempt to execute page scripts, in case no content is returned.
-  maybeExecutePageScripts();
+  // Attempt to continue, in case no content is returned.
+  maybeContinueAfterContent();
 };
 
 
