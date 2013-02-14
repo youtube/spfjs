@@ -374,6 +374,7 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
   for (var id in fragments) {
     var el = document.getElementById(id);
     if (!el) {
+      remaining--;
       continue;
     }
     var html = fragments[id];
