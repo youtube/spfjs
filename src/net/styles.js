@@ -47,12 +47,28 @@ spf.net.styles.load = function(url) {
     return linkEl;
   }
   // Otherwise, the stylesheet needs to be installed.
-  linkEl = document.createElement('link');
+  linkEl = spf.net.styles.load_(url, id);
+  return linkEl;
+};
+
+
+/**
+ * See {@link #load}.
+ *
+ * @param {string} url Url of the stylesheet.
+ * @param {string} id Id of the link element.
+ * @param {Document} opt_document Content document element.
+ * @return {Element} The dynamically created link element.
+ * @private
+ */
+spf.net.styles.load_ = function(url, id, opt_document) {
+  var linkEl = document.createElement('link');
   linkEl.id = id;
   linkEl.rel = 'stylesheet';
   linkEl.href = url;
-  var head = document.getElementsByTagName('head')[0];
-  head.appendChild(linkEl);
+  var doc = opt_document || document;
+  var targetEl = doc.getElementsByTagName('head')[0] || doc.body;
+  targetEl.appendChild(linkEl);
   return linkEl;
 };
 
@@ -62,7 +78,7 @@ spf.net.styles.load = function(url) {
  * removing it from the document.  This will remove the styles and allow a
  * URL to be loaded again if needed.
  *
- * @param {string} url Url of the script.
+ * @param {string} url Url of the stylesheet.
  */
 spf.net.styles.unload = function(url) {
   var id = spf.net.styles.ID_PREFIX + spf.string.hashCode(url);
@@ -74,32 +90,105 @@ spf.net.styles.unload = function(url) {
 
 
 /**
- * Parses styles from an HTML string and installs them in the current
- * document.
+ * Preloads a stylesheet URL; the stylesheet will be requested but not loaded.
+ * Use to prime the browser cache and avoid needing to request the styesheet
+ * when subsequently loaded.  See {@link #load}.
  *
- * @param {string} html The complete HTML content to use as a source for
- *     updates.
+ * @param {string} url Url of the stylesheet.
+ */
+spf.net.styles.preload = function(url) {
+  var id = spf.net.styles.ID_PREFIX + 'preload';
+  var iframeEl = document.getElementById(id);
+  if (!iframeEl) {
+    iframeEl = document.createElement('iframe');
+    iframeEl.id = id;
+    iframeEl.src = 'javascript:""';
+    iframeEl.style.display = 'none';
+    document.body.appendChild(iframeEl);
+  }
+  // Firefox needs the iframe to be fully created in the DOM before loading.
+  setTimeout(function() {
+    spf.net.styles.load_(url, '', iframeEl.contentWindow.document);
+  }, 0);
+};
+
+
+/**
+ * Parses an HTML string and installs styles in the current document.
+ * See {@link #load} and {@link #eval}.
+ *
+ * @param {string} html The HTML content to parse.
  */
 spf.net.styles.install = function(html) {
   if (!html) {
     return;
   }
+  // Extract the styles.
+  var queue = spf.net.styles.extract_(html);
+  // Install the styles.
+  for (var i = 0; i < queue.length; i++) {
+    var pair = queue[i];
+    var style = pair[0];
+    var isUrl = pair[1];
+    if (isUrl) {
+      spf.net.styles.load(style);
+    } else {
+      spf.net.styles.eval(style);
+    }
+  }
+};
+
+
+/**
+ * Parses an HTML string and preloads style URLs.
+ * See {@link #preload}.
+ *
+ * @param {string} html The HTML content to parse.
+ */
+spf.net.styles.preinstall = function(html) {
+  if (!html) {
+    return;
+  }
+  // Extract the styles.
+  var queue = spf.net.styles.extract_(html);
+  // Preload the styles.
+  for (var i = 0; i < queue.length; i++) {
+    var pair = queue[i];
+    var style = pair[0];
+    var isUrl = pair[1];
+    if (isUrl) {
+      spf.net.styles.preload(style);
+    }
+  }
+};
+
+
+/**
+ * Parses styles from an HTML string.
+ *
+ * @param {string} html The HTML content to parse.
+ * @return {Array.<string, boolean>}
+ * @private
+ */
+spf.net.styles.extract_ = function(html) {
+  var queue = [];
   html.replace(spf.net.styles.LINK_TAG_REGEXP,
       function(fullMatch, attr) {
         var isStyleSheet = spf.string.contains(attr, 'rel="stylesheet"');
         if (isStyleSheet) {
           var url = attr.match(spf.net.styles.HREF_ATTR_REGEXP);
           if (url) {
-            spf.net.styles.load(url[1]);
+            queue.push([url[1], true]);
           }
         }
       });
   html.replace(spf.net.styles.STYLE_TAG_REGEXP,
       function(fullMatch, attr, text) {
         if (text) {
-          spf.net.styles.eval(text);
+          queue.push([text, false]);
         }
       });
+  return queue;
 };
 
 
@@ -112,7 +201,7 @@ spf.net.styles.ID_PREFIX = 'css-';
 
 /**
  * Regular expression used to locate link tags in a string.
- * See {@link #install}.
+ * See {@link #extract_}.
  *
  * @type {RegExp}
  * @const
@@ -122,7 +211,7 @@ spf.net.styles.LINK_TAG_REGEXP = /\x3clink([\s\S]*?)\x3e/ig;
 
 /**
  * Regular expression used to locate style tags in a string.
- * See {@link #install}.
+ * See {@link #extract_}.
  *
  * @type {RegExp}
  * @const
@@ -133,7 +222,7 @@ spf.net.styles.STYLE_TAG_REGEXP =
 
 /**
  * Regular expression used to locate href attributes in a string.
- * See {@link #install}.
+ * See {@link #extract_}.
  *
  * @type {RegExp}
  * @const

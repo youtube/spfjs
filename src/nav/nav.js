@@ -321,7 +321,7 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
  * Process the response using the SPF protocol.  The response object should
  * already have been unserialized by {@link #request}.
  *
- * @param {spf.nav.Response} response The SPF response object to load.
+ * @param {spf.nav.Response} response The SPF response object to process.
  * @param {boolean=} opt_reverse Whether this is "backwards" navigation. True
  *     when the "back" button is clicked and a request is in response to a
  *     popState event.
@@ -486,6 +486,61 @@ spf.nav.process_ = function(key, opt_quick) {
       delete transitions[key];
     }
   }
+};
+
+
+/**
+ * Preloads a URL using the SPF protocol.  Use to prime the SPF request cache
+ * with the content and the browser cache with script and stylesheet URLs.
+ * The content is requested by {@link #request}.  If the response is
+ * successfully parsed, it is processed by {@link #preprocess}, and the URL and
+ * response object are passed to the optional {@code opt_onSuccess} callback.
+ * If not, the URL is passed to the optional {@code opt_onError} callback.
+ *
+ * @param {string} url The URL to load, without the SPF identifier.
+ * @param {function(string, !Object)=} opt_onSuccess The callback to execute if
+ *     the load succeeds.
+ * @param {function(string)=} opt_onError The callback to execute if the
+ *     load fails.
+ * @return {XMLHttpRequest} The XHR of the current request.
+ */
+spf.nav.preload = function(url, opt_onSuccess, opt_onError) {
+  spf.debug.info('nav.preload', url);
+  var loadError = function(url) {
+    if (opt_onError) {
+      opt_onError(url);
+    }
+  };
+  var loadSuccess = function(url, response) {
+    // Preprocess the requested response.
+    spf.nav.preprocess(response);
+    if (opt_onSuccess) {
+      opt_onSuccess(url, response);
+    }
+  };
+  return spf.nav.request(url, loadSuccess, loadError);
+};
+
+
+/**
+ * Preprocesses the response using the SPF protocol.  The response object
+ * should already have been unserialized by {@link #request}.  Similar to
+ * {@link #process} but instead of page content being updated, script and
+ * stylesheet URLs are preloaded.
+ *
+ * @param {spf.nav.Response} response The SPF response object to preprocess.
+ */
+spf.nav.preprocess = function(response) {
+  spf.debug.info('nav.preprocess', response);
+  // Preinstall page styles.
+  spf.net.styles.preinstall(response['css']);
+  // Preexecute fragment scripts.
+  var fragments = response['html'] || {};
+  for (var id in fragments) {
+    spf.net.scripts.preexecute(fragments[id]);
+  }
+  // Preexecute page scripts.
+  spf.net.scripts.preexecute(response['js']);
 };
 
 

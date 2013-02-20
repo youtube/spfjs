@@ -44,10 +44,10 @@ spf.net.scripts.eval = function(text, opt_callback) {
     scriptEl.appendChild(document.createTextNode(text));
     // Place the scripts in the head instead of the body to avoid errors when
     // called from the head in the first place.
-    var head = document.getElementsByTagName('head')[0];
+    var targetEl = document.getElementsByTagName('head')[0] || document.body;
     // Use insertBefore instead of appendChild to avoid errors with loading
     // multiple scripts at once in IE.
-    head.insertBefore(scriptEl, head.firstChild);
+    targetEl.insertBefore(scriptEl, targetEl.firstChild);
   }
   if (opt_callback) {
     opt_callback();
@@ -113,7 +113,7 @@ spf.net.scripts.load_ = function(url, id, fn) {
   scriptEl.id = id;
   // Safari/Chrome and Firefox support the onload event for scripts.
   scriptEl.onload = function() {
-    // IE10 has a bug where it will synchronously call load handlers for
+    // IE 10 has a bug where it will synchronously call load handlers for
     // cached resources, we must force this to be async.
     setTimeout(fn, 0);
   };
@@ -132,10 +132,10 @@ spf.net.scripts.load_ = function(url, id, fn) {
   scriptEl.src = url;
   // Place the scripts in the head instead of the body to avoid errors when
   // called from the head in the first place.
-  var head = document.getElementsByTagName('head')[0];
+  var targetEl = document.getElementsByTagName('head')[0] || document.body;
   // Use insertBefore instead of appendChild to avoid errors with loading
   // multiple scripts at once in IE.
-  head.insertBefore(scriptEl, head.firstChild);
+  targetEl.insertBefore(scriptEl, targetEl.firstChild);
   return scriptEl;
 };
 
@@ -159,11 +159,34 @@ spf.net.scripts.unload = function(url) {
 
 
 /**
- * Parses scripts from an HTML string and executes them in the current
- * document.
+ * Preloads a script URL; the script will be requested but not loaded.
+ * Use to prime the browser cache and avoid needing to request the script when
+ * subsequently loaded.  See {@link #load}.
  *
- * @param {string} html The complete HTML content to use as a source for
- *     updates.
+ * @param {string} url Url of the script.
+ */
+spf.net.scripts.preload = function(url) {
+  if (spf.net.scripts.IS_IE) {
+    // IE needs a <script> in order to complete the request, but fortunately
+    // will not execute it unless in the DOM.  Attempting to use an <object>
+    // like other browsers will cause the download to hang.
+    var scriptEl = document.createElement('script');
+    scriptEl.src = url;
+  } else {
+    var objectEl = document.createElement('object');
+    objectEl.data = url;
+    objectEl.width = 0;
+    objectEl.height = 0;
+    document.body.appendChild(objectEl);
+  }
+};
+
+
+/**
+ * Parses an HTML string and executes scripts in the current document.
+ * See {@link #load} and {@link #eval}.
+ *
+ * @param {string} html The HTML content to parse.
  * @param {Function=} opt_callback Callback function to execute after
  *     all scripts are loaded.
  */
@@ -174,18 +197,8 @@ spf.net.scripts.execute = function(html, opt_callback) {
     }
     return;
   }
-  var queue = [];
   // Extract the scripts.
-  html = html.replace(spf.net.scripts.SCRIPT_TAG_REGEXP,
-      function(fullMatch, attr, text) {
-        var url = attr.match(spf.net.scripts.SRC_ATTR_REGEXP);
-          if (url) {
-            queue.push([url[1], true]);
-          } else {
-            queue.push([text, false]);
-          }
-        return '';
-      });
+  var queue = spf.net.scripts.extract_(html);
   // Load or evaluate the scripts in order.
   var getNextScript = function() {
     if (queue.length > 0) {
@@ -208,6 +221,53 @@ spf.net.scripts.execute = function(html, opt_callback) {
 
 
 /**
+ * Parses an HTML string and preloads script URLs.
+ * See {@link #preload}.
+ *
+ * @param {string} html The HTML content to parse.
+ */
+spf.net.scripts.preexecute = function(html) {
+  if (!html) {
+    return;
+  }
+  // Extract the scripts.
+  var queue = spf.net.scripts.extract_(html);
+  // Preload the scripts.
+  for (var i = 0; i < queue.length; i++) {
+    var pair = queue[i];
+    var script = pair[0];
+    var isUrl = pair[1];
+    if (isUrl) {
+      spf.net.scripts.preload(script);
+    }
+  }
+};
+
+
+/**
+ * Parses scripts from an HTML string.
+ *
+ * @param {string} html The HTML content to parse.
+ * @return {Array.<string, boolean>}
+ * @private
+ */
+spf.net.scripts.extract_ = function(html) {
+  var queue = [];
+  html.replace(spf.net.scripts.SCRIPT_TAG_REGEXP,
+      function(fullMatch, attr, text) {
+        var url = attr.match(spf.net.scripts.SRC_ATTR_REGEXP);
+        if (url) {
+          queue.push([url[1], true]);
+        } else {
+          queue.push([text, false]);
+        }
+        return '';
+      });
+  return queue;
+};
+
+
+/**
  * @type {string} The ID prefix for dynamically created script elements.
  * @const
  */
@@ -215,8 +275,15 @@ spf.net.scripts.ID_PREFIX = 'js-';
 
 
 /**
+ * @type {boolean} Whether the browser is Internet Explorer.
+ * @const
+ */
+spf.net.scripts.IS_IE = spf.string.contains(navigator.appName, 'Microsoft');
+
+
+/**
  * Regular expression used to locate script tags in a string.
- * See {@link #execute}.
+ * See {@link #extract_}.
  *
  * @type {RegExp}
  * @const
@@ -227,7 +294,7 @@ spf.net.scripts.SCRIPT_TAG_REGEXP =
 
 /**
  * Regular expression used to locate src attributes in a string.
- * See {@link #execute}.
+ * See {@link #extract_}.
  *
  * @type {RegExp}
  * @const
