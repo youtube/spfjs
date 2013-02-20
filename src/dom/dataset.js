@@ -1,5 +1,3 @@
-// Copyright 2012 Google Inc. All Rights Reserved.
-
 /**
  * @fileoverview Element dataset manipulation functions.
  * See {@link http://www.w3.org/TR/html5/Overview.html#dom-dataset}.

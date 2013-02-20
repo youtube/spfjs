@@ -1,5 +1,3 @@
-// Copyright 2012 Google Inc. All Rights Reserved.
-
 /**
  * @fileoverview Singleton history instance used to enable browser history
  * functions (e.g. back/forward) without leaving the current page.

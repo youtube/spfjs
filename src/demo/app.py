@@ -1,5 +1,3 @@
-# Copyright 2012 Google Inc. All Rights Reserved.
-
 """Simple demo app for SPF."""
 
 __author__ = 'nicksay@google.com (Alex Nicksay)'

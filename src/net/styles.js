@@ -1,5 +1,3 @@
-// Copyright 2012 Google Inc. All Rights Reserved.
-
 /**
  * @fileoverview Functions for dynamically loading styles.
  *
@@ -19,10 +17,10 @@ goog.require('spf.string');
  */
 spf.net.styles.eval = function(text) {
   var styleEl = document.createElement('style');
-  var head = document.getElementsByTagName('head')[0];
+  var targetEl = document.getElementsByTagName('head')[0] || document.body;
   // IE requires the Style element to be in the document before accessing
   // the StyleSheet object.
-  head.appendChild(styleEl);
+  targetEl.appendChild(styleEl);
   if ('styleSheet' in styleEl) {
     styleEl.styleSheet.cssText = text;
   } else {
@@ -167,7 +165,7 @@ spf.net.styles.preinstall = function(html) {
  * Parses styles from an HTML string.
  *
  * @param {string} html The HTML content to parse.
- * @return {Array.<string, boolean>}
+ * @return {Array.<{0:string, 1:boolean}>}
  * @private
  */
 spf.net.styles.extract_ = function(html) {

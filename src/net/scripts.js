@@ -1,5 +1,3 @@
-// Copyright 2012 Google Inc. All Rights Reserved.
-
 /**
  * @fileoverview Functions for dynamically loading scripts without blocking.
  * By nesting multiple calls in callback parameters, execution order of
@@ -248,7 +246,7 @@ spf.net.scripts.preexecute = function(html) {
  * Parses scripts from an HTML string.
  *
  * @param {string} html The HTML content to parse.
- * @return {Array.<string, boolean>}
+ * @return {Array.<{0:string, 1:boolean}>}
  * @private
  */
 spf.net.scripts.extract_ = function(html) {

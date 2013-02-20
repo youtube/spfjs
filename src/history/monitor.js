@@ -1,5 +1,3 @@
-// Copyright 2012 Google Inc. All Rights Reserved.
-
 /**
  * @fileoverview A History management class for detecting and creating
  * history entries using the HTML5 history modification API.  It enables

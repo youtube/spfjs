@@ -1,5 +1,3 @@
-// Copyright 2012 Google Inc. All Rights Reserved.
-
 /**
  * @fileoverview Single publish/subscribe instance used as a "dispatch"
  * for centralized notifications.
