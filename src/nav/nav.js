@@ -14,6 +14,7 @@ goog.require('spf.cache');
 goog.require('spf.debug');
 goog.require('spf.dom');
 goog.require('spf.dom.classes');
+goog.require('spf.dom.url');
 goog.require('spf.history');
 goog.require('spf.net.scripts');
 goog.require('spf.net.styles');
@@ -255,7 +256,8 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
  */
 spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
   spf.debug.info('nav.request', url);
-  var requestUrl = url;
+  var requestUrl = spf.dom.url.absolute(url);
+  spf.debug.info('    >> converted to absolute url: ', requestUrl);
   var ident = spf.config['url-identifier'] || '';
   if (ident && !spf.string.contains(requestUrl, ident)) {
     if (spf.string.startsWith(ident, '?')) {
@@ -284,7 +286,7 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
     }
     response = /** @type {spf.nav.Response} */ (response);
     // Cache the response for future requests.
-    spf.cache.set(url, response, spf.config['cache-lifetime']);
+    spf.cache.set(requestUrl, response, spf.config['cache-lifetime']);
     if (opt_notification) {
       // Publish to callbacks.
       spf.pubsub.publish(opt_notification, url, response);
@@ -294,8 +296,9 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
     }
   };
   // Try to find a cached response for the request before sending a new XHR.
-  var cachedResponse = /** @type {spf.nav.Response} */ (spf.cache.get(url));
+  var cachedResponse = spf.cache.get(requestUrl);
   if (cachedResponse) {
+    cachedResponse = /** @type {spf.nav.Response} */ (cachedResponse);
     spf.debug.info('    >> cached response found', cachedResponse);
     if (opt_notification) {
       // Publish to callbacks.
