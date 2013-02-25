@@ -70,15 +70,15 @@ spf.nav.dispose = function() {
  * @param {Event} evt The click event.
  */
 spf.nav.handleClick = function(evt) {
-  spf.debug.info('nav.handleClick', evt);
+  spf.debug.debug('nav.handleClick ', 'evt=', evt);
   // Ignore clicks with modifier keys.
   if (evt.metaKey || evt.altKey || evt.ctrlKey || evt.shiftKey) {
-    spf.debug.warn('ignoring click with modifier key');
+    spf.debug.debug('    ignoring click with modifier key');
     return;
   }
   // Ignore clicks with alternate buttons (left = 0, middle = 1, right = 2).
   if (evt.button > 0) {
-    spf.debug.warn('ignoring click with alternate button');
+    spf.debug.debug('    ignoring click with alternate button');
     return;
   }
   // Ignore clicks on targets without the SPF link class.
@@ -115,7 +115,7 @@ spf.nav.handleClick = function(evt) {
     // A SECURITY_ERR exception is thrown if the URL passed to pushState
     // doesn't match the same domain.  In this case, do nothing to allow
     // the default browser navigation to take effect.
-    spf.debug.error('>> error caught, ignoring click', err);
+    spf.debug.error('>> error caught, ignoring click ', 'err=', err);
   }
 };
 
@@ -128,7 +128,7 @@ spf.nav.handleClick = function(evt) {
  */
 spf.nav.handleHistory = function(url, opt_state) {
   var reverse = !!(opt_state && opt_state['spf-back']);
-  spf.debug.info('nav.handleHistory: ', 'url=', url, 'state=', opt_state);
+  spf.debug.debug('nav.handleHistory ', 'url=', url, 'state=', opt_state);
   // Publish to callbacks.
   spf.pubsub.publish('navigate-history-callback', url);
   // Navigate to the URL.
@@ -162,7 +162,7 @@ spf.nav.navigate = function(url) {
   } catch (err) {
     // A SECURITY_ERR exception is thrown if the URL passed to pushState
     // doesn't match the same domain.  In this case, redirect to the URL.
-    spf.debug.error('>> error caught, redirecting', err);
+    spf.debug.error('>> error caught, redirecting ', 'url=', url, 'err=', err);
     window.location.href = url;
   }
 };
@@ -178,17 +178,18 @@ spf.nav.navigate = function(url) {
  * @private.
  */
 spf.nav.navigate_ = function(url, opt_reverse) {
-  spf.debug.info('nav.navigate', url, opt_reverse);
+  spf.debug.info('nav.navigate ', url, opt_reverse);
   if (!spf.nav.initialized_) {
     spf.debug.error('>> nav not initialized');
     return;
   }
   if (spf.nav.request_) {
-    spf.debug.warn('    >> aborting previous navigate', spf.nav.request_);
+    spf.debug.warn('aborting previous navigate ', 'xhr=', spf.nav.request_);
     spf.nav.request_.abort();
     spf.nav.request_ = null;
   }
   var navigateError = function(url) {
+    spf.debug.warn('navigate failed, redirecting ', 'url=', url);
     spf.nav.request_ = null;
     window.location.href = url;
   };
@@ -220,8 +221,9 @@ spf.nav.navigate_ = function(url, opt_reverse) {
  * @return {XMLHttpRequest} The XHR of the current request.
  */
 spf.nav.load = function(url, opt_onSuccess, opt_onError) {
-  spf.debug.info('nav.load', url);
+  spf.debug.info('nav.load ', url);
   var loadError = function(url) {
+    spf.debug.warn('load failed ', 'url=', url);
     if (opt_onError) {
       opt_onError(url);
     }
@@ -253,9 +255,9 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
  * @return {XMLHttpRequest} The XHR of the current request.
  */
 spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
-  spf.debug.info('nav.request', url);
+  spf.debug.debug('nav.request ', url);
   var requestUrl = spf.dom.url.absolute(url);
-  spf.debug.info('    >> converted to absolute url: ', requestUrl);
+  spf.debug.debug('    converted to absolute url ', requestUrl);
   var ident = spf.config['url-identifier'] || '';
   if (ident && !spf.string.contains(requestUrl, ident)) {
     if (spf.string.startsWith(ident, '?')) {
@@ -267,11 +269,13 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
     }
   }
   var requestError = function(xhr) {
+    spf.debug.debug('    XHR error', 'xhr=', xhr);
     if (opt_onError) {
       opt_onError(url);
     }
   };
   var requestSuccess = function(xhr) {
+    spf.debug.debug('    XHR success', 'xhr=', xhr);
     try {
       if ('JSON' in window) {
         var response = JSON.parse(xhr.responseText);
@@ -279,6 +283,7 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
         var response = eval('(' + xhr.responseText + ')');
       }
     } catch (err) {
+      spf.debug.debug('    JSON parse failed');
       requestError(xhr);
       return;
     }
@@ -297,7 +302,7 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
   var cachedResponse = spf.cache.get(requestUrl);
   if (cachedResponse) {
     cachedResponse = /** @type {spf.nav.Response} */ (cachedResponse);
-    spf.debug.info('    >> cached response found', cachedResponse);
+    spf.debug.debug('    cached response found ', cachedResponse);
     if (opt_notification) {
       // Publish to callbacks.
       spf.pubsub.publish(opt_notification, url, cachedResponse);
@@ -306,7 +311,7 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
       opt_onSuccess(url, cachedResponse);
     }
   } else {
-    spf.debug.info('    >> fetching XHR');
+    spf.debug.debug('    sending XHR');
     var xhr = spf.net.xhr.get(requestUrl, {
       timeoutMs: spf.config['request-timeout'],
       onSuccess: requestSuccess,
@@ -330,9 +335,10 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
  *     request succeeds.
  */
 spf.nav.process = function(response, opt_reverse, opt_notification) {
-  spf.debug.info('nav.process', response, opt_reverse);
+  spf.debug.info('nav.process ', response, opt_reverse);
   // Install page styles.
   spf.net.styles.install(response['css']);
+  spf.debug.debug('    installed styles');
   // Update title.
   if (response['title']) {
     document.title = response['title'];
@@ -345,6 +351,7 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
       continue;
     }
     spf.dom.setAttributes(el, attributes[id]);
+    spf.debug.debug('    set attributes ', id);
   }
   // Tally the number of content updates need.
   var remaining = 0;
@@ -362,6 +369,7 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
     if (remaining == 0) {
       // Execute scripts.
       spf.net.scripts.execute(response['js'], function() {
+        spf.debug.debug('    executed scripts');
         if (opt_notification) {
           // Publish to callbacks.
           spf.pubsub.publish(opt_notification, response);
@@ -384,8 +392,10 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
         !spf.dom.classes.has(el, spf.config['transition-class'])) {
       // If the target element isn't enabled for transitions, just replace.
       el.innerHTML = html;
+      spf.debug.debug('    updated fragment content ', id);
       // Execute embedded scripts before continuing.
       spf.net.scripts.execute(html, function() {
+        spf.debug.debug('    executed fragment scripts ', id);
         remaining--;
         maybeContinueAfterContent();
       });
@@ -432,6 +442,7 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
       }, 0]);
       // Transition Step 3: Remove old (timeout = config duration).
       queue.push([function(data, next) {
+        spf.debug.debug('    updated fragment content ', data.parentEl.id);
         // When done, remove the old content.
         data.parentEl.removeChild(data.currentEl);
         // End the transition.
@@ -444,6 +455,7 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
       queue.push([function(data, next) {
         // Execute embedded scripts before continuing.
         spf.net.scripts.execute(data.html, function() {
+          spf.debug.debug('    executed fragment scripts ', data.parentEl.id);
           remaining--;
           maybeContinueAfterContent();
           next();
@@ -506,8 +518,9 @@ spf.nav.process_ = function(key, opt_quick) {
  * @return {XMLHttpRequest} The XHR of the current request.
  */
 spf.nav.preload = function(url, opt_onSuccess, opt_onError) {
-  spf.debug.info('nav.preload', url);
+  spf.debug.info('nav.preload ', url);
   var loadError = function(url) {
+    spf.debug.warn('preload failed ', 'url=', url);
     if (opt_onError) {
       opt_onError(url);
     }
@@ -532,16 +545,19 @@ spf.nav.preload = function(url, opt_onSuccess, opt_onError) {
  * @param {spf.nav.Response} response The SPF response object to preprocess.
  */
 spf.nav.preprocess = function(response) {
-  spf.debug.info('nav.preprocess', response);
+  spf.debug.info('nav.preprocess ', response);
   // Preinstall page styles.
   spf.net.styles.preinstall(response['css']);
+  spf.debug.debug('    preinstalled styles');
   // Preexecute fragment scripts.
   var fragments = response['html'] || {};
   for (var id in fragments) {
     spf.net.scripts.preexecute(fragments[id]);
+    spf.debug.debug('    preexecuted fragment scripts ', id);
   }
   // Preexecute page scripts.
   spf.net.scripts.preexecute(response['js']);
+  spf.debug.debug('    preexecuted scripts');
 };
 
 

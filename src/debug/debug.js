@@ -12,9 +12,7 @@ goog.require('spf');
 
 
 /**
- * Log to the browser console using "debug", the low priority method.  Output
- * using this method will be prefixed with the millisecond duration since
- * start.
+ * Log to the browser console using "debug", the low priority method.
  *
  * @param {...*} var_args Items to log.
  */
@@ -64,13 +62,25 @@ spf.debug.error = function(var_args) {
  */
 spf.debug.log = function(method, args) {
   if (spf.DEBUG && window.console) {
+    var methodLevel = spf.debug.levels_[method];
+    var outputLevel = spf.debug.levels_[spf.debug.OUTPUT];
+    if (methodLevel < outputLevel) {
+      return;
+    }
     args = Array.prototype.slice.call(args, 0);
     var timestamp = spf.now();
-    var duration = timestamp - spf.debug.start_;
-    if (method == 'debug') {
-      args.unshift('  >  ' + duration + 'ms: ');
+    var duration = (timestamp - spf.debug.start_) / 1000;
+    if (duration.toFixed) {
+      duration = duration.toFixed(3);
+      while (duration.length < 8) {
+        duration = ' ' + duration;
+      }
+    } else {
+      duration = '' + duration;
     }
+    args.unshift(duration + 's: ');
     if (spf.debug.advanced_) {
+      args.unshift('[spf]');
       var fnArgs = 'spf_debug_' + timestamp;
       window[fnArgs] = args;
       var fnStr = 'window.console.' + method + '(';
@@ -81,7 +91,8 @@ spf.debug.log = function(method, args) {
       fnStr += ')';
       eval('(' + fnStr + ')');
     } else {
-      window.console.log(method + ': ' + args.join(' '));
+      args.unshift('[spf.' + method + ']');
+      window.console.log(args.join(' '));
     }
   }
 };
@@ -101,3 +112,26 @@ spf.debug.start_ = spf.now();
  * @private
  */
 spf.debug.advanced_ = !!(window.console && !eval('/*@cc_on!@*/false'));
+
+
+/**
+ * A map of logging methods to corresponding output levels.
+ * @type {Object.<string, number>}
+ * @const
+ * @private
+ */
+spf.debug.levels_ = {
+  'debug': 1,
+  'info': 2,
+  'warn': 3,
+  'error': 4
+};
+
+
+/**
+ * @define {string} OUTPUT is provided to control the level of output
+ * from debugging code.  Valid values correspond to browser console logging
+ * functions: "debug", "info", "warn", and "error", and can be set by the
+ * compiler when "--define spf.DEBUG_LEVEL='warn'" or similar is specified.
+ */
+spf.debug.OUTPUT = 'info';

@@ -24,7 +24,7 @@ goog.require('spf.string');
  */
 spf.main.init = function(opt_config) {
   var enable = !!(window.history.pushState);
-  spf.debug.info('main.init', enable, opt_config);
+  spf.debug.info('main.init ', 'enable=', enable);
   var config = opt_config || {};
   for (var key in spf.defaults) {
     var value = (key in config) ? config[key] : spf.defaults[key];
@@ -33,6 +33,7 @@ spf.main.init = function(opt_config) {
       spf.pubsub.subscribe(key, value);
     }
   }
+  spf.debug.debug('    config', spf.config);
   if (enable) {
     spf.history.init(spf.nav.handleHistory);
     spf.nav.init();

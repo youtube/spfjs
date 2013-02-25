@@ -107,7 +107,7 @@ demo.handleNavigateHistory = function(url) {
  */
 demo.handleNavigateReceived = function(url, response) {
   if (window.console) {
-    window.console.log('demo: navigate received', url, response);
+    window.console.log('demo: navigate received', url);
   }
 };
 
@@ -118,7 +118,7 @@ demo.handleNavigateReceived = function(url, response) {
  */
 demo.handleNavigateProcessed = function(response) {
   if (window.console) {
-    window.console.log('demo: navigate processed', response);
+    window.console.log('demo: navigate processed');
   }
 };
 
@@ -130,7 +130,7 @@ demo.handleNavigateProcessed = function(response) {
  */
 demo.handleLoadReceived = function(url, response) {
   if (window.console) {
-    window.console.log('demo: load received', url, response);
+    window.console.log('demo: load received', url);
   }
 };
 
@@ -141,7 +141,7 @@ demo.handleLoadReceived = function(url, response) {
  */
 demo.handleLoadProcessed = function(response) {
   if (window.console) {
-    window.console.log('demo: load processed', response);
+    window.console.log('demo: load processed');
   }
 };
 

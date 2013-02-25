@@ -87,9 +87,7 @@ spf.history.Monitor.prototype.disable = function() {
  */
 spf.history.Monitor.prototype.handlePop = function(evt) {
   var url = window.location.href;
-  spf.debug.info('spf.history.handlePop: ', 'url=', url, 'evt=', evt);
-  spf.debug.debug('new url: ', url != this.url_);
-  spf.debug.debug('current timestamp: ', this.timestamp_);
+  spf.debug.info('history.pop ', 'url=', url, 'evt=', evt);
   // Avoid the initial event on first load by for a state.
   if (evt.state) {
     var state = evt.state;
@@ -98,13 +96,12 @@ spf.history.Monitor.prototype.handlePop = function(evt) {
     // the state to the original.
     if (url == this.url_) {
       this.timestamp_ = state['spf-timestamp'];
-      spf.debug.debug('replace: ', 'url=', url, 'state=', state);
       window.history.replaceState(state, '', url);
+      spf.debug.debug('    replaceState:  ', 'url=', url, 'state=', state);
     } else {
       var timestamp = state['spf-timestamp'];
       state['spf-back'] = !!(timestamp < this.timestamp_);
       this.timestamp_ = timestamp;
-      spf.debug.debug('callback: ', 'url=', url, 'state=', state);
       this.url_ = url;
       this.callback_(url, state);
     }
@@ -129,7 +126,7 @@ spf.history.Monitor.prototype.handlePop = function(evt) {
  */
 spf.history.Monitor.prototype.add = function(opt_url, opt_state,
                                              opt_skipCallback) {
-  spf.debug.info('spf.history.add: ', 'url=', opt_url, 'state=', opt_state);
+  spf.debug.info('history.add ', opt_url);
   this.push_(false, opt_url, opt_state, opt_skipCallback);
 };
 
@@ -151,7 +148,7 @@ spf.history.Monitor.prototype.add = function(opt_url, opt_state,
  */
 spf.history.Monitor.prototype.replace = function(opt_url, opt_state,
                                                  opt_skipCallback) {
-  spf.debug.info('spf.history.replace: ', 'url=', opt_url, 'state=', opt_state);
+  spf.debug.info('history.replace ', opt_url);
   this.push_(true, opt_url, opt_state, opt_skipCallback);
 };
 
@@ -176,10 +173,11 @@ spf.history.Monitor.prototype.push_ = function(replace, opt_url, opt_state,
   state['spf-timestamp'] = this.timestamp_;
   if (replace) {
     window.history.replaceState(state, '', url);
+    spf.debug.debug('    replaceState:  ', 'url=', url, 'state=', state);
   } else {
     window.history.pushState(state, '', url);
+    spf.debug.debug('    pushState:  ', 'url=', url, 'state=', state);
   }
-  spf.debug.debug('entry:  ', 'url=', url, 'state=', state);
   this.url_ = url;
   if (!opt_skipCallback) {
     this.callback_(url, state);
