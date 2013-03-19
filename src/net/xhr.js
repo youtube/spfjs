@@ -76,6 +76,7 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
 
   var xhr = spf.net.xhr.create();
   xhr.open(method, url, true);
+  xhr['timing'] = {};
 
   // Overload the abort method to handle the timer.
   var xhr_abort = xhr.abort;
@@ -86,7 +87,13 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
   };
 
   xhr.onreadystatechange = function() {
-    if (xhr.readyState == 4) {
+    var timing = xhr['timing'];
+    if (xhr.readyState == spf.net.xhr.State.HEADERS_RECEIVED) {
+      // Record responseStart time when first byte is received.
+      timing['responseStart'] = timing['responseStart'] || spf.now();
+    } else if (xhr.readyState == spf.net.xhr.State.DONE) {
+      // Record responseEnd time when full response is received.
+      timing['responseEnd'] = timing['responseEnd'] || spf.now();
       clearTimeout(timer);
       switch (xhr.status) {
         case 200:  // Http Success
@@ -108,7 +115,10 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
     }, options.timeoutMs);
   }
 
+  // Record fetchStart time when request is sent.
+  xhr['timing']['fetchStart'] = spf.now();
   xhr.send(null);
+
   return xhr;
 };
 
@@ -124,3 +134,15 @@ spf.net.xhr.create = (function() {
     return function() { return new ActiveXObject('Microsoft.XMLHTTP'); };
   }
 })();
+
+
+/**
+ * @enum {number}
+ */
+spf.net.xhr.State = {
+  UNSENT: 0,
+  OPENED: 1,
+  HEADERS_RECEIVED: 2,
+  LOADING: 3,
+  DONE: 4
+};

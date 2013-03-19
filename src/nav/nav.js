@@ -30,13 +30,15 @@ goog.require('spf.string');
  *      to set on the Elements.
  * - js: HTML string containing <script> tags of JS to execute.
  * - title: String of the new Document title.
+ * - timing: Map of timing attributes to timestamp numbers.
  *
  * @typedef {{
  *   css: (string|undefined),
  *   html: (Object.<string, string>|undefined),
  *   attr: (Object.<string, Object.<string, string>>|undefined),
  *   js: (string|undefined),
- *   title: (string|undefined)
+ *   title: (string|undefined),
+ *   timing: (Object.<string, number>|undefined),
  * }}
  */
 spf.nav.Response;
@@ -268,6 +270,10 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
       }
     }
   }
+  // Record a start time before sending the request or loading from cache.
+  // This will be recored later as navigationStart.
+  var start = spf.now();
+  var timing = {};
   var requestError = function(xhr) {
     spf.debug.debug('    XHR error', 'xhr=', xhr);
     if (opt_onError) {
@@ -276,6 +282,14 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
   };
   var requestSuccess = function(xhr) {
     spf.debug.debug('    XHR success', 'xhr=', xhr);
+    // Record the timing information.
+    timing['navigationStart'] = start;
+    if (xhr['timing']) {
+      for (var t in xhr['timing']) {
+        timing[t] = xhr['timing'][t];
+      }
+    }
+    // Attempt to parse the response.
     try {
       if ('JSON' in window) {
         var response = JSON.parse(xhr.responseText);
@@ -290,6 +304,8 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
     response = /** @type {spf.nav.Response} */ (response);
     // Cache the response for future requests.
     spf.cache.set(requestUrl, response, spf.config['cache-lifetime']);
+    // Set the timing values for the response.
+    response['timing'] = timing;
     if (opt_notification) {
       // Publish to callbacks.
       spf.pubsub.publish(opt_notification, url, response);
@@ -299,9 +315,16 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
     }
   };
   // Try to find a cached response for the request before sending a new XHR.
+  // Record fetchStart time before loading from cache.
+  timing['fetchStart'] = spf.now()
   var cachedResponse = spf.cache.get(requestUrl);
   if (cachedResponse) {
     cachedResponse = /** @type {spf.nav.Response} */ (cachedResponse);
+    // Record responseStart and responseEnd times after loading from cache.
+    timing['responseStart'] = timing['responseEnd'] = spf.now();
+    timing['navigationStart'] = start;
+    // Store the timing for the cached response (avoid stale timing values).
+    cachedResponse['timing'] = timing;
     spf.debug.debug('    cached response found ', cachedResponse);
     if (opt_notification) {
       // Publish to callbacks.
@@ -312,6 +335,9 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
     }
   } else {
     spf.debug.debug('    sending XHR');
+    // If no cached response is found, reset the timing data to use
+    // the values provided by the XHR instead.
+    timing = {};
     var xhr = spf.net.xhr.get(requestUrl, {
       timeoutMs: spf.config['request-timeout'],
       onSuccess: requestSuccess,
