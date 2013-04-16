@@ -20,6 +20,7 @@
 
 goog.provide('spf.net.scripts');
 
+goog.require('spf.dom');
 goog.require('spf.dom.dataset');
 goog.require('spf.pubsub');
 goog.require('spf.string');
@@ -55,17 +56,32 @@ spf.net.scripts.eval = function(text, opt_callback) {
 
 /**
  * Loads a script URL by dynamically creating an element and appending it to
- * the document.  A callback can be specified to execute once the script
- * has been loaded.  Subsequent calls to load the same URL will not
- * reload the script.
+ * the document.
+ *
+ * - Subsequent calls to load the same URL will not reload the script.  This
+ *   is done by giving each script a unique element id based on the URL and
+ *   checking for it prior to loading.  To reload a script, unload it first.
+ *   {@link #unload}
+ *
+ * - A callback can be specified to execute once the script has loaded.  The
+ *   callback will be execute each time, even if the script is not reloaded.
+ *
+ * - A name can be specified to identify the same script at different URLs.
+ *   (For example, "main-A.js" and "main-B.js" are both "main".)  If a name
+ *   is specified, all other scripts with the same name will be unloaded
+ *   before the callback is executed.  This allows switching between
+ *   versions of the same script at different URLs.
  *
  * @param {string} url Url of the script.
  * @param {Function=} opt_callback Callback function to execute when the
  *     script is loaded.
+ * @param {string=} opt_name Name to identify the script independently
+ *     of the URL.
  * @return {Element} The dynamically created script element.
  */
-spf.net.scripts.load = function(url, opt_callback) {
+spf.net.scripts.load = function(url, opt_callback, opt_name) {
   var id = spf.net.scripts.ID_PREFIX + spf.string.hashCode(url);
+  var cls = opt_name || '';
   var scriptEl = document.getElementById(id);
   var isLoaded = scriptEl && spf.dom.dataset.get(scriptEl, 'loaded');
   var isLoading = scriptEl && !isLoaded;
@@ -85,10 +101,17 @@ spf.net.scripts.load = function(url, opt_callback) {
     return scriptEl;
   }
   // Otherwise, the script needs to be loaded.
+  // First, find old scripts to remove after loading, if any.
+  var scriptElsToRemove = cls ? spf.dom.query('script.' + cls) : [];
   // Lexical closures allow this trickiness with the "el" variable.
-  var el = spf.net.scripts.load_(url, id, function() {
+  var el = spf.net.scripts.load_(url, id, cls, function() {
     if (!spf.dom.dataset.get(el, 'loaded')) {
       spf.dom.dataset.set(el, 'loaded', 'true');
+      // Now that the script is loaded, remove old ones.
+      // Only do this after a successful load to avoid prematurely removing
+      // a script, which could lead to an unneeded script download/execution
+      // if load() is called again.
+      spf.net.scripts.unload_(scriptElsToRemove);
       spf.pubsub.publish(id);
       spf.pubsub.clear(id);
     }
@@ -102,13 +125,15 @@ spf.net.scripts.load = function(url, opt_callback) {
  *
  * @param {string} url Url of the script.
  * @param {string} id Id of the script element.
+ * @param {string} cls Class of the script element.
  * @param {Function} fn Callback for when the script has loaded.
  * @return {Element} The dynamically created script element.
  * @private
  */
-spf.net.scripts.load_ = function(url, id, fn) {
+spf.net.scripts.load_ = function(url, id, cls, fn) {
   var scriptEl = document.createElement('script');
   scriptEl.id = id;
+  scriptEl.className = cls;
   // Safari/Chrome and Firefox support the onload event for scripts.
   scriptEl.onload = function() {
     // IE 10 has a bug where it will synchronously call load handlers for
@@ -141,8 +166,8 @@ spf.net.scripts.load_ = function(url, id, fn) {
 /**
  * "Unloads" a script URL by finding a previously created element and
  * removing it from the document.  This will allow a URL to be loaded again
- * if needed.  Calling unload will stop execution of a pending callback, but
- * will not stop loading a pending script.
+ * if needed.  Unloading a script will stop execution of a pending callback,
+ * but will not stop loading a pending URL.
  *
  * @param {string} url Url of the script.
  */
@@ -150,8 +175,21 @@ spf.net.scripts.unload = function(url) {
   var id = spf.net.scripts.ID_PREFIX + spf.string.hashCode(url);
   var scriptEl = document.getElementById(id);
   if (scriptEl) {
-    spf.pubsub.clear(id);
-    scriptEl.parentNode.removeChild(scriptEl);
+    spf.net.scripts.unload_([scriptEl]);
+  }
+};
+
+
+/**
+ * See {@link unload}
+ *
+ * @param {Array.<Node>} scriptEls The script elements.
+ * @private
+ */
+spf.net.scripts.unload_ = function(scriptEls) {
+  for (var i = 0; i < scriptEls.length; i++) {
+    spf.pubsub.clear(scriptEls[i].id);
+    scriptEls[i].parentNode.removeChild(scriptEls[i]);
   }
 };
 
@@ -164,7 +202,7 @@ spf.net.scripts.unload = function(url) {
  * @param {string} url Url of the script.
  */
 spf.net.scripts.preload = function(url) {
-  if (spf.net.scripts.IS_IE) {
+  if (spf.dom.IS_IE) {
     // IE needs a <script> in order to complete the request, but fortunately
     // will not execute it unless in the DOM.  Attempting to use an <object>
     // like other browsers will cause the download to hang.
@@ -200,11 +238,12 @@ spf.net.scripts.execute = function(html, opt_callback) {
   // Load or evaluate the scripts in order.
   var getNextScript = function() {
     if (queue.length > 0) {
-      var pair = queue.shift();
-      var script = pair[0];
-      var isUrl = pair[1];
+      var item = queue.shift();
+      var script = item[0];
+      var isUrl = item[1];
+      var name = item[2];
       if (isUrl) {
-        spf.net.scripts.load(script, getNextScript);
+        spf.net.scripts.load(script, getNextScript, name);
       } else {
         spf.net.scripts.eval(script, getNextScript);
       }
@@ -232,9 +271,10 @@ spf.net.scripts.preexecute = function(html) {
   var queue = spf.net.scripts.extract_(html);
   // Preload the scripts.
   for (var i = 0; i < queue.length; i++) {
-    var pair = queue[i];
-    var script = pair[0];
-    var isUrl = pair[1];
+    var item = queue[i];
+    var script = item[0];
+    var isUrl = item[1];
+    var name = item[2];
     if (isUrl) {
       spf.net.scripts.preload(script);
     }
@@ -244,6 +284,7 @@ spf.net.scripts.preexecute = function(html) {
 
 /**
  * Parses scripts from an HTML string.
+ * See {@link #execute}.
  *
  * @param {string} html The HTML content to parse.
  * @return {Array.<{0:string, 1:boolean}>}
@@ -255,9 +296,12 @@ spf.net.scripts.extract_ = function(html) {
       function(fullMatch, attr, text) {
         var url = attr.match(spf.net.scripts.SRC_ATTR_REGEXP);
         if (url) {
-          queue.push([url[1], true]);
+          url = url[1];
+          var name = attr.match(spf.net.scripts.CLASS_ATTR_REGEXP);
+          name = name ? name[1] : '';
+          queue.push([url, true, name]);
         } else {
-          queue.push([text, false]);
+          queue.push([text, false, '']);
         }
         return '';
       });
@@ -266,17 +310,10 @@ spf.net.scripts.extract_ = function(html) {
 
 
 /**
- * @type {string} The ID prefix for dynamically created script elements.
+ * @type {string} The id prefix for dynamically created script elements.
  * @const
  */
 spf.net.scripts.ID_PREFIX = 'js-';
-
-
-/**
- * @type {boolean} Whether the browser is Internet Explorer.
- * @const
- */
-spf.net.scripts.IS_IE = spf.string.contains(navigator.appName, 'Microsoft');
 
 
 /**
@@ -298,3 +335,13 @@ spf.net.scripts.SCRIPT_TAG_REGEXP =
  * @const
  */
 spf.net.scripts.SRC_ATTR_REGEXP = /src="([\S]+)"/;
+
+
+/**
+ * Regular expression used to locate class attributes in a string.
+ * See {@link #extract_}.
+ *
+ * @type {RegExp}
+ * @const
+ */
+spf.net.scripts.CLASS_ATTR_REGEXP = /class="([\S]+)"/;

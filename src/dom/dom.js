@@ -8,6 +8,37 @@ goog.provide('spf.dom');
 
 
 /**
+ * Gets document nodes matching a selector.
+ *
+ * Note: IE8 and earlier do not support CSS3 selectors.
+ *
+ * @param {string} selector Selector to match.
+ * @return {Array.<Node>|NodeList} nodes Matching nodes.
+ */
+spf.dom.query = function(selector) {
+  if (document.querySelectorAll) {
+    return document.querySelectorAll(selector);
+  } else if (spf.dom.IS_IE) {
+    // For IE7 and earlier, use CSS Expressions to query elements.
+    // CSS Expressions are functions executed for every element matching
+    // a selector and "this" is a reference to the element.
+    var styleEl = document.createElement('style');
+    var head = document.getElementsByTagName('head')[0];
+    head.appendChild(styleEl);
+    window['__qsa'] = [];  // Global array for holding matches.
+    styleEl.styleSheet.cssText = selector + '{x:expression(__qsa.push(this))}';
+    // Reflow the page to ensure the CSS Expression is executed.
+    // Both are needed for IE7 to trigger a reflow.
+    document.body.style.cssText += '';
+    document.body.style.zoom = 1;
+    head.removeChild(styleEl);
+    return window['__qsa'].slice(0);
+  }
+  return [];
+};
+
+
+/**
  * Inserts a new node before an existing reference node (i.e. as the previous
  * sibling). If the reference node has no parent, then does nothing.
  *
@@ -123,3 +154,10 @@ spf.dom.setAttributes = function(element, attributes) {
     }
   }
 };
+
+
+/**
+ * @type {boolean} Whether the browser is Internet Explorer.
+ * @const
+ */
+spf.dom.IS_IE = navigator.appName == 'Microsoft Internet Explorer';
