@@ -24,7 +24,7 @@ spf.defaults = {
   'url-identifier': '?spf=1',
   'link-class': 'spf-link',
   'nolink-class': null, // If needed, "spf-nolink" is recommended.
-  'request-timeout': 2000,  // 2 seconds in milliseconds.
+  'request-timeout': 0,
   'cache-lifetime': 600000,  // 10 minutes in milliseconds.
   'navigate-started-callback': null,
   'navigate-history-callback': null,
