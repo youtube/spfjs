@@ -274,14 +274,8 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
   // This will be recored later as navigationStart.
   var start = spf.now();
   var timing = {};
-  var requestError = function(xhr) {
-    spf.debug.debug('    XHR error', 'xhr=', xhr);
-    if (opt_onError) {
-      opt_onError(url);
-    }
-  };
-  var requestSuccess = function(xhr) {
-    spf.debug.debug('    XHR success', 'xhr=', xhr);
+  var requestResponse = function(xhr) {
+    spf.debug.debug('    XHR response', 'status=', xhr.status, 'xhr=', xhr);
     // Record the timing information.
     timing['navigationStart'] = start;
     if (xhr['timing']) {
@@ -298,7 +292,9 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
       }
     } catch (err) {
       spf.debug.debug('    JSON parse failed');
-      requestError(xhr);
+      if (opt_onError) {
+        opt_onError(url);
+      }
       return;
     }
     response = /** @type {spf.nav.Response} */ (response);
@@ -340,9 +336,9 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
     timing = {};
     var xhr = spf.net.xhr.get(requestUrl, {
       timeoutMs: spf.config['request-timeout'],
-      onSuccess: requestSuccess,
-      onError: requestError,
-      onTimeout: requestError
+      onSuccess: requestResponse,
+      onError: requestResponse,
+      onTimeout: requestResponse
     });
     return xhr;
   }

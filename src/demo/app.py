@@ -18,6 +18,9 @@ urls = (
   '/spec', 'spec',
   '/page', 'page',
   '/page/(.*)', 'page',
+  '/missing', 'missing',
+  '/other', 'other',
+  '/other/(.*)', 'other',
 )
 app = web.application(urls, globals())
 
@@ -88,6 +91,25 @@ class page(servlet):
   def GET(self, page_num=0):
     content = templates.page(page_num)
     return self.render(content)
+
+
+class other(servlet):
+  def GET(self, arg=None):
+    if arg is not None:
+      req = web.input(spf=None)
+      if req.spf:
+        raise web.seeother('/other?spf=1')
+      else:
+        raise web.seeother('/other')
+    referer = web.ctx.env.get('HTTP_REFERER')
+    content = templates.other(referer)
+    return self.render(content)
+
+
+class missing(servlet):
+  def GET(self):
+    web.ctx.status = '404 Not Found'
+    return self.render(templates.missing())
 
 
 if __name__ == '__main__':

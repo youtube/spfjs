@@ -1,0 +1,21 @@
+$def with (referer)
+
+$def _attributes():
+  { "nav": { "class": "other" } }
+
+$var title: Other
+$var stylesheet:
+$var javascript:
+$var attributes: $:_attributes()
+
+<div id="spec" class="pane">
+  <h1>Other</h1>
+
+  <p>This page is the target of a HTTP 303 See Other request.</p>
+  <dl>
+    <dt>Referer:</dt>
+    <dd><code>$referer</code></dd>
+    <dt>Random Number:</dt>
+    <dd><code>$random.randint(1, 100)</code></dd>
+  </dl>
+</div>
