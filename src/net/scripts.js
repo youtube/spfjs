@@ -202,19 +202,54 @@ spf.net.scripts.unload_ = function(scriptEls) {
  * @param {string} url Url of the script.
  */
 spf.net.scripts.preload = function(url) {
+  var id = spf.net.scripts.ID_PREFIX + spf.string.hashCode(url);
+  var scriptEl = document.getElementById(id);
+  // If the script is already loaded, return.
+  if (scriptEl) {
+    return;
+  }
+  var iframeId = spf.net.scripts.ID_PREFIX + 'preload';
+  var iframeEl = document.getElementById(iframeId);
+  if (!iframeEl) {
+    iframeEl = spf.dom.createIframe(iframeId);
+  } else {
+    // If the script is already preloaded, return.
+    scriptEl = iframeEl.contentWindow.document.getElementById(id);
+    if (scriptEl) {
+      return;
+    }
+  }
+  // Firefox needs the iframe to be fully created in the DOM before continuing.
+  setTimeout(function() {
+    spf.net.scripts.preload_(url, id, iframeEl.contentWindow.document);
+  }, 0);
+};
+
+
+
+/**
+ * See {@link #preload}.
+ *
+ * @param {string} url Url of the script.
+ * @param {string} id Id of the script element.
+ * @param {Document=} opt_document Content document element.
+ * @private
+ */
+spf.net.scripts.preload_ = function(url, id, opt_document) {
+  var doc = opt_document || document;
+  var objectEl = doc.createElement('object');
+  objectEl.id = id;
   if (spf.dom.IS_IE) {
     // IE needs a <script> in order to complete the request, but fortunately
     // will not execute it unless in the DOM.  Attempting to use an <object>
-    // like other browsers will cause the download to hang.
-    var scriptEl = document.createElement('script');
+    // like other browsers will cause the download to hang.  The <object> will
+    // just be a placeholder that the request has been made.
+    var scriptEl = doc.createElement('script');
     scriptEl.src = url;
   } else {
-    var objectEl = document.createElement('object');
     objectEl.data = url;
-    objectEl.width = 0;
-    objectEl.height = 0;
-    document.body.appendChild(objectEl);
   }
+  doc.body.appendChild(objectEl);
 };
 
 

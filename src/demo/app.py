@@ -9,9 +9,20 @@ import random
 
 import web
 
+# A string hash function for compatibility with spf.string.hashCode.
+def hashcode(s):
+  result = 0
+  max_value = 2**32
+  for char in s:
+    result = (31 * result) + ord(char)
+    result %= max_value
+  return result
+
 
 # Set up the basic app config.
-templates = web.template.render('templates/', globals={'random': random})
+templates = web.template.render('templates/',
+                                globals={'random': random,
+                                         'hashcode': hashcode})
 urls = (
   '/', 'index',
   '/index_ajax', 'index_ajax',

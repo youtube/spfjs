@@ -6,6 +6,7 @@
 
 goog.provide('spf.net.styles');
 
+goog.require('spf.dom');
 goog.require('spf.string');
 
 
@@ -40,11 +41,11 @@ spf.net.styles.eval = function(text) {
 spf.net.styles.load = function(url) {
   var id = spf.net.styles.ID_PREFIX + spf.string.hashCode(url);
   var linkEl = document.getElementById(id);
-  // If the stylesheet is already installed, return.
+  // If the stylesheet is already loaded, return.
   if (linkEl) {
     return linkEl;
   }
-  // Otherwise, the stylesheet needs to be installed.
+  // Otherwise, the stylesheet needs to be loaded.
   linkEl = spf.net.styles.load_(url, id);
   return linkEl;
 };
@@ -55,7 +56,7 @@ spf.net.styles.load = function(url) {
  *
  * @param {string} url Url of the stylesheet.
  * @param {string} id Id of the link element.
- * @param {Document} opt_document Content document element.
+ * @param {Document=} opt_document Content document element.
  * @return {Element} The dynamically created link element.
  * @private
  */
@@ -95,18 +96,26 @@ spf.net.styles.unload = function(url) {
  * @param {string} url Url of the stylesheet.
  */
 spf.net.styles.preload = function(url) {
-  var id = spf.net.styles.ID_PREFIX + 'preload';
-  var iframeEl = document.getElementById(id);
-  if (!iframeEl) {
-    iframeEl = document.createElement('iframe');
-    iframeEl.id = id;
-    iframeEl.src = 'javascript:""';
-    iframeEl.style.display = 'none';
-    document.body.appendChild(iframeEl);
+  var id = spf.net.styles.ID_PREFIX + spf.string.hashCode(url);
+  var linkEl = document.getElementById(id);
+  // If the stylesheet is already loaded, return.
+  if (linkEl) {
+    return linkEl;
   }
-  // Firefox needs the iframe to be fully created in the DOM before loading.
+  var iframeId = spf.net.styles.ID_PREFIX + 'preload';
+  var iframeEl = document.getElementById(iframeId);
+  if (!iframeEl) {
+    iframeEl = spf.dom.createIframe(iframeId);
+  } else {
+    // If the stylesheet is already preloaded, return.
+    linkEl = iframeEl.contentWindow.document.getElementById(id);
+    if (linkEl) {
+      return;
+    }
+  }
+  // Firefox needs the iframe to be fully created in the DOM before continuing.
   setTimeout(function() {
-    spf.net.styles.load_(url, '', iframeEl.contentWindow.document);
+    spf.net.styles.load_(url, id, iframeEl.contentWindow.document);
   }, 0);
 };
 

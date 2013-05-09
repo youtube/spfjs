@@ -15,6 +15,10 @@ $def _stylesheet():
     .page .sun img { height: 3em;
                      vertical-align: middle; }
   </style>
+  $ page_css = "/static/demo-page.css"
+  <!-- Pre-fill the hashcode so SPF won't load the stylesheet twice -->
+  <link id="css-$hashcode(page_css)" rel="stylesheet" type="text/css" href="$page_css">
+
 
 $def _javascript():
   <script type="text/javascript">
@@ -22,6 +26,10 @@ $def _javascript():
       window.console.log('demo: page javascript - page $page_num');
     }
   </script>
+  $ page_js = "/static/demo-page.js"
+  <!-- Pre-fill the hashcode so SPF won't load the script twice -->
+  <script id="js-$hashcode(page_js)" src="$page_js"></script>
+
 
 $def _attributes():
   { "nav": { "class": "page$page_num" } }

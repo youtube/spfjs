@@ -157,6 +157,25 @@ spf.dom.setAttributes = function(element, attributes) {
 
 
 /**
+ * Installs an empty iframe in the page.
+ *
+ * @param {string=} opt_id Id of the iframe element.
+ * @param {Document=} opt_document Content document element.
+ * @return {!HTMLIFrameElement}
+ */
+spf.dom.createIframe = function(opt_id, opt_document) {
+  var id = opt_id || '';
+  var doc = opt_document || document;
+  var iframeEl = doc.createElement('iframe');
+  iframeEl.id = id;
+  iframeEl.src = 'javascript:""';
+  iframeEl.style.display = 'none';
+  doc.body.appendChild(iframeEl);
+  return iframeEl;
+};
+
+
+/**
  * @type {boolean} Whether the browser is Internet Explorer.
  * @const
  */
