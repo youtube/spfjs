@@ -21,7 +21,7 @@ spf.DEBUG = true;
  * @type {Object.<string, string|number|Function>}
  */
 spf.defaults = {
-  'url-identifier': '?spf=1',
+  'url-identifier': '?spf=__type__',
   'link-class': 'spf-link',
   'nolink-class': null, // If needed, "spf-nolink" is recommended.
   'request-timeout': 0,

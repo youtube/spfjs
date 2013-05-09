@@ -201,7 +201,7 @@ spf.nav.navigate_ = function(url, opt_reverse) {
     spf.nav.process(response, opt_reverse, 'navigate-processed-callback');
   };
   var xhr = spf.nav.request(url, navigateSuccess, navigateError,
-                            'navigate-received-callback');
+                            'navigate-received-callback', 'navigate');
   spf.nav.request_ = xhr;
 };
 
@@ -237,7 +237,8 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
       opt_onSuccess(url, response);
     }
   };
-  return spf.nav.request(url, loadSuccess, loadError, 'load-received-callback');
+  return spf.nav.request(url, loadSuccess, loadError,
+                         'load-received-callback', 'load');
 };
 
 
@@ -252,24 +253,31 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
  *     the request succeeds.
  * @param {function(string)=} opt_onError The callback to execute if the
  *     request fails.
- * @param {string=} opt_notification The notification to publish if the
+ * @param {?string=} opt_notification The notification to publish if the
  *     request succeeds.
+ * @param {?string=} opt_type The type of request (e.g. navigate, load, etc)
+ *     this is, used to alter the URL identifier.
  * @return {XMLHttpRequest} The XHR of the current request.
  */
-spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
+spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification,
+                           opt_type) {
   spf.debug.debug('nav.request ', url);
-  var requestUrl = spf.dom.url.absolute(url);
-  spf.debug.debug('    converted to absolute url ', requestUrl);
+  // Convert the URL to absolute, to be used for caching the response.
+  var absoluteUrl = spf.dom.url.absolute(url);
+  spf.debug.debug('    absolute url ', absoluteUrl);
+  // Add the SPF identifier, to be used for sending the request.
+  var requestUrl = absoluteUrl;
   var ident = spf.config['url-identifier'] || '';
-  if (ident && !spf.string.contains(requestUrl, ident)) {
-    if (spf.string.startsWith(ident, '?')) {
-      if (!spf.string.contains(requestUrl, '?')) {
-        requestUrl += ident;
-      } else {
-        requestUrl += ident.replace('?', '&');
-      }
+  if (ident) {
+    ident = ident.replace('__type__', opt_type || 'request');
+    if (spf.string.startsWith(ident, '?') &&
+        spf.string.contains(requestUrl, '?')) {
+      requestUrl += ident.replace('?', '&');
+    } else {
+      requestUrl += ident;
     }
   }
+  spf.debug.debug('    identified url ', requestUrl);
   // Record a start time before sending the request or loading from cache.
   // This will be recored later as navigationStart.
   var start = spf.now();
@@ -299,7 +307,9 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
     }
     response = /** @type {spf.nav.Response} */ (response);
     // Cache the response for future requests.
-    spf.cache.set(requestUrl, response, spf.config['cache-lifetime']);
+    // Use the absolute URL without identifier to allow cached responses
+    // from preloading to apply to navigation.
+    spf.cache.set(absoluteUrl, response, spf.config['cache-lifetime']);
     // Set the timing values for the response.
     response['timing'] = timing;
     if (opt_notification) {
@@ -313,7 +323,9 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification) {
   // Try to find a cached response for the request before sending a new XHR.
   // Record fetchStart time before loading from cache.
   timing['fetchStart'] = spf.now()
-  var cachedResponse = spf.cache.get(requestUrl);
+  // Use the absolute URL without identifier to allow cached responses
+  // from preloading to apply to navigation.
+  var cachedResponse = spf.cache.get(absoluteUrl);
   if (cachedResponse) {
     cachedResponse = /** @type {spf.nav.Response} */ (cachedResponse);
     // Record responseStart and responseEnd times after loading from cache.
@@ -554,7 +566,7 @@ spf.nav.preload = function(url, opt_onSuccess, opt_onError) {
       opt_onSuccess(url, response);
     }
   };
-  return spf.nav.request(url, loadSuccess, loadError);
+  return spf.nav.request(url, loadSuccess, loadError, null, 'preload');
 };
 
 
