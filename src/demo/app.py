@@ -5,7 +5,6 @@ __author__ = 'nicksay@google.com (Alex Nicksay)'
 
 import json
 import os
-import sys
 import random
 
 import web

@@ -123,7 +123,7 @@ spf.history.push_ = function(replace, opt_url, opt_state, opt_skipCallback) {
 spf.history.pop_ = function(evt) {
   var url = window.location.href;
   spf.debug.info('history.pop ', 'url=', url, 'evt=', evt);
-  // Avoid the initial event on first load by for a state.
+  // Avoid the initial event on first load for a state.
   if (evt.state) {
     var state = evt.state;
     // If the URL is the same and a state is present, the browser has left
