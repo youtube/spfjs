@@ -5,9 +5,11 @@ __author__ = 'nicksay@google.com (Alex Nicksay)'
 
 import json
 import os
+import sys
 import random
 
 import web
+
 
 # A string hash function for compatibility with spf.string.hashCode.
 def hashcode(s):
@@ -21,8 +23,9 @@ def hashcode(s):
 
 # Set up the basic app config.
 templates = web.template.render('templates/',
-                                globals={'random': random,
-                                         'hashcode': hashcode})
+                                globals={'randint': random.randint,
+                                         'hashcode': hashcode,
+                                         'debug': web.config.debug})
 urls = (
   '/', 'index',
   '/index_ajax', 'index_ajax',

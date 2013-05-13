@@ -3,7 +3,7 @@ $def with (content)
 <html>
 <head>
   <title>$content.title</title>
-  <link rel="stylesheet" type="text/css" href="/static/demo.css">
+  <link rel="stylesheet" href="/static/demo.css">
   $:content.stylesheet
 </head>
 <body>
@@ -38,10 +38,12 @@ $def with (content)
   <div id="footer">
     Etc.
   </div>
-  <!-- Use "spf-debug.js" for debug output and active development. -->
-  <script src="/static/spf.js"></script>
+  $if debug:
+    <script src="/static/spf-debug.js"></script>
+  $else:
+    <script src="/static/spf.js"></script>
   <script src="/static/demo.js"></script>
-  <script type="text/javascript">
+  <script>
     demo.init();
   </script>
   $:content.javascript

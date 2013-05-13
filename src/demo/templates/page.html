@@ -17,7 +17,7 @@ $def _stylesheet():
   </style>
   $ page_css = "/static/demo-page.css"
   <!-- Pre-fill the hashcode so SPF won't load the stylesheet twice -->
-  <link id="css-$hashcode(page_css)" rel="stylesheet" type="text/css" href="$page_css">
+  <link id="css-$hashcode(page_css)" rel="stylesheet" href="$page_css">
 
 
 $def _javascript():
