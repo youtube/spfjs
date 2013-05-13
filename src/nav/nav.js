@@ -83,25 +83,39 @@ spf.nav.handleClick = function(evt) {
     spf.debug.debug('    ignoring click with alternate button');
     return;
   }
-  // Ignore clicks on targets without the SPF link class.
-  var target = spf.dom.getAncestor(evt.target, function(node) {
+  // Ignore clicks on targets without the link class or not within
+  // a container with the link class.
+  var linkEl = spf.dom.getAncestor(evt.target, function(node) {
     return spf.dom.classes.has(node, spf.config['link-class']);
   });
-  if (!target) {
+  if (!linkEl) {
+    spf.debug.debug('    ignoring click without link class');
     return;
   }
-  // Ignore clicks on targets within a container with a nolink class.
+  // Ignore clicks on targets with the nolink class or within
+  // a container with the nolink class.
   if (spf.config['nolink-class']) {
-    var nolinkContainer = spf.dom.getAncestor(evt.target, function(node) {
+    var nolinkEl = spf.dom.getAncestor(evt.target, function(node) {
       return spf.dom.classes.has(node, spf.config['nolink-class']);
     });
-    if (nolinkContainer) {
+    if (nolinkEl) {
+      spf.debug.debug('    ignoring click with nolink class');
       return;
     }
+  }
+  // Adjust the target element to be the one with an href.
+  var target = spf.dom.getAncestor(evt.target, function(node) {
+    return node.href;
+  }, linkEl);
+  // Ignore clicks on targets without an href.
+  if (!target) {
+    spf.debug.debug('    ignoring click without href');
+    return;
   }
   // Ignore clicks to the same page or to empty URLs.
   var url = target.href;
   if (!url || url == window.location.href) {
+    spf.debug.debug('    ignoring click to same page');
     // Prevent the default browser navigation to avoid hard refreshes.
     evt.preventDefault();
     return;

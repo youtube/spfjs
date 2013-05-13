@@ -51,13 +51,17 @@ $var attributes: $:_attributes()
 
   <div class="samples">
     <p>
-      <strong>Sample SPF links:</strong>
+      <strong>Sample <code>spf-link</code> links:</strong>
       <br>
       A dynamic page transition <em>should</em> occur when clicked.
       <br>
       The URL <em>should</em> update.
       <br>
-      <a class="spf-link" href="/">Overview</a>
+      <a class="spf-link" href="/">
+        <span class="sun">
+          <img src="/static/sun.png">Overview
+        </span>
+      </a>
       <a class="spf-link" href="/spec">Spec</a>
       &nbsp;&nbsp;&nbsp;&nbsp;
       <a class="spf-link" href="/page/1">Page 1</a>
@@ -68,13 +72,17 @@ $var attributes: $:_attributes()
       <a class="spf-link" href="/page/6">Page 6</a>
     </p>
     <p>
-      <strong>Sample non-SPF links:</strong>
+      <strong>Sample links:</strong>
       <br>
       A dynamic page transition <em>should not</em> occur when clicked.
       <br>
       The URL <em>should</em> update.
       <br>
-      <a href="/">Overview</a>
+      <a href="/">
+        <span class="sun">
+          <img src="/static/sun.png">Overview
+        </span>
+      </a>
       <a href="/spec">Spec</a>
       &nbsp;&nbsp;&nbsp;&nbsp;
       <a href="/page/1">Page 1</a>
@@ -85,34 +93,50 @@ $var attributes: $:_attributes()
       <a href="/page/6">Page 6</a>
     </p>
     <p>
-      <strong>Sample SPF link with children elements:</strong>
+      <strong>Sample links in a <code>spf-link</code> container:</strong>
       <br>
       A dynamic page transition <em>should</em> occur when clicked.
       <br>
       The URL <em>should</em> update.
       <br>
-      <a href="/" class="spf-link">
-        <span class="sun">
-          <img src="/static/sun.png">Overview
-        </span>
-      </a>
+      <span class="spf-link">
+        <a href="/">
+          <span class="sun">
+            <img src="/static/sun.png">Overview
+          </span>
+        </a>
+        <a href="/spec">Spec</a>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <a href="/page/1">Page 1</a>
+        <a href="/page/2">Page 2</a>
+        <a href="/page/3">Page 3</a>
+        <a href="/page/4">Page 4</a>
+        <a href="/page/5">Page 5</a>
+        <a href="/page/6">Page 6</a>
+      </span>
     </p>
-    <p class="spf-nolink">
-      <strong>Sample SPF links in a nolink container:</strong>
+    <p>
+      <strong>Sample <code>spf-link</code> links in a <code>spf-nolink</code> container:</strong>
       <br>
       A dynamic page transition <em>should not</em> occur when clicked.
       <br>
       The URL <em>should</em> update.
       <br>
-      <a class="spf-link" href="/">Overview</a>
-      <a class="spf-link" href="/spec">Spec</a>
-      &nbsp;&nbsp;&nbsp;&nbsp;
-      <a class="spf-link" href="/page/1">Page 1</a>
-      <a class="spf-link" href="/page/2">Page 2</a>
-      <a class="spf-link" href="/page/3">Page 3</a>
-      <a class="spf-link" href="/page/4">Page 4</a>
-      <a class="spf-link" href="/page/5">Page 5</a>
-      <a class="spf-link" href="/page/6">Page 6</a>
+      <span class="spf-nolink">
+        <a class="spf-link" href="/">
+          <span class="sun">
+            <img src="/static/sun.png">Overview
+          </span>
+        </a>
+        <a class="spf-link" href="/spec">Spec</a>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <a class="spf-link" href="/page/1">Page 1</a>
+        <a class="spf-link" href="/page/2">Page 2</a>
+        <a class="spf-link" href="/page/3">Page 3</a>
+        <a class="spf-link" href="/page/4">Page 4</a>
+        <a class="spf-link" href="/page/5">Page 5</a>
+        <a class="spf-link" href="/page/6">Page 6</a>
+      </span>
     </p>
     <p>
       <strong>Sample buttons to load content via JavaScript <em>with</em> navigation:</strong>
@@ -147,6 +171,50 @@ $var attributes: $:_attributes()
       <button onclick="spf.load('/page/4')">Page 4</button>
       <button onclick="spf.load('/page/5')">Page 5</button>
       <button onclick="spf.load('/page/6')">Page 6</button>
+    </p>
+    <p>
+      <strong>Sample <code>spf-link</code> links without <code>href</code> attributes:</strong>
+      <br>
+      A dynamic page transition <em>should not</em> occur when clicked.
+      <br>
+      The URL <em>should not</em> update.
+      <br>
+      <!-- missing hrefs point nowhere -->
+      <a class="spf-link">
+        <span class="sun">
+          <img src="/static/sun.png">Overview
+        </span>
+      </a>
+      <a class="spf-link">Spec</a>
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      <!-- emtpy hrefs point to the same page -->
+      <a class="spf-link" href="">Page 1</a>
+      <a class="spf-link" href="">Page 2</a>
+      <a class="spf-link" href="">Page 3</a>
+      <a class="spf-link" href="">Page 4</a>
+      <a class="spf-link" href="">Page 5</a>
+      <a class="spf-link" href="">Page 6</a>
+    </p>
+    <p>
+      <strong>Sample links with <code>spf-link</code> children:</strong>
+      <br>
+      A dynamic page transition <em>should not</em> occur when clicked.
+      <br>
+      The URL <em>should</em> update.
+      <br>
+      <a href="/">
+        <span class="sun spf-link">
+          <img src="/static/sun.png">Overview
+        </span>
+      </a>
+      <a href="/spec"><span class="spf-link">Spec</span></a>
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      <a href="/page/1"><span class="spf-link">Page 1</span></a>
+      <a href="/page/2"><span class="spf-link">Page 2</span></a>
+      <a href="/page/3"><span class="spf-link">Page 3</span></a>
+      <a href="/page/4"><span class="spf-link">Page 4</span></a>
+      <a href="/page/5"><span class="spf-link">Page 5</span></a>
+      <a href="/page/6"><span class="spf-link">Page 6</span></a>
     </p>
   </div>
 </div>

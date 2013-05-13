@@ -114,19 +114,28 @@ spf.dom.inflateElement = function(element, parent) {
  * matcher function.
  *
  * @param {Node|EventTarget} element The DOM node to start with.
- * @param {function(Node) : boolean} matcher A function that returns true if the
- *     passed node matches the desired criteria.
+ * @param {function(Node) : boolean} matcher A function that returns true if
+ *     the passed node matches the desired criteria.
+ * @param {Node=} opt_parent The DOM node to end with.  If provided, it will
+ *     be the highest point in the hierarchy walked.  If not provided, the
+ *     full hierarchy will be walked.
  * @return {Node} DOM node that matched the matcher, or null if there was
  *     no match.
  */
-spf.dom.getAncestor = function(element, matcher) {
+spf.dom.getAncestor = function(element, matcher, opt_parent) {
   while (element) {
     if (matcher(element)) {
+      // Found a match, return it.
       return element;
     }
+    if (opt_parent && element == opt_parent) {
+      // Reached the parent, return null.
+      return null;
+    }
+    // Walk up the hierarchy.
     element = element.parentNode;
   }
-  // Reached the root of the DOM without a match
+  // Reached the root, return null.
   return null;
 };
 
