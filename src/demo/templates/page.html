@@ -173,6 +173,28 @@ $var attributes: $:_attributes()
       <button onclick="spf.load('/page/6')">Page 6</button>
     </p>
     <p>
+      <strong>Sample <code>spf-link</code> links with non-200 responses:</strong>
+      <br>
+      A dynamic page transition <em>should</em> occur when clicked.
+      <br>
+      The URL <em>should</em> update.
+      <br>
+      404 Not Found: <a class="spf-link" href="/missing">Missing</a>
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      303 See Other: <a class="spf-link" href="/other/foo">Other Foo</a>
+    </p>
+    <p>
+      <strong>Sample links with non-200 responses:</strong>
+      <br>
+      A dynamic page transition <em>should not</em> occur when clicked.
+      <br>
+      The URL <em>should</em> update.
+      <br>
+      404 Not Found: <a href="/missing">Missing</a>
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      303 See Other: <a href="/other/foo">Other Foo</a>
+    </p>
+    <p>
       <strong>Sample <code>spf-link</code> links without <code>href</code> attributes:</strong>
       <br>
       A dynamic page transition <em>should not</em> occur when clicked.

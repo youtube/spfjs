@@ -31,6 +31,7 @@ goog.require('spf.string');
  * - js: HTML string containing <script> tags of JS to execute.
  * - title: String of the new Document title.
  * - timing: Map of timing attributes to timestamp numbers.
+ * - redirect: String of a URL to request instead.
  *
  * @typedef {{
  *   css: (string|undefined),
@@ -39,6 +40,7 @@ goog.require('spf.string');
  *   js: (string|undefined),
  *   title: (string|undefined),
  *   timing: (Object.<string, number>|undefined),
+ *   redirect: (string|undefined)
  * }}
  */
 spf.nav.Response;
@@ -173,7 +175,7 @@ spf.nav.navigate = function(url) {
   // Publish to callbacks.
   spf.pubsub.publish('navigate-started-callback', url);
   try {
-    // Add the URL to the history stack, (calls back to handleHistory).
+    // Add the URL to the history stack, calls back to handleHistory.
     spf.history.add(url);
   } catch (err) {
     // A SECURITY_ERR exception is thrown if the URL passed to pushState
@@ -211,6 +213,12 @@ spf.nav.navigate_ = function(url, opt_reverse) {
   };
   var navigateSuccess = function(url, response) {
     spf.nav.request_ = null;
+    // Check for redirects.
+    if (response['redirect']) {
+      // Replace the top URL on the history stack, calls back to handleHistory.
+      spf.history.replace(response['redirect']);
+      return;
+    }
     // Process the requested response.
     spf.nav.process(response, opt_reverse, 'navigate-processed-callback');
   };
@@ -245,6 +253,11 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
     }
   };
   var loadSuccess = function(url, response) {
+    // Check for redirects.
+    if (response['redirect']) {
+      spf.nav.load(response['redirect'], opt_onSuccess, opt_onError);
+      return;
+    }
     // Process the requested response.
     spf.nav.process(response, false, 'load-processed-callback');
     if (opt_onSuccess) {
@@ -574,6 +587,11 @@ spf.nav.preload = function(url, opt_onSuccess, opt_onError) {
     }
   };
   var loadSuccess = function(url, response) {
+    // Check for redirects.
+    if (response['redirect']) {
+      spf.nav.preload(response['redirect'], opt_onSuccess, opt_onError);
+      return;
+    }
     // Preprocess the requested response.
     spf.nav.preprocess(response);
     if (opt_onSuccess) {

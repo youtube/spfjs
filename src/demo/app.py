@@ -39,6 +39,15 @@ app = web.application(urls, globals())
 
 
 class servlet(object):
+  def json_response(self, response):
+    web.header('Content-Type', 'application/json')
+    web.header('Cache-Control', 'no-cache')
+    web.header('Pragma', 'no-cache')  # IE
+    if web.config.debug:
+      return json.dumps(response, sort_keys=True, indent=4)
+    else:
+      return json.dumps(response, separators=(',', ':'))
+
   def render_spf(self, content, fragments=None):
     response = {}
     css = str(getattr(content, 'stylesheet', ''))
@@ -61,13 +70,7 @@ class servlet(object):
       content_str = str(content)
       if content_str:
         response['html'] = {'content': content_str}
-    web.header('Content-Type', 'application/json')
-    web.header('Cache-Control', 'no-cache')
-    web.header('Pragma', 'no-cache') # IE
-    if web.config.debug:
-      return json.dumps(response, sort_keys=True, indent=4)
-    else:
-      return json.dumps(response, separators=(',', ':'))
+    return self.json_response(response)
 
   def render_html(self, content):
     return templates.base(content)
@@ -78,6 +81,14 @@ class servlet(object):
       return self.render_spf(content)
     else:
       return self.render_html(content)
+
+  def redirect(self, url):
+    req = web.input(spf=None)
+    if req.spf:
+      response = {'redirect': url}
+      return self.json_response(response)
+    else:
+      raise web.seeother(url)
 
 
 class index(servlet):
@@ -109,11 +120,7 @@ class page(servlet):
 class other(servlet):
   def GET(self, arg=None):
     if arg is not None:
-      req = web.input(spf=None)
-      if req.spf:
-        raise web.seeother('/other?spf=1')
-      else:
-        raise web.seeother('/other')
+      return self.redirect('/other')
     referer = web.ctx.env.get('HTTP_REFERER')
     content = templates.other(referer)
     return self.render(content)
