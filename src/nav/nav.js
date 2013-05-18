@@ -335,7 +335,7 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification,
     response = /** @type {spf.nav.Response} */ (response);
     // Cache the response for future requests.
     // Use the absolute URL without identifier to allow cached responses
-    // from preloading to apply to navigation.
+    // from prefetching to apply to navigation.
     spf.cache.set(absoluteUrl, response, spf.config['cache-lifetime']);
     // Set the timing values for the response.
     response['timing'] = timing;
@@ -351,7 +351,7 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification,
   // Record fetchStart time before loading from cache.
   timing['fetchStart'] = spf.now()
   // Use the absolute URL without identifier to allow cached responses
-  // from preloading to apply to navigation.
+  // from prefetching to apply to navigation.
   var cachedResponse = spf.cache.get(absoluteUrl);
   if (cachedResponse) {
     cachedResponse = /** @type {spf.nav.Response} */ (cachedResponse);
@@ -564,7 +564,7 @@ spf.nav.process_ = function(key, opt_quick) {
 
 
 /**
- * Preloads a URL using the SPF protocol.  Use to prime the SPF request cache
+ * Prefetches a URL using the SPF protocol.  Use to prime the SPF request cache
  * with the content and the browser cache with script and stylesheet URLs.
  * The content is requested by {@link #request}.  If the response is
  * successfully parsed, it is processed by {@link #preprocess}, and the URL and
@@ -578,18 +578,18 @@ spf.nav.process_ = function(key, opt_quick) {
  *     load fails.
  * @return {XMLHttpRequest} The XHR of the current request.
  */
-spf.nav.preload = function(url, opt_onSuccess, opt_onError) {
-  spf.debug.info('nav.preload ', url);
-  var loadError = function(url) {
-    spf.debug.warn('preload failed ', 'url=', url);
+spf.nav.prefetch = function(url, opt_onSuccess, opt_onError) {
+  spf.debug.info('nav.prefetch ', url);
+  var fetchError = function(url) {
+    spf.debug.warn('prefetch failed ', 'url=', url);
     if (opt_onError) {
       opt_onError(url);
     }
   };
-  var loadSuccess = function(url, response) {
+  var fetchSuccess = function(url, response) {
     // Check for redirects.
     if (response['redirect']) {
-      spf.nav.preload(response['redirect'], opt_onSuccess, opt_onError);
+      spf.nav.prefetch(response['redirect'], opt_onSuccess, opt_onError);
       return;
     }
     // Preprocess the requested response.
@@ -598,7 +598,7 @@ spf.nav.preload = function(url, opt_onSuccess, opt_onError) {
       opt_onSuccess(url, response);
     }
   };
-  return spf.nav.request(url, loadSuccess, loadError, null, 'preload');
+  return spf.nav.request(url, fetchSuccess, fetchError, null, 'prefetch');
 };
 
 
@@ -606,7 +606,7 @@ spf.nav.preload = function(url, opt_onSuccess, opt_onError) {
  * Preprocesses the response using the SPF protocol.  The response object
  * should already have been unserialized by {@link #request}.  Similar to
  * {@link #process} but instead of page content being updated, script and
- * stylesheet URLs are preloaded.
+ * stylesheet URLs are prefetched.
  *
  * @param {spf.nav.Response} response The SPF response object to preprocess.
  */

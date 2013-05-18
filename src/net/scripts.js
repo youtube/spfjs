@@ -195,25 +195,25 @@ spf.net.scripts.unload_ = function(scriptEls) {
 
 
 /**
- * Preloads a script URL; the script will be requested but not loaded.
+ * Prefetchs a script URL; the script will be requested but not loaded.
  * Use to prime the browser cache and avoid needing to request the script when
  * subsequently loaded.  See {@link #load}.
  *
  * @param {string} url Url of the script.
  */
-spf.net.scripts.preload = function(url) {
+spf.net.scripts.prefetch = function(url) {
   var id = spf.net.scripts.ID_PREFIX + spf.string.hashCode(url);
   var scriptEl = document.getElementById(id);
   // If the script is already loaded, return.
   if (scriptEl) {
     return;
   }
-  var iframeId = spf.net.scripts.ID_PREFIX + 'preload';
+  var iframeId = spf.net.scripts.ID_PREFIX + 'prefetch';
   var iframeEl = document.getElementById(iframeId);
   if (!iframeEl) {
     iframeEl = spf.dom.createIframe(iframeId);
   } else {
-    // If the script is already preloaded, return.
+    // If the script is already prefetched, return.
     scriptEl = iframeEl.contentWindow.document.getElementById(id);
     if (scriptEl) {
       return;
@@ -221,21 +221,21 @@ spf.net.scripts.preload = function(url) {
   }
   // Firefox needs the iframe to be fully created in the DOM before continuing.
   setTimeout(function() {
-    spf.net.scripts.preload_(url, id, iframeEl.contentWindow.document);
+    spf.net.scripts.prefetch_(url, id, iframeEl.contentWindow.document);
   }, 0);
 };
 
 
 
 /**
- * See {@link #preload}.
+ * See {@link #prefetch}.
  *
  * @param {string} url Url of the script.
  * @param {string} id Id of the script element.
  * @param {Document=} opt_document Content document element.
  * @private
  */
-spf.net.scripts.preload_ = function(url, id, opt_document) {
+spf.net.scripts.prefetch_ = function(url, id, opt_document) {
   var doc = opt_document || document;
   var objectEl = doc.createElement('object');
   objectEl.id = id;
@@ -293,8 +293,8 @@ spf.net.scripts.execute = function(html, opt_callback) {
 
 
 /**
- * Parses an HTML string and preloads script URLs.
- * See {@link #preload}.
+ * Parses an HTML string and prefetches script URLs.
+ * See {@link #prefetch}.
  *
  * @param {string} html The HTML content to parse.
  */
@@ -304,14 +304,14 @@ spf.net.scripts.preexecute = function(html) {
   }
   // Extract the scripts.
   var queue = spf.net.scripts.extract_(html);
-  // Preload the scripts.
+  // Prefetch the scripts.
   for (var i = 0; i < queue.length; i++) {
     var item = queue[i];
     var script = item[0];
     var isUrl = item[1];
     var name = item[2];
     if (isUrl) {
-      spf.net.scripts.preload(script);
+      spf.net.scripts.prefetch(script);
     }
   }
 };

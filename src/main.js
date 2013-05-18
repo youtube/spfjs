@@ -60,7 +60,7 @@ spf.dispose = spf.main.dispose;
 spf.navigate = spf.nav.navigate;
 spf.load = spf.nav.load;
 spf.process = spf.nav.process;
-spf.preload = spf.nav.preload;
+spf.prefetch = spf.nav.prefetch;
 spf.preprocess = spf.nav.preprocess;
 
 
@@ -77,7 +77,7 @@ if (spf.DEBUG) {
     'navigate': spf.navigate,
     'load': spf.load,
     'process': spf.process,
-    'preload': spf.preload,
+    'prefetch': spf.prefetch,
     'preprocess': spf.preprocess
   };
 }

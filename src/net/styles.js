@@ -89,25 +89,25 @@ spf.net.styles.unload = function(url) {
 
 
 /**
- * Preloads a stylesheet URL; the stylesheet will be requested but not loaded.
+ * Prefetches a stylesheet URL; the stylesheet will be requested but not loaded.
  * Use to prime the browser cache and avoid needing to request the styesheet
  * when subsequently loaded.  See {@link #load}.
  *
  * @param {string} url Url of the stylesheet.
  */
-spf.net.styles.preload = function(url) {
+spf.net.styles.prefetch = function(url) {
   var id = spf.net.styles.ID_PREFIX + spf.string.hashCode(url);
   var linkEl = document.getElementById(id);
   // If the stylesheet is already loaded, return.
   if (linkEl) {
     return linkEl;
   }
-  var iframeId = spf.net.styles.ID_PREFIX + 'preload';
+  var iframeId = spf.net.styles.ID_PREFIX + 'prefetch';
   var iframeEl = document.getElementById(iframeId);
   if (!iframeEl) {
     iframeEl = spf.dom.createIframe(iframeId);
   } else {
-    // If the stylesheet is already preloaded, return.
+    // If the stylesheet is already prefetched, return.
     linkEl = iframeEl.contentWindow.document.getElementById(id);
     if (linkEl) {
       return;
@@ -147,8 +147,8 @@ spf.net.styles.install = function(html) {
 
 
 /**
- * Parses an HTML string and preloads style URLs.
- * See {@link #preload}.
+ * Parses an HTML string and prefetches style URLs.
+ * See {@link #prefetch}.
  *
  * @param {string} html The HTML content to parse.
  */
@@ -158,13 +158,13 @@ spf.net.styles.preinstall = function(html) {
   }
   // Extract the styles.
   var queue = spf.net.styles.extract_(html);
-  // Preload the styles.
+  // Prefetch the styles.
   for (var i = 0; i < queue.length; i++) {
     var pair = queue[i];
     var style = pair[0];
     var isUrl = pair[1];
     if (isUrl) {
-      spf.net.styles.preload(style);
+      spf.net.styles.prefetch(style);
     }
   }
 };
