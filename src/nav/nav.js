@@ -1,5 +1,5 @@
 /**
- * @fileoverview Functions to handle pushState-based navigation.
+ * @fileoverview Functions to handle pushstate-based navigation.
  *
  * @author nicksay@google.com (Alex Nicksay)
  */
@@ -125,8 +125,9 @@ spf.nav.handleClick = function(evt) {
   // Publish to callbacks.
   spf.pubsub.publish('navigate-started-callback', url);
   try {
-    // Add the URL to the history stack, (calls back to handleHistory).
-    spf.history.add(url);
+    // Add the URL to the history stack, calls back to handleHistory.
+    var state = {'spf-referer': window.location.href};
+    spf.history.add(url, state);
     // Prevent the default browser navigation.
     evt.preventDefault();
   } catch (err) {
@@ -146,11 +147,12 @@ spf.nav.handleClick = function(evt) {
  */
 spf.nav.handleHistory = function(url, opt_state) {
   var reverse = !!(opt_state && opt_state['spf-back']);
+  var referer = opt_state && opt_state['spf-referer'];
   spf.debug.debug('nav.handleHistory ', 'url=', url, 'state=', opt_state);
   // Publish to callbacks.
   spf.pubsub.publish('navigate-history-callback', url);
   // Navigate to the URL.
-  spf.nav.navigate_(url, reverse);
+  spf.nav.navigate_(url, referer, reverse);
 };
 
 
@@ -176,7 +178,8 @@ spf.nav.navigate = function(url) {
   spf.pubsub.publish('navigate-started-callback', url);
   try {
     // Add the URL to the history stack, calls back to handleHistory.
-    spf.history.add(url);
+    var state = {'spf-referer': window.location.href};
+    spf.history.add(url, state);
   } catch (err) {
     // A SECURITY_ERR exception is thrown if the URL passed to pushState
     // doesn't match the same domain.  In this case, redirect to the URL.
@@ -190,12 +193,13 @@ spf.nav.navigate = function(url) {
  * Performs navigation to a URL. See {@link #navigate} and {@link #handleClick}.
  *
  * @param {string} url The URL to navigate to, without the SPF identifier.
+ * @param {string=} opt_referer The Referrer URL, without the SPF identifier.
  * @param {boolean=} opt_reverse Whether this is "backwards" navigation. True
  *     when the "back" button is clicked and a request is in response to a
  *     popState event.
  * @private.
  */
-spf.nav.navigate_ = function(url, opt_reverse) {
+spf.nav.navigate_ = function(url, opt_referer, opt_reverse) {
   spf.debug.info('nav.navigate ', url, opt_reverse);
   if (!spf.nav.initialized_) {
     spf.debug.error('>> nav not initialized');
@@ -223,7 +227,8 @@ spf.nav.navigate_ = function(url, opt_reverse) {
     spf.nav.process(response, opt_reverse, 'navigate-processed-callback');
   };
   var xhr = spf.nav.request(url, navigateSuccess, navigateError,
-                            'navigate-received-callback', 'navigate');
+                            'navigate-received-callback', 'navigate',
+                            opt_referer);
   spf.nav.request_ = xhr;
 };
 
@@ -284,10 +289,11 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
  *     request succeeds.
  * @param {?string=} opt_type The type of request (e.g. navigate, load, etc)
  *     this is, used to alter the URL identifier.
+ * @param {string=} opt_referer The Referrer URL, without the SPF identifier.
  * @return {XMLHttpRequest} The XHR of the current request.
  */
 spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification,
-                           opt_type) {
+                           opt_type, opt_referer) {
   spf.debug.debug('nav.request ', url);
   // Convert the URL to absolute, to be used for caching the response.
   var absoluteUrl = spf.dom.url.absolute(url);
@@ -373,7 +379,12 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification,
     // If no cached response is found, reset the timing data to use
     // the values provided by the XHR instead.
     timing = {};
+    var headers;
+    if (opt_referer) {
+      headers = {'X-SPF-Referer': opt_referer};
+    }
     var xhr = spf.net.xhr.get(requestUrl, {
+      headers: headers,
       timeoutMs: spf.config['request-timeout'],
       onSuccess: requestResponse,
       onError: requestResponse,

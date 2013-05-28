@@ -9,6 +9,7 @@ goog.provide('spf.net.xhr');
 
 /**
  * Type definition for the configuration options for an XMLHttpRequest.
+ * - headers: map of header key/value pairs.
  * - timeoutMs: number of milliseconds after which the request will be timed
  *      out by the client. Default is to allow the browser to handle timeouts.
  * - onSuccess: optional callback to execute if the XHR succeeds.
@@ -17,6 +18,7 @@ goog.provide('spf.net.xhr');
  *      if a timeout is configured.
  *
  * @typedef {{
+ *   headers: (Object.<string>|undefined),
  *   timeoutMs: (number|undefined),
  *   onSuccess: (function(XMLHttpRequest)|undefined),
  *   onError: (function(XMLHttpRequest)|undefined),
@@ -30,7 +32,7 @@ spf.net.xhr.Options;
  * Type definition for POST data.
  * @typedef {(ArrayBuffer|Blob|Document|FormData|null|string|undefined)}
  */
- spf.net.xhr.PostData;
+spf.net.xhr.PostData;
 
 
 /**
@@ -110,6 +112,12 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
       }
     }
   };
+
+  if (options.headers) {
+    for (var key in options.headers) {
+      xhr.setRequestHeader(key, options.headers[key]);
+    }
+  }
 
   if (options.timeoutMs > 0) {
     timer = setTimeout(function() {
