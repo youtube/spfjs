@@ -21,11 +21,9 @@ demo.init = function() {
   var config = {
     'nolink-class': 'spf-nolink',
     'navigate-started-callback': demo.handleNavigateStarted,
-    'navigate-history-callback': demo.handleNavigateHistory,
+    'navigate-requested-callback': demo.handleNavigateRequested,
     'navigate-received-callback': demo.handleNavigateReceived,
-    'navigate-processed-callback': demo.handleNavigateProcessed,
-    'load-received-callback': demo.handleLoadReceived,
-    'load-processed-callback': demo.handleLoadProcessed
+    'navigate-processed-callback': demo.handleNavigateProcessed
   };
   demo.enabled = spf.init(config);
   demo.updateStatus();
@@ -78,30 +76,18 @@ demo.updateTime = function() {
 
 
 /**
- * Callback for navigate starting (via a link click or calling
- * spf.navigate).
+ * Callback for when navigate requests are sent.
  * @param {string} url The new URL.
  */
-demo.handleNavigateStarted = function(url) {
+demo.handleNavigateRequested = function(url) {
   if (window.console) {
-    window.console.log('demo: navigate started', url);
+    window.console.log('demo: navigate requested', url);
   }
 };
 
 
 /**
- * Callback for history change events.
- * @param {string} url The new URL.
- */
-demo.handleNavigateHistory = function(url) {
-  if (window.console) {
-    window.console.log('demo: navigate history', url);
-  }
-};
-
-
-/**
- * Callback for navigate requests.
+ * Callback for when navigate requests are received.
  * @param {string} url The reqested URL, without the SPF identifier.
  * @param {Object} response The requested SPF response object.
  */
@@ -119,29 +105,6 @@ demo.handleNavigateReceived = function(url, response) {
 demo.handleNavigateProcessed = function(response) {
   if (window.console) {
     window.console.log('demo: navigate processed');
-  }
-};
-
-
-/**
- * Callback for load requests.
- * @param {string} url The reqested URL, without the SPF identifier.
- * @param {Object} response The requested SPF response object.
- */
-demo.handleLoadReceived = function(url, response) {
-  if (window.console) {
-    window.console.log('demo: load received', url);
-  }
-};
-
-
-/**
- * Callback for load response processing.
- * @param {Object} response The processed SPF response object.
- */
-demo.handleLoadProcessed = function(response) {
-  if (window.console) {
-    window.console.log('demo: load processed');
   }
 };
 

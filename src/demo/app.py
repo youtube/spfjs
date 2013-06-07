@@ -39,6 +39,12 @@ app = web.application(urls, globals())
 
 
 class servlet(object):
+  def get_referer(self):
+    referer = web.ctx.env.get('HTTP_X_SPF_REFERER')
+    if not referer:
+      referer = web.ctx.env.get('HTTP_REFERER')
+    return referer
+
   def json_response(self, response):
     web.header('Content-Type', 'application/json')
     web.header('Cache-Control', 'no-cache')
@@ -121,7 +127,7 @@ class other(servlet):
   def GET(self, arg=None):
     if arg is not None:
       return self.redirect('/other')
-    referer = web.ctx.env.get('HTTP_REFERER')
+    referer = self.get_referer()
     content = templates.other(referer)
     return self.render(content)
 

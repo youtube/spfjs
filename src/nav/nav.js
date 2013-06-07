@@ -122,20 +122,10 @@ spf.nav.handleClick = function(evt) {
     evt.preventDefault();
     return;
   }
-  // Publish to callbacks.
-  spf.pubsub.publish('navigate-started-callback', url);
-  try {
-    // Add the URL to the history stack, calls back to handleHistory.
-    var state = {'spf-referer': window.location.href};
-    spf.history.add(url, state);
-    // Prevent the default browser navigation.
-    evt.preventDefault();
-  } catch (err) {
-    // A SECURITY_ERR exception is thrown if the URL passed to pushState
-    // doesn't match the same domain.  In this case, do nothing to allow
-    // the default browser navigation to take effect.
-    spf.debug.error('>> error caught, ignoring click ', 'err=', err);
-  }
+  // Navigate to the URL.
+  spf.nav.navigate_(url);
+  // Prevent the default browser navigation to avoid hard refreshes.
+  evt.preventDefault();
 };
 
 
@@ -149,10 +139,8 @@ spf.nav.handleHistory = function(url, opt_state) {
   var reverse = !!(opt_state && opt_state['spf-back']);
   var referer = opt_state && opt_state['spf-referer'];
   spf.debug.debug('nav.handleHistory ', 'url=', url, 'state=', opt_state);
-  // Publish to callbacks.
-  spf.pubsub.publish('navigate-history-callback', url);
   // Navigate to the URL.
-  spf.nav.navigate_(url, referer, reverse);
+  spf.nav.navigate_(url, referer, true, reverse);
 };
 
 
@@ -174,61 +162,97 @@ spf.nav.navigate = function(url) {
   if (!url || url == window.location.href) {
     return;
   }
-  // Publish to callbacks.
-  spf.pubsub.publish('navigate-started-callback', url);
-  try {
-    // Add the URL to the history stack, calls back to handleHistory.
-    var state = {'spf-referer': window.location.href};
-    spf.history.add(url, state);
-  } catch (err) {
-    // A SECURITY_ERR exception is thrown if the URL passed to pushState
-    // doesn't match the same domain.  In this case, redirect to the URL.
-    spf.debug.error('>> error caught, redirecting ', 'url=', url, 'err=', err);
-    window.location.href = url;
-  }
+  // Navigate to the URL.
+  spf.nav.navigate_(url);
 };
 
 
 /**
- * Performs navigation to a URL. See {@link #navigate} and {@link #handleClick}.
+ * Performs navigation to a URL.
+ * See {@link #navigate}, {@link #handleClick}, and {@link #handleHistory}.
  *
  * @param {string} url The URL to navigate to, without the SPF identifier.
  * @param {string=} opt_referer The Referrer URL, without the SPF identifier.
+ *     Defaults to the current URL.
+ * @param {boolean=} opt_history Whether this navigation is part of a history
+ *     change. True when navigation is in response to a popState event.
  * @param {boolean=} opt_reverse Whether this is "backwards" navigation. True
- *     when the "back" button is clicked and a request is in response to a
+ *     when the "back" button is clicked and navigation is in response to a
  *     popState event.
  * @private.
  */
-spf.nav.navigate_ = function(url, opt_referer, opt_reverse) {
-  spf.debug.info('nav.navigate ', url, opt_reverse);
+spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
+  spf.debug.info('nav.navigate ', url, opt_referer, opt_history, opt_reverse);
+  // If navigation is requested but SPF is not initialzed, redirect.
   if (!spf.nav.initialized_) {
     spf.debug.error('>> nav not initialized');
+    window.location.href = url;
     return;
   }
+  // Abort previous navigation, if needed.
   if (spf.nav.request_) {
     spf.debug.warn('aborting previous navigate ', 'xhr=', spf.nav.request_);
     spf.nav.request_.abort();
     spf.nav.request_ = null;
   }
+  // Set the navigation referer, stored in the history entry state object
+  // to allow the correct value to be sent to the server during back/forward.
+  // Only different than the current URL when navigation is in response to
+  // a popState event.
+  var referer = opt_referer || window.location.href;
+  // Publish to callbacks.
+  // Do this before the request is made, since the response might be cached,
+  // in which case the operation is synchronous.
+  spf.pubsub.publish('navigate-requested-callback', url);
   var navigateError = function(url) {
     spf.debug.warn('navigate failed, redirecting ', 'url=', url);
     spf.nav.request_ = null;
     window.location.href = url;
+    return;
   };
   var navigateSuccess = function(url, response) {
     spf.nav.request_ = null;
     // Check for redirects.
     if (response['redirect']) {
-      // Replace the top URL on the history stack, calls back to handleHistory.
-      spf.history.replace(response['redirect']);
+      // If a redirect is issued in response to a new navigation,
+      // navigate to the redirect URL directly.
+      var redirectUrl = response['redirect'];
+      if (!opt_history) {
+        spf.nav.navigate_(redirectUrl, referer, opt_history, opt_reverse);
+      } else {
+        // Otherwise, replace the current history entry with the redirect,
+        // executing the callback to trigger the next navigation.
+        var state = {'spf-referer': referer};
+        spf.history.replace(redirectUrl, state, true);
+      }
       return;
+    }
+    // Check for new navigation that needs a history entry added.
+    if (!opt_history) {
+      try {
+        // Add the URL to the history stack.
+        var state = {'spf-referer': referer};
+        spf.history.add(url, state);
+      } catch (err) {
+        // An error is thrown if the state object is too large or if the
+        // URL is not in the same domain.  At this point the XHR has succeeded,
+        // so the same domain error should not occur, and browser limits
+        // on the serialized state objects should be much larger than the
+        // data used by SPF.  However, in case external JS has modified the
+        // state object or a unforeseen mismatch in security policies between
+        // XHR and History occurs, handle the error here and redirect.
+        spf.debug.error('>> error caught, redirecting ',
+                        'url=', url, 'err=', err);
+        window.location.href = url;
+        return;
+      }
     }
     // Process the requested response.
     spf.nav.process(response, opt_reverse, 'navigate-processed-callback');
   };
   var xhr = spf.nav.request(url, navigateSuccess, navigateError,
                             'navigate-received-callback', 'navigate',
-                            opt_referer);
+                            referer);
   spf.nav.request_ = xhr;
 };
 
@@ -264,13 +288,12 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
       return;
     }
     // Process the requested response.
-    spf.nav.process(response, false, 'load-processed-callback');
+    spf.nav.process(response);
     if (opt_onSuccess) {
       opt_onSuccess(url, response);
     }
   };
-  return spf.nav.request(url, loadSuccess, loadError,
-                         'load-received-callback', 'load');
+  return spf.nav.request(url, loadSuccess, loadError, null, 'load');
 };
 
 
@@ -287,8 +310,8 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
  *     request fails.
  * @param {?string=} opt_notification The notification to publish if the
  *     request succeeds.
- * @param {?string=} opt_type The type of request (e.g. navigate, load, etc)
- *     this is, used to alter the URL identifier.
+ * @param {?string=} opt_type The type of request (e.g. "navigate", "load",
+ *     etc), used to alter the URL identifier; defaults to "request".
  * @param {string=} opt_referer The Referrer URL, without the SPF identifier.
  * @return {XMLHttpRequest} The XHR of the current request.
  */

@@ -26,12 +26,9 @@ spf.defaults = {
   'nolink-class': null, // If needed, "spf-nolink" is recommended.
   'request-timeout': 0,
   'cache-lifetime': 600000,  // 10 minutes in milliseconds.
-  'navigate-started-callback': null,
-  'navigate-history-callback': null,
+  'navigate-requested-callback': null,
   'navigate-received-callback': null,
   'navigate-processed-callback': null,
-  'load-received-callback': null,
-  'load-processed-callback': null,
   'transition-class': 'spf-transition',
   'transition-duration': 425,
   'transition-forward-parent-class': 'spf-transition-forward',

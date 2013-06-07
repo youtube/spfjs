@@ -26,7 +26,7 @@ spf.history.init = function(callback) {
     spf.history.initialized_ = true;
     spf.history.callback_ = callback;
     spf.history.url_ = window.location.href;
-    spf.history.replace(spf.history.url_, null, true);
+    spf.history.replace(spf.history.url_);
     window.addEventListener('popstate', spf.history.pop_, false);
   }
 };
@@ -50,15 +50,15 @@ spf.history.dispose = function() {
  * @param {Object=} opt_state The state object associated with this history
  *     entry.  When the user returns to this entry, the "state" property of the
  *     event will contain a copy of this object.
- * @param {boolean=} opt_skipCallback Whether to skip calling the callback.
+ * @param {boolean=} opt_doCallback Whether to do the history event callback.
  * @throws {Error} If the state object is too large. For example, Firefox will
  *     pass the object to JSON.stringify and impose a 640k character limit.
  * @throws {Error} If the URL is not in the same domain, a SECURITY_ERR
  *     (code == 18) is thrown.
  */
-spf.history.add = function(opt_url, opt_state, opt_skipCallback) {
+spf.history.add = function(opt_url, opt_state, opt_doCallback) {
   spf.debug.info('history.add ', opt_url);
-  spf.history.push_(false, opt_url, opt_state, opt_skipCallback);
+  spf.history.push_(false, opt_url, opt_state, opt_doCallback);
 };
 
 
@@ -71,15 +71,15 @@ spf.history.add = function(opt_url, opt_state, opt_skipCallback) {
  * @param {Object=} opt_state The state object associated with this history
  *     entry.  When the user returns to this entry, the "state" property of the
  *     event will contain a copy of this object.
- * @param {boolean=} opt_skipCallback Whether to skip calling the callback.
+ * @param {boolean=} opt_doCallback Whether to do the history event callback.
  * @throws {Error} If the state object is too large. For example, Firefox will
  *     pass the object to JSON.stringify and impose a 640k character limit.
  * @throws {Error} If the URL is not in the same domain, a SECURITY_ERR
  *     (code == 18) is thrown.
  */
-spf.history.replace = function(opt_url, opt_state, opt_skipCallback) {
+spf.history.replace = function(opt_url, opt_state, opt_doCallback) {
   spf.debug.info('history.replace ', opt_url);
-  spf.history.push_(true, opt_url, opt_state, opt_skipCallback);
+  spf.history.push_(true, opt_url, opt_state, opt_doCallback);
 };
 
 
@@ -89,10 +89,10 @@ spf.history.replace = function(opt_url, opt_state, opt_skipCallback) {
  * @param {boolean} replace Whether to replace the previous entry.
  * @param {?string=} opt_url The URL associated with this entry.
  * @param {Object=} opt_state The state object associated with this entry.
- * @param {boolean=} opt_skipCallback Whether to skip the callback.
+ * @param {boolean=} opt_doCallback Whether to do the history event callback.
  * @private
  */
-spf.history.push_ = function(replace, opt_url, opt_state, opt_skipCallback) {
+spf.history.push_ = function(replace, opt_url, opt_state, opt_doCallback) {
   if (!opt_url && !opt_state) {
     return;
   }
@@ -108,7 +108,7 @@ spf.history.push_ = function(replace, opt_url, opt_state, opt_skipCallback) {
     spf.debug.debug('    pushState:  ', 'url=', url, 'state=', state);
   }
   spf.history.url_ = url;
-  if (!opt_skipCallback) {
+  if (opt_doCallback) {
     spf.history.callback_(url, state);
   }
 };

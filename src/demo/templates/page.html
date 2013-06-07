@@ -27,8 +27,8 @@ $def _javascript():
     }
   </script>
   $ page_js = "/static/demo-page.js"
-  <!-- Pre-fill the hashcode so SPF won't load the script twice -->
-  <script id="js-$hashcode(page_js)" src="$page_js"></script>
+  <!-- Pre-fill the hashcode and data attribute so SPF won't load the script twice -->
+  <script id="js-$hashcode(page_js)" src="$page_js" data-loaded="true"></script>
 
 
 $def _attributes():
