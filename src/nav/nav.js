@@ -183,7 +183,7 @@ spf.nav.navigate = function(url) {
  */
 spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
   spf.debug.info('nav.navigate ', url, opt_referer, opt_history, opt_reverse);
-  // If navigation is requested but SPF is not initialzed, redirect.
+  // If navigation is requested but SPF is not initialized, redirect.
   if (!spf.nav.initialized_) {
     spf.debug.error('>> nav not initialized');
     window.location.href = url;
@@ -432,7 +432,8 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification,
 spf.nav.process = function(response, opt_reverse, opt_notification) {
   spf.debug.info('nav.process ', response, opt_reverse);
   // Install page styles.
-  spf.net.styles.install(response['css']);
+  var result = spf.net.styles.parse(response['css']);
+  spf.net.styles.install(result);
   spf.debug.debug('    installed styles');
   // Update title.
   if (response['title']) {
@@ -463,7 +464,8 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
     // Only execute when remaining is 0, to avoid early execution.
     if (remaining == 0) {
       // Execute scripts.
-      spf.net.scripts.execute(response['js'], function() {
+      result = spf.net.scripts.parse(response['js']);
+      spf.net.scripts.execute(result, function() {
         spf.debug.debug('    executed scripts');
         if (opt_notification) {
           // Publish to callbacks.
@@ -485,11 +487,14 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
     var key = spf.getKey(el);
     if (!spf.nav.animate_ ||
         !spf.dom.classes.has(el, spf.config['transition-class'])) {
+      result = spf.net.scripts.parse(html);
       // If the target element isn't enabled for transitions, just replace.
-      el.innerHTML = html;
+      // Use the parsed HTML without script tags to avoid any scripts
+      // being accidentally considered loading.
+      el.innerHTML = result.parsed;
       spf.debug.debug('    updated fragment content ', id);
       // Execute embedded scripts before continuing.
-      spf.net.scripts.execute(html, function() {
+      spf.net.scripts.execute(result, function() {
         spf.debug.debug('    executed fragment scripts ', id);
         remaining--;
         maybeContinueAfterContent();
@@ -501,7 +506,7 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
       var queue = [];
       var data = {
         reverse: !!opt_reverse,
-        html: html,
+        result: spf.net.scripts.parse(html),
         currentEl: null,  // Set in Step 1.
         pendingEl: null,  // Set in Step 1.
         parentEl: el,
@@ -522,7 +527,9 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
         // Add the new content.
         data.pendingEl = document.createElement('div');
         data.pendingEl.className = data.pendingClass;
-        data.pendingEl.innerHTML = data.html;
+        // Use the parsed HTML without script tags to avoid any scripts
+        // being accidentally considered loading.
+        data.pendingEl.innerHTML = data.result.parsed;
         if (data.reverse) {
           spf.dom.insertSiblingBefore(data.pendingEl, data.currentEl);
         } else {
@@ -549,7 +556,7 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
       // Transition Step 4: Execute scripts (timeout = 0).
       queue.push([function(data, next) {
         // Execute embedded scripts before continuing.
-        spf.net.scripts.execute(data.html, function() {
+        spf.net.scripts.execute(data.result, function() {
           spf.debug.debug('    executed fragment scripts ', data.parentEl.id);
           remaining--;
           maybeContinueAfterContent();
@@ -647,16 +654,19 @@ spf.nav.prefetch = function(url, opt_onSuccess, opt_onError) {
 spf.nav.preprocess = function(response) {
   spf.debug.info('nav.preprocess ', response);
   // Preinstall page styles.
-  spf.net.styles.preinstall(response['css']);
+  var result = spf.net.styles.parse(response['css']);
+  spf.net.styles.preinstall(result);
   spf.debug.debug('    preinstalled styles');
   // Preexecute fragment scripts.
   var fragments = response['html'] || {};
   for (var id in fragments) {
-    spf.net.scripts.preexecute(fragments[id]);
+    result = spf.net.scripts.parse(fragments[id]);
+    spf.net.scripts.preexecute(result);
     spf.debug.debug('    preexecuted fragment scripts ', id);
   }
   // Preexecute page scripts.
-  spf.net.scripts.preexecute(response['js']);
+  result = spf.net.scripts.parse(response['js']);
+  spf.net.scripts.preexecute(result);
   spf.debug.debug('    preexecuted scripts');
 };
 

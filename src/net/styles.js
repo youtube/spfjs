@@ -121,26 +121,22 @@ spf.net.styles.prefetch = function(url) {
 
 
 /**
- * Parses an HTML string and installs styles in the current document.
- * See {@link #load} and {@link #eval}.
+ * Installs styles that have been parsed from an HTML string.
+ * See {@link #load}, {@link #eval}, and {@link #parse}.
  *
- * @param {string} html The HTML content to parse.
+ * @param {!spf.net.styles.ParseResult} result The parsed HTML result.
  */
-spf.net.styles.install = function(html) {
-  if (!html) {
+spf.net.styles.install = function(result) {
+  if (result.queue.length <= 0) {
     return;
   }
-  // Extract the styles.
-  var queue = spf.net.styles.extract_(html);
   // Install the styles.
-  for (var i = 0; i < queue.length; i++) {
-    var pair = queue[i];
-    var style = pair[0];
-    var isUrl = pair[1];
-    if (isUrl) {
-      spf.net.styles.load(style);
-    } else {
-      spf.net.styles.eval(style);
+  for (var i = 0; i < result.queue.length; i++) {
+    var item = result.queue[i];
+    if (item['url']) {
+      spf.net.styles.load(item['url']);
+    } else if (item['text']) {
+      spf.net.styles.eval(item['text']);
     }
   }
 };
@@ -148,23 +144,19 @@ spf.net.styles.install = function(html) {
 
 /**
  * Parses an HTML string and prefetches style URLs.
- * See {@link #prefetch}.
+ * See {@link #prefetch} and {@link #parse}.
  *
- * @param {string} html The HTML content to parse.
+ * @param {!spf.net.styles.ParseResult} result The parsed HTML result.
  */
-spf.net.styles.preinstall = function(html) {
-  if (!html) {
+spf.net.styles.preinstall = function(result) {
+  if (result.queue.length <= 0) {
     return;
   }
-  // Extract the styles.
-  var queue = spf.net.styles.extract_(html);
   // Prefetch the styles.
-  for (var i = 0; i < queue.length; i++) {
-    var pair = queue[i];
-    var style = pair[0];
-    var isUrl = pair[1];
-    if (isUrl) {
-      spf.net.styles.prefetch(style);
+  for (var i = 0; i < result.queue.length; i++) {
+    var item = result.queue[i];
+    if (item['url']) {
+      spf.net.styles.prefetch(item['url']);
     }
   }
 };
@@ -174,28 +166,47 @@ spf.net.styles.preinstall = function(html) {
  * Parses styles from an HTML string.
  *
  * @param {string} html The HTML content to parse.
- * @return {Array.<{0:string, 1:boolean}>}
- * @private
+ * @return {!spf.net.styles.ParseResult}
  */
-spf.net.styles.extract_ = function(html) {
-  var queue = [];
-  html.replace(spf.net.styles.LINK_TAG_REGEXP,
+spf.net.styles.parse = function(html) {
+  var result = new spf.net.styles.ParseResult();
+  if (!html) {
+    return result;
+  }
+  result.original = html;
+  html = html.replace(spf.net.styles.LINK_TAG_REGEXP,
       function(fullMatch, attr) {
         var isStyleSheet = spf.string.contains(attr, 'rel="stylesheet"');
         if (isStyleSheet) {
           var url = attr.match(spf.net.styles.HREF_ATTR_REGEXP);
-          if (url) {
-            queue.push([url[1], true]);
-          }
+          url = url ? url[1] : '';
+          result.queue.push({'url': url, 'text': ''});
+          return '';
+        } else {
+          return fullMatch;
         }
       });
-  html.replace(spf.net.styles.STYLE_TAG_REGEXP,
+  html = html.replace(spf.net.styles.STYLE_TAG_REGEXP,
       function(fullMatch, attr, text) {
-        if (text) {
-          queue.push([text, false]);
-        }
+        result.queue.push({'url': '', 'text': text});
+        return '';
       });
-  return queue;
+  result.parsed = html;
+  return result;
+};
+
+
+/**
+ * A container for holding the result of parsing styles from an HTML string.
+ * @constructor
+ */
+spf.net.styles.ParseResult = function() {
+  /** @type {string} */
+  this.original = '';
+  /** @type {string} */
+  this.parsed = '';
+  /** @type {Array.<{url:string, text:string}>} */
+  this.queue = [];
 };
 
 
@@ -208,7 +219,7 @@ spf.net.styles.ID_PREFIX = 'css-';
 
 /**
  * Regular expression used to locate link tags in a string.
- * See {@link #extract_}.
+ * See {@link #parse}.
  *
  * @type {RegExp}
  * @const
@@ -218,7 +229,7 @@ spf.net.styles.LINK_TAG_REGEXP = /\x3clink([\s\S]*?)\x3e/ig;
 
 /**
  * Regular expression used to locate style tags in a string.
- * See {@link #extract_}.
+ * See {@link #parse}.
  *
  * @type {RegExp}
  * @const
@@ -229,7 +240,7 @@ spf.net.styles.STYLE_TAG_REGEXP =
 
 /**
  * Regular expression used to locate href attributes in a string.
- * See {@link #extract_}.
+ * See {@link #parse}.
  *
  * @type {RegExp}
  * @const

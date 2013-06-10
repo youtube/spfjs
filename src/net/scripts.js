@@ -254,33 +254,32 @@ spf.net.scripts.prefetch_ = function(url, id, opt_document) {
 
 
 /**
- * Parses an HTML string and executes scripts in the current document.
- * See {@link #load} and {@link #eval}.
+ * Executes scripts that have been parsed from an HTML string.
+ * See {@link #load}, {@link #eval}, and {@link #parse}.
  *
- * @param {string} html The HTML content to parse.
+ * @param {!spf.net.scripts.ParseResult} result The parsed HTML result.
  * @param {Function=} opt_callback Callback function to execute after
  *     all scripts are loaded.
  */
-spf.net.scripts.execute = function(html, opt_callback) {
-  if (!html) {
+spf.net.scripts.execute = function(result, opt_callback) {
+  if (result.queue.length <= 0) {
     if (opt_callback) {
       opt_callback();
     }
     return;
   }
-  // Extract the scripts.
-  var queue = spf.net.scripts.extract_(html);
   // Load or evaluate the scripts in order.
+  var index = -1;
   var getNextScript = function() {
-    if (queue.length > 0) {
-      var item = queue.shift();
-      var script = item[0];
-      var isUrl = item[1];
-      var name = item[2];
-      if (isUrl) {
-        spf.net.scripts.load(script, getNextScript, name);
+    index++;
+    if (index < result.queue.length) {
+      var item = result.queue[index];
+      if (item['url']) {
+        spf.net.scripts.load(item['url'], getNextScript, item['name']);
+      } else if (item['text']) {
+        spf.net.scripts.eval(item['text'], getNextScript);
       } else {
-        spf.net.scripts.eval(script, getNextScript);
+        getNextScript();
       }
     } else {
       if (opt_callback) {
@@ -293,25 +292,20 @@ spf.net.scripts.execute = function(html, opt_callback) {
 
 
 /**
- * Parses an HTML string and prefetches script URLs.
- * See {@link #prefetch}.
+ * Prefetches scripts that have been parsed from an HTML string.
+ * See {@link #prefetch} and {@link #parse}.
  *
- * @param {string} html The HTML content to parse.
+ * @param {!spf.net.scripts.ParseResult} result The parsed HTML result.
  */
-spf.net.scripts.preexecute = function(html) {
-  if (!html) {
+spf.net.scripts.preexecute = function(result) {
+  if (result.queue.length <= 0) {
     return;
   }
-  // Extract the scripts.
-  var queue = spf.net.scripts.extract_(html);
   // Prefetch the scripts.
-  for (var i = 0; i < queue.length; i++) {
-    var item = queue[i];
-    var script = item[0];
-    var isUrl = item[1];
-    var name = item[2];
-    if (isUrl) {
-      spf.net.scripts.prefetch(script);
+  for (var i = 0; i < result.queue.length; i++) {
+    var item = result.queue[i];
+    if (item['url']) {
+      spf.net.scripts.prefetch(item['url']);
     }
   }
 };
@@ -322,25 +316,39 @@ spf.net.scripts.preexecute = function(html) {
  * See {@link #execute}.
  *
  * @param {string} html The HTML content to parse.
- * @return {Array.<{0:string, 1:boolean}>}
- * @private
+ * @return {!spf.net.scripts.ParseResult}
  */
-spf.net.scripts.extract_ = function(html) {
-  var queue = [];
-  html.replace(spf.net.scripts.SCRIPT_TAG_REGEXP,
+spf.net.scripts.parse = function(html) {
+  var result = new spf.net.scripts.ParseResult();
+  if (!html) {
+    return result;
+  }
+  result.original = html;
+  html = html.replace(spf.net.scripts.SCRIPT_TAG_REGEXP,
       function(fullMatch, attr, text) {
         var url = attr.match(spf.net.scripts.SRC_ATTR_REGEXP);
-        if (url) {
-          url = url[1];
-          var name = attr.match(spf.net.scripts.CLASS_ATTR_REGEXP);
-          name = name ? name[1] : '';
-          queue.push([url, true, name]);
-        } else {
-          queue.push([text, false, '']);
-        }
+        url = url ? url[1] : '';
+        var name = attr.match(spf.net.scripts.CLASS_ATTR_REGEXP);
+        name = name ? name[1] : '';
+        result.queue.push({'url': url, 'text': text, 'name': name});
         return '';
       });
-  return queue;
+  result.parsed = html;
+  return result;
+};
+
+
+/**
+ * A container for holding the result of parsing scripts from an HTML string.
+ * @constructor
+ */
+spf.net.scripts.ParseResult = function() {
+  /** @type {string} */
+  this.original = '';
+  /** @type {string} */
+  this.parsed = '';
+  /** @type {Array.<{url:string, text:string, name:string}>} */
+  this.queue = [];
 };
 
 
@@ -353,7 +361,7 @@ spf.net.scripts.ID_PREFIX = 'js-';
 
 /**
  * Regular expression used to locate script tags in a string.
- * See {@link #extract_}.
+ * See {@link #parse}.
  *
  * @type {RegExp}
  * @const
@@ -364,7 +372,7 @@ spf.net.scripts.SCRIPT_TAG_REGEXP =
 
 /**
  * Regular expression used to locate src attributes in a string.
- * See {@link #extract_}.
+ * See {@link #parse}.
  *
  * @type {RegExp}
  * @const
@@ -374,7 +382,7 @@ spf.net.scripts.SRC_ATTR_REGEXP = /src="([\S]+)"/;
 
 /**
  * Regular expression used to locate class attributes in a string.
- * See {@link #extract_}.
+ * See {@link #parse}.
  *
  * @type {RegExp}
  * @const

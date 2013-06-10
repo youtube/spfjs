@@ -19,30 +19,25 @@ $def _stylesheet():
   <!-- Pre-fill the hashcode so SPF won't load the stylesheet twice -->
   <link id="css-$hashcode(page_css)" rel="stylesheet" href="$page_css">
 
-
-$def _javascript():
-  <script type="text/javascript">
-    if (window.console) {
-      window.console.log('demo: page javascript - page $page_num');
-    }
-  </script>
-  $ page_js = "/static/demo-page.js"
-  <!-- Pre-fill the hashcode and data attribute so SPF won't load the script twice -->
-  <script id="js-$hashcode(page_js)" src="$page_js" data-loaded="true"></script>
-
-
 $def _attributes():
   { "nav": { "class": "page$page_num" } }
 
 $var title: Demo Page $page_num
 $var stylesheet: $:_stylesheet()
-$var javascript: $:_javascript()
+$var javascript:
 $var attributes: $:_attributes()
 
 <div id="page" class="pane page">
   <h1>Demo Page $page_num</h1>
+  <!-- Place an external script in the middle of a content fragment to illustrate support -->
+  <!-- Pre-fill the hashcode and data attribute so SPF won't load the script twice -->
+  $ page_js = "/static/demo-page.js"
+  <script id="js-$hashcode(page_js)" src="$page_js" data-loaded="true"></script>
   <script type="text/javascript">
-    console.log('demo: embedded javascript - page $page_num');
+    if (window.console) {
+      window.console.log('demo: embedded javascript - page $page_num');
+      window.console.log('demo: external js is loaded = ' + !!(window.demo && demo.page && demo.page.loaded));
+    }
   </script>
 
   <div>
