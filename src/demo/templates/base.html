@@ -3,7 +3,9 @@ $def with (content)
 <html>
 <head>
   <title>$content.title</title>
-  <link rel="stylesheet" href="/static/demo.css">
+  <!-- Pre-fill hashcodes so SPF won't load resources twice -->
+  $ demo_css = "/static/demo.css"
+  <link id="css-$hashcode(demo_css)" rel="stylesheet" href="$demo_css" data-loaded="true">
   $:content.stylesheet
 </head>
 <body>
@@ -38,11 +40,14 @@ $def with (content)
   <div id="footer">
     Etc.
   </div>
+  <!-- Pre-fill hashcodes so SPF won't load resources twice -->
   $if debug:
-    <script src="/static/spf-debug.js"></script>
+    $ spf_js = "/static/spf-debug.js"
   $else:
-    <script src="/static/spf.js"></script>
-  <script src="/static/demo.js"></script>
+    $ spf_js = "/static/spf.js"
+  <script id="js-$hashcode(spf_js)" src="$spf_js" data-loaded="true"></script>
+  $ demo_js = "/static/demo.js"
+  <script id="js-$hashcode(demo_js)" src="$demo_js" data-loaded="true"></script>
   <script>
     demo.init();
   </script>

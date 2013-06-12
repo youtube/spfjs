@@ -138,7 +138,9 @@ spf.net.scripts.load_ = function(url, id, cls, fn) {
   scriptEl.onload = function() {
     // IE 10 has a bug where it will synchronously call load handlers for
     // cached resources, we must force this to be async.
-    setTimeout(fn, 0);
+    if (fn) {
+      setTimeout(fn, 0);
+    }
   };
   // IE < 9 does not support the onload handler, so the onreadystatechange event
   // should be used to manually call onload. This means fn will be called twice
