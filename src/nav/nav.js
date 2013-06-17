@@ -527,7 +527,7 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
       // If the target element isn't enabled for transitions, just replace.
       // Use the parsed HTML without script tags to avoid any scripts
       // being accidentally considered loading.
-      el.innerHTML = result.parsed;
+      el.innerHTML = result.html;
       spf.debug.debug('    updated fragment content ', id);
       // Execute embedded scripts before continuing.
       spf.net.scripts.execute(result, function() {
@@ -565,7 +565,7 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
         data.pendingEl.className = data.pendingClass;
         // Use the parsed HTML without script tags to avoid any scripts
         // being accidentally considered loading.
-        data.pendingEl.innerHTML = data.result.parsed;
+        data.pendingEl.innerHTML = data.result.html;
         if (data.reverse) {
           spf.dom.insertSiblingBefore(data.pendingEl, data.currentEl);
         } else {

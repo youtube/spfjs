@@ -6,9 +6,7 @@
 
 goog.provide('spf.net.styles');
 
-goog.require('spf.dom');
-goog.require('spf.dom.dataset');
-goog.require('spf.pubsub');
+goog.require('spf.net.resources');
 goog.require('spf.string');
 
 
@@ -60,80 +58,7 @@ spf.net.styles.eval = function(text) {
  * @return {Element} The dynamically created link element.
  */
 spf.net.styles.load = function(url, opt_callback, opt_name) {
-  var id = spf.net.styles.ID_PREFIX + spf.string.hashCode(url);
-  var cls = opt_name || '';
-  var linkEl = document.getElementById(id);
-  var isLoaded = linkEl && spf.dom.dataset.get(linkEl, 'loaded');
-  var isLoading = linkEl && !isLoaded;
-  // If the stylesheet is already loaded, execute the callback(s) immediately.
-  if (isLoaded) {
-    if (opt_callback) {
-      opt_callback();
-    }
-    return linkEl;
-  }
-  // Register the callback.
-  if (opt_callback) {
-    spf.pubsub.subscribe(id, opt_callback);
-  }
-  // If the stylesheet is currently loading, wait.
-  if (isLoading) {
-    return linkEl;
-  }
-  // Otherwise, the stylesheet needs to be loaded.
-  // First, find old stylesheets to remove after loading, if any.
-  var linkElsToRemove = cls ? spf.dom.query('link.' + cls) : [];
-  // Lexical closures allow this trickiness with the "el" variable.
-  var el = spf.net.styles.load_(url, id, cls, function() {
-    if (!spf.dom.dataset.get(el, 'loaded')) {
-      spf.dom.dataset.set(el, 'loaded', 'true');
-      // Now that the stylesheet is loaded, remove old ones.
-      // Only do this after a successful load to avoid prematurely removing
-      // a stylesheet, which could lead to and unneeded stylesheet download
-      // if load() is called again.
-      spf.net.styles.unload_(linkElsToRemove);
-      spf.pubsub.publish(id);
-      spf.pubsub.clear(id);
-    }
-  });
-  return el;
-};
-
-
-/**
- * See {@link #load}.
- *
- * @param {string} url Url of the stylesheet.
- * @param {string} id Id of the link element.
- * @param {string} cls Class of the link element.
- * @param {Function} fn Callback for when the link has loaded.
- * @param {Document=} opt_document Content document element.
- * @return {Element} The dynamically created link element.
- * @private
- */
-spf.net.styles.load_ = function(url, id, cls, fn, opt_document) {
-  var linkEl = document.createElement('link');
-  linkEl.id = id;
-  linkEl.className = cls;
-  linkEl.rel = 'stylesheet';
-  // The onload event for stylesheets is supported in IE 5.5, Firefox 9,
-  // and WebKit 535.24 (Chrome 19 / Safari 6).
-  linkEl.onload = function() {
-    // IE 10 has a bug where it will synchronously call load handlers for
-    // cached resources, we must force this to be async.
-    if (fn) {
-      setTimeout(fn, 0);
-    }
-  };
-  // Set the onload handler before setting the href to avoid potential
-  // IE bug where handlers are not called.
-  linkEl.href = url;
-  // Place the stylesheet in the head instead of the body to avoid errors when
-  // called from the head in the first place.
-  var doc = opt_document || document;
-  var targetEl = doc.getElementsByTagName('head')[0] || doc.body;
-  targetEl.appendChild(linkEl);
-  return linkEl;
+  return spf.net.resources.load('css', url, opt_callback, opt_name);
 };
 
 
@@ -145,25 +70,7 @@ spf.net.styles.load_ = function(url, id, cls, fn, opt_document) {
  * @param {string} url Url of the stylesheet.
  */
 spf.net.styles.unload = function(url) {
-  var id = spf.net.styles.ID_PREFIX + spf.string.hashCode(url);
-  var linkEl = document.getElementById(id);
-  if (linkEl) {
-    spf.net.styles.unload_([linkEl]);
-  }
-};
-
-
-/**
- * See {@link unload}
- *
- * @param {Array.<Node>} linkEls The link elements.
- * @private
- */
-spf.net.styles.unload_ = function(linkEls) {
-  for (var i = 0; i < linkEls.length; i++) {
-    spf.pubsub.clear(linkEls[i].id);
-    linkEls[i].parentNode.removeChild(linkEls[i]);
-  }
+  spf.net.resources.unload('css', url);
 };
 
 
@@ -175,27 +82,7 @@ spf.net.styles.unload_ = function(linkEls) {
  * @param {string} url Url of the stylesheet.
  */
 spf.net.styles.prefetch = function(url) {
-  var id = spf.net.styles.ID_PREFIX + spf.string.hashCode(url);
-  var linkEl = document.getElementById(id);
-  // If the stylesheet is already loaded, return.
-  if (linkEl) {
-    return linkEl;
-  }
-  var iframeId = spf.net.styles.ID_PREFIX + 'prefetch';
-  var iframeEl = document.getElementById(iframeId);
-  if (!iframeEl) {
-    iframeEl = spf.dom.createIframe(iframeId);
-  } else {
-    // If the stylesheet is already prefetched, return.
-    linkEl = iframeEl.contentWindow.document.getElementById(id);
-    if (linkEl) {
-      return;
-    }
-  }
-  // Firefox needs the iframe to be fully created in the DOM before continuing.
-  setTimeout(function() {
-    spf.net.styles.load_(url, id, '', null, iframeEl.contentWindow.document);
-  }, 0);
+  spf.net.resources.prefetch('css', url);
 };
 
 
@@ -206,12 +93,12 @@ spf.net.styles.prefetch = function(url) {
  * @param {!spf.net.styles.ParseResult} result The parsed HTML result.
  */
 spf.net.styles.install = function(result) {
-  if (result.queue.length <= 0) {
+  if (result.styles.length <= 0) {
     return;
   }
   // Install the styles.
-  for (var i = 0; i < result.queue.length; i++) {
-    var item = result.queue[i];
+  for (var i = 0; i < result.styles.length; i++) {
+    var item = result.styles[i];
     if (item['url']) {
       spf.net.styles.load(item['url'], null, item['name']);
     } else if (item['text']) {
@@ -228,12 +115,12 @@ spf.net.styles.install = function(result) {
  * @param {!spf.net.styles.ParseResult} result The parsed HTML result.
  */
 spf.net.styles.preinstall = function(result) {
-  if (result.queue.length <= 0) {
+  if (result.styles.length <= 0) {
     return;
   }
   // Prefetch the styles.
-  for (var i = 0; i < result.queue.length; i++) {
-    var item = result.queue[i];
+  for (var i = 0; i < result.styles.length; i++) {
+    var item = result.styles[i];
     if (item['url']) {
       spf.net.styles.prefetch(item['url']);
     }
@@ -252,7 +139,6 @@ spf.net.styles.parse = function(html) {
   if (!html) {
     return result;
   }
-  result.original = html;
   html = html.replace(spf.net.styles.LINK_TAG_REGEXP,
       function(fullMatch, attr) {
         var isStyleSheet = spf.string.contains(attr, 'rel="stylesheet"');
@@ -261,7 +147,7 @@ spf.net.styles.parse = function(html) {
           url = url ? url[1] : '';
           var name = attr.match(spf.net.styles.CLASS_ATTR_REGEXP);
           name = name ? name[1] : '';
-          result.queue.push({'url': url, 'text': '', 'name': name});
+          result.styles.push({'url': url, 'text': '', 'name': name});
           return '';
         } else {
           return fullMatch;
@@ -269,10 +155,10 @@ spf.net.styles.parse = function(html) {
       });
   html = html.replace(spf.net.styles.STYLE_TAG_REGEXP,
       function(fullMatch, attr, text) {
-        result.queue.push({'url': '', 'text': text, 'name': ''});
+        result.styles.push({'url': '', 'text': text, 'name': ''});
         return '';
       });
-  result.parsed = html;
+  result.html = html;
   return result;
 };
 
@@ -283,19 +169,10 @@ spf.net.styles.parse = function(html) {
  */
 spf.net.styles.ParseResult = function() {
   /** @type {string} */
-  this.original = '';
-  /** @type {string} */
-  this.parsed = '';
+  this.html = '';
   /** @type {Array.<{url:string, text:string, name:string}>} */
-  this.queue = [];
+  this.styles = [];
 };
-
-
-/**
- * @type {string} The ID prefix for dynamically created style elements.
- * @const
- */
-spf.net.styles.ID_PREFIX = 'css-';
 
 
 /**
