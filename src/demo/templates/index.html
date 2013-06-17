@@ -25,10 +25,8 @@ $def _stylesheet():
   </style>
 
 $def _javascript():
-  <script type="text/javascript">
-    if (window.console) {
-      window.console.log('demo: page javascript - home');
-    }
+  <script>
+    demo.log('home: page javascript')
     demo.home.init();
   </script>
 
@@ -42,11 +40,6 @@ $var attributes: $:_attributes()
 
 <div id="home" class="pane">
   <h1>SPF: Structured Page Fragments</h1>
-  <script type="text/javascript">
-    if (window.console) {
-      window.console.log('demo: embedded javascript - home');
-    }
-  </script>
 
   <div id="home-left" class="col spf-transition">
   <p>

@@ -10,6 +10,15 @@
 var demo = demo || {};
 
 /**
+ * Simple central logging function for the demo app.
+ */
+demo.log = function(msg) {
+  if (window.console) {
+    window.console.log('[demo] ' + msg);
+  }
+};
+
+/**
  * The demo app namespace for the page page.
  * @type {Object}
  */
@@ -19,6 +28,4 @@ demo.page = demo.page || {};
 /** @type {boolean} */
 demo.page.loaded = true;
 
-if (window.console) {
-  window.console.log('demo: external javascript - page');
-}
+demo.log('page: external javascript');

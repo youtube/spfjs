@@ -185,13 +185,15 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
   spf.debug.info('nav.navigate ', url, opt_referer, opt_history, opt_reverse);
   // If navigation is requested but SPF is not initialized, redirect.
   if (!spf.nav.initialized_) {
-    spf.debug.error('>> nav not initialized');
+    spf.debug.error('nav not initialized, redirecting ',
+                    'url=', url);
     window.location.href = url;
     return;
   }
   // Abort previous navigation, if needed.
   if (spf.nav.request_) {
-    spf.debug.warn('aborting previous navigate ', 'xhr=', spf.nav.request_);
+    spf.debug.warn('aborting previous navigate ',
+                   'xhr=', spf.nav.request_);
     spf.nav.request_.abort();
     spf.nav.request_ = null;
   }
@@ -213,7 +215,8 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
     return;
   }
   var navigateError = function(url) {
-    spf.debug.warn('navigate failed, redirecting ', 'url=', url);
+    spf.debug.warn('navigate failed, redirecting ',
+                   'url=', url);
     spf.nav.request_ = null;
     window.location.href = url;
     return;

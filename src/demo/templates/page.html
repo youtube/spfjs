@@ -29,15 +29,13 @@ $var attributes: $:_attributes()
 
 <div id="page" class="pane page">
   <h1>Demo Page $page_num</h1>
-  <!-- Place an external script in the middle of a content fragment to illustrate support -->
+  <!-- Demonstrate scripts in the middle of a content fragment -->
   <!-- Pre-fill the hashcode and data attribute so SPF won't load the script twice -->
   $ page_js = "/static/demo-page.js"
   <script id="js-$hashcode(page_js)" src="$page_js" data-loaded="true"></script>
-  <script type="text/javascript">
-    if (window.console) {
-      window.console.log('demo: embedded javascript - page $page_num');
-      window.console.log('demo: external js is loaded = ' + !!(window.demo && demo.page && demo.page.loaded));
-    }
+  <script>
+    demo.log('page $page_num: embedded javascript')
+    demo.log('external js is loaded = ' + !!(window.demo && demo.page && demo.page.loaded));
   </script>
 
   <div>

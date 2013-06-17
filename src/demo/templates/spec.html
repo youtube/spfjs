@@ -4,8 +4,8 @@ $def _stylesheet():
   </style>
 
 $def _javascript():
-  <script type="text/javascript">
-    console.log('demo: page javascript - spec');
+  <script>
+    demo.log('spec: page javascript');
   </script>
 
 $def _attributes():
@@ -18,11 +18,6 @@ $var attributes: $:_attributes()
 
 <div id="spec" class="pane">
   <h1>Spec</h1>
-  <script type="text/javascript">
-    if (window.console) {
-      window.console.log('demo: embedded javascript - spec');
-    }
-  </script>
 
   <pre>
     {

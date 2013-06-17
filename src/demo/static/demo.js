@@ -43,6 +43,16 @@ demo.dispose = function() {
 
 
 /**
+ * Simple central logging function for the demo app.
+ */
+demo.log = function(msg) {
+  if (window.console) {
+    window.console.log('[demo] ' + msg);
+  }
+};
+
+
+/**
  * Update the display showing whether SPF is enabled.
  */
 demo.updateStatus = function() {
@@ -80,9 +90,7 @@ demo.updateTime = function() {
  * @param {string} url The new URL.
  */
 demo.handleNavigateRequested = function(url) {
-  if (window.console) {
-    window.console.log('demo: navigate requested', url);
-  }
+  demo.log('navigate requested');
 };
 
 
@@ -92,9 +100,7 @@ demo.handleNavigateRequested = function(url) {
  * @param {Object} response The requested SPF response object.
  */
 demo.handleNavigateReceived = function(url, response) {
-  if (window.console) {
-    window.console.log('demo: navigate received', url);
-  }
+  demo.log('navigate received');
 };
 
 
@@ -103,9 +109,7 @@ demo.handleNavigateReceived = function(url, response) {
  * @param {Object} response The processed SPF response object.
  */
 demo.handleNavigateProcessed = function(response) {
-  if (window.console) {
-    window.console.log('demo: navigate processed');
-  }
+  demo.log('navigate processed');
 };
 
 
