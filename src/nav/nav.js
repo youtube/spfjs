@@ -130,7 +130,7 @@ spf.nav.handleClick = function(evt) {
 
 
 /**
- * Handles callbacks when the active history entry changes.
+ * Handles when the active history entry changes.
  *
  * @param {string} url The URL the user is browsing to.
  * @param {Object=} opt_state An optional state object associated with the URL.
@@ -203,7 +203,15 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
   // Publish to callbacks.
   // Do this before the request is made, since the response might be cached,
   // in which case the operation is synchronous.
-  spf.pubsub.publish('navigate-requested-callback', url);
+  // Use a try/catch to prevent errors in client code from blocking navigation.
+  try {
+    spf.pubsub.publish('navigate-requested-callback', url);
+  } catch (err) {
+    spf.debug.error('error in "navigate-requested-callback", redirecting ',
+                    'url=', url, 'err=', err);
+    window.location.href = url;
+    return;
+  }
   var navigateError = function(url) {
     spf.debug.warn('navigate failed, redirecting ', 'url=', url);
     spf.nav.request_ = null;
@@ -241,7 +249,7 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
         // data used by SPF.  However, in case external JS has modified the
         // state object or a unforeseen mismatch in security policies between
         // XHR and History occurs, handle the error here and redirect.
-        spf.debug.error('>> error caught, redirecting ',
+        spf.debug.error('error caught, redirecting ',
                         'url=', url, 'err=', err);
         window.location.href = url;
         return;
@@ -370,7 +378,16 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification,
     response['timing'] = timing;
     if (opt_notification) {
       // Publish to callbacks.
-      spf.pubsub.publish(opt_notification, url, response);
+      // Use a try/catch to prevent errors in client code from blocking
+      // navigation.
+      try {
+        spf.pubsub.publish(opt_notification, url, response);
+      } catch (err) {
+        spf.debug.error('error in "' + opt_notification + '", redirecting ',
+                        'url=', url, 'err=', err);
+        window.location.href = url;
+        return;
+      }
     }
     if (opt_onSuccess) {
       opt_onSuccess(url, response);
@@ -392,7 +409,16 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification,
     spf.debug.debug('    cached response found ', cachedResponse);
     if (opt_notification) {
       // Publish to callbacks.
-      spf.pubsub.publish(opt_notification, url, cachedResponse);
+      // Use a try/catch to prevent errors in client code from blocking
+      // navigation.
+      try {
+        spf.pubsub.publish(opt_notification, url, cachedResponse);
+      } catch (err) {
+        spf.debug.error('error in "' + opt_notification + '", redirecting ',
+                        'url=', url, 'err=', err);
+        window.location.href = url;
+        return;
+      }
     }
     if (opt_onSuccess) {
       opt_onSuccess(url, cachedResponse);
@@ -469,7 +495,14 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
         spf.debug.debug('    executed scripts');
         if (opt_notification) {
           // Publish to callbacks.
-          spf.pubsub.publish(opt_notification, response);
+          // Use a try/catch to prevent errors in client code from blocking
+          // navigation.
+          try {
+            spf.pubsub.publish(opt_notification, response);
+          } catch (err) {
+            spf.debug.error('error in "' + opt_notification + '", ignoring ',
+                            'err=', err);
+          }
         }
       });
       // Prevent double execution.
