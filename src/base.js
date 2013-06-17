@@ -29,6 +29,7 @@ spf.defaults = {
   'navigate-requested-callback': null,
   'navigate-received-callback': null,
   'navigate-processed-callback': null,
+  'navigate-error-callback': null,
   'transition-class': 'spf-transition',
   'transition-duration': 425,
   'transition-forward-parent-class': 'spf-transition-forward',
@@ -47,6 +48,27 @@ spf.config = {};
 
 
 /**
+ * Executes a function inside a try/catch to gracefully handle failures.
+ *
+ * @param {Function} fn Function to be executed.
+ * @param {...*} var_args Arguments to apply to the function.
+ * @return {*} The function result or Error if execution failed.
+ */
+spf.execute = function(fn, var_args) {
+  if (fn) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    try {
+      return fn.apply(null, args);
+    } catch (err) {
+      return err;
+    }
+  }
+};
+
+
+/**
+ * Gets the current timestamp.
+ *
  * @return {number} An integer value representing the number of milliseconds
  *     between midnight, January 1, 1970 and the current time.
  */
@@ -64,7 +86,7 @@ spf.now = function() {
  * @param {Object} obj The object to get a unique key for.
  * @return {string} The unique key.
  */
-spf.getKey = function(obj) {
+spf.key = function(obj) {
   return obj['spf-key'] ||
       (obj['spf-key'] = spf.now() + '-' + (++spf.counter_));
 };

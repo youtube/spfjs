@@ -17,7 +17,6 @@ goog.require('spf.history');
 goog.require('spf.net.scripts');
 goog.require('spf.net.styles');
 goog.require('spf.net.xhr');
-goog.require('spf.pubsub');
 goog.require('spf.string');
 
 
@@ -138,7 +137,7 @@ spf.nav.handleClick = function(evt) {
 spf.nav.handleHistory = function(url, opt_state) {
   var reverse = !!(opt_state && opt_state['spf-back']);
   var referer = opt_state && opt_state['spf-referer'];
-  spf.debug.debug('nav.handleHistory ', 'url=', url, 'state=', opt_state);
+  spf.debug.debug('nav.handleHistory ', '(url=', url, 'state=', opt_state, ')');
   // Navigate to the URL.
   spf.nav.navigate_(url, referer, true, reverse);
 };
@@ -183,11 +182,26 @@ spf.nav.navigate = function(url) {
  */
 spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
   spf.debug.info('nav.navigate ', url, opt_referer, opt_history, opt_reverse);
+  // Execute the "navigation requested" callback.  If the callback explicitly
+  // returns false, cancel this navigation.
+  var val = spf.execute(spf.config['navigate-requested-callback'], url);
+  if (val === false) {
+    spf.debug.warn('failed in "navigate-requested-callback", canceling',
+                   '(val=', val, ')');
+    return;
+  }
+  if (val instanceof Error) {
+    spf.debug.warn('failed in "navigate-requested-callback", canceling',
+                   '(val=', val, ')');
+    spf.nav.error(url, val);
+    return;
+  }
   // If navigation is requested but SPF is not initialized, redirect.
   if (!spf.nav.initialized_) {
-    spf.debug.error('nav not initialized, redirecting ',
-                    'url=', url);
-    window.location.href = url;
+    spf.debug.warn('nav not initialized, redirecting ',
+                    '(url=', url, ')');
+    var err = new Error('Navigation not initialized');
+    spf.nav.error(url, err);
     return;
   }
   // Abort previous navigation, if needed.
@@ -202,23 +216,12 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
   // Only different than the current URL when navigation is in response to
   // a popState event.
   var referer = opt_referer || window.location.href;
-  // Publish to callbacks.
-  // Do this before the request is made, since the response might be cached,
-  // in which case the operation is synchronous.
-  // Use a try/catch to prevent errors in client code from blocking navigation.
-  try {
-    spf.pubsub.publish('navigate-requested-callback', url);
-  } catch (err) {
-    spf.debug.error('error in "navigate-requested-callback", redirecting ',
-                    'url=', url, 'err=', err);
-    window.location.href = url;
-    return;
-  }
-  var navigateError = function(url) {
-    spf.debug.warn('navigate failed, redirecting ',
-                   'url=', url);
+  var navigateError = function(url, err) {
+    spf.debug.warn('navigate failed', '(url=', url, ')');
     spf.nav.request_ = null;
-    window.location.href = url;
+    if (err instanceof Error) {
+      spf.nav.error(url, err);
+    }
     return;
   };
   var navigateSuccess = function(url, response) {
@@ -253,8 +256,8 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
         // state object or a unforeseen mismatch in security policies between
         // XHR and History occurs, handle the error here and redirect.
         spf.debug.error('error caught, redirecting ',
-                        'url=', url, 'err=', err);
-        window.location.href = url;
+                        '(url=', url, 'err=', err, ')');
+        spf.nav.error(url, err);
         return;
       }
     }
@@ -262,9 +265,28 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
     spf.nav.process(response, opt_reverse, 'navigate-processed-callback');
   };
   var xhr = spf.nav.request(url, navigateSuccess, navigateError,
-                            'navigate-received-callback', 'navigate',
-                            referer);
+                            'navigate', referer);
   spf.nav.request_ = xhr;
+};
+
+
+/**
+ * Handles a navigation error and redirects (unless cancelled).
+ *
+ * @param {string} url The requested URL, without the SPF identifier.
+ * @param {Error} err The Error object.
+ */
+spf.nav.error = function(url, err) {
+  spf.debug.error('nav.error ', '(url=', url, 'err=', err, ')');
+  // Execute the "navigation error" callback.  If the callback explicitly
+  // returns false, do not redirect.
+  var val = spf.execute(spf.config['navigate-error-callback'], url, err);
+  if (val === false) {
+    spf.debug.warn('failed in "navigate-error-callback", canceling',
+                   '(val=', val, ')');
+    return;
+  }
+  window.location.href = url;
 };
 
 
@@ -287,7 +309,7 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
 spf.nav.load = function(url, opt_onSuccess, opt_onError) {
   spf.debug.info('nav.load ', url);
   var loadError = function(url) {
-    spf.debug.warn('load failed ', 'url=', url);
+    spf.debug.warn('load failed ', '(url=', url, ')');
     if (opt_onError) {
       opt_onError(url);
     }
@@ -304,7 +326,7 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
       opt_onSuccess(url, response);
     }
   };
-  return spf.nav.request(url, loadSuccess, loadError, null, 'load');
+  return spf.nav.request(url, loadSuccess, loadError, 'load');
 };
 
 
@@ -319,15 +341,14 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
  *     the request succeeds.
  * @param {function(string)=} opt_onError The callback to execute if the
  *     request fails.
- * @param {?string=} opt_notification The notification to publish if the
- *     request succeeds.
  * @param {?string=} opt_type The type of request (e.g. "navigate", "load",
- *     etc), used to alter the URL identifier; defaults to "request".
+ *     etc), used to alter the URL identifier and determine whether the
+ *     global "navigation received" callback is executed; defaults to "request".
  * @param {string=} opt_referer The Referrer URL, without the SPF identifier.
  * @return {XMLHttpRequest} The XHR of the current request.
  */
-spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification,
-                           opt_type, opt_referer) {
+spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
+                           opt_referer) {
   spf.debug.debug('nav.request ', url);
   // Convert the URL to absolute, to be used for caching the response.
   var absoluteUrl = spf.dom.url.absolute(url);
@@ -368,7 +389,7 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification,
     } catch (err) {
       spf.debug.debug('    JSON parse failed');
       if (opt_onError) {
-        opt_onError(url);
+        opt_onError(url, err);
       }
       return;
     }
@@ -379,16 +400,17 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification,
     spf.cache.set(absoluteUrl, response, spf.config['cache-lifetime']);
     // Set the timing values for the response.
     response['timing'] = timing;
-    if (opt_notification) {
-      // Publish to callbacks.
-      // Use a try/catch to prevent errors in client code from blocking
-      // navigation.
-      try {
-        spf.pubsub.publish(opt_notification, url, response);
-      } catch (err) {
-        spf.debug.error('error in "' + opt_notification + '", redirecting ',
-                        'url=', url, 'err=', err);
-        window.location.href = url;
+    if (opt_type == 'navigate') {
+      // Execute the "navigation received" callback.  If the callback
+      // explicitly returns false, cancel this navigation.
+      var val = spf.execute(spf.config['navigate-received-callback'],
+                            url, response);
+      if (val === false || val instanceof Error) {
+        spf.debug.warn('failed in "navigate-received-callback", canceling',
+                       '(val=', val, ')');
+        if (opt_onError) {
+          opt_onError(url, val);
+        }
         return;
       }
     }
@@ -410,16 +432,17 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification,
     // Store the timing for the cached response (avoid stale timing values).
     cachedResponse['timing'] = timing;
     spf.debug.debug('    cached response found ', cachedResponse);
-    if (opt_notification) {
-      // Publish to callbacks.
-      // Use a try/catch to prevent errors in client code from blocking
-      // navigation.
-      try {
-        spf.pubsub.publish(opt_notification, url, cachedResponse);
-      } catch (err) {
-        spf.debug.error('error in "' + opt_notification + '", redirecting ',
-                        'url=', url, 'err=', err);
-        window.location.href = url;
+    if (opt_type == 'navigate') {
+      // Execute the "navigation received" callback.  If the callback
+      // explicitly returns false, cancel this navigation.
+      var val = spf.execute(spf.config['navigate-received-callback'],
+                            url, cachedResponse);
+      if (val === false || val instanceof Error) {
+        spf.debug.warn('failed in "navigate-received-callback", canceling',
+                       '(val=', val, ')');
+        if (opt_onError) {
+          opt_onError(url, val);
+        }
         return;
       }
     }
@@ -455,10 +478,10 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_notification,
  * @param {boolean=} opt_reverse Whether this is "backwards" navigation. True
  *     when the "back" button is clicked and a request is in response to a
  *     popState event.
- * @param {string=} opt_notification The notification to publish if the
- *     request succeeds.
+ * @param {boolean=} opt_notify Whether to execute the global notification
+ *     callback if processing succeeds.
  */
-spf.nav.process = function(response, opt_reverse, opt_notification) {
+spf.nav.process = function(response, opt_reverse, opt_notify) {
   spf.debug.info('nav.process ', response, opt_reverse);
   // Install page styles.
   var result = spf.net.styles.parse(response['css']);
@@ -496,15 +519,15 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
       result = spf.net.scripts.parse(response['js']);
       spf.net.scripts.execute(result, function() {
         spf.debug.debug('    executed scripts');
-        if (opt_notification) {
-          // Publish to callbacks.
-          // Use a try/catch to prevent errors in client code from blocking
-          // navigation.
-          try {
-            spf.pubsub.publish(opt_notification, response);
-          } catch (err) {
-            spf.debug.error('error in "' + opt_notification + '", ignoring ',
-                            'err=', err);
+        if (opt_notify) {
+          // Execute the "navigation processed" callback.  There is no
+          // opportunity to cancel the navigation after processing is complete,
+          // so explicitly returning false here does nothing.
+          var val = spf.execute(spf.config['navigate-processed-callback'],
+                                response);
+          if (val instanceof Error) {
+            spf.debug.warn('failed in "navigate-processed-callback", ignoring',
+                           '(val=', val, ')');
           }
         }
       });
@@ -520,7 +543,7 @@ spf.nav.process = function(response, opt_reverse, opt_notification) {
       continue;
     }
     var html = fragments[id];
-    var key = spf.getKey(el);
+    var key = spf.key(el);
     if (!spf.nav.animate_ ||
         !spf.dom.classes.has(el, spf.config['transition-class'])) {
       result = spf.net.scripts.parse(html);
@@ -658,7 +681,7 @@ spf.nav.process_ = function(key, opt_quick) {
 spf.nav.prefetch = function(url, opt_onSuccess, opt_onError) {
   spf.debug.info('nav.prefetch ', url);
   var fetchError = function(url) {
-    spf.debug.warn('prefetch failed ', 'url=', url);
+    spf.debug.warn('prefetch failed ', '(url=', url, ')');
     if (opt_onError) {
       opt_onError(url);
     }
@@ -675,7 +698,7 @@ spf.nav.prefetch = function(url, opt_onSuccess, opt_onError) {
       opt_onSuccess(url, response);
     }
   };
-  return spf.nav.request(url, fetchSuccess, fetchError, null, 'prefetch');
+  return spf.nav.request(url, fetchSuccess, fetchError, 'prefetch');
 };
 
 

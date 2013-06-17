@@ -20,10 +20,10 @@ demo.init = function() {
   demo.timer_ = window.setInterval(demo.updateTime, 500);
   var config = {
     'nolink-class': 'spf-nolink',
-    'navigate-started-callback': demo.handleNavigateStarted,
     'navigate-requested-callback': demo.handleNavigateRequested,
     'navigate-received-callback': demo.handleNavigateReceived,
-    'navigate-processed-callback': demo.handleNavigateProcessed
+    'navigate-processed-callback': demo.handleNavigateProcessed,
+    'navigate-error-callback': demo.handleNavigateError
   };
   demo.enabled = spf.init(config);
   demo.updateStatus();
@@ -96,7 +96,7 @@ demo.handleNavigateRequested = function(url) {
 
 /**
  * Callback for when navigate requests are received.
- * @param {string} url The reqested URL, without the SPF identifier.
+ * @param {string} url The requested URL, without the SPF identifier.
  * @param {Object} response The requested SPF response object.
  */
 demo.handleNavigateReceived = function(url, response) {
@@ -110,6 +110,16 @@ demo.handleNavigateReceived = function(url, response) {
  */
 demo.handleNavigateProcessed = function(response) {
   demo.log('navigate processed');
+};
+
+
+/**
+ * Callback for navigate errors.
+ * @param {string} url The requested URL, without the SPF identifier.
+ * @param {Error} err The Error object.
+ */
+demo.handleNavigateError = function(url, err) {
+  demo.log('navigate error');
 };
 
 
