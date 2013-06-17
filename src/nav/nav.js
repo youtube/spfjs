@@ -106,7 +106,8 @@ spf.nav.handleClick = function(evt) {
   }
   // Adjust the target element to be the one with an href.
   var target = spf.dom.getAncestor(evt.target, function(node) {
-    return node.href;
+    // Images in IE10 can have an href.
+    return node.href && node.tagName.toLowerCase() != 'img';
   }, linkEl);
   // Ignore clicks on targets without an href.
   if (!target) {
