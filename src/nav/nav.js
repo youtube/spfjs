@@ -60,6 +60,7 @@ spf.nav.init = function() {
  * Disposes (disables) pushState navigation.
  */
 spf.nav.dispose = function() {
+  spf.nav.cancel();
   if (spf.nav.initialized_) {
     document.removeEventListener('click', spf.nav.handleClick, false);
     spf.nav.initialized_ = false;
@@ -206,12 +207,7 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
     return;
   }
   // Abort previous navigation, if needed.
-  if (spf.nav.request_) {
-    spf.debug.warn('aborting previous navigate ',
-                   'xhr=', spf.nav.request_);
-    spf.nav.request_.abort();
-    spf.nav.request_ = null;
-  }
+  spf.nav.cancel();
   // Set the navigation referer, stored in the history entry state object
   // to allow the correct value to be sent to the server during back/forward.
   // Only different than the current URL when navigation is in response to
@@ -229,38 +225,12 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
     spf.nav.request_ = null;
     // Check for redirects.
     if (response['redirect']) {
-      // If a redirect is issued in response to a new navigation,
-      // navigate to the redirect URL directly.
       var redirectUrl = response['redirect'];
-      if (!opt_history) {
-        spf.nav.navigate_(redirectUrl, referer, opt_history, opt_reverse);
-      } else {
-        // Otherwise, replace the current history entry with the redirect,
-        // executing the callback to trigger the next navigation.
-        var state = {'spf-referer': referer};
-        spf.history.replace(redirectUrl, state, true);
-      }
+      // Replace the current history entry with the redirect,
+      // executing the callback to trigger the next navigation.
+      var state = {'spf-referer': referer};
+      spf.history.replace(redirectUrl, state, true);
       return;
-    }
-    // Check for new navigation that needs a history entry added.
-    if (!opt_history) {
-      try {
-        // Add the URL to the history stack.
-        var state = {'spf-referer': referer};
-        spf.history.add(url, state);
-      } catch (err) {
-        // An error is thrown if the state object is too large or if the
-        // URL is not in the same domain.  At this point the XHR has succeeded,
-        // so the same domain error should not occur, and browser limits
-        // on the serialized state objects should be much larger than the
-        // data used by SPF.  However, in case external JS has modified the
-        // state object or a unforeseen mismatch in security policies between
-        // XHR and History occurs, handle the error here and redirect.
-        spf.debug.error('error caught, redirecting ',
-                        '(url=', url, 'err=', err, ')');
-        spf.nav.error(url, err);
-        return;
-      }
     }
     // Process the requested response.
     spf.nav.process(response, opt_reverse, 'navigate-processed-callback');
@@ -268,6 +238,38 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
   var xhr = spf.nav.request(url, navigateSuccess, navigateError,
                             'navigate', referer);
   spf.nav.request_ = xhr;
+  // After the request has been sent, check for new navigation that needs
+  // a history entry added.  Do this after sending the XHR to have the
+  // correct referer for regular navigation (but not history navigation).
+  if (!opt_history) {
+    try {
+      // Add the URL to the history stack.
+      var state = {'spf-referer': referer};
+      spf.history.add(url, state);
+    } catch (err) {
+      // Abort previous navigation.
+      spf.nav.cancel();
+      // An error is thrown if the state object is too large or if the
+      // URL is not in the same domain.
+      spf.debug.error('error caught, redirecting ',
+                      '(url=', url, 'err=', err, ')');
+      spf.nav.error(url, err);
+      return;
+    }
+  }
+};
+
+
+/**
+ * Cancels the current navigation request, if any.
+ */
+spf.nav.cancel = function() {
+  if (spf.nav.request_) {
+    spf.debug.warn('aborting previous navigate ',
+                   'xhr=', spf.nav.request_);
+    spf.nav.request_.abort();
+    spf.nav.request_ = null;
+  }
 };
 
 
@@ -371,36 +373,7 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
   // This will be recored later as navigationStart.
   var start = spf.now();
   var timing = {};
-  var requestResponse = function(xhr) {
-    spf.debug.debug('    XHR response', 'status=', xhr.status, 'xhr=', xhr);
-    // Record the timing information.
-    timing['navigationStart'] = start;
-    if (xhr['timing']) {
-      for (var t in xhr['timing']) {
-        timing[t] = xhr['timing'][t];
-      }
-    }
-    // Attempt to parse the response.
-    try {
-      if ('JSON' in window) {
-        var response = JSON.parse(xhr.responseText);
-      } else {
-        var response = eval('(' + xhr.responseText + ')');
-      }
-    } catch (err) {
-      spf.debug.debug('    JSON parse failed');
-      if (opt_onError) {
-        opt_onError(url, err);
-      }
-      return;
-    }
-    response = /** @type {spf.nav.Response} */ (response);
-    // Cache the response for future requests.
-    // Use the absolute URL without identifier to allow cached responses
-    // from prefetching to apply to navigation.
-    spf.cache.set(absoluteUrl, response, spf.config['cache-lifetime']);
-    // Set the timing values for the response.
-    response['timing'] = timing;
+  var onResponseFound = function(response) {
     if (opt_type == 'navigate') {
       // Execute the "navigation received" callback.  If the callback
       // explicitly returns false, cancel this navigation.
@@ -419,37 +392,62 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
       opt_onSuccess(url, response);
     }
   };
+  var onCacheResponse = function(response) {
+    response = /** @type {spf.nav.Response} */ (response);
+    // Record responseStart and responseEnd times after loading from cache.
+    timing['responseStart'] = timing['responseEnd'] = spf.now();
+    timing['navigationStart'] = start;
+    // Store the timing for the cached response (avoid stale timing values).
+    response['timing'] = timing;
+    spf.debug.debug('    cached response found ', response);
+    onResponseFound(response);
+  };
+  var onRequestResponse = function(xhr) {
+    spf.debug.debug('    XHR response', 'status=', xhr.status, 'xhr=', xhr);
+    // Record the timing information.
+    timing['navigationStart'] = start;
+    if (xhr['timing']) {
+      for (var t in xhr['timing']) {
+        timing[t] = xhr['timing'][t];
+      }
+    }
+    // Attempt to parse the response.
+    var response;
+    try {
+      if ('JSON' in window) {
+        response = JSON.parse(xhr.responseText);
+      } else {
+        response = eval('(' + xhr.responseText + ')');
+      }
+    } catch (err) {
+      spf.debug.debug('    JSON parse failed');
+      if (opt_onError) {
+        opt_onError(url, err);
+      }
+      return;
+    }
+    response = /** @type {spf.nav.Response} */ (response);
+    // Cache the response for future requests.
+    // Use the absolute URL without identifier to allow cached responses
+    // from prefetching to apply to navigation.
+    spf.cache.set(absoluteUrl, response, spf.config['cache-lifetime']);
+    // Set the timing values for the response.
+    response['timing'] = timing;
+    onResponseFound(response);
+  };
   // Try to find a cached response for the request before sending a new XHR.
   // Record fetchStart time before loading from cache.
   timing['fetchStart'] = spf.now()
   // Use the absolute URL without identifier to allow cached responses
   // from prefetching to apply to navigation.
-  var cachedResponse = spf.cache.get(absoluteUrl);
-  if (cachedResponse) {
-    cachedResponse = /** @type {spf.nav.Response} */ (cachedResponse);
-    // Record responseStart and responseEnd times after loading from cache.
-    timing['responseStart'] = timing['responseEnd'] = spf.now();
-    timing['navigationStart'] = start;
-    // Store the timing for the cached response (avoid stale timing values).
-    cachedResponse['timing'] = timing;
-    spf.debug.debug('    cached response found ', cachedResponse);
-    if (opt_type == 'navigate') {
-      // Execute the "navigation received" callback.  If the callback
-      // explicitly returns false, cancel this navigation.
-      var val = spf.execute(spf.config['navigate-received-callback'],
-                            url, cachedResponse);
-      if (val === false || val instanceof Error) {
-        spf.debug.warn('failed in "navigate-received-callback", canceling',
-                       '(val=', val, ')');
-        if (opt_onError) {
-          opt_onError(url, val);
-        }
-        return;
-      }
-    }
-    if (opt_onSuccess) {
-      opt_onSuccess(url, cachedResponse);
-    }
+  var cached = spf.cache.get(absoluteUrl);
+  if (cached) {
+    cached = /** @type {spf.nav.Response} */ (cached);
+    // To ensure a similar execution pattern as a request, ensure the
+    // cache response is returned asynchronously.
+    setTimeout(function() {
+      onCacheResponse(cached);
+    }, 0);
   } else {
     spf.debug.debug('    sending XHR');
     // If no cached response is found, reset the timing data to use
@@ -462,9 +460,9 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
     var xhr = spf.net.xhr.get(requestUrl, {
       headers: headers,
       timeoutMs: spf.config['request-timeout'],
-      onSuccess: requestResponse,
-      onError: requestResponse,
-      onTimeout: requestResponse
+      onSuccess: onRequestResponse,
+      onError: onRequestResponse,
+      onTimeout: onRequestResponse
     });
     return xhr;
   }
