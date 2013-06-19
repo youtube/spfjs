@@ -142,9 +142,15 @@ spf.net.resources.load_ = function(type, url, id, cls, fn, opt_document) {
   // called from the head in the first place.
   var doc = opt_document || document;
   var targetEl = doc.getElementsByTagName('head')[0] || doc.body;
-  // Use insertBefore instead of appendChild to avoid errors with loading
-  // multiple scripts at once in IE.
-  targetEl.insertBefore(el, targetEl.firstChild);
+
+  if (type == 'js') {
+    // Use insertBefore instead of appendChild to avoid errors with loading
+    // multiple scripts at once in IE.
+    targetEl.insertBefore(el, targetEl.firstChild);
+  } else {
+    // Use appendChild for CSS because we must preserve the order.
+    targetEl.appendChild(el);
+  }
   return el;
 };
 
