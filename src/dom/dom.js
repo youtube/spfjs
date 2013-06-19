@@ -180,7 +180,7 @@ spf.dom.createIframe = function(opt_id, opt_document) {
   iframeEl.src = 'javascript:""';
   iframeEl.style.display = 'none';
   doc.body.appendChild(iframeEl);
-  return iframeEl;
+  return /** @type {!HTMLIFrameElement} */ (iframeEl);
 };
 
 

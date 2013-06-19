@@ -72,7 +72,7 @@ spf.net.resources.load = function(type, url, opt_callback, opt_name) {
   var tag = (type == 'css') ? 'link' : 'script';
   var elsToRemove = cls ? spf.dom.query(tag + '.' + cls) : [];
   // Lexical closures allow this trickiness with the "el" variable.
-  var el = spf.net.resources.load_(type, url, id, cls, function() {
+  el = spf.net.resources.load_(type, url, id, cls, function() {
     if (!spf.dom.dataset.get(el, 'loaded')) {
       spf.dom.dataset.set(el, 'loaded', 'true');
       // Now that the resource is loaded, remove old ones.
@@ -180,7 +180,7 @@ spf.net.resources.unload = function(type, url) {
 /**
  * See {@link unload}.
  *
- * @param {Array.<Node>} els The elements.
+ * @param {Array.<Node>|NodeList} els The elements.
  * @private
  */
 spf.net.resources.unload_ = function(els) {

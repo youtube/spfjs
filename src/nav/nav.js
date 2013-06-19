@@ -233,7 +233,7 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
       return;
     }
     // Process the requested response.
-    spf.nav.process(response, opt_reverse, 'navigate-processed-callback');
+    spf.nav.process(response, opt_reverse, true);
   };
   var xhr = spf.nav.request(url, navigateSuccess, navigateError,
                             'navigate', referer);
@@ -305,16 +305,18 @@ spf.nav.error = function(url, err) {
  * @param {string} url The URL to load, without the SPF identifier.
  * @param {function(string, !Object)=} opt_onSuccess The callback to execute if
  *     the load succeeds.
- * @param {function(string)=} opt_onError The callback to execute if the
- *     load fails.
+ * @param {function(string, Error)=} opt_onError The callback to
+ *     execute if the load fails. The first argument is the requested
+ *     URL; the second argument is the Error that occurred.
+
  * @return {XMLHttpRequest} The XHR of the current request.
  */
 spf.nav.load = function(url, opt_onSuccess, opt_onError) {
   spf.debug.info('nav.load ', url);
-  var loadError = function(url) {
+  var loadError = function(url, err) {
     spf.debug.warn('load failed ', '(url=', url, ')');
     if (opt_onError) {
-      opt_onError(url);
+      opt_onError(url, err);
     }
   };
   var loadSuccess = function(url, response) {
@@ -342,8 +344,12 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {function(string, !Object)=} opt_onSuccess The callback to execute if
  *     the request succeeds.
- * @param {function(string)=} opt_onError The callback to execute if the
- *     request fails.
+ * @param {function(string, (Error|boolean))=} opt_onError The callback to
+ *     execute if the request fails. The first argument is the requested
+ *     URL; the second argument is the Error that occurred.  If the type of
+ *     request is "navigate", the second argument might be false if the
+ *     request was canceled in response to the global "navigate-received"
+ *     callback.
  * @param {?string=} opt_type The type of request (e.g. "navigate", "load",
  *     etc), used to alter the URL identifier and determine whether the
  *     global "navigation received" callback is executed; defaults to "request".
@@ -483,8 +489,8 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
 spf.nav.process = function(response, opt_reverse, opt_notify) {
   spf.debug.info('nav.process ', response, opt_reverse);
   // Install page styles.
-  var result = spf.net.styles.parse(response['css']);
-  spf.net.styles.install(result);
+  var cssParseResult = spf.net.styles.parse(response['css']);
+  spf.net.styles.install(cssParseResult);
   spf.debug.debug('    installed styles');
   // Update title.
   if (response['title']) {
@@ -515,8 +521,8 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
     // Only execute when remaining is 0, to avoid early execution.
     if (remaining == 0) {
       // Execute scripts.
-      result = spf.net.scripts.parse(response['js']);
-      spf.net.scripts.execute(result, function() {
+      var jsParseResult = spf.net.scripts.parse(response['js']);
+      spf.net.scripts.execute(jsParseResult, function() {
         spf.debug.debug('    executed scripts');
         if (opt_notify) {
           // Execute the "navigation processed" callback.  There is no
@@ -545,14 +551,14 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
     var key = spf.key(el);
     if (!spf.nav.animate_ ||
         !spf.dom.classes.has(el, spf.config['transition-class'])) {
-      result = spf.net.scripts.parse(html);
+      var jsParseResult = spf.net.scripts.parse(html);
       // If the target element isn't enabled for transitions, just replace.
       // Use the parsed HTML without script tags to avoid any scripts
       // being accidentally considered loading.
-      el.innerHTML = result.html;
+      el.innerHTML = jsParseResult.html;
       spf.debug.debug('    updated fragment content ', id);
       // Execute embedded scripts before continuing.
-      spf.net.scripts.execute(result, function() {
+      spf.net.scripts.execute(jsParseResult, function() {
         spf.debug.debug('    executed fragment scripts ', id);
         remaining--;
         maybeContinueAfterContent();
@@ -564,7 +570,7 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
       var queue = [];
       var data = {
         reverse: !!opt_reverse,
-        result: spf.net.scripts.parse(html),
+        jsParseResult: spf.net.scripts.parse(html),
         currentEl: null,  // Set in Step 1.
         pendingEl: null,  // Set in Step 1.
         parentEl: el,
@@ -587,7 +593,7 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
         data.pendingEl.className = data.pendingClass;
         // Use the parsed HTML without script tags to avoid any scripts
         // being accidentally considered loading.
-        data.pendingEl.innerHTML = data.result.html;
+        data.pendingEl.innerHTML = data.jsParseResult.html;
         if (data.reverse) {
           spf.dom.insertSiblingBefore(data.pendingEl, data.currentEl);
         } else {
@@ -614,7 +620,7 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
       // Transition Step 4: Execute scripts (timeout = 0).
       queue.push([function(data, next) {
         // Execute embedded scripts before continuing.
-        spf.net.scripts.execute(data.result, function() {
+        spf.net.scripts.execute(data.jsParseResult, function() {
           spf.debug.debug('    executed fragment scripts ', data.parentEl.id);
           remaining--;
           maybeContinueAfterContent();
@@ -673,16 +679,17 @@ spf.nav.process_ = function(key, opt_quick) {
  * @param {string} url The URL to load, without the SPF identifier.
  * @param {function(string, !Object)=} opt_onSuccess The callback to execute if
  *     the load succeeds.
- * @param {function(string)=} opt_onError The callback to execute if the
- *     load fails.
+ * @param {function(string, Error)=} opt_onError The callback to
+ *     execute if the load fails. The first argument is the requested
+ *     URL; the second argument is the Error that occurred.
  * @return {XMLHttpRequest} The XHR of the current request.
  */
 spf.nav.prefetch = function(url, opt_onSuccess, opt_onError) {
   spf.debug.info('nav.prefetch ', url);
-  var fetchError = function(url) {
+  var fetchError = function(url, err) {
     spf.debug.warn('prefetch failed ', '(url=', url, ')');
     if (opt_onError) {
-      opt_onError(url);
+      opt_onError(url, err);
     }
   };
   var fetchSuccess = function(url, response) {
@@ -712,19 +719,20 @@ spf.nav.prefetch = function(url, opt_onSuccess, opt_onError) {
 spf.nav.preprocess = function(response) {
   spf.debug.info('nav.preprocess ', response);
   // Preinstall page styles.
-  var result = spf.net.styles.parse(response['css']);
-  spf.net.styles.preinstall(result);
+  var cssParseResult = spf.net.styles.parse(response['css']);
+  spf.net.styles.preinstall(cssParseResult);
   spf.debug.debug('    preinstalled styles');
   // Preexecute fragment scripts.
   var fragments = response['html'] || {};
+  var jsParseResult;
   for (var id in fragments) {
-    result = spf.net.scripts.parse(fragments[id]);
-    spf.net.scripts.preexecute(result);
+    jsParseResult = spf.net.scripts.parse(fragments[id]);
+    spf.net.scripts.preexecute(jsParseResult);
     spf.debug.debug('    preexecuted fragment scripts ', id);
   }
   // Preexecute page scripts.
-  result = spf.net.scripts.parse(response['js']);
-  spf.net.scripts.preexecute(result);
+  jsParseResult = spf.net.scripts.parse(response['js']);
+  spf.net.scripts.preexecute(jsParseResult);
   spf.debug.debug('    preexecuted scripts');
 };
 
