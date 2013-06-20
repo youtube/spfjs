@@ -49,7 +49,7 @@ spf.nav.Response;
  * Initializes (enables) pushState navigation.
  */
 spf.nav.init = function() {
-  if (!spf.nav.initialized_) {
+  if (!spf.nav.initialized_ && document.addEventListener) {
     document.addEventListener('click', spf.nav.handleClick, false);
     spf.nav.initialized_ = true;
   }
@@ -62,7 +62,9 @@ spf.nav.init = function() {
 spf.nav.dispose = function() {
   spf.nav.cancel();
   if (spf.nav.initialized_) {
-    document.removeEventListener('click', spf.nav.handleClick, false);
+    if (document.removeEventListener) {
+      document.removeEventListener('click', spf.nav.handleClick, false);
+    }
     spf.nav.initialized_ = false;
   }
 };

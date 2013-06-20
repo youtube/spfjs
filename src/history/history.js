@@ -22,7 +22,7 @@ goog.require('spf.debug');
  *     state object associated with that URL.
  */
 spf.history.init = function(callback) {
-  if (!spf.history.initialized_) {
+  if (!spf.history.initialized_ && window.addEventListener) {
     spf.history.initialized_ = true;
     spf.history.callback_ = callback;
     spf.history.url_ = window.location.href;
@@ -36,7 +36,9 @@ spf.history.init = function(callback) {
  * Dispose pushstate-based HTML5 History management.
  */
 spf.history.dispose = function() {
-  window.removeEventListener('popstate', spf.history.pop_, false);
+  if (window.removeEventListener) {
+    window.removeEventListener('popstate', spf.history.pop_, false);
+  }
   spf.history.initialized_ = false;
 };
 

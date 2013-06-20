@@ -46,8 +46,11 @@ spf.main.init = function(opt_config) {
  * Dispose SPF.
  */
 spf.main.dispose = function() {
-  spf.nav.dispose();
-  spf.history.dispose();
+  var enable = !!(window.history.pushState);
+  if (enable) {
+    spf.nav.dispose();
+    spf.history.dispose();
+  }
   spf.pubsub.clear();
   spf.cache.clear();
   spf.config = {};
