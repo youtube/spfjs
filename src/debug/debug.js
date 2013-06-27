@@ -17,7 +17,9 @@ goog.require('spf');
  * @param {...*} var_args Items to log.
  */
 spf.debug.debug = function(var_args) {
-  spf.debug.log('debug', arguments);
+  if (spf.debug.isLevelEnabled(spf.debug.Level.DEBUG)) {
+    spf.debug.log(spf.debug.Level.DEBUG, 'spf', arguments);
+  }
 };
 
 
@@ -27,7 +29,9 @@ spf.debug.debug = function(var_args) {
  * @param {...*} var_args Items to log.
  */
 spf.debug.info = function(var_args) {
-  spf.debug.log('info', arguments);
+  if (spf.debug.isLevelEnabled(spf.debug.Level.INFO)) {
+    spf.debug.log(spf.debug.Level.INFO, 'spf', arguments);
+  }
 };
 
 
@@ -37,7 +41,9 @@ spf.debug.info = function(var_args) {
  * @param {...*} var_args Items to log.
  */
 spf.debug.warn = function(var_args) {
-  spf.debug.log('warn', arguments);
+  if (spf.debug.isLevelEnabled(spf.debug.Level.WARN)) {
+    spf.debug.log(spf.debug.Level.WARN, 'spf', arguments);
+  }
 };
 
 
@@ -47,7 +53,9 @@ spf.debug.warn = function(var_args) {
  * @param {...*} var_args Items to log.
  */
 spf.debug.error = function(var_args) {
-  spf.debug.log('error', arguments);
+  if (spf.debug.isLevelEnabled(spf.debug.Level.ERROR)) {
+    spf.debug.log(spf.debug.Level.ERROR, 'spf', arguments);
+  }
 };
 
 
@@ -58,67 +66,98 @@ spf.debug.error = function(var_args) {
  * strings before output for compatibility.
  *
  * @param {string} method The console method to use when logging.
- * @param {Array|Arguments|{length: number}} args List of items to log.
+ * @param {string} prefix The string prefix to prepend to the logged items.
+ * @param {{length: number}} args List of items to log.
  */
-spf.debug.log = function(method, args) {
-  if (spf.DEBUG && window.console) {
-    var methodLevel = spf.debug.levels_[method];
-    var outputLevel = spf.debug.levels_[spf.debug.OUTPUT];
-    if (methodLevel < outputLevel) {
-      return;
-    }
-    args = Array.prototype.slice.call(args, 0);
-    var timestamp = spf.now();
-    var duration = (timestamp - spf.debug.start_) / 1000;
-    if (duration.toFixed) {
-      duration = duration.toFixed(3);
-      while (duration.length < 8) {
-        duration = ' ' + duration;
-      }
-    } else {
-      duration = '' + duration;
-    }
-    args.unshift(duration + 's: ');
-    if (spf.debug.advanced_) {
-      args.unshift('[spf]');
-      var fnArgs = 'spf_debug_' + timestamp;
-      window[fnArgs] = args;
-      var fnStr = 'window.console.' + method + '(';
-      for (var i = 0, l = args.length; i < l; i++) {
-        fnStr += (i > 0) ? ',' : '';
-        fnStr += fnArgs + '[' + i + ']';
-      }
-      fnStr += ')';
-      eval('(' + fnStr + ')');
-    } else {
-      args.unshift('[spf.' + method + ']');
-      window.console.log(args.join(' '));
-    }
+spf.debug.log = function(method, prefix, args) {
+  if (!spf.DEBUG || !window.console) {
+    return;
+  }
+  args = Array.prototype.slice.call(args, 0);
+  var current = spf.now();
+  var overall = spf.debug.formatDuration(spf.debug.start_, current);
+  if (spf.debug.split_) {
+    var split = spf.debug.formatDuration(spf.debug.split_, current);
+    args.unshift(overall + '/' + split + ':');
+  } else {
+    args.unshift(overall + ':');
+  }
+  if (spf.debug.direct_) {
+    args.unshift('[' + prefix + ']');
+    // Note that passing null for execution context throws an Error in Chrome.
+    window.console[method].apply(window.console, args);
+  } else {
+    args.unshift('[' + prefix + ' - ' + method + ']');
+    window.console.log(args.join(' '));
   }
 };
 
 
 /**
- * The timestamp of when debugging was initialize, for logging duration.
- * @type {number}
- * @private
+ * Reset the timer used for logging duration.  Call to log split times
+ * since last reset in addition to overall duration.
+ */
+spf.debug.reset = function() {
+  spf.debug.split_ = spf.now();
+};
+
+
+/**
+ * Formats two millisecond timestamps into a duration string.
+ * See {@link spf.now} for timestamp generation.
+ *
+ * @param {number} start The starting millisecond timestamp.
+ * @param {number} end The ending millisecond timestamp.
+ * @return {string} The formatted duration string.
+ */
+spf.debug.formatDuration = function(start, end) {
+  var dur = (end - start) / 1000;
+  if (dur.toFixed) {
+    dur = dur.toFixed(3);
+  }
+  return dur + 's';
+};
+
+
+/**
+ * Checks whether a logging level is enabled for output.
+ *
+ * @param {spf.debug.Level} level The logging level.
+ * @return {boolean} True if the logging level is enabled.
+ */
+spf.debug.isLevelEnabled = function(level) {
+  return (spf.debug.levels_[level] >= spf.debug.levels_[spf.debug.OUTPUT]);
+};
+
+
+/**
+ * The timestamp of when debugging was initialized, for overall duration.
+ * @private {number}
  */
 spf.debug.start_ = spf.now();
 
 
 /**
- * Whether to suppor the advanced console API.
- * @type {boolean}
- * @private
+ * The timestamp of when debugging was reset, for split durations.
+ * @private {number}
  */
-spf.debug.advanced_ = !!(window.console && !eval('/*@cc_on!@*/false'));
+spf.debug.split_ = 0;
 
 
 /**
- * A map of logging methods to corresponding output levels.
- * @type {Object.<string, number>}
+ * Whether to support direct console logging.  This mode allows logging of
+ * objects directly to the console without casting to a string.
+ * Note: IE does not support direct logging, but also does not support the
+ * debug method, so this property will be false in IE.
+ * @private {boolean}
+ */
+spf.debug.direct_ = !!(window.console && window.console.debug);
+
+
+/**
+ * A map of logging output levels to corresponding numeric values.
+ * @private {Object.<string, number>}
  * @const
- * @private
  */
 spf.debug.levels_ = {
   'debug': 1,
@@ -129,9 +168,22 @@ spf.debug.levels_ = {
 
 
 /**
+ * The level of logging output, corresponding to browser console logging
+ * functions: "debug", "info", "warn", "error".
+ * @enum {string}
+ */
+spf.debug.Level = {
+  DEBUG: 'debug',
+  INFO: 'info',
+  WARN: 'warn',
+  ERROR: 'error'
+};
+
+
+/**
  * @define {string} OUTPUT is provided to control the level of output
  * from debugging code.  Valid values correspond to browser console logging
  * functions: "debug", "info", "warn", and "error", and can be set by the
- * compiler when "--define spf.DEBUG_LEVEL='warn'" or similar is specified.
+ * compiler when "--define spf.debug.OUTPUT='warn'" or similar is specified.
  */
 spf.debug.OUTPUT = 'info';

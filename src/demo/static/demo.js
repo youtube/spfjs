@@ -101,6 +101,11 @@ demo.handleNavigateRequested = function(url) {
  */
 demo.handleNavigateReceived = function(url, response) {
   demo.log('navigate received');
+  // If debug logging is enabled, reset the relative times when each new
+  // request is received.
+  if (spf.debug) {
+    spf.debug.reset();
+  }
 };
 
 
