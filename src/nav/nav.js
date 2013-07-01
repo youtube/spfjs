@@ -551,8 +551,9 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
     }
     var html = fragments[id];
     var key = spf.key(el);
+    var transitionClass = spf.config['transition-class'];
     if (!spf.nav.animate_ ||
-        !spf.dom.classes.has(el, spf.config['transition-class'])) {
+        !spf.dom.classes.has(el, transitionClass)) {
       var jsParseResult = spf.net.scripts.parse(html);
       // If the target element isn't enabled for transitions, just replace.
       // Use the parsed HTML without script tags to avoid any scripts
@@ -576,16 +577,18 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
         currentEl: null,  // Set in Step 1.
         pendingEl: null,  // Set in Step 1.
         parentEl: el,
-        currentClass: spf.config['transition-current-child-class'],
-        pendingClass: !!opt_reverse ?
-                          spf.config['transition-reverse-child-class'] :
-                          spf.config['transition-forward-child-class'],
-        parentClass: !!opt_reverse ?
-                         spf.config['transition-reverse-parent-class'] :
-                         spf.config['transition-forward-parent-class']
+        currentClass: transitionClass + '-old',
+        pendingClass: transitionClass + '-new',
+        startClass: !!opt_reverse ?
+                        transitionClass + '-reverse-start' :
+                        transitionClass + '-forward-start',
+        endClass: !!opt_reverse ?
+                      transitionClass + '-reverse-end' :
+                      transitionClass + '-forward-end'
       };
       // Transition Step 1: Insert new (timeout = 0).
       queue.push([function(data, next) {
+        spf.dom.classes.add(data.parentEl, data.startClass);
         // Reparent the existing elements.
         data.currentEl = document.createElement('div');
         data.currentEl.className = data.currentClass;
@@ -605,7 +608,9 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
       }, 0]);
       // Transition Step 2: Switch between old and new (timeout = 0).
       queue.push([function(data, next) {
-        spf.dom.classes.add(data.parentEl, data.parentClass);
+        // Start the transition.
+        spf.dom.classes.remove(data.parentEl, data.startClass);
+        spf.dom.classes.add(data.parentEl, data.endClass);
         next();
       }, 0]);
       // Transition Step 3: Remove old (timeout = config duration).
@@ -614,7 +619,7 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
         // When done, remove the old content.
         data.parentEl.removeChild(data.currentEl);
         // End the transition.
-        spf.dom.classes.remove(data.parentEl, data.parentClass);
+        spf.dom.classes.remove(data.parentEl, data.endClass);
         // Reparent the new elements.
         spf.dom.flattenElement(data.pendingEl);
         next();
@@ -740,30 +745,26 @@ spf.nav.preprocess = function(response) {
 
 
 /**
- * @type {boolean}
- * @private
+ * @private {boolean}
  */
 spf.nav.initialized_ = false;
 
 
 /**
- * @type {XMLHttpRequest}
- * @private
+ * @private {XMLHttpRequest}
  */
 spf.nav.request_;
 
 
 /**
- * @type {!Object.<string, ?{timer: number, queue: !Array, data: !Object}>}
- * @private
+ * @private {!Object.<string, ?{timer: number, queue: !Array, data: !Object}>}
  */
 spf.nav.transitions_ = {};
 
 
 /**
  * Whether the browser supports animation via CSS Transitions.
- * @type {boolean}
- * @private
+ * @private {boolean}
  */
 spf.nav.animate_ = (function() {
   var testEl = document.createElement('div');

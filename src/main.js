@@ -11,7 +11,6 @@ goog.require('spf.debug');
 goog.require('spf.history');
 goog.require('spf.nav');
 goog.require('spf.pubsub');
-goog.require('spf.string');
 
 
 /**
@@ -29,9 +28,6 @@ spf.main.init = function(opt_config) {
   for (var key in spf.defaults) {
     var value = (key in config) ? config[key] : spf.defaults[key];
     spf.config[key] = value;
-    if (enable && value && spf.string.endsWith(key, '-callback')) {
-      spf.pubsub.subscribe(key, value);
-    }
   }
   spf.debug.debug('    config', spf.config);
   if (enable) {

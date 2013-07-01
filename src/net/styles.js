@@ -97,12 +97,12 @@ spf.net.styles.install = function(result) {
     return;
   }
   // Install the styles.
-  for (var i = 0; i < result.styles.length; i++) {
+  for (var i = 0, l = result.styles.length; i < l; i++) {
     var item = result.styles[i];
-    if (item['url']) {
-      spf.net.styles.load(item['url'], null, item['name']);
-    } else if (item['text']) {
-      spf.net.styles.eval(item['text']);
+    if (item.url) {
+      spf.net.styles.load(item.url, null, item.name);
+    } else if (item.text) {
+      spf.net.styles.eval(item.text);
     }
   }
 };
@@ -119,10 +119,10 @@ spf.net.styles.preinstall = function(result) {
     return;
   }
   // Prefetch the styles.
-  for (var i = 0; i < result.styles.length; i++) {
+  for (var i = 0, l = result.styles.length; i < l; i++) {
     var item = result.styles[i];
-    if (item['url']) {
-      spf.net.styles.prefetch(item['url']);
+    if (item.url) {
+      spf.net.styles.prefetch(item.url);
     }
   }
 };
@@ -147,7 +147,7 @@ spf.net.styles.parse = function(html) {
           url = url ? url[1] : '';
           var name = attr.match(spf.net.styles.CLASS_ATTR_REGEXP);
           name = name ? name[1] : '';
-          result.styles.push({'url': url, 'text': '', 'name': name});
+          result.styles.push({url: url, text: '', name: name});
           return '';
         } else {
           return fullMatch;
@@ -155,7 +155,7 @@ spf.net.styles.parse = function(html) {
       });
   html = html.replace(spf.net.styles.STYLE_TAG_REGEXP,
       function(fullMatch, attr, text) {
-        result.styles.push({'url': '', 'text': text, 'name': ''});
+        result.styles.push({url: '', text: text, name: ''});
         return '';
       });
   result.html = html;

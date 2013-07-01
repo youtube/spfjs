@@ -69,7 +69,7 @@ spf.net.resources.load = function(type, url, opt_callback, opt_name) {
   }
   // Otherwise, the resource needs to be loaded.
   // First, find old resources to remove after loading, if any.
-  var tag = (type == 'css') ? 'link' : 'script';
+  var tag = (type == 'js') ? 'script' : 'link';
   var elsToRemove = cls ? spf.dom.query(tag + '.' + cls) : [];
   // Lexical closures allow this trickiness with the "el" variable.
   el = spf.net.resources.load_(type, url, id, cls, function() {
@@ -103,7 +103,7 @@ spf.net.resources.load_ = function(type, url, id, cls, fn, opt_document) {
   if (type != 'js' && type != 'css') {
     return null;
   }
-  var tag = (type == 'css') ? 'link' : 'script';
+  var tag = (type == 'js') ? 'script' : 'link';
   var el = document.createElement(tag);
   el.id = id;
   el.className = cls;
@@ -131,18 +131,17 @@ spf.net.resources.load_ = function(type, url, id, cls, fn, opt_document) {
         el.onload();
     }
   };
-  if (type == 'css') {
-    el.href = url;
-  } else {
+  if (type == 'js') {
     // For scripts, set the onload and onreadystatechange handlers before
     // setting the src to avoid potential IE bug where handlers are not called.
     el.src = url;
+  } else {
+    el.href = url;
   }
   // Place the resources in the head instead of the body to avoid errors when
   // called from the head in the first place.
   var doc = opt_document || document;
   var targetEl = doc.getElementsByTagName('head')[0] || doc.body;
-
   if (type == 'js') {
     // Use insertBefore instead of appendChild to avoid errors with loading
     // multiple scripts at once in IE.
@@ -223,10 +222,7 @@ spf.net.resources.prefetch = function(type, url) {
   // Firefox needs the iframe to be fully created in the DOM before continuing.
   setTimeout(function() {
     var iframeDoc = iframeEl.contentWindow.document;
-    if (type == 'css') {
-      // Stylesheets can be prefetched in the same way as loaded.
-      spf.net.resources.load_(type, url, id, '', null, iframeDoc);
-    } else {
+    if (type == 'js') {
       // Scripts need to be prefetched without execution.
       var objectEl = iframeDoc.createElement('object');
       objectEl.id = id;
@@ -241,6 +237,9 @@ spf.net.resources.prefetch = function(type, url) {
         objectEl.data = url;
       }
       iframeDoc.body.appendChild(objectEl);
+    } else {
+      // Stylesheets can be prefetched in the same way as loaded.
+      spf.net.resources.load_(type, url, id, '', null, iframeDoc);
     }
   }, 0);
 };

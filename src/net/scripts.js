@@ -128,10 +128,10 @@ spf.net.scripts.execute = function(result, opt_callback) {
     index++;
     if (index < result.scripts.length) {
       var item = result.scripts[index];
-      if (item['url']) {
-        spf.net.scripts.load(item['url'], getNextScript, item['name']);
-      } else if (item['text']) {
-        spf.net.scripts.eval(item['text'], getNextScript);
+      if (item.url) {
+        spf.net.scripts.load(item.url, getNextScript, item.name);
+      } else if (item.text) {
+        spf.net.scripts.eval(item.text, getNextScript);
       } else {
         getNextScript();
       }
@@ -156,10 +156,10 @@ spf.net.scripts.preexecute = function(result) {
     return;
   }
   // Prefetch the scripts.
-  for (var i = 0; i < result.scripts.length; i++) {
+  for (var i = 0, l = result.scripts.length; i < l; i++) {
     var item = result.scripts[i];
-    if (item['url']) {
-      spf.net.scripts.prefetch(item['url']);
+    if (item.url) {
+      spf.net.scripts.prefetch(item.url);
     }
   }
 };
@@ -183,7 +183,7 @@ spf.net.scripts.parse = function(html) {
         url = url ? url[1] : '';
         var name = attr.match(spf.net.scripts.CLASS_ATTR_REGEXP);
         name = name ? name[1] : '';
-        result.scripts.push({'url': url, 'text': text, 'name': name});
+        result.scripts.push({url: url, text: text, name: name});
         return '';
       });
   result.html = html;

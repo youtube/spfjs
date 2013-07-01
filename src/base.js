@@ -23,7 +23,7 @@ spf.DEBUG = true;
 spf.defaults = {
   'url-identifier': '?spf=__type__',
   'link-class': 'spf-link',
-  'nolink-class': null, // If needed, "spf-nolink" is recommended.
+  'nolink-class': 'spf-nolink',
   'request-timeout': 0,
   'cache-lifetime': 600000,  // 10 minutes in milliseconds.
   'navigate-requested-callback': null,
@@ -31,12 +31,7 @@ spf.defaults = {
   'navigate-processed-callback': null,
   'navigate-error-callback': null,
   'transition-class': 'spf-transition',
-  'transition-duration': 425,
-  'transition-forward-parent-class': 'spf-transition-forward',
-  'transition-reverse-parent-class': 'spf-transition-reverse',
-  'transition-current-child-class': 'spf-current',
-  'transition-forward-child-class': 'spf-forward',
-  'transition-reverse-child-class': 'spf-reverse'
+  'transition-duration': 425
 };
 
 
@@ -93,7 +88,6 @@ spf.key = function(obj) {
 
 
 /**
- * @type {number}
- * @private
+ * @private {number}
  */
 spf.counter_ = 0;
