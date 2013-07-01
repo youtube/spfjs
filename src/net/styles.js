@@ -75,6 +75,17 @@ spf.net.styles.unload = function(url) {
 
 
 /**
+ * Cancels execution of any pending callbacks but does not stop loading
+ * the stylesheet.
+ *
+ * @param {string} url Url of the stylesheet.
+ */
+spf.net.styles.cancelCallbacks = function(url) {
+  spf.net.resources.cancelCallbacks('css', url);
+};
+
+
+/**
  * Prefetches a stylesheet URL; the stylesheet will be requested but not loaded.
  * Use to prime the browser cache and avoid needing to request the styesheet
  * when subsequently loaded.  See {@link #load}.

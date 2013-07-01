@@ -191,6 +191,22 @@ spf.net.resources.unload_ = function(els) {
 
 
 /**
+ * Cancels execution of any pending callbacks but does not stop loading the
+ * pending URL.
+ *
+ * @param {string} type Type of the resource, must be either "js" or "css".
+ * @param {string} url Url of the resource.
+ */
+spf.net.resources.cancelCallbacks = function(type, url) {
+  if (type != 'js' && type != 'css') {
+    return;
+  }
+  var id = type + '-' + spf.string.hashCode(url);
+  spf.pubsub.clear(id);
+};
+
+
+/**
  * Prefetches a resource URL; the resource will be requested but not loaded.
  * Use to prime the browser cache and avoid needing to request the resource
  * when subsequently loaded.  See {@link #load}.

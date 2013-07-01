@@ -95,6 +95,17 @@ spf.net.scripts.unload = function(url) {
 
 
 /**
+ * Cancels execution of any pending callbacks but does not stop loading
+ * the script.
+ *
+ * @param {string} url Url of the script.
+ */
+spf.net.scripts.cancelCallbacks = function(url) {
+  spf.net.resources.cancelCallbacks('js', url);
+};
+
+
+/**
  * Prefetchs a script URL; the script will be requested but not loaded.
  * Use to prime the browser cache and avoid needing to request the script when
  * subsequently loaded.  See {@link #load}.
