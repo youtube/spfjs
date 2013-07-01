@@ -11,7 +11,7 @@ goog.require('spf');
 goog.require('spf.cache');
 goog.require('spf.debug');
 goog.require('spf.dom');
-goog.require('spf.dom.classes');
+goog.require('spf.dom.classlist');
 goog.require('spf.dom.url');
 goog.require('spf.history');
 goog.require('spf.net.scripts');
@@ -90,7 +90,7 @@ spf.nav.handleClick = function(evt) {
   // Ignore clicks on targets without the link class or not within
   // a container with the link class.
   var linkEl = spf.dom.getAncestor(evt.target, function(node) {
-    return spf.dom.classes.has(node, spf.config['link-class']);
+    return spf.dom.classlist.contains(node, spf.config['link-class']);
   });
   if (!linkEl) {
     spf.debug.debug('    ignoring click without link class');
@@ -100,7 +100,7 @@ spf.nav.handleClick = function(evt) {
   // a container with the nolink class.
   if (spf.config['nolink-class']) {
     var nolinkEl = spf.dom.getAncestor(evt.target, function(node) {
-      return spf.dom.classes.has(node, spf.config['nolink-class']);
+      return spf.dom.classlist.contains(node, spf.config['nolink-class']);
     });
     if (nolinkEl) {
       spf.debug.debug('    ignoring click with nolink class');
@@ -553,7 +553,7 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
     var key = spf.key(el);
     var transitionClass = spf.config['transition-class'];
     if (!spf.nav.animate_ ||
-        !spf.dom.classes.has(el, transitionClass)) {
+        !spf.dom.classlist.contains(el, transitionClass)) {
       var jsParseResult = spf.net.scripts.parse(html);
       // If the target element isn't enabled for transitions, just replace.
       // Use the parsed HTML without script tags to avoid any scripts
@@ -588,7 +588,7 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
       };
       // Transition Step 1: Insert new (timeout = 0).
       queue.push([function(data, next) {
-        spf.dom.classes.add(data.parentEl, data.startClass);
+        spf.dom.classlist.add(data.parentEl, data.startClass);
         // Reparent the existing elements.
         data.currentEl = document.createElement('div');
         data.currentEl.className = data.currentClass;
@@ -609,8 +609,8 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
       // Transition Step 2: Switch between old and new (timeout = 0).
       queue.push([function(data, next) {
         // Start the transition.
-        spf.dom.classes.remove(data.parentEl, data.startClass);
-        spf.dom.classes.add(data.parentEl, data.endClass);
+        spf.dom.classlist.remove(data.parentEl, data.startClass);
+        spf.dom.classlist.add(data.parentEl, data.endClass);
         next();
       }, 0]);
       // Transition Step 3: Remove old (timeout = config duration).
@@ -619,7 +619,7 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
         // When done, remove the old content.
         data.parentEl.removeChild(data.currentEl);
         // End the transition.
-        spf.dom.classes.remove(data.parentEl, data.endClass);
+        spf.dom.classlist.remove(data.parentEl, data.endClass);
         // Reparent the new elements.
         spf.dom.flattenElement(data.pendingEl);
         next();
