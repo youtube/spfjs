@@ -5,6 +5,7 @@
  */
 
 goog.provide('spf');
+goog.provide('spf.state');
 
 
 /**
@@ -82,12 +83,51 @@ spf.now = function() {
  * @return {string} The unique key.
  */
 spf.key = function(obj) {
+  var c = (spf.state.get('counter') || 0) + 1;
   return obj['spf-key'] ||
-      (obj['spf-key'] = spf.now() + '-' + (++spf.counter_));
+      (obj['spf-key'] = spf.now() + '-' + spf.state.set('counter', c));
 };
 
 
 /**
- * @private {number}
+ * Checks whether a current state value exists.
+ *
+ * @param {string} name The state name.
+ * @return {boolean} Whether the state value exists.
  */
-spf.counter_ = 0;
+spf.state.has = function(name) {
+  return name in spf.state.values_;
+};
+
+
+/**
+ * Gets a current state value.
+ *
+ * @param {string} name The state name.
+ * @return {*} The state value.
+ */
+spf.state.get = function(name) {
+  return spf.state.values_[name];
+};
+
+
+/**
+ * Sets a current state value.
+ *
+ * @param {string} name The state name.
+ * @param {*} value The state value.
+ * @return {*} The state value.
+ */
+spf.state.set = function(name, value) {
+  spf.state.values_[name] = value;
+  return value;
+};
+
+
+/**
+ * Current state values.  Globally exported to maintain continuity
+ * across revisions.
+ * @private {Object}
+ */
+spf.state.values_ = window['_spf_state'] || {};
+window['_spf_state'] = spf.state.values_;
