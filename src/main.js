@@ -7,6 +7,7 @@
 goog.provide('spf.main');
 
 goog.require('spf');
+goog.require('spf.config');
 goog.require('spf.debug');
 goog.require('spf.history');
 goog.require('spf.nav');
@@ -16,8 +17,7 @@ goog.require('spf.pubsub');
 /**
  * Initialize SPF.
  *
- * @param {Object=} opt_config Optional configuration object.  Will be merged
- *     with {@link #defaults} and stored in {@link #config}.
+ * @param {Object=} opt_config Optional configuration object.
  * @return {boolean} Whether SPF was successfully initialized.  If the HTML5
  *     history modification API is not supported, returns false.
  */
@@ -25,11 +25,10 @@ spf.main.init = function(opt_config) {
   var enable = !!(window.history.pushState);
   spf.debug.info('main.init ', 'enable=', enable);
   var config = opt_config || {};
-  for (var key in spf.defaults) {
-    var value = (key in config) ? config[key] : spf.defaults[key];
-    spf.config[key] = value;
+  for (var key in spf.config.defaults) {
+    var value = (key in config) ? config[key] : spf.config.defaults[key];
+    spf.config.set(key, value);
   }
-  spf.debug.debug('    config', spf.config);
   if (enable) {
     spf.history.init(spf.nav.handleHistory);
     spf.nav.init();
@@ -47,7 +46,7 @@ spf.main.dispose = function() {
     spf.nav.dispose();
     spf.history.dispose();
   }
-  spf.config = {};
+  spf.config.clear();
 };
 
 

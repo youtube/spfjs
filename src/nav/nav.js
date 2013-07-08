@@ -9,6 +9,7 @@ goog.provide('spf.nav');
 
 goog.require('spf');
 goog.require('spf.cache');
+goog.require('spf.config');
 goog.require('spf.debug');
 goog.require('spf.dom');
 goog.require('spf.dom.classlist');
@@ -90,7 +91,7 @@ spf.nav.handleClick = function(evt) {
   // Ignore clicks on targets without the link class or not within
   // a container with the link class.
   var linkEl = spf.dom.getAncestor(evt.target, function(node) {
-    return spf.dom.classlist.contains(node, spf.config['link-class']);
+    return spf.dom.classlist.contains(node, spf.config.get('link-class'));
   });
   if (!linkEl) {
     spf.debug.debug('    ignoring click without link class');
@@ -98,9 +99,9 @@ spf.nav.handleClick = function(evt) {
   }
   // Ignore clicks on targets with the nolink class or within
   // a container with the nolink class.
-  if (spf.config['nolink-class']) {
+  if (spf.config.get('nolink-class')) {
     var nolinkEl = spf.dom.getAncestor(evt.target, function(node) {
-      return spf.dom.classlist.contains(node, spf.config['nolink-class']);
+      return spf.dom.classlist.contains(node, spf.config.get('nolink-class'));
     });
     if (nolinkEl) {
       spf.debug.debug('    ignoring click with nolink class');
@@ -188,7 +189,7 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
   spf.debug.info('nav.navigate ', url, opt_referer, opt_history, opt_reverse);
   // Execute the "navigation requested" callback.  If the callback explicitly
   // returns false, cancel this navigation.
-  var val = spf.execute(spf.config['navigate-requested-callback'], url);
+  var val = spf.execute(spf.config.get('navigate-requested-callback'), url);
   if (val === false) {
     spf.debug.warn('failed in "navigate-requested-callback", canceling',
                    '(val=', val, ')');
@@ -285,7 +286,7 @@ spf.nav.error = function(url, err) {
   spf.debug.error('nav.error ', '(url=', url, 'err=', err, ')');
   // Execute the "navigation error" callback.  If the callback explicitly
   // returns false, do not redirect.
-  var val = spf.execute(spf.config['navigate-error-callback'], url, err);
+  var val = spf.execute(spf.config.get('navigate-error-callback'), url, err);
   if (val === false) {
     spf.debug.warn('failed in "navigate-error-callback", canceling',
                    '(val=', val, ')');
@@ -366,7 +367,7 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
   spf.debug.debug('    absolute url ', absoluteUrl);
   // Add the SPF identifier, to be used for sending the request.
   var requestUrl = absoluteUrl;
-  var ident = spf.config['url-identifier'] || '';
+  var ident = spf.config.get('url-identifier') || '';
   if (ident) {
     ident = ident.replace('__type__', opt_type || 'request');
     if (spf.string.startsWith(ident, '?') &&
@@ -385,7 +386,7 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
     if (opt_type == 'navigate') {
       // Execute the "navigation received" callback.  If the callback
       // explicitly returns false, cancel this navigation.
-      var val = spf.execute(spf.config['navigate-received-callback'],
+      var val = spf.execute(spf.config.get('navigate-received-callback'),
                             url, response);
       if (val === false || val instanceof Error) {
         spf.debug.warn('failed in "navigate-received-callback", canceling',
@@ -438,7 +439,7 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
     // Cache the response for future requests.
     // Use the absolute URL without identifier to allow cached responses
     // from prefetching to apply to navigation.
-    spf.cache.set(absoluteUrl, response, spf.config['cache-lifetime']);
+    spf.cache.set(absoluteUrl, response, spf.config.get('cache-lifetime'));
     // Set the timing values for the response.
     response['timing'] = timing;
     onResponseFound(response);
@@ -467,7 +468,7 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
     }
     var xhr = spf.net.xhr.get(requestUrl, {
       headers: headers,
-      timeoutMs: spf.config['request-timeout'],
+      timeoutMs: spf.config.get('request-timeout'),
       onSuccess: onRequestResponse,
       onError: onRequestResponse,
       onTimeout: onRequestResponse
@@ -530,7 +531,7 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
           // Execute the "navigation processed" callback.  There is no
           // opportunity to cancel the navigation after processing is complete,
           // so explicitly returning false here does nothing.
-          var val = spf.execute(spf.config['navigate-processed-callback'],
+          var val = spf.execute(spf.config.get('navigate-processed-callback'),
                                 response);
           if (val instanceof Error) {
             spf.debug.warn('failed in "navigate-processed-callback", ignoring',
@@ -551,7 +552,7 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
     }
     var html = fragments[id];
     var key = spf.key(el);
-    var transitionClass = spf.config['transition-class'];
+    var transitionClass = spf.config.get('transition-class');
     if (!spf.nav.animate_ ||
         !spf.dom.classlist.contains(el, transitionClass)) {
       var jsParseResult = spf.net.scripts.parse(html);
@@ -623,7 +624,7 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
         // Reparent the new elements.
         spf.dom.flattenElement(data.pendingEl);
         next();
-      }, spf.config['transition-duration']]);
+      }, spf.config.get('transition-duration')]);
       // Transition Step 4: Execute scripts (timeout = 0).
       queue.push([function(data, next) {
         // Execute embedded scripts before continuing.

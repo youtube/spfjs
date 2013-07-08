@@ -5,6 +5,7 @@
  */
 
 goog.provide('spf');
+goog.provide('spf.config');
 goog.provide('spf.state');
 
 
@@ -15,32 +16,6 @@ goog.provide('spf.state');
  * place debugging code inside an "if (spf.DEBUG)" conditional.
  */
 spf.DEBUG = true;
-
-
-/**
- * Default configuration values.
- * @type {Object.<string, string|number|Function>}
- */
-spf.defaults = {
-  'url-identifier': '?spf=__type__',
-  'link-class': 'spf-link',
-  'nolink-class': 'spf-nolink',
-  'request-timeout': 0,
-  'cache-lifetime': 600000,  // 10 minutes in milliseconds.
-  'navigate-requested-callback': null,
-  'navigate-received-callback': null,
-  'navigate-processed-callback': null,
-  'navigate-error-callback': null,
-  'transition-class': 'spf-transition',
-  'transition-duration': 425
-};
-
-
-/**
- * Current configuration values.
- * @type {Object}
- */
-spf.config = {};
 
 
 /**
@@ -86,6 +61,87 @@ spf.key = function(obj) {
   var c = (spf.state.get('counter') || 0) + 1;
   return obj['spf-key'] ||
       (obj['spf-key'] = spf.now() + '-' + spf.state.set('counter', c));
+};
+
+
+/**
+ * Default configuration values.
+ * @type {Object.<string, string|number|Function>}
+ */
+spf.config.defaults = {
+  'url-identifier': '?spf=__type__',
+  'link-class': 'spf-link',
+  'nolink-class': 'spf-nolink',
+  'request-timeout': 0,
+  'cache-lifetime': 600000,  // 10 minutes in milliseconds.
+  'navigate-requested-callback': null,
+  'navigate-received-callback': null,
+  'navigate-processed-callback': null,
+  'navigate-error-callback': null,
+  'transition-class': 'spf-transition',
+  'transition-duration': 425
+};
+
+
+/**
+ * Checks whether a current configuration value exists.
+ *
+ * @param {string} name The configuration name.
+ * @return {boolean} Whether the configuration value exists.
+ */
+spf.config.has = function(name) {
+  var config = spf.config.config_();
+  return name in config;
+};
+
+
+/**
+ * Gets a current configuration value.
+ *
+ * @param {string} name The configuration name.
+ * @return {*} The configuration value.
+ */
+spf.config.get = function(name) {
+  var config = spf.config.config_();
+  return config[name];
+};
+
+
+/**
+ * Sets a current configuration value.
+ *
+ * @param {string} name The configuration name.
+ * @param {*} value The configuration value.
+ * @return {*} The configuration value.
+ */
+spf.config.set = function(name, value) {
+  var config = spf.config.config_();
+  config[name] = value;
+  return value;
+};
+
+
+/**
+ * Removes all data from the cache.
+ */
+spf.config.clear = function() {
+  spf.config.config_({});
+};
+
+
+/**
+ * @param {!Object.<string, *>=} opt_config Optional config
+ *     object to overwrite the current value.
+ * @return {!Object.<string, Object>} Current config object.
+ * @private
+ */
+spf.config.config_ = function(opt_config) {
+  if (opt_config || !spf.state.has('config')) {
+    return /** @type {!Object.<string, *>} */ (
+        spf.state.set('config', (opt_config || {})));
+  }
+  return /** @type {!Object.<string, *>} */ (
+      spf.state.get('config'));
 };
 
 
