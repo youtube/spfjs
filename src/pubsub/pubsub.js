@@ -1,5 +1,5 @@
 /**
- * @fileoverview Single publish/subscribe instance used as a "dispatch"
+ * @fileoverview Simple publish/subscribe instance used as a "dispatch"
  * for centralized notifications.
  *
  * @author nicksay@google.com (Alex Nicksay)
@@ -7,24 +7,26 @@
 
 goog.provide('spf.pubsub');
 
+goog.require('spf.state');
+
 
 /**
- * Subscribes a function to a topic.  The function is invoked as a method on
- * the given {@code opt_context} object, or in the global scope if no context
- * is specified.  Subscribing the same function to the same topic multiple
+ * Subscribes a function to a topic.  The function is invoked in the global
+ * scope.  Subscribing the same function to the same topic multiple
  * times will result in multiple function invocations while publishing.
  *
  * @param {string} topic Topic to subscribe to.
  * @param {Function} fn Function to be invoked when a message is published to
  *     the given topic.
- * @param {Object=} opt_context Object in whose context the function is to be
- *     called (the global scope if none).
  */
-spf.pubsub.subscribe = function(topic, fn, opt_context) {
-  if (!(topic in spf.pubsub.subscriptions_)) {
-    spf.pubsub.subscriptions_[topic] = [];
+spf.pubsub.subscribe = function(topic, fn) {
+  if (topic && fn) {
+    var subs = spf.pubsub.subscriptions_();
+    if (!(topic in subs)) {
+      subs[topic] = [];
+    }
+    subs[topic].push(fn);
   }
-  spf.pubsub.subscriptions_[topic].push([fn, opt_context]);
 };
 
 
@@ -33,15 +35,13 @@ spf.pubsub.subscribe = function(topic, fn, opt_context) {
  *
  * @param {string} topic Topic to unsubscribe from.
  * @param {Function} fn Function to unsubscribe.
- * @param {Object=} opt_context Object in whose context the function was to be
- *     called (the global scope if none).
  */
-spf.pubsub.unsubscribe = function(topic, fn, opt_context) {
-  if (topic in spf.pubsub.subscriptions_) {
-    var subs = spf.pubsub.subscriptions_[topic];
-    for (var i = 0, l = subs.length; i < l; i++) {
-      if (subs[i] && subs[i][0] == fn && subs[i][1] == opt_context) {
-        subs[i] = null;
+spf.pubsub.unsubscribe = function(topic, fn) {
+  var subs = spf.pubsub.subscriptions_();
+  if (topic in subs && fn) {
+    for (var i = 0, l = subs[topic].length; i < l; i++) {
+      if (subs[topic][i] == fn) {
+        subs[topic][i] = null;
         return;
       }
     }
@@ -59,14 +59,12 @@ spf.pubsub.unsubscribe = function(topic, fn, opt_context) {
  *     function.
  */
 spf.pubsub.publish = function(topic, var_args) {
-  if (topic in spf.pubsub.subscriptions_) {
-    var subs = spf.pubsub.subscriptions_[topic];
+  var subs = spf.pubsub.subscriptions_();
+  if (topic in subs) {
     var args = Array.prototype.slice.call(arguments, 1);
-    for (var i = 0, l = subs.length; i < l; i++) {
-      if (subs[i]) {
-        var fn = subs[i][0];
-        var context = subs[i][1];
-        fn.apply(context, args);
+    for (var i = 0, l = subs[topic].length; i < l; i++) {
+      if (subs[topic][i]) {
+        subs[topic][i].apply(null, args);
       }
     }
   }
@@ -79,21 +77,28 @@ spf.pubsub.publish = function(topic, var_args) {
  * @param {string=} opt_topic Topic to clear (all topics if unspecified).
  */
 spf.pubsub.clear = function(opt_topic) {
+  var subs = spf.pubsub.subscriptions_();
   if (opt_topic) {
-    if (opt_topic in spf.pubsub.subscriptions_) {
-      delete spf.pubsub.subscriptions_[opt_topic];
+    if (opt_topic in subs) {
+      delete subs[opt_topic];
     }
   } else {
-    spf.pubsub.subscriptions_ = {};
+    spf.pubsub.subscriptions_({});
   }
 };
 
 
-
 /**
- * Map of subscriptions.
- *
- * @type {!Object.<string, Array>}
+ * @param {!Object.<string, Array>=} opt_subs Optional map of subscriptions
+ *     to overwrite the current value.
+ * @return {!Object.<string, Array>} Current map of subscriptions.
  * @private
  */
-spf.pubsub.subscriptions_ = {};
+spf.pubsub.subscriptions_ = function(opt_subs) {
+  if (opt_subs || !spf.state.has('pubsub-subs')) {
+    return /** @type {!Object.<string, Array>} */ (
+        spf.state.set('pubsub-subs', (opt_subs || {})));
+  }
+  return /** @type {!Object.<string, Array>} */ (
+      spf.state.get('pubsub-subs'));
+};

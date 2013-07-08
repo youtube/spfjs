@@ -7,6 +7,7 @@
 goog.provide('spf.cache');
 
 goog.require('spf');
+goog.require('spf.state');
 
 
 /**
@@ -17,17 +18,18 @@ goog.require('spf');
  * @return {*} The data, if it exists.
  */
 spf.cache.get = function(key) {
-  if (!spf.cache.storage_ || !(key in spf.cache.storage_)) {
+  var storage = spf.cache.storage_();
+  if (!(key in storage)) {
     return;
   }
-  var unit = spf.cache.storage_[key];
+  var unit = storage[key];
   // Ensure valid data is availabe for the key.
-  if (unit && unit.data) {
-    var age = spf.now() - unit.timestamp;
+  if (unit && unit['data']) {
+    var age = spf.now() - unit['time'];
     // A lifetime of NaN is considered forever; always return the data.
     // If the age is less than the lifetime, return the data.
-    if (isNaN(unit.lifetime) || age < unit.lifetime) {
-      return unit.data;
+    if (isNaN(unit['life']) || age < unit['life']) {
+      return unit['data'];
     }
   }
   // Otherwise, the data should be removed from the cache.
@@ -45,14 +47,12 @@ spf.cache.get = function(key) {
  *     is specified, the data is not set in the cache.
  */
 spf.cache.set = function(key, data, opt_lifetime) {
-  if (!spf.cache.storage_) {
-    spf.cache.storage_ = {};
-  }
   var lifetime = parseInt(opt_lifetime, 10);
   if (lifetime <= 0) {
     return;
   }
-  spf.cache.storage_[key] = new spf.cache.Unit(data, lifetime);
+  var storage = spf.cache.storage_();
+  storage[key] = spf.cache.create_(data, lifetime);
   // When setting data in the cache, trigger an asynchronous garbage collection
   // run to prevent unnecessary memory growth.
   setTimeout(spf.cache.collect, 1000);
@@ -63,8 +63,9 @@ spf.cache.set = function(key, data, opt_lifetime) {
  * Removes data from the cache.
  */
 spf.cache.remove = function(key) {
-  if (spf.cache.storage_ && key in spf.cache.storage_) {
-    delete spf.cache.storage_[key];
+  var storage = spf.cache.storage_();
+  if (key in storage) {
+    delete storage[key];
   }
 };
 
@@ -73,7 +74,7 @@ spf.cache.remove = function(key) {
  * Removes all data from the cache.
  */
 spf.cache.clear = function() {
-  delete spf.cache.storage_;
+  spf.cache.storage_({});
 };
 
 
@@ -82,20 +83,18 @@ spf.cache.clear = function() {
  * and data with an age exceeding the data lifetime will be removed.
  */
 spf.cache.collect = function() {
-  if (!spf.cache.storage_) {
-    return;
-  }
-  for (var key in spf.cache.storage_) {
-    var unit = spf.cache.storage_[key];
+  var storage = spf.cache.storage_();
+  for (var key in storage) {
+    var unit = storage[key];
     // If invalid data exists, remove.
-    if (!unit || !unit.data) {
-      delete spf.cache.storage_[key];
+    if (!unit || !unit['data']) {
+      delete storage[key];
     } else {
-      var age = spf.now() - unit.timestamp;
+      var age = spf.now() - unit['time'];
       // A lifetime of NaN is considered forever; don't remove.
       // If the age is greater than the lifetime, remove.
-      if (!isNaN(unit.lifetime) && age >= unit.lifetime) {
-        delete spf.cache.storage_[key];
+      if (!isNaN(unit['life']) && age >= unit['life']) {
+        delete storage[key];
       }
     }
   }
@@ -103,19 +102,31 @@ spf.cache.collect = function() {
 
 
 /**
- * @type {Object.<string, spf.cache.Unit>}
+ * @param {*} data The data.
+ * @param {number} lifetime Lifetime for the data object.
+ * @return {!Object}
  * @private
  */
-spf.cache.storage_;
+spf.cache.create_ = function(data, lifetime) {
+  return {
+    'data': data,
+    'life': lifetime,
+    'time': spf.now()
+  };
+};
 
 
 /**
- * @param {*} data The data.
- * @param {number} lifetime Lifetime for the data object.
- * @constructor
+ * @param {!Object.<string, Object>=} opt_storage Optional storage
+ *     object to overwrite the current value.
+ * @return {!Object.<string, Object>} Current storage object.
+ * @private
  */
-spf.cache.Unit = function(data, lifetime) {
-  this.data = data;
-  this.lifetime = lifetime;
-  this.timestamp = spf.now();
+spf.cache.storage_ = function(opt_storage) {
+  if (opt_storage || !spf.state.has('cache-storage')) {
+    return /** @type {!Object.<string, Object>} */ (
+        spf.state.set('cache-storage', (opt_storage || {})));
+  }
+  return /** @type {!Object.<string, Object>} */ (
+      spf.state.get('cache-storage'));
 };
