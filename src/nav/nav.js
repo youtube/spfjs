@@ -18,6 +18,7 @@ goog.require('spf.history');
 goog.require('spf.net.scripts');
 goog.require('spf.net.styles');
 goog.require('spf.net.xhr');
+goog.require('spf.state');
 goog.require('spf.string');
 
 
@@ -50,9 +51,10 @@ spf.nav.Response;
  * Initializes (enables) pushState navigation.
  */
 spf.nav.init = function() {
-  if (!spf.nav.initialized_ && document.addEventListener) {
-    document.addEventListener('click', spf.nav.handleClick, false);
-    spf.nav.initialized_ = true;
+  if (!spf.state.get('nav-init') && document.addEventListener) {
+    document.addEventListener('click', spf.nav.handleClick);
+    spf.state.set('nav-init', true);
+    spf.state.set('nav-listener', spf.nav.handleClick);
   }
 };
 
@@ -62,11 +64,12 @@ spf.nav.init = function() {
  */
 spf.nav.dispose = function() {
   spf.nav.cancel();
-  if (spf.nav.initialized_) {
+  if (spf.state.get('nav-init')) {
     if (document.removeEventListener) {
-      document.removeEventListener('click', spf.nav.handleClick, false);
+      document.removeEventListener('click', spf.state.get('nav-listener'));
     }
-    spf.nav.initialized_ = false;
+    spf.state.set('nav-init', false);
+    spf.state.set('nav-listener', null);
   }
 };
 
@@ -202,7 +205,7 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
     return;
   }
   // If navigation is requested but SPF is not initialized, redirect.
-  if (!spf.nav.initialized_) {
+  if (!spf.state.get('nav-init')) {
     spf.debug.warn('nav not initialized, redirecting ',
                     '(url=', url, ')');
     var err = new Error('Navigation not initialized');
@@ -218,14 +221,14 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
   var referer = opt_referer || window.location.href;
   var navigateError = function(url, err) {
     spf.debug.warn('navigate failed', '(url=', url, ')');
-    spf.nav.request_ = null;
+    spf.state.set('nav-request', null);
     if (err instanceof Error) {
       spf.nav.error(url, err);
     }
     return;
   };
   var navigateSuccess = function(url, response) {
-    spf.nav.request_ = null;
+    spf.state.set('nav-request', null);
     // Check for redirects.
     if (response['redirect']) {
       var redirectUrl = response['redirect'];
@@ -240,7 +243,7 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
   };
   var xhr = spf.nav.request(url, navigateSuccess, navigateError,
                             'navigate', referer);
-  spf.nav.request_ = xhr;
+  spf.state.set('nav-request', xhr);
   // After the request has been sent, check for new navigation that needs
   // a history entry added.  Do this after sending the XHR to have the
   // correct referer for regular navigation (but not history navigation).
@@ -267,11 +270,12 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
  * Cancels the current navigation request, if any.
  */
 spf.nav.cancel = function() {
-  if (spf.nav.request_) {
+  var xhr = spf.state.get('nav-request');
+  if (xhr) {
     spf.debug.warn('aborting previous navigate ',
-                   'xhr=', spf.nav.request_);
-    spf.nav.request_.abort();
-    spf.nav.request_ = null;
+                   'xhr=', xhr);
+    xhr.abort();
+    spf.state.set('nav-request', null);
   }
 };
 
@@ -636,7 +640,8 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
         });
       }, 0]);
       // Store the steps so the transition can be cleared, if needed.
-      spf.nav.transitions_[key] = {timer: 0, queue: queue, data: data};
+      var transitions = spf.nav.transitions_();
+      transitions[key] = {'timer': 0, 'queue': queue, 'data': data};
       // Execute the steps in order.
       spf.nav.process_(key);
     }
@@ -653,23 +658,23 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
  * @private
  */
 spf.nav.process_ = function(key, opt_quick) {
-  var transitions = spf.nav.transitions_;
+  var transitions = spf.nav.transitions_();
   if (key in transitions) {
-    if (transitions[key].queue.length > 0) {
-      var step = transitions[key].queue.shift();
+    if (transitions[key]['queue'].length > 0) {
+      var step = transitions[key]['queue'].shift();
       if (opt_quick) {
-        step[0](transitions[key].data, function() {
+        step[0](transitions[key]['data'], function() {
           spf.nav.process_(key, opt_quick);
         });
       } else {
-        transitions[key].timer = setTimeout(function() {
-          step[0](transitions[key].data, function() {
+        transitions[key]['timer'] = setTimeout(function() {
+          step[0](transitions[key]['data'], function() {
             spf.nav.process_(key, opt_quick);
           });
         }, step[1]);
       }
     } else {
-      clearTimeout(transitions[key].timer)
+      clearTimeout(transitions[key]['timer'])
       delete transitions[key];
     }
   }
@@ -746,21 +751,20 @@ spf.nav.preprocess = function(response) {
 
 
 /**
- * @private {boolean}
+ * @param {!Object.<string, ?{timer: number, queue: !Array, data: !Object}>=}
+ *     opt_trans Optional map of transitions to overwrite the current value.
+ * @return {!Object.<string, ?{timer: number, queue: !Array, data: !Object}>}
+ *     Current map of transitions.
+ * @private
  */
-spf.nav.initialized_ = false;
-
-
-/**
- * @private {XMLHttpRequest}
- */
-spf.nav.request_;
-
-
-/**
- * @private {!Object.<string, ?{timer: number, queue: !Array, data: !Object}>}
- */
-spf.nav.transitions_ = {};
+spf.nav.transitions_ = function(opt_trans) {
+  if (opt_trans || !spf.state.has('nav-transitions')) {
+    return /** @type {!Object.<string, ?{timer: number, queue: !Array, data: !Object>} */ (
+        spf.state.set('nav-transitions', (opt_trans || {})));
+  }
+  return /** @type {!Object.<string, ?{timer: number, queue: !Array, data: !Object>} */ (
+      spf.state.get('nav-transitions'));
+};
 
 
 /**

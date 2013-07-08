@@ -10,7 +10,9 @@
 
 goog.provide('spf.history');
 
+goog.require('spf');
 goog.require('spf.debug');
+goog.require('spf.state');
 
 
 /**
@@ -22,12 +24,22 @@ goog.require('spf.debug');
  *     state object associated with that URL.
  */
 spf.history.init = function(callback) {
-  if (!spf.history.initialized_ && window.addEventListener) {
-    spf.history.initialized_ = true;
-    spf.history.callback_ = callback;
-    spf.history.url_ = window.location.href;
-    spf.history.replace(spf.history.url_);
-    window.addEventListener('popstate', spf.history.pop_, false);
+  if (!spf.state.get('history-init') && window.addEventListener) {
+    var url = window.location.href;
+    window.addEventListener('popstate', spf.history.pop_);
+    // Whether history is initialized.
+    spf.state.set('history-init', true);
+    // A callback to handle history events.
+    spf.state.set('history-callback', callback);
+    // The event listener.
+    spf.state.set('history-listener', spf.history.pop_);
+    // The URL of the current history entry, used to detect returning to the
+    // the first state.
+    spf.state.set('history-url', url);
+    // The timestap of the current history entry, used to distinguish
+    // between backward and forward state changes.
+    spf.state.set('history-timestamp', spf.now());
+    spf.history.replace(url);
   }
 };
 
@@ -36,10 +48,16 @@ spf.history.init = function(callback) {
  * Dispose pushstate-based HTML5 History management.
  */
 spf.history.dispose = function() {
-  if (window.removeEventListener) {
-    window.removeEventListener('popstate', spf.history.pop_, false);
+  if (spf.state.get('history-init')) {
+    if (window.removeEventListener) {
+      window.removeEventListener('popstate', spf.state.get('history-listener'));
+    }
+    spf.state.set('history-init', false);
+    spf.state.set('history-callback', null);
+    spf.state.set('history-listener', null);
+    spf.state.set('history-url', null);
+    spf.state.set('history-timestamp', 0);
   }
-  spf.history.initialized_ = false;
 };
 
 
@@ -100,8 +118,9 @@ spf.history.push_ = function(replace, opt_url, opt_state, opt_doCallback) {
   }
   var url = opt_url || window.location.href;
   var state = opt_state || {};
-  spf.history.timestamp_ = spf.now();
-  state['spf-timestamp'] = spf.history.timestamp_;
+  var timestamp = spf.now();
+  spf.state.set('history-timestamp', timestamp);
+  state['spf-timestamp'] = timestamp;
   if (replace) {
     window.history.replaceState(state, '', url);
     spf.debug.debug('    replaceState:  ', 'url=', url, 'state=', state);
@@ -109,9 +128,12 @@ spf.history.push_ = function(replace, opt_url, opt_state, opt_doCallback) {
     window.history.pushState(state, '', url);
     spf.debug.debug('    pushState:  ', 'url=', url, 'state=', state);
   }
-  spf.history.url_ = url;
+  spf.state.set('history-url', url);
   if (opt_doCallback) {
-    spf.history.callback_(url, state);
+    var callback = spf.state.get('history-callback');
+    if (callback) {
+      callback(url, state);
+    }
   }
 };
 
@@ -128,47 +150,22 @@ spf.history.pop_ = function(evt) {
   // Avoid the initial event on first load for a state.
   if (evt.state) {
     var state = evt.state;
+    var timestamp = state['spf-timestamp'];
     // If the URL is the same and a state is present, the browser has left
     // and returned to first load via back/forward.  In this case, reset
     // the state to the original.
-    if (url == spf.history.url_) {
-      spf.history.timestamp_ = state['spf-timestamp'];
+    if (url == spf.state.get('history-url')) {
+      spf.state.set('history-timestamp', timestamp);
       window.history.replaceState(state, '', url);
       spf.debug.debug('    replaceState:  ', 'url=', url, 'state=', state);
     } else {
-      var timestamp = state['spf-timestamp'];
-      state['spf-back'] = !!(timestamp < spf.history.timestamp_);
-      spf.history.timestamp_ = timestamp;
-      spf.history.url_ = url;
-      spf.history.callback_(url, state);
+      state['spf-back'] = !!(timestamp < spf.state.get('history-timestamp'));
+      spf.state.set('history-timestamp', timestamp);
+      spf.state.set('history-url', url);
+      var callback = spf.state.get('history-callback');
+      if (callback) {
+        callback(url, state);
+      }
     }
   }
 };
-
-
-/**
- * @private {boolean}
- */
-spf.history.initialized_ = false;
-
-
-/**
- * A callback to handle history events.
- * @private {function(string, Object=)}
- */
-spf.history.callback_;
-
-
-/**
- * The timestamp of the current history entry, for distinguishing
- * between backward and forward state changes.
- * @private {number}
- */
-spf.history.timestamp_ = 0;
-
-
-/**
- * The URL of the current history entry.
- * @private {string}
- */
-spf.history.url_ = window.location.href;
