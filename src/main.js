@@ -52,34 +52,37 @@ spf.main.dispose = function() {
 };
 
 
-// When SPF is compiled for a production build, all methods are renamed by
-// the compiler and wrapped in an anonymous function to prevent namespace
-// pollution.  Only the methods exported here will be exposed to the page.
+// Create the API by exporting aliased functions.
+// Core API functions are available on the top-level namespace.
+// Extra API functions are available on second-level namespaces.
+var api = {
+  'init': spf.main.init,
+  'dispose': spf.main.dispose,
+  'navigate': spf.nav.navigate,
+  'load': spf.nav.load,
+  'process': spf.nav.process,
+  'prefetch': spf.nav.prefetch,
+  'scripts': {
+    'load': spf.net.scripts.load,
+    'unload': spf.net.scripts.unload,
+    'ignore': spf.net.scripts.ignore,
+    'prefetch': spf.net.scripts.prefetch
+  },
+  'styles': {
+    'load': spf.net.styles.load,
+    'unload': spf.net.styles.unload,
+    'ignore': spf.net.styles.ignore,
+    'prefetch': spf.net.styles.prefetch
+  }
+};
+
 if (spf.DEBUG) {
   // When compiled for a debug build, allow access to entire namespace.
   window['spf'] = spf;
+  for (var key in api) {
+    window['spf'][key] = api[key];
+  }
 } else {
   // When compiled for a production build, isolate access to API functions.
-  window['spf'] = {};
+  window['spf'] = api;
 }
-// Create the API by exporting aliased functions.
-// Core API functions are available on the top-level namespace.
-window['spf']['init'] = spf.main.init;
-window['spf']['dispose'] = spf.main.dispose;
-window['spf']['navigate'] = spf.nav.navigate;
-window['spf']['load'] = spf.nav.load;
-window['spf']['process'] = spf.nav.process;
-window['spf']['prefetch'] = spf.nav.prefetch;
-// Extra API functions are on second-level namespaces.
-window['spf']['scripts'] = {
-  'load': spf.net.scripts.load,
-  'unload': spf.net.scripts.unload,
-  'ignore': spf.net.scripts.ignore,
-  'prefetch': spf.net.scripts.prefetch
-};
-window['spf']['styles'] = {
-  'load': spf.net.styles.load,
-  'unload': spf.net.styles.unload,
-  'ignore': spf.net.styles.ignore,
-  'prefetch': spf.net.styles.prefetch
-};

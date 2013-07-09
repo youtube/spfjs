@@ -315,7 +315,6 @@ spf.nav.error = function(url, err) {
  * @param {function(string, Error)=} opt_onError The callback to
  *     execute if the load fails. The first argument is the requested
  *     URL; the second argument is the Error that occurred.
-
  * @return {XMLHttpRequest} The XHR of the current request.
  */
 spf.nav.load = function(url, opt_onSuccess, opt_onError) {
@@ -691,9 +690,9 @@ spf.nav.process_ = function(key, opt_quick) {
  *
  * @param {string} url The URL to load, without the SPF identifier.
  * @param {function(string, !Object)=} opt_onSuccess The callback to execute if
- *     the load succeeds.
+ *     the prefetch succeeds.
  * @param {function(string, Error)=} opt_onError The callback to
- *     execute if the load fails. The first argument is the requested
+ *     execute if the prefetch fails. The first argument is the requested
  *     URL; the second argument is the Error that occurred.
  * @return {XMLHttpRequest} The XHR of the current request.
  */
