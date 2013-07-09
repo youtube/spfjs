@@ -191,13 +191,13 @@ spf.net.resources.unload_ = function(els) {
 
 
 /**
- * Cancels execution of any pending callbacks but does not stop loading the
- * pending URL.
+ * "Ignores" a resource load by canceling execution of any pending callbacks;
+ * does not stop the actual loading of the resource.
  *
  * @param {string} type Type of the resource, must be either "js" or "css".
  * @param {string} url Url of the resource.
  */
-spf.net.resources.cancelCallbacks = function(type, url) {
+spf.net.resources.ignore = function(type, url) {
   if (type != 'js' && type != 'css') {
     return;
   }

@@ -95,13 +95,13 @@ spf.net.scripts.unload = function(url) {
 
 
 /**
- * Cancels execution of any pending callbacks but does not stop loading
- * the script.
+ * "Ignores" a script load by canceling execution of any pending callbacks;
+ * does not stop the actual loading of the script.
  *
  * @param {string} url Url of the script.
  */
-spf.net.scripts.cancelCallbacks = function(url) {
-  spf.net.resources.cancelCallbacks('js', url);
+spf.net.scripts.ignore = function(url) {
+  spf.net.resources.ignore('js', url);
 };
 
 

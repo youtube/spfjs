@@ -75,13 +75,13 @@ spf.net.styles.unload = function(url) {
 
 
 /**
- * Cancels execution of any pending callbacks but does not stop loading
- * the stylesheet.
+ * "Ignores" a stylesheet load by canceling execution of any pending callbacks;
+ * does not stop the actual loading of the stylesheet.
  *
  * @param {string} url Url of the stylesheet.
  */
-spf.net.styles.cancelCallbacks = function(url) {
-  spf.net.resources.cancelCallbacks('css', url);
+spf.net.styles.ignore = function(url) {
+  spf.net.resources.ignore('css', url);
 };
 
 
