@@ -42,7 +42,7 @@ $def with (content)
   </div>
   <!-- Pre-fill hashcodes so SPF won't load resources twice -->
   $if debug:
-    $ spf_js = "/static/spf-debug.js"
+    $ spf_js = "/static/debug-spf.js"
   $else:
     $ spf_js = "/static/spf.js"
   <script id="js-$hashcode(spf_js)" src="$spf_js" data-loaded="true"></script>
