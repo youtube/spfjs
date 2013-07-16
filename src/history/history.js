@@ -26,7 +26,7 @@ goog.require('spf.state');
 spf.history.init = function(callback) {
   if (!spf.state.get('history-init') && window.addEventListener) {
     var url = window.location.href;
-    window.addEventListener('popstate', spf.history.pop_);
+    window.addEventListener('popstate', spf.history.pop_, false);
     // Whether history is initialized.
     spf.state.set('history-init', true);
     // A callback to handle history events.
@@ -50,7 +50,8 @@ spf.history.init = function(callback) {
 spf.history.dispose = function() {
   if (spf.state.get('history-init')) {
     if (window.removeEventListener) {
-      window.removeEventListener('popstate', spf.state.get('history-listener'));
+      window.removeEventListener('popstate', /** @type {function(Event)} */ (
+          spf.state.get('history-listener')), false);
     }
     spf.state.set('history-init', false);
     spf.state.set('history-callback', null);
@@ -130,7 +131,8 @@ spf.history.push_ = function(replace, opt_url, opt_state, opt_doCallback) {
   }
   spf.state.set('history-url', url);
   if (opt_doCallback) {
-    var callback = spf.state.get('history-callback');
+    var callback = /** @type {function(string, Object=)} */ (
+        spf.state.get('history-callback'));
     if (callback) {
       callback(url, state);
     }
@@ -159,10 +161,12 @@ spf.history.pop_ = function(evt) {
       window.history.replaceState(state, '', url);
       spf.debug.debug('    replaceState:  ', 'url=', url, 'state=', state);
     } else {
-      state['spf-back'] = !!(timestamp < spf.state.get('history-timestamp'));
+      var current = /** @type {number} */ (spf.state.get('history-timestamp'));
+      state['spf-back'] = (timestamp < current);
       spf.state.set('history-timestamp', timestamp);
       spf.state.set('history-url', url);
-      var callback = spf.state.get('history-callback');
+      var callback = /** @type {function(string, Object=)} */ (
+          spf.state.get('history-callback'));
       if (callback) {
         callback(url, state);
       }
