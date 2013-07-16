@@ -39,6 +39,12 @@ app = web.application(urls, globals())
 
 
 class servlet(object):
+  def is_spf_request(self):
+    req = web.input(spf=None)
+    has_spf_header = bool(web.ctx.env.get('HTTP_X_SPF_REQUEST'))
+    has_spf_param = bool(req.spf)
+    return has_spf_header or has_spf_param
+
   def get_referer(self):
     referer = web.ctx.env.get('HTTP_X_SPF_REFERER')
     if not referer:
@@ -82,15 +88,13 @@ class servlet(object):
     return templates.base(content)
 
   def render(self, content):
-    req = web.input(spf=None)
-    if req.spf:
+    if self.is_spf_request():
       return self.render_spf(content)
     else:
       return self.render_html(content)
 
   def redirect(self, url):
-    req = web.input(spf=None)
-    if req.spf:
+    if self.is_spf_request():
       response = {'redirect': url}
       return self.json_response(response)
     else:

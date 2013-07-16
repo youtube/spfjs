@@ -375,8 +375,9 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
  *     request was canceled in response to the global "navigate-received"
  *     callback.
  * @param {?string=} opt_type The type of request (e.g. "navigate", "load",
- *     etc), used to alter the URL identifier and determine whether the
- *     global "navigation received" callback is executed; defaults to "request".
+ *     etc), used to alter the URL identifier and XHR header and used to
+ *     determine whether the global "navigation received" callback is executed;
+ *     defaults to "request".
  * @param {string=} opt_referer The Referrer URL, without the SPF identifier.
  * @return {XMLHttpRequest} The XHR of the current request.
  */
@@ -484,9 +485,9 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
     // If no cached response is found, reset the timing data to use
     // the values provided by the XHR instead.
     timing = {};
-    var headers;
+    var headers = {'X-SPF-Request': opt_type || 'request'};
     if (opt_referer) {
-      headers = {'X-SPF-Referer': opt_referer};
+      headers['X-SPF-Referer'] = opt_referer;
     }
     var xhr = spf.net.xhr.get(requestUrl, {
       headers: headers,
