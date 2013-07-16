@@ -58,9 +58,9 @@ spf.now = function() {
  * @return {string} The unique key.
  */
 spf.key = function(obj) {
-  var c = (spf.state.get('counter') || 0) + 1;
-  return obj['spf-key'] ||
-      (obj['spf-key'] = spf.now() + '-' + spf.state.set('counter', c));
+  // TODO(nicksay): Remove "counter" with next release.
+  var uid = (spf.state.get('uid') || spf.state.get('counter') || 0) + 1;
+  return obj['spf-key'] || (obj['spf-key'] = spf.state.set('uid', uid));
 };
 
 
@@ -74,6 +74,7 @@ spf.config.defaults = {
   'nolink-class': 'spf-nolink',
   'request-timeout': 0,
   'cache-lifetime': 600000,  // 10 minutes in milliseconds.
+  'cache-max': 50,  // 50 items.
   'navigate-requested-callback': null,
   'navigate-received-callback': null,
   'navigate-processed-callback': null,
@@ -132,7 +133,7 @@ spf.config.clear = function() {
 /**
  * @param {!Object.<string, *>=} opt_config Optional config
  *     object to overwrite the current value.
- * @return {!Object.<string, Object>} Current config object.
+ * @return {!Object.<string, *>} Current config object.
  * @private
  */
 spf.config.config_ = function(opt_config) {
