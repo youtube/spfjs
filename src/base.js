@@ -69,18 +69,19 @@ spf.key = function(obj) {
  * @type {Object.<string, string|number|Function>}
  */
 spf.config.defaults = {
-  'url-identifier': '?spf=__type__',
-  'link-class': 'spf-link',
-  'nolink-class': 'spf-nolink',
-  'request-timeout': 0,
   'cache-lifetime': 600000,  // 10 minutes in milliseconds.
   'cache-max': 50,  // 50 items.
+  'link-class': 'spf-link',
+  'nolink-class': 'spf-nolink',
+  'navigate-limit': 20,  // 20 navigations per session.
   'navigate-requested-callback': null,
   'navigate-received-callback': null,
   'navigate-processed-callback': null,
   'navigate-error-callback': null,
+  'request-timeout': 0,  // No request timeout.
   'transition-class': 'spf-transition',
-  'transition-duration': 425
+  'transition-duration': 425,
+  'url-identifier': '?spf=__type__'
 };
 
 

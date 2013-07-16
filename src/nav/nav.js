@@ -218,6 +218,19 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
   }
   // Abort previous navigation, if needed.
   spf.nav.cancel();
+  // If a session limit has been set and reached, redirect instead of navigate.
+  var count = /** @type {number} */ (
+      (spf.state.get('navigate-counter') || 0)) + 1;
+  var limit = parseInt(spf.config.get('navigate-limit'), 10);
+  limit = isNaN(limit) ? Infinity : limit;
+  if (count > limit) {
+    spf.debug.warn('nav limit reached, redirecting ',
+                    '(url=', url, ')');
+    var err = new Error('Navigation limit reached');
+    spf.nav.error(url, err);
+    return;
+  }
+  spf.state.set('navigate-counter', count);
   // Set the navigation referer, stored in the history entry state object
   // to allow the correct value to be sent to the server during back/forward.
   // Only different than the current URL when navigation is in response to
