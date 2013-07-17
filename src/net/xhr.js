@@ -101,7 +101,9 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
         case 200:  // HTTP Success: OK
         case 201:  // HTTP Success: Created
         case 202:  // HTTP Success: Accepted
+        case 203:  // HTTP Success: Non-Authoritative Information
         case 204:  // HTTP Success: No Content
+        case 205:  // HTTP Success: Reset Content
         case 206:  // HTTP Success: Partial Content
         case 304:  // HTTP Redirection: Not Modified
           onSuccess(xhr);
