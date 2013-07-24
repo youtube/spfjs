@@ -1,6 +1,6 @@
 /**
  * @fileoverview Functions for loading and unloading external resources,
- * particularly useful for scripts and styles.
+ * currently limited to scripts and styles.
  * See {@link spf.net.scripts} and {@link spf.net.styles}.
  *
  * @author nicksay@google.com (Alex Nicksay)
@@ -68,9 +68,13 @@ spf.net.resources.load = function(type, url, opt_callback, opt_name) {
     return el;
   }
   // Otherwise, the resource needs to be loaded.
+  var isJS = type == 'js';
   // First, find old resources to remove after loading, if any.
-  var tag = (type == 'js') ? 'script' : 'link';
+  var tag = isJS ? 'script' : 'link';
   var elsToRemove = cls ? spf.dom.query(tag + '.' + cls) : [];
+  var key = isJS ? 'script-loading-callback' : 'style-loading-callback';
+  var val = spf.execute(/** @type {Function} */ (
+        spf.config.get(key)), url, cls);
   // Lexical closures allow this trickiness with the "el" variable.
   el = spf.net.resources.load_(type, url, id, cls, function() {
     if (!spf.dom.dataset.get(el, 'loaded')) {

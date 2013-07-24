@@ -79,6 +79,8 @@ spf.config.defaults = {
   'navigate-processed-callback': null,
   'navigate-error-callback': null,
   'request-timeout': 0,  // No request timeout.
+  'script-loading-callback': null,
+  'style-loading-callback': null,
   'transition-class': 'spf-transition',
   'transition-duration': 425,
   'url-identifier': '?spf=__type__'

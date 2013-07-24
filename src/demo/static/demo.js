@@ -22,7 +22,9 @@ demo.init = function() {
     'navigate-requested-callback': demo.handleNavigateRequested,
     'navigate-received-callback': demo.handleNavigateReceived,
     'navigate-processed-callback': demo.handleNavigateProcessed,
-    'navigate-error-callback': demo.handleNavigateError
+    'navigate-error-callback': demo.handleNavigateError,
+    'script-loading-callback': demo.handleScriptLoading,
+    'style-loading-callback': demo.handleStyleLoading
   };
   demo.enabled = spf.init(config);
   demo.updateStatus();
@@ -124,6 +126,27 @@ demo.handleNavigateProcessed = function(response) {
  */
 demo.handleNavigateError = function(url, err) {
   demo.log('navigate error');
+};
+
+
+/**
+ * Callback for script loading.
+ * @param {string} url The new script URL.
+ * @param {string} name The new script name (to identify it independently of
+ *     the URL).
+ */
+demo.handleScriptLoading = function(url, name) {
+  demo.log('script loading ' + url + ' ' + name);
+};
+
+/**
+ * Callback for style loading.
+ * @param {string} url The new style URL.
+ * @param {string} name The new style name (to identify it independently of
+ *     the URL).
+ */
+demo.handleStyleLoading = function(url, name) {
+  demo.log('style loading ' + url + ' ' + name);
 };
 
 
