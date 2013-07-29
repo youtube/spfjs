@@ -514,9 +514,11 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
  */
 spf.nav.process = function(response, opt_reverse, opt_notify) {
   spf.debug.info('nav.process ', response, opt_reverse);
+  var timing = response['timing'] || (response['timing'] = {});
   // Install page styles.
   var cssParseResult = spf.net.styles.parse(response['css']);
   spf.net.styles.install(cssParseResult);
+  timing['spfProcessCss'] = spf.now();
   spf.debug.debug('    installed styles');
   // Update title.
   if (response['title']) {
@@ -532,6 +534,7 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
     spf.dom.setAttributes(el, attributes[id]);
     spf.debug.debug('    set attributes ', id);
   }
+  timing['spfProcessAttr'] = spf.now();
   // Tally the number of content updates need.
   var remaining = 0;
   var fragments = response['html'] || {};
@@ -546,9 +549,11 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
   var maybeContinueAfterContent = function() {
     // Only execute when remaining is 0, to avoid early execution.
     if (remaining == 0) {
+      timing['spfProcessHtml'] = spf.now();
       // Execute scripts.
       var jsParseResult = spf.net.scripts.parse(response['js']);
       spf.net.scripts.execute(jsParseResult, function() {
+        timing['spfProcessJs'] = spf.now();
         spf.debug.debug('    executed scripts');
         if (opt_notify) {
           // Execute the "navigation processed" callback.  There is no
