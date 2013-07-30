@@ -70,7 +70,7 @@ spf.debug.error = function(var_args) {
  * @param {{length: number}} args List of items to log.
  */
 spf.debug.log = function(method, prefix, args) {
-  if (!spf.DEBUG || !window.console) {
+  if (!SPF_DEBUG || !window.console) {
     return;
   }
   args = Array.prototype.slice.call(args, 0);
@@ -186,4 +186,4 @@ spf.debug.Level = {
  * functions: "debug", "info", "warn", and "error", and can be set by the
  * compiler when "--define spf.debug.OUTPUT='warn'" or similar is specified.
  */
-spf.debug.OUTPUT = 'info';
+spf.debug.OUTPUT = 'debug';

@@ -31,6 +31,7 @@ goog.require('spf.net.resources');
  * @param {string} text The text of the script.
  * @param {Function=} opt_callback Callback function to execute when the
  *     script is loaded.
+ * @return {undefined}
  */
 spf.net.scripts.eval = function(text, opt_callback) {
   if (window.execScript) {

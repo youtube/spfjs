@@ -480,6 +480,8 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
     setTimeout(function() {
       onCacheResponse(cached);
     }, 0);
+    // Return null because no XHR is made.
+    return null;
   } else {
     spf.debug.debug('    sending XHR');
     // If no cached response is found, reset the timing data to use
@@ -496,6 +498,7 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
       onError: onRequestResponse,
       onTimeout: onRequestResponse
     });
+    // Return the XHR being made.
     return xhr;
   }
 };
@@ -680,6 +683,8 @@ spf.nav.process = function(response, opt_reverse, opt_notify) {
  * See {@link #process}.
  *
  * @param {string} key The transition key.
+ * @param {boolean=} opt_quick Whether to quickly iterate through instead of
+ *     using setTimeout to facilitate transitions.
  * @private
  */
 spf.nav.process_ = function(key, opt_quick) {

@@ -75,14 +75,13 @@ var api = {
     'prefetch': spf.net.styles.prefetch
   }
 };
-
-if (spf.DEBUG) {
-  // When compiled for a debug build, allow access to entire namespace.
-  window['spf'] = spf;
+if (!SPF_COMPILED) {
+  // When not compiled, mixin the API to the existing namespace for development.
   for (var key in api) {
-    window['spf'][key] = api[key];
+    // Work around the "incomplete alias" warning.
+    eval('spf[key] = api[key]');
   }
 } else {
-  // When compiled for a production build, isolate access to API functions.
+  // When compiled for a production/debug build, isolate access to the API.
   window['spf'] = api;
 }

@@ -10,12 +10,22 @@ goog.provide('spf.state');
 
 
 /**
- * @define {boolean} DEBUG is provided as a convenience so that debugging code
- * that should not be included in a production build can be easily removed
- * by the compiler when "--define spf.DEBUG=false" is specified.  To use,
- * place debugging code inside an "if (spf.DEBUG)" conditional.
+ * @define {boolean} SPF_COMPILED is provided as a flag so that development code
+ * that should not be included in either a debug or production build can be
+ * easily removed by the compiler when "--define SPF_COMPILED=true" is
+ * specified (e.g. making extra functions beyond the API globally available).
+ * To use, place development code inside an "if (!SPF_COMPILED)" conditional.
  */
-spf.DEBUG = true;
+var SPF_COMPILED = false;
+
+
+/**
+ * @define {boolean} SPF_DEBUG is provided as a flag so that debugging code
+ * that should not be included in a production build can be easily removed
+ * by the compiler when "--define SPF_DEBUG=false" is specified.  To use,
+ * place debugging code inside an "if (SPF_DEBUG)" conditional.
+ */
+var SPF_DEBUG = true;
 
 
 /**

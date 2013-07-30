@@ -15,6 +15,7 @@ goog.require('spf.string');
  * to the document.
  *
  * @param {string} text The text of the style.
+ * @return {undefined}
  */
 spf.net.styles.eval = function(text) {
   var styleEl = document.createElement('style');
