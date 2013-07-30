@@ -1,4 +1,4 @@
-$def with (content)
+$def with (content, is_debug, is_dev)
 <!doctype HTML>
 <html>
 <head>
@@ -41,7 +41,9 @@ $def with (content)
     Etc.
   </div>
   <!-- Pre-fill hashcodes so SPF won't load resources twice -->
-  $if debug:
+  $if is_dev:
+    $ spf_js = "/static/dev-spf-bundle.js"
+  $elif is_debug:
     $ spf_js = "/static/debug-spf.js"
   $else:
     $ spf_js = "/static/spf.js"

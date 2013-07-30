@@ -23,8 +23,8 @@ def hashcode(s):
 # Set up the basic app config.
 templates = web.template.render('templates/',
                                 globals={'randint': random.randint,
-                                         'hashcode': hashcode,
-                                         'debug': web.config.debug})
+                                         'hashcode': hashcode})
+
 urls = (
   '/', 'index',
   '/index_ajax', 'index_ajax',
@@ -85,7 +85,10 @@ class servlet(object):
     return self.json_response(response)
 
   def render_html(self, content):
-    return templates.base(content)
+    req = web.input(dev=None)
+    is_debug = web.config.debug
+    is_dev = web.config.debug and bool(req.dev)
+    return templates.base(content, is_debug, is_dev)
 
   def render(self, content):
     if self.is_spf_request():
