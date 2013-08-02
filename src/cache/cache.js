@@ -59,6 +59,8 @@ spf.cache.set = function(key, data, opt_lifetime) {
 
 /**
  * Removes data from the cache.
+ *
+ * @param {string} key Key for the data object.
  */
 spf.cache.remove = function(key) {
   var storage = spf.cache.storage_();

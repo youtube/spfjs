@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<!-- Runner for SPF unit tests. -->
+<html>
+<head>
+  <title>SPF Unit Tests</title>
+
+  <link rel="stylesheet" href="jasmine.css">
+  <script src="jasmine.js"></script>
+  <script src="jasmine-html.js"></script>
+
+  <script src="manifest.js"></script>
+</head>
+<body>
+  <script>
+    (function() {
+      var env = jasmine.getEnv();
+      env.updateInterval = 1000;
+      env.addReporter(new jasmine.HtmlReporter());
+      env.execute();
+    })();
+  </script>
+</body>
+</html>
