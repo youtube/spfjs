@@ -7,22 +7,25 @@ goog.require('spf.cache');
 
 describe('spf.cache', function() {
 
-  var storage, mockTime;
+  var storage;
+  var time;
 
   beforeEach(function() {
-    storage = spf.cache.storage_();
-    mockTime = {
-      advance: 0
-    };
+    // Mock timestamp generation.
+    time = { advance: 0 };
+    spf.__now = spf.now;
     spf.now = function() {
-      return (+new Date()) + mockTime.advance;
+      return (+new Date()) + time.advance;
     };
+    // Reset.
+    storage = spf.cache.storage_();
   });
 
   afterEach(function() {
     spf.cache.storage_({});
     storage = null;
-    mockTime = null;
+    spf.now = spf.__now;
+    time = null;
   });
 
   it('set', function() {
@@ -45,10 +48,10 @@ describe('spf.cache', function() {
     spf.cache.set('bar', 'value2', 200);
     expect(spf.cache.get('foo')).toEqual('value1');
     expect(spf.cache.get('bar')).toEqual('value2');
-    mockTime.advance = 100;
+    time.advance = 100;
     expect(spf.cache.get('foo')).toBeUndefined();
     expect(spf.cache.get('bar')).toEqual('value2');
-    mockTime.advance = 200;
+    time.advance = 200;
     expect(spf.cache.get('foo')).toBeUndefined();
     expect(spf.cache.get('bar')).toBeUndefined();
     // Max.
@@ -86,11 +89,11 @@ describe('spf.cache', function() {
     spf.cache.collect();
     expect('foo' in storage).toBe(true);
     expect('bar' in storage).toBe(true);
-    mockTime.advance = 100;
+    time.advance = 100;
     spf.cache.collect();
     expect('foo' in storage).toBe(false);
     expect('bar' in storage).toBe(true);
-    mockTime.advance = 200;
+    time.advance = 200;
     spf.cache.collect();
     expect('foo' in storage).toBe(false);
     expect('bar' in storage).toBe(false);

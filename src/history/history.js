@@ -25,7 +25,7 @@ goog.require('spf.state');
  */
 spf.history.init = function(callback) {
   if (!spf.state.get('history-init') && window.addEventListener) {
-    var url = window.location.href;
+    var url = spf.history.getCurrentUrl_();
     window.addEventListener('popstate', spf.history.pop_, false);
     // Whether history is initialized.
     spf.state.set('history-init', true);
@@ -117,16 +117,16 @@ spf.history.push_ = function(replace, opt_url, opt_state, opt_doCallback) {
   if (!opt_url && !opt_state) {
     return;
   }
-  var url = opt_url || window.location.href;
+  var url = opt_url || spf.history.getCurrentUrl_();
   var state = opt_state || {};
   var timestamp = spf.now();
   spf.state.set('history-timestamp', timestamp);
   state['spf-timestamp'] = timestamp;
   if (replace) {
-    window.history.replaceState(state, '', url);
+    spf.history.doReplaceState_(state, '', url);
     spf.debug.debug('    replaceState:  ', 'url=', url, 'state=', state);
   } else {
-    window.history.pushState(state, '', url);
+    spf.history.doPushState_(state, '', url);
     spf.debug.debug('    pushState:  ', 'url=', url, 'state=', state);
   }
   spf.state.set('history-url', url);
@@ -147,7 +147,7 @@ spf.history.push_ = function(replace, opt_url, opt_state, opt_doCallback) {
  * @private
  */
 spf.history.pop_ = function(evt) {
-  var url = window.location.href;
+  var url = spf.history.getCurrentUrl_();
   spf.debug.info('history.pop ', 'url=', url, 'evt=', evt);
   // Avoid the initial event on first load for a state.
   if (evt.state) {
@@ -158,7 +158,7 @@ spf.history.pop_ = function(evt) {
     // the state to the original.
     if (url == spf.state.get('history-url')) {
       spf.state.set('history-timestamp', timestamp);
-      window.history.replaceState(state, '', url);
+      spf.history.doReplaceState_(state, '', url);
       spf.debug.debug('    replaceState:  ', 'url=', url, 'state=', state);
     } else {
       var current = /** @type {number} */ (spf.state.get('history-timestamp'));
@@ -172,4 +172,35 @@ spf.history.pop_ = function(evt) {
       }
     }
   }
+};
+
+
+/**
+ * @return {string} The location href.
+ * @private
+ */
+spf.history.getCurrentUrl_ = function() {
+  return window.location.href;
+};
+
+
+/**
+ * @param {*} data New state.
+ * @param {string} title The title for a new session history entry.
+ * @param {string=} opt_url The URL for a new session history entry.
+ * @private
+ */
+spf.history.doPushState_ = function(data, title, opt_url) {
+  window.history.pushState(data, title, opt_url);
+};
+
+
+/**
+ * @param {*} data New state.
+ * @param {string} title The title for a session history entry.
+ * @param {string=} opt_url The URL for a new session history entry.
+ * @private
+ */
+spf.history.doReplaceState_ = function(data, title, opt_url) {
+  window.history.replaceState(data, title, opt_url);
 };
