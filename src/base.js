@@ -78,11 +78,12 @@ spf.key = function(obj) {
  * @type {Object.<string, string|number|Function>}
  */
 spf.config.defaults = {
-  'cache-lifetime': 600000,  // 10 minutes in milliseconds.
+  'cache-lifetime': 10 * 60 * 1000,  // 10 minute cache lifetime (ms).
   'cache-max': 50,  // 50 items.
   'link-class': 'spf-link',
   'nolink-class': 'spf-nolink',
   'navigate-limit': 20,  // 20 navigations per session.
+  'navigate-lifetime': 24 * 60 * 60 * 1000,  // 1 day session lifetime (ms).
   'navigate-requested-callback': null,
   'navigate-received-callback': null,
   'navigate-processed-callback': null,

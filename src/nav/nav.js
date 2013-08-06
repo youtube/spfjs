@@ -54,6 +54,8 @@ spf.nav.init = function() {
   if (!spf.state.get('nav-init') && document.addEventListener) {
     document.addEventListener('click', spf.nav.handleClick, false);
     spf.state.set('nav-init', true);
+    spf.state.set('nav-counter', 0);
+    spf.state.set('nav-time', spf.now());
     spf.state.set('nav-listener', spf.nav.handleClick);
   }
 };
@@ -70,6 +72,8 @@ spf.nav.dispose = function() {
           spf.state.get('nav-listener')), false);
     }
     spf.state.set('nav-init', false);
+    spf.state.set('nav-counter', null);
+    spf.state.set('nav-time', null);
     spf.state.set('nav-listener', null);
   }
 };
@@ -218,8 +222,8 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
   }
   // Abort previous navigation, if needed.
   spf.nav.cancel();
-  // If a session limit has been set and reached, redirect instead of navigate.
-  var count = (parseInt(spf.state.get('navigate-counter'), 10) || 0) + 1;
+  // If a session limit has been set and reached, redirect.
+  var count = (parseInt(spf.state.get('nav-counter'), 10) || 0) + 1;
   var limit = parseInt(spf.config.get('navigate-limit'), 10);
   limit = isNaN(limit) ? Infinity : limit;
   if (count > limit) {
@@ -229,7 +233,20 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
     spf.nav.error(url, err);
     return;
   }
-  spf.state.set('navigate-counter', count);
+  spf.state.set('nav-counter', count);
+  // If a session lifetime has been set and reached, redirect.
+  var timestamp = parseInt(spf.state.get('nav-time'), 10);
+  var age = spf.now() - timestamp;
+  var lifetime = parseInt(spf.config.get('navigate-lifetime'), 10);
+  lifetime = isNaN(lifetime) ? Infinity : lifetime;
+  if (age > lifetime) {
+    spf.debug.warn('nav lifetime reached, redirecting ',
+                    '(url=', url, ')');
+    var err = new Error('Navigation lifetime reached');
+    spf.nav.error(url, err);
+    return;
+  }
+  spf.state.set('nav-time', spf.now());
   // Set the navigation referer, stored in the history entry state object
   // to allow the correct value to be sent to the server during back/forward.
   // Only different than the current URL when navigation is in response to
