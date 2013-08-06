@@ -129,9 +129,9 @@ spf.cache.valid_ = function(unit) {
   lifetime = isNaN(lifetime) ? Infinity : lifetime;
   var timestamp = unit['time'];
   var age = spf.now() - timestamp;
-  // A max of NaN is considered infinite.  If the count is less than the max,
+  // A max of NaN is considered infinite. If the count is less than the max,
   // then the unit is valid.
-  var max = /** @type {number} */ (spf.config.get('cache-max'));
+  var max = parseInt(spf.config.get('cache-max'), 10);
   max = isNaN(max) ? Infinity : max;
   var current = /** @type {number} */ ((spf.state.get('cache-counter') || 0));
   var count = current - (unit['count'] || 0);
