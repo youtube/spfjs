@@ -219,8 +219,7 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
   // Abort previous navigation, if needed.
   spf.nav.cancel();
   // If a session limit has been set and reached, redirect instead of navigate.
-  var count = /** @type {number} */ (
-      (spf.state.get('navigate-counter') || 0)) + 1;
+  var count = (parseInt(spf.state.get('navigate-counter'), 10) || 0) + 1;
   var limit = parseInt(spf.config.get('navigate-limit'), 10);
   limit = isNaN(limit) ? Infinity : limit;
   if (count > limit) {

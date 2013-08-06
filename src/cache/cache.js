@@ -106,7 +106,7 @@ spf.cache.collect = function() {
  *   data: *,
  *   life: number,
  *   time: number,
- *   count: (number|undefined)
+ *   count: number
  * }}
  */
 spf.cache.Unit;
@@ -129,12 +129,13 @@ spf.cache.valid_ = function(unit) {
   lifetime = isNaN(lifetime) ? Infinity : lifetime;
   var timestamp = unit['time'];
   var age = spf.now() - timestamp;
-  // A max of NaN is considered infinite. If the count is less than the max,
-  // then the unit is valid.
+  // A max of NaN is considered infinite.  If the count is less than the max,
+  // then the unit is valid.  Note that if the count is missing, the unit
+  // will not be valid.
   var max = parseInt(spf.config.get('cache-max'), 10);
   max = isNaN(max) ? Infinity : max;
-  var current = /** @type {number} */ ((spf.state.get('cache-counter') || 0));
-  var count = current - (unit['count'] || 0);
+  var current = parseInt(spf.state.get('cache-counter'), 10) || 0;
+  var count = current - unit['count'];
   // Both a valid age and count are required.
   return (age < lifetime) && (count < max);
 };
@@ -147,8 +148,7 @@ spf.cache.valid_ = function(unit) {
  * @private
  */
 spf.cache.create_ = function(data, lifetime) {
-  var count = /** @type {number} */ (
-      (spf.state.get('cache-counter') || 0)) + 1;
+  var count = (parseInt(spf.state.get('cache-counter'), 10) || 0) + 1;
   spf.state.set('cache-counter', count);
   return {'data': data, 'life': lifetime, 'time': spf.now(), 'count': count};
 };

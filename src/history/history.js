@@ -161,7 +161,7 @@ spf.history.pop_ = function(evt) {
       spf.history.doReplaceState_(state, '', url);
       spf.debug.debug('    replaceState:  ', 'url=', url, 'state=', state);
     } else {
-      var current = /** @type {number} */ (spf.state.get('history-timestamp'));
+      var current = parseInt(spf.state.get('history-timestamp'), 10);
       state['spf-back'] = (timestamp < current);
       spf.state.set('history-timestamp', timestamp);
       spf.state.set('history-url', url);

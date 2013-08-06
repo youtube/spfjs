@@ -68,8 +68,7 @@ spf.now = function() {
  * @return {string} The unique key.
  */
 spf.key = function(obj) {
-  // TODO(nicksay): Remove "counter" with next release.
-  var uid = (spf.state.get('uid') || spf.state.get('counter') || 0) + 1;
+  var uid = (parseInt(spf.state.get('uid'), 10) || 0) + 1;
   return obj['spf-key'] || (obj['spf-key'] = '' + spf.state.set('uid', uid));
 };
 
