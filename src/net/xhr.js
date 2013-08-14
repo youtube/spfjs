@@ -16,13 +16,16 @@ goog.provide('spf.net.xhr');
  * - onError: optional callback to execute if the XHR fails.
  * - onTimeout: optional callback to execute if the XHR times out.  Only called
  *      if a timeout is configured.
+ * - onBeginResponse: optional callback to execute when the XHR begins
+ *      receiving the response.
  *
  * @typedef {{
  *   headers: (Object.<string>|undefined),
  *   timeoutMs: (number|undefined),
  *   onSuccess: (function(XMLHttpRequest)|undefined),
  *   onError: (function(XMLHttpRequest)|undefined),
- *   onTimeout: (function(XMLHttpRequest)|undefined)
+ *   onTimeout: (function(XMLHttpRequest)|undefined),
+ *   onBeginResponse: (function(XMLHttpRequest)|undefined)
  * }}
  */
 spf.net.xhr.Options;
@@ -74,6 +77,7 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
   var onSuccess = options.onSuccess || function() {};
   var onError = options.onError || function() {};
   var onTimeout = options.onTimeout || function() {};
+  var onBeginResponse = options.onBeginResponse || function() {};
   var timer;
 
   var xhr = spf.net.xhr.create();
@@ -93,6 +97,7 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
     if (xhr.readyState == spf.net.xhr.State.HEADERS_RECEIVED) {
       // Record responseStart time when first byte is received.
       timing['responseStart'] = timing['responseStart'] || spf.now();
+      onBeginResponse(xhr);
     } else if (xhr.readyState == spf.net.xhr.State.DONE) {
       // Record responseEnd time when full response is received.
       timing['responseEnd'] = timing['responseEnd'] || spf.now();
