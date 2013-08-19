@@ -258,7 +258,6 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
     if (err instanceof Error) {
       spf.nav.error(url, err);
     }
-    return;
   };
   var navigateSuccess = function(url, response) {
     spf.state.set('nav-request', null);
@@ -417,7 +416,7 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
   }
   spf.debug.debug('    identified url ', requestUrl);
   // Record a start time before sending the request or loading from cache.
-  // This will be recored later as navigationStart.
+  // This will be recored later as navigationStart/startTime.
   var start = spf.now();
   var timing = {};
   var onResponseFound = function(response) {
@@ -441,22 +440,35 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
   };
   var onCacheResponse = function(response) {
     response = /** @type {spf.nav.Response} */ (response);
+    // Record the timing information.
     // Record responseStart and responseEnd times after loading from cache.
     timing['responseStart'] = timing['responseEnd'] = spf.now();
-    timing['navigationStart'] = start;
-    // Store the timing for the cached response (avoid stale timing values).
+    // Record startTime always (consistent with W3C PerformanceResourceTiming
+    // for XHRs), and also record navigationStart for navigate requests
+    // (consistent with W3C PerformanceTiming for page loads).
+    timing['startTime'] = start;
+    if (opt_type == 'navigate') {
+      timing['navigationStart'] = start;
+    }
+    // Set the timing for the cached response (avoid stale timing values).
     response['timing'] = timing;
     spf.debug.debug('    cached response found ', response);
     onResponseFound(response);
   };
   var onRequestResponse = function(xhr) {
     spf.debug.debug('    XHR response', 'status=', xhr.status, 'xhr=', xhr);
-    // Record the timing information.
-    timing['navigationStart'] = start;
+    // Record the timing information from the XHR.
     if (xhr['timing']) {
       for (var t in xhr['timing']) {
         timing[t] = xhr['timing'][t];
       }
+    }
+    // Record startTime always (consistent with W3C PerformanceResourceTiming
+    // for XHRs), and also record navigationStart for navigate requests
+    // (consistent with W3C PerformanceTiming for page loads).
+    timing['startTime'] = start;
+    if (opt_type == 'navigate') {
+      timing['navigationStart'] = start;
     }
     // Attempt to parse the response.
     var response;
@@ -503,7 +515,8 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
     }
   };
   // Try to find a cached response for the request before sending a new XHR.
-  // Record fetchStart time before loading from cache.
+  // Record fetchStart time before loading from cache. If no cached response
+  // is found, this value will be replaced with the one provided by the XHR.
   timing['fetchStart'] = spf.now()
   // Use the absolute URL without identifier to allow cached responses
   // from prefetching to apply to navigation.
@@ -519,9 +532,6 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
     return null;
   } else {
     spf.debug.debug('    sending XHR');
-    // If no cached response is found, reset the timing data to use
-    // the values provided by the XHR instead.
-    timing = {};
     var headers = {'X-SPF-Request': opt_type || 'request'};
     if (opt_referer) {
       headers['X-SPF-Referer'] = opt_referer;
