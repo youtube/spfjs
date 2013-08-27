@@ -20,7 +20,6 @@ demo.init = function() {
   demo.timer_ = window.setInterval(demo.updateTime, 500);
   var config = {
     'navigate-requested-callback': demo.handleNavigateRequested,
-    'navigate-begin-response-callback': demo.handleNavigateBeginResponse,
     'navigate-received-callback': demo.handleNavigateReceived,
     'navigate-processed-callback': demo.handleNavigateProcessed,
     'navigate-error-callback': demo.handleNavigateError,
@@ -93,15 +92,6 @@ demo.updateTime = function() {
  */
 demo.handleNavigateRequested = function(url) {
   demo.log('navigate requested');
-};
-
-
-/**
- * Callback for when navigate requests begin receiving a response.
- * @param {string} url The new URL.
- */
-demo.handleNavigateBeginResponse = function(url) {
-  demo.log('navigate begin response');
 };
 
 

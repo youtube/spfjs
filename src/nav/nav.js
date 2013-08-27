@@ -495,25 +495,6 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
     response['timing'] = timing;
     onResponseFound(response);
   };
-  var onBeginResponse = function(xhr) {
-    if (opt_type == 'navigate') {
-      // Execute the "navigation begin response" callback.  If the callback
-      // explicitly returns false, cancel this navigation.
-      var val = spf.execute(/** @type {Function} */ (
-          spf.config.get('navigate-begin-response-callback')), url);
-      if (val === false || val instanceof Error) {
-        spf.debug.warn(
-            'failed in "navigate-begin-response-callback", canceling',
-            '(val=', val, ')');
-        // Abort navigation
-        spf.nav.cancel();
-        if (opt_onError) {
-          opt_onError(url, val);
-        }
-        return;
-      }
-    }
-  };
   // Try to find a cached response for the request before sending a new XHR.
   // Record fetchStart time before loading from cache. If no cached response
   // is found, this value will be replaced with the one provided by the XHR.
@@ -541,8 +522,7 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
       timeoutMs: /** @type {number} */ (spf.config.get('request-timeout')),
       onSuccess: onRequestResponse,
       onError: onRequestResponse,
-      onTimeout: onRequestResponse,
-      onBeginResponse: onBeginResponse
+      onTimeout: onRequestResponse
     });
     // Return the XHR being made.
     return xhr;

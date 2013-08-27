@@ -85,7 +85,6 @@ spf.config.defaults = {
   'navigate-limit': 20,  // 20 navigations per session.
   'navigate-lifetime': 24 * 60 * 60 * 1000,  // 1 day session lifetime (ms).
   'navigate-requested-callback': null,
-  'navigate-begin-response-callback': null,
   'navigate-received-callback': null,
   'navigate-processed-callback': null,
   'navigate-error-callback': null,
