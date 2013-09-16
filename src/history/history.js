@@ -39,7 +39,9 @@ spf.history.init = function(callback) {
     // The timestap of the current history entry, used to distinguish
     // between backward and forward state changes.
     spf.state.set('history-timestamp', spf.now());
-    spf.history.replace(url);
+    // Set the initial referer to properly send referer on back button.
+    var historyState = { 'spf-referer': document.referrer };
+    spf.history.replace(url, historyState);
   }
 };
 
