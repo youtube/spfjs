@@ -216,8 +216,7 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
   if (!spf.state.get('nav-init')) {
     spf.debug.warn('nav not initialized, redirecting ',
                     '(url=', url, ')');
-    var err = new Error('Navigation not initialized');
-    spf.nav.error(url, err);
+    spf.nav.error(url);
     return;
   }
   // Abort previous navigation, if needed.
@@ -316,18 +315,20 @@ spf.nav.cancel = function() {
  * Handles a navigation error and redirects (unless cancelled).
  *
  * @param {string} url The requested URL, without the SPF identifier.
- * @param {Error} err The Error object.
+ * @param {Error=} opt_err The Error object.
  */
-spf.nav.error = function(url, err) {
-  spf.debug.error('nav.error ', '(url=', url, 'err=', err, ')');
-  // Execute the "navigation error" callback.  If the callback explicitly
-  // returns false, do not redirect.
-  var val = spf.execute(/** @type {Function} */ (
-      spf.config.get('navigate-error-callback')), url, err);
-  if (val === false) {
-    spf.debug.warn('failed in "navigate-error-callback", canceling',
-                   '(val=', val, ')');
-    return;
+spf.nav.error = function(url, opt_err) {
+  spf.debug.error('nav.error ', '(url=', url, 'err=', opt_err, ')');
+  if (opt_err) {
+    // Execute the "navigation error" callback.  If the callback explicitly
+    // returns false, do not redirect.
+    var val = spf.execute(/** @type {Function} */ (
+        spf.config.get('navigate-error-callback')), url, opt_err);
+    if (val === false) {
+      spf.debug.warn('failed in "navigate-error-callback", canceling',
+                     '(val=', val, ')');
+      return;
+    }
   }
   window.location.href = url;
 };
