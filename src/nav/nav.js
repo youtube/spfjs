@@ -228,8 +228,7 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
   if (count > limit) {
     spf.debug.warn('nav limit reached, redirecting ',
                     '(url=', url, ')');
-    var err = new Error('Navigation limit reached');
-    spf.nav.error(url, err);
+    spf.nav.error(url);
     return;
   }
   spf.state.set('nav-counter', count);
@@ -241,8 +240,7 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
   if (age > lifetime) {
     spf.debug.warn('nav lifetime reached, redirecting ',
                     '(url=', url, ')');
-    var err = new Error('Navigation lifetime reached');
-    spf.nav.error(url, err);
+    spf.nav.error(url);
     return;
   }
   spf.state.set('nav-time', spf.now());
