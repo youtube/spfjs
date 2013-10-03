@@ -74,8 +74,7 @@ html, body {
 #nav.page2 .nav-page2 a,
 #nav.page3 .nav-page3 a,
 #nav.page4 .nav-page4 a,
-#nav.page5 .nav-page5 a,
-#nav.page6 .nav-page6 a {
+#nav.page5 .nav-page5 a {
   background: rgba(0, 0, 0, .2);
 }
 #content {
@@ -83,6 +82,7 @@ html, body {
 }
 #content .pane {
   padding: 0 2em;
+  overflow: hidden;
 }
 #footer {
   border-top: 1px solid #EEE;

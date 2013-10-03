@@ -1,0 +1,83 @@
+$def _stylesheet():
+  <!-- This style is inlined here for demo purposes. -->
+  <style type="text/css">
+    #chunked-actions p { float: left;
+                         width: 44%; height: 4em;
+                         margin: 1em; padding: 1em;
+                         border: 1px solid #eee; }
+    #chunked-actions label input { font-size: 100%; }
+    #chunked-output { clear: both;
+                      margin: 1em; padding: 1em;
+                      border: 1px solid #eee; }
+    #chunked-log { white-space: pre-wrap; }
+  </style>
+
+$def _attributes():
+  { "nav": { "class": "test" } }
+
+$def _javascript():
+  <!-- Pre-fill the hashcode and data attribute so SPF won't load the script twice -->
+  $ test_js = "/static/demo-chunked.js"
+  <script id="js-$hashcode(test_js)" src="$test_js" data-loaded="true"></script>
+  <script>
+    demo.chunked.check();
+  </script>
+
+
+$var title: Chunked Test
+$var stylesheet: $:_stylesheet()
+$var javascript: $:_javascript()
+$var attributes: $:_attributes()
+
+<div id="chunked" class="pane">
+  <h1>Chunked Transfer Tests</h1>
+
+  <p id="chunked-message" style="display: none">
+    This page needs to be running dev (uncompiled) mode.  Please
+    <a href="?dev=true">load it with the correct parameters</a>.
+  </p>
+
+  <div id="chunked-actions">
+
+    <p>
+      <strong>Configuration</strong>
+      <br>
+      <label>
+        Number of chunks:
+        <input id="chunks-input" type="number" min="1" max="5" step="1" name="chunks" value="3">
+      </label>
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      <label>
+        Delay between chunks:
+        <input id="delay-input" type="number" min="0" max="5" step="0.5" name="delay" value="0.5">sec
+      </label>
+    </p>
+
+    <p>
+      <strong>Valid Responses</strong>
+      <br>
+      <button onclick="demo.chunked.requestSingle();">Request Single</button>
+      <button onclick="demo.chunked.requestMultipart();">Request Multipart</button>
+    </p>
+
+    <p>
+      <strong>Malformed Responses (No Error)</strong>
+      <br>
+      <button onclick="demo.chunked.requestMultipart({no_multipart_header: true});">Request Multipart: No Header</button>
+      <button onclick="demo.chunked.requestMultipart({no_final_delimiter: true});">Request Multipart: No Final Delimiter</button>
+    </p>
+
+    <p>
+      <strong>Invalid Responses (Error)</strong>
+      <br>
+      <button onclick="demo.chunked.requestSingle({add_parse_error: true});">Request Single: Parse Error</button>
+      <button onclick="demo.chunked.requestMultipart({add_parse_error: true});">Request Multipart: Parse Error</button>
+    </p>
+
+  </div>
+
+  <div id="chunked-output">
+    <strong>Log</strong>
+    <pre id="chunked-log"></pre>
+  </div>
+</div>

@@ -43,6 +43,29 @@ describe('spf.string', function() {
     expect(spf.string.endsWith('file.js', 'file.txt')).toBe(false);
   });
 
+  it('trim', function() {
+    // No trimming.
+    expect(spf.string.trim('foo bar')).toEqual('foo bar');
+    // Trim leading.
+    expect(spf.string.trim('    foo bar')).toEqual('foo bar');
+    expect(spf.string.trim('\n\nfoo bar')).toEqual('foo bar');
+    expect(spf.string.trim('\t\tfoo bar')).toEqual('foo bar');
+    expect(spf.string.trim('\r\rfoo bar')).toEqual('foo bar');
+    expect(spf.string.trim(' \t \r\n foo bar')).toEqual('foo bar');
+    // Trim trailing.
+    expect(spf.string.trim('foo bar    ')).toEqual('foo bar');
+    expect(spf.string.trim('foo bar\n\n')).toEqual('foo bar');
+    expect(spf.string.trim('foo bar\t\t')).toEqual('foo bar');
+    expect(spf.string.trim('foo bar\r\r')).toEqual('foo bar');
+    expect(spf.string.trim('foo bar \r\n \t ')).toEqual('foo bar');
+    // Trim both.
+    expect(spf.string.trim('    foo bar    ')).toEqual('foo bar');
+    expect(spf.string.trim('\n\nfoo bar\n\n')).toEqual('foo bar');
+    expect(spf.string.trim('\t\tfoo bar\t\t')).toEqual('foo bar');
+    expect(spf.string.trim('\r\rfoo bar\r\r')).toEqual('foo bar');
+    expect(spf.string.trim(' \t \r\n foo bar \r\n \t ')).toEqual('foo bar');
+  });
+
   it('hashCode', function() {
     expect(function() {spf.string.hashCode(null)}).toThrow();
     expect(spf.string.hashCode('')).toEqual(0);

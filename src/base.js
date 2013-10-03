@@ -4,6 +4,15 @@
  * @author nicksay@google.com (Alex Nicksay)
  */
 
+// A general note on the SPF framework.
+//
+// SPF is an independent framework intended to be compiled using the Closure
+// Compiler, but it has no dependencies on the Closure Library.  Each file has
+// goog.provide and goog.require statements for automatic dependency management
+// by the compiler, but these primitives are processed and removed during
+// compilation.  For testing and development, these functions are stubbed in
+// testing/stub.js.
+
 goog.provide('spf');
 goog.provide('spf.config');
 goog.provide('spf.state');
@@ -26,6 +35,31 @@ var SPF_COMPILED = false;
  * place debugging code inside an "if (SPF_DEBUG)" conditional.
  */
 var SPF_DEBUG = true;
+
+
+/**
+ * Creates a new function that, when called, has its {@code this} set to the
+ * provided value, with a given sequence of arguments preceding any provided
+ * when the new function is called.
+ *
+ * @param {?function(this:T, ...)} fn A function to partially apply.
+ * @param {T} self Specifies the object which this should point to when the
+ *     function is run.
+ * @param {...*} var_args Additional arguments that are partially applied to the
+ *     function.
+ * @return {!Function} A partially-applied form of the function bind() was
+ *     invoked as a method of.
+ * @template T
+ */
+spf.bind = function(fn, self, var_args) {
+  var args = Array.prototype.slice.call(arguments, 2);
+  return function() {
+    // Clone the args and append additional ones.
+    var newArgs = args.slice();
+    newArgs.push.apply(newArgs, arguments);
+    return fn.apply(self, newArgs);
+  };
+};
 
 
 /**
@@ -201,3 +235,43 @@ spf.state.set = function(name, value) {
  */
 spf.state.values_ = window['_spf_state'] || {};
 window['_spf_state'] = spf.state.values_;
+
+
+/**
+ * Type definition for a single SPF response object.
+ * - css: HTML string containing <link> and <style> tags of CSS to install.
+ * - html: Map of Element IDs to HTML strings containing content with which
+ *      to update the Elements.
+ * - attr: Map of Element IDs to maps of attibute names to attribute values
+ *      to set on the Elements.
+ * - js: HTML string containing <script> tags of JS to execute.
+ * - title: String of the new Document title.
+ * - timing: Map of timing attributes to timestamp numbers.
+ * - redirect: String of a URL to request instead.
+ *
+ * @typedef {{
+ *   css: (string|undefined),
+ *   html: (Object.<string, string>|undefined),
+ *   attr: (Object.<string, Object.<string, string>>|undefined),
+ *   js: (string|undefined),
+ *   title: (string|undefined),
+ *   timing: (Object.<string, number>|undefined),
+ *   redirect: (string|undefined)
+ * }}
+ */
+spf.SingleResponse;
+
+
+/**
+ * Type definition for a multipart SPF response object.
+ * - parts: List of response objects.
+ * - timing: Map of timing attributes to timestamp numbers.
+ * - type: The string "multipart".
+ *
+ * @typedef {{
+ *   parts: (Array.<spf.SingleResponse>|undefined),
+ *   timing: (Object.<string, number>|undefined),
+ *   type: string
+ * }}
+ */
+spf.MultipartResponse;

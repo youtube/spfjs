@@ -8,43 +8,15 @@
 goog.provide('spf.nav');
 
 goog.require('spf');
-goog.require('spf.cache');
 goog.require('spf.config');
 goog.require('spf.debug');
 goog.require('spf.dom');
 goog.require('spf.dom.classlist');
-goog.require('spf.dom.url');
 goog.require('spf.history');
+goog.require('spf.nav.request');
 goog.require('spf.net.scripts');
 goog.require('spf.net.styles');
-goog.require('spf.net.xhr');
 goog.require('spf.state');
-goog.require('spf.string');
-
-
-/**
- * Type definition for a SPF response object.
- * - css: HTML string containing <link> and <style> tags of CSS to install.
- * - html: Map of Element IDs to HTML strings containing content with which
- *      to update the Elements.
- * - attr: Map of Element IDs to maps of attibute names to attribute values
- *      to set on the Elements.
- * - js: HTML string containing <script> tags of JS to execute.
- * - title: String of the new Document title.
- * - timing: Map of timing attributes to timestamp numbers.
- * - redirect: String of a URL to request instead.
- *
- * @typedef {{
- *   css: (string|undefined),
- *   html: (Object.<string, string>|undefined),
- *   attr: (Object.<string, Object.<string, string>>|undefined),
- *   js: (string|undefined),
- *   title: (string|undefined),
- *   timing: (Object.<string, number>|undefined),
- *   redirect: (string|undefined)
- * }}
- */
-spf.nav.Response;
 
 
 /**
@@ -256,6 +228,9 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
       spf.nav.error(url, err);
     }
   };
+  var navigatePart = function(url, partial) {
+    spf.nav.process(partial, opt_reverse);
+  };
   var navigateSuccess = function(url, response) {
     spf.state.set('nav-request', null);
     // Check for redirects.
@@ -268,10 +243,29 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
       return;
     }
     // Process the requested response.
-    spf.nav.process(response, opt_reverse, true);
+    // If a multipart response was received, all processing is already done,
+    // so just execute the global notification.
+    if (response['type'] == 'multipart') {
+      // Execute the "navigation processed" callback.  There is no
+      // opportunity to cancel the navigation after processing is complete,
+      // so explicitly returning false here does nothing.
+      var val = spf.execute(/** @type {Function} */ (
+          spf.config.get('navigate-processed-callback')), response);
+      if (val instanceof Error) {
+        spf.debug.warn('failed in "navigate-processed-callback", ignoring',
+                       '(val=', val, ')');
+      }
+    } else {
+      spf.nav.process(response, opt_reverse, true);
+    }
   };
-  var xhr = spf.nav.request(url, navigateSuccess, navigateError,
-                            'navigate', referer);
+  var xhr = spf.nav.request.send(url, {
+    onPart: navigatePart,
+    onError: navigateError,
+    onSuccess: navigateSuccess,
+    type: 'navigate',
+    referer: referer
+  });
   spf.state.set('nav-request', xhr);
   // After the request has been sent, check for new navigation that needs
   // a history entry added.  Do this after sending the XHR to have the
@@ -357,6 +351,9 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
       opt_onError(url, err);
     }
   };
+  var loadPart = function(url, partial) {
+    spf.nav.process(partial);
+  };
   var loadSuccess = function(url, response) {
     // Check for redirects.
     if (response['redirect']) {
@@ -364,168 +361,21 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
       return;
     }
     // Process the requested response.
-    spf.nav.process(response);
-    if (opt_onSuccess) {
-      opt_onSuccess(url, response);
-    }
-  };
-  return spf.nav.request(url, loadSuccess, loadError, 'load');
-};
-
-
-/**
- * Requests a URL using the SPF protocol and parses the response.  If
- * successful, the URL and response object are passed to the optional
- * {@code opt_onSuccess} callback.  If not, the URL is passed to the optional
- * {@code opt_onError} callback.
- *
- * @param {string} url The requested URL, without the SPF identifier.
- * @param {function(string, !Object)=} opt_onSuccess The callback to execute if
- *     the request succeeds.
- * @param {function(string, (Error|boolean))=} opt_onError The callback to
- *     execute if the request fails. The first argument is the requested
- *     URL; the second argument is the Error that occurred.  If the type of
- *     request is "navigate", the second argument might be false if the
- *     request was canceled in response to the global "navigate-received"
- *     callback.
- * @param {?string=} opt_type The type of request (e.g. "navigate", "load",
- *     etc), used to alter the URL identifier and XHR header and used to
- *     determine whether the global "navigation received" callback is executed;
- *     defaults to "request".
- * @param {string=} opt_referer The Referrer URL, without the SPF identifier.
- * @return {XMLHttpRequest} The XHR of the current request.
- */
-spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
-                           opt_referer) {
-  spf.debug.debug('nav.request ', url);
-  // Convert the URL to absolute, to be used for caching the response.
-  var absoluteUrl = spf.dom.url.absolute(url);
-  spf.debug.debug('    absolute url ', absoluteUrl);
-  // Add the SPF identifier, to be used for sending the request.
-  var requestUrl = absoluteUrl;
-  var ident = /** @type {string} */ (spf.config.get('url-identifier')) || '';
-  if (ident) {
-    ident = ident.replace('__type__', opt_type || 'request');
-    if (spf.string.startsWith(ident, '?') &&
-        spf.string.contains(requestUrl, '?')) {
-      requestUrl += ident.replace('?', '&');
-    } else {
-      requestUrl += ident;
-    }
-  }
-  spf.debug.debug('    identified url ', requestUrl);
-  // Record a start time before sending the request or loading from cache.
-  // This will be recored later as navigationStart/startTime.
-  var start = spf.now();
-  var timing = {};
-  var onResponseFound = function(response) {
-    if (opt_type == 'navigate') {
-      // Execute the "navigation received" callback.  If the callback
-      // explicitly returns false, cancel this navigation.
-      var val = spf.execute(/** @type {Function} */ (
-          spf.config.get('navigate-received-callback')), url, response);
-      if (val === false || val instanceof Error) {
-        spf.debug.warn('failed in "navigate-received-callback", canceling',
-                       '(val=', val, ')');
-        if (opt_onError) {
-          opt_onError(url, val);
-        }
-        return;
-      }
+    // If a multipart response was received, all processing is already done,
+    // so just execute the callback.
+    if (response['type'] != 'multipart') {
+      spf.nav.process(response);
     }
     if (opt_onSuccess) {
       opt_onSuccess(url, response);
     }
   };
-  var onCacheResponse = function(response) {
-    response = /** @type {spf.nav.Response} */ (response);
-    // Record the timing information.
-    // Record responseStart and responseEnd times after loading from cache.
-    timing['responseStart'] = timing['responseEnd'] = spf.now();
-    // Record startTime always (consistent with W3C PerformanceResourceTiming
-    // for XHRs), and also record navigationStart for navigate requests
-    // (consistent with W3C PerformanceTiming for page loads).
-    timing['startTime'] = start;
-    if (opt_type == 'navigate') {
-      timing['navigationStart'] = start;
-    }
-    // Set the timing for the cached response (avoid stale timing values).
-    response['timing'] = timing;
-    spf.debug.debug('    cached response found ', response);
-    onResponseFound(response);
-  };
-  var onRequestResponse = function(xhr) {
-    spf.debug.debug('    XHR response', 'status=', xhr.status, 'xhr=', xhr);
-    // Record the timing information from the XHR.
-    if (xhr['timing']) {
-      for (var t in xhr['timing']) {
-        timing[t] = xhr['timing'][t];
-      }
-    }
-    // Record startTime always (consistent with W3C PerformanceResourceTiming
-    // for XHRs), and also record navigationStart for navigate requests
-    // (consistent with W3C PerformanceTiming for page loads).
-    timing['startTime'] = start;
-    if (opt_type == 'navigate') {
-      timing['navigationStart'] = start;
-    }
-    // Attempt to parse the response.
-    var response;
-    try {
-      if ('JSON' in window) {
-        response = JSON.parse(xhr.responseText);
-      } else {
-        response = eval('(' + xhr.responseText + ')');
-      }
-    } catch (err) {
-      spf.debug.debug('    JSON parse failed');
-      if (opt_onError) {
-        opt_onError(url, err);
-      }
-      return;
-    }
-    response = /** @type {spf.nav.Response} */ (response);
-    // Cache the response for future requests.
-    // Use the absolute URL without identifier to allow cached responses
-    // from prefetching to apply to navigation.
-    spf.cache.set(absoluteUrl, response,  /** @type {number} */ (
-        spf.config.get('cache-lifetime')));
-    // Set the timing values for the response.
-    response['timing'] = timing;
-    onResponseFound(response);
-  };
-  // Try to find a cached response for the request before sending a new XHR.
-  // Record fetchStart time before loading from cache. If no cached response
-  // is found, this value will be replaced with the one provided by the XHR.
-  timing['fetchStart'] = spf.now()
-  // Use the absolute URL without identifier to allow cached responses
-  // from prefetching to apply to navigation.
-  var cached = spf.cache.get(absoluteUrl);
-  if (cached) {
-    cached = /** @type {spf.nav.Response} */ (cached);
-    // To ensure a similar execution pattern as a request, ensure the
-    // cache response is returned asynchronously.
-    setTimeout(function() {
-      onCacheResponse(cached);
-    }, 0);
-    // Return null because no XHR is made.
-    return null;
-  } else {
-    spf.debug.debug('    sending XHR');
-    var headers = {'X-SPF-Request': opt_type || 'request'};
-    if (opt_referer) {
-      headers['X-SPF-Referer'] = opt_referer;
-    }
-    var xhr = spf.net.xhr.get(requestUrl, {
-      headers: headers,
-      timeoutMs: /** @type {number} */ (spf.config.get('request-timeout')),
-      onSuccess: onRequestResponse,
-      onError: onRequestResponse,
-      onTimeout: onRequestResponse
-    });
-    // Return the XHR being made.
-    return xhr;
-  }
+  return spf.nav.request.send(url, {
+    onPart: loadPart,
+    onError: loadError,
+    onSuccess: loadSuccess,
+    type: 'load'
+  });
 };
 
 
@@ -533,7 +383,7 @@ spf.nav.request = function(url, opt_onSuccess, opt_onError, opt_type,
  * Process the response using the SPF protocol.  The response object should
  * already have been unserialized by {@link #request}.
  *
- * @param {spf.nav.Response} response The SPF response object to process.
+ * @param {spf.SingleResponse} response The SPF response object to process.
  * @param {boolean=} opt_reverse Whether this is "backwards" navigation. True
  *     when the "back" button is clicked and a request is in response to a
  *     popState event.
@@ -760,6 +610,9 @@ spf.nav.prefetch = function(url, opt_onSuccess, opt_onError) {
       opt_onError(url, err);
     }
   };
+  var fetchPart = function(url, partial) {
+    spf.nav.preprocess(partial);
+  };
   var fetchSuccess = function(url, response) {
     // Check for redirects.
     if (response['redirect']) {
@@ -767,12 +620,21 @@ spf.nav.prefetch = function(url, opt_onSuccess, opt_onError) {
       return;
     }
     // Preprocess the requested response.
-    spf.nav.preprocess(response);
+    // If a multipart response was received, all processing is already done,
+    // so just execute the callback.
+    if (response['type'] != 'multipart') {
+      spf.nav.preprocess(response);
+    }
     if (opt_onSuccess) {
       opt_onSuccess(url, response);
     }
   };
-  return spf.nav.request(url, fetchSuccess, fetchError, 'prefetch');
+  return spf.nav.request.send(url, {
+    onPart: fetchPart,
+    onError: fetchError,
+    onSuccess: fetchSuccess,
+    type: 'prefetch'
+  });
 };
 
 
@@ -782,7 +644,7 @@ spf.nav.prefetch = function(url, opt_onSuccess, opt_onError) {
  * {@link #process} but instead of page content being updated, script and
  * stylesheet URLs are prefetched.
  *
- * @param {spf.nav.Response} response The SPF response object to preprocess.
+ * @param {spf.SingleResponse} response The SPF response object to preprocess.
  */
 spf.nav.preprocess = function(response) {
   spf.debug.info('nav.preprocess ', response);

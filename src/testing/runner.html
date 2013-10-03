@@ -13,9 +13,11 @@
 <body>
   <script>
     (function() {
+      var reporter = new jasmine.HtmlReporter();
       var env = jasmine.getEnv();
       env.updateInterval = 1000;
-      env.addReporter(new jasmine.HtmlReporter());
+      env.addReporter(reporter);
+      env.specFilter = function(s) { return reporter.specFilter(s); };
       env.execute();
     })();
   </script>

@@ -10,19 +10,27 @@ goog.provide('spf.net.xhr');
 /**
  * Type definition for the configuration options for an XMLHttpRequest.
  * - headers: map of header key/value pairs.
- * - timeoutMs: number of milliseconds after which the request will be timed
- *      out by the client. Default is to allow the browser to handle timeouts.
- * - onSuccess: optional callback to execute if the XHR succeeds.
+ * - onChunk: optional callback to execute as chunks of the XHR response
+ *      are received.  Only called if a valid "Transfer-Encoding: chunked"
+ *      header is received.  Each execution of the callback will pass the
+ *      current chunk in addition to the XHR object.
  * - onError: optional callback to execute if the XHR fails.
+ * - onHeaders: optional callback to execute once the XHR response headers
+ *      have been received.
+ * - onSuccess: optional callback to execute if the XHR succeeds.
  * - onTimeout: optional callback to execute if the XHR times out.  Only called
  *      if a timeout is configured.
+ * - timeoutMs: number of milliseconds after which the request will be timed
+ *      out by the client. Default is to allow the browser to handle timeouts.
  *
  * @typedef {{
  *   headers: (Object.<string>|undefined),
- *   timeoutMs: (number|undefined),
- *   onSuccess: (function(XMLHttpRequest)|undefined),
+ *   onChunk: (function(XMLHttpRequest, string)|undefined),
  *   onError: (function(XMLHttpRequest)|undefined),
- *   onTimeout: (function(XMLHttpRequest)|undefined)
+ *   onHeaders: (function(XMLHttpRequest)|undefined),
+ *   onSuccess: (function(XMLHttpRequest)|undefined),
+ *   onTimeout: (function(XMLHttpRequest)|undefined),
+ *   timeoutMs: (number|undefined)
  * }}
  */
 spf.net.xhr.Options;
@@ -71,9 +79,14 @@ spf.net.xhr.post = function(url, data, opt_options) {
  */
 spf.net.xhr.send = function(method, url, data, opt_options) {
   var options = opt_options || {};
-  var onSuccess = options.onSuccess || function() {};
-  var onError = options.onError || function() {};
-  var onTimeout = options.onTimeout || function() {};
+  var nullFunction = function() {};
+  var onHeaders = options.onHeaders || nullFunction;
+  var onChunk = options.onChunk || nullFunction;
+  var onSuccess = options.onSuccess || nullFunction;
+  var onError = options.onError || nullFunction;
+  var onTimeout = options.onTimeout || nullFunction;
+  var chunked = false;
+  var offset = 0;
   var timer;
 
   var xhr = spf.net.xhr.create();
@@ -93,9 +106,32 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
     if (xhr.readyState == spf.net.xhr.State.HEADERS_RECEIVED) {
       // Record responseStart time when first byte is received.
       timing['responseStart'] = timing['responseStart'] || spf.now();
+      // Determine whether to process chunks as they arrive.
+      // This is only possible with both chunked transfer encoding.
+      // Note: handle Transfer-Encoding header values like:
+      //   "chunked"  (standard)
+      //   "Chunked"  (non-standard)
+      //   "chunked, chunked"  (multiple headers sent)
+      var encoding = xhr.getResponseHeader('Transfer-Encoding') || '';
+      chunked = encoding.toLowerCase().indexOf('chunked') > -1;
+      onHeaders(xhr);
+    } else if (xhr.readyState == spf.net.xhr.State.LOADING) {
+      if (chunked && onChunk != nullFunction) {
+        var chunk = xhr.responseText.substring(offset);
+        offset = xhr.responseText.length;
+        onChunk(xhr, chunk);
+      }
     } else if (xhr.readyState == spf.net.xhr.State.DONE) {
       // Record responseEnd time when full response is received.
       timing['responseEnd'] = timing['responseEnd'] || spf.now();
+      // If processing chunks as they arrive and the state was transitioned
+      // at response end to DONE without a LOADING, process the final chunk now.
+      if (chunked && onChunk != nullFunction &&
+          xhr.responseText.length > offset) {
+        var chunk = xhr.responseText.substring(offset);
+        offset = xhr.responseText.length;
+        onChunk(xhr, chunk);
+      }
       clearTimeout(timer);
       switch (xhr.status) {
         case 200:  // HTTP Success: OK

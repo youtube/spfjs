@@ -25,7 +25,6 @@ $def with (content, is_debug, is_dev)
       <li class="nav-page3"><a class="spf-link" href="/page/3">Page 3</a></li>
       <li class="nav-page4"><a class="spf-link" href="/page/4">Page 4</a></li>
       <li class="nav-page5"><a class="spf-link" href="/page/5">Page 5</a></li>
-      <li class="nav-page6"><a class="spf-link" href="/page/6">Page 6</a></li>
     </ul>
     <!-- pages with real content -->
     <ul>
@@ -35,10 +34,6 @@ $def with (content, is_debug, is_dev)
   </div>
   <div id="content" class="spf-transition">
     $:content
-  </div>
-  </div>
-  <div id="footer">
-    Etc.
   </div>
   <!-- Pre-fill hashcodes so SPF won't load resources twice -->
   $if is_dev:
