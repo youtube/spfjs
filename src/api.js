@@ -68,6 +68,7 @@ spf.load = function(url, opt_onSuccess, opt_onError) {};
  * Process a response using the SPF protocol.
  *
  * @param {!Object} response The SPF response object to process.
+ * @deprecated Use spf.load instead.
  */
 spf.process = function(response) {};
 
