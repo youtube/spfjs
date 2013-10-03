@@ -116,8 +116,7 @@ spf.nav.request.send = function(url, opt_options) {
       timeoutMs: /** @type {number} */ (spf.config.get('request-timeout')),
       onHeaders: handleHeaders,
       onChunk: handleChunk,
-      onSuccess: handleComplete,
-      onError: handleComplete,
+      onDone: handleComplete,
       onTimeout: handleComplete
     });
     // Return the XHR being made.

@@ -24,14 +24,14 @@ describe('spf.nav.request', function() {
     var callOnHeaders = function(opts) {
       opts.onHeaders(fakeXHR);
     };
-    var callOnSuccessDelayed = function(opts) {
+    var callOnDoneDelayed = function(opts) {
       setTimeout(function() {
-        opts.onSuccess(fakeXHR);
+        opts.onDone(fakeXHR);
       }, MOCK_DELAY);
     };
     return function(xhrUrl, xhrOptions) {
       callOnHeaders(xhrOptions);
-      callOnSuccessDelayed(xhrOptions);
+      callOnDoneDelayed(xhrOptions);
     };
   };
   var createFakeChunkedXHR = function(xhrText, numChunks, isMultipart) {
@@ -49,9 +49,9 @@ describe('spf.nav.request', function() {
         opts.onChunk(fakeXHR, chunk);
       }, MOCK_DELAY * num);
     };
-    var callOnSuccessDelayed = function(opts) {
+    var callOnDoneDelayed = function(opts) {
       setTimeout(function() {
-        opts.onSuccess(fakeXHR);
+        opts.onDone(fakeXHR);
       }, MOCK_DELAY * (1 + numChunks));
     };
     return function(xhrUrl, xhrOptions) {
@@ -61,7 +61,7 @@ describe('spf.nav.request', function() {
         var chunk = xhrText.substring(i, (i + l));
         callOnChunkDelayed(xhrOptions, chunk, (1 + (i / l)));
       }
-      callOnSuccessDelayed(xhrOptions);
+      callOnDoneDelayed(xhrOptions);
     };
   };
 

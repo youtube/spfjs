@@ -14,10 +14,10 @@ goog.provide('spf.net.xhr');
  *      are received.  Only called if a valid "Transfer-Encoding: chunked"
  *      header is received.  Each execution of the callback will pass the
  *      current chunk in addition to the XHR object.
- * - onError: optional callback to execute if the XHR fails.
+ * - onDone: optional callback to execute once the XHR response has been
+ *      been completely received .
  * - onHeaders: optional callback to execute once the XHR response headers
  *      have been received.
- * - onSuccess: optional callback to execute if the XHR succeeds.
  * - onTimeout: optional callback to execute if the XHR times out.  Only called
  *      if a timeout is configured.
  * - timeoutMs: number of milliseconds after which the request will be timed
@@ -26,9 +26,8 @@ goog.provide('spf.net.xhr');
  * @typedef {{
  *   headers: (Object.<string>|undefined),
  *   onChunk: (function(XMLHttpRequest, string)|undefined),
- *   onError: (function(XMLHttpRequest)|undefined),
+ *   onDone: (function(XMLHttpRequest)|undefined),
  *   onHeaders: (function(XMLHttpRequest)|undefined),
- *   onSuccess: (function(XMLHttpRequest)|undefined),
  *   onTimeout: (function(XMLHttpRequest)|undefined),
  *   timeoutMs: (number|undefined)
  * }}
@@ -79,12 +78,6 @@ spf.net.xhr.post = function(url, data, opt_options) {
  */
 spf.net.xhr.send = function(method, url, data, opt_options) {
   var options = opt_options || {};
-  var nullFunction = function() {};
-  var onHeaders = options.onHeaders || nullFunction;
-  var onChunk = options.onChunk || nullFunction;
-  var onSuccess = options.onSuccess || nullFunction;
-  var onError = options.onError || nullFunction;
-  var onTimeout = options.onTimeout || nullFunction;
   var chunked = false;
   var offset = 0;
   var timer;
@@ -114,39 +107,28 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
       //   "chunked, chunked"  (multiple headers sent)
       var encoding = xhr.getResponseHeader('Transfer-Encoding') || '';
       chunked = encoding.toLowerCase().indexOf('chunked') > -1;
-      onHeaders(xhr);
+      if (options.onHeaders) {
+        options.onHeaders(xhr);
+      }
     } else if (xhr.readyState == spf.net.xhr.State.LOADING) {
-      if (chunked && onChunk != nullFunction) {
+      if (chunked && options.onChunk) {
         var chunk = xhr.responseText.substring(offset);
         offset = xhr.responseText.length;
-        onChunk(xhr, chunk);
+        options.onChunk(xhr, chunk);
       }
     } else if (xhr.readyState == spf.net.xhr.State.DONE) {
       // Record responseEnd time when full response is received.
       timing['responseEnd'] = timing['responseEnd'] || spf.now();
       // If processing chunks as they arrive and the state was transitioned
       // at response end to DONE without a LOADING, process the final chunk now.
-      if (chunked && onChunk != nullFunction &&
-          xhr.responseText.length > offset) {
+      if (chunked && options.onChunk && xhr.responseText.length > offset) {
         var chunk = xhr.responseText.substring(offset);
         offset = xhr.responseText.length;
-        onChunk(xhr, chunk);
+        options.onChunk(xhr, chunk);
       }
       clearTimeout(timer);
-      switch (xhr.status) {
-        case 200:  // HTTP Success: OK
-        case 201:  // HTTP Success: Created
-        case 202:  // HTTP Success: Accepted
-        case 203:  // HTTP Success: Non-Authoritative Information
-        case 204:  // HTTP Success: No Content
-        case 205:  // HTTP Success: Reset Content
-        case 206:  // HTTP Success: Partial Content
-        case 304:  // HTTP Redirection: Not Modified
-          onSuccess(xhr);
-          break;
-        default:
-          onError(xhr);
-          break;
+      if (options.onDone) {
+        options.onDone(xhr);
       }
     }
   };
@@ -160,7 +142,9 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
   if (options.timeoutMs > 0) {
     timer = setTimeout(function() {
       xhr.abort();
-      onTimeout(xhr);
+      if (options.onTimeout) {
+        options.onTimeout(xhr);
+      }
     }, options.timeoutMs);
   }
 
