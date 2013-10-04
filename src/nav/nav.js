@@ -145,7 +145,7 @@ spf.nav.handleHistory_ = function(url, opt_state) {
  * cancelled.
  *
  * NOTE: Currently, the optional {@code onSuccess} and {@code onError}
- * callbacks are ignored in this method.  This will be fixed shortly.
+ * callbacks are ignored in this function.  This will be fixed shortly.
  *
  * @param {string} url The URL to navigate to, without the SPF identifier.
  * @param {spf.RequestOptions=} opt_options Optional request options object.

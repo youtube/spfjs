@@ -193,6 +193,6 @@ demo.home.init = function() {
   // Enable the extra content button.
   var buttonEl = document.getElementById('home-ajax-get');
   buttonEl.onclick = function() {
-    spf.load('/index_ajax', {'method': 'post'});
+    spf.load('/index_ajax', {'method': 'POST'});
   };
 };

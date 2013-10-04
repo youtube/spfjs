@@ -18,7 +18,7 @@ goog.require('spf.string');
 
 /**
  * Type definition for the configuration options for an SPF request.
- * - method: optional method with which to send the request; defaults to "get".
+ * - method: optional method with which to send the request; defaults to "GET".
  * - onPart: optional callback to execute with the parts of a multipart
  *       response.  The first argumet is the requested URL; the second argument
  *       is the partial response object.  If valid
@@ -35,7 +35,7 @@ goog.require('spf.string');
  *       response object will be either a complete single response object or
  *       a complete multipart response object.
  * - postData: optional data to send with the request.  Only used if the method
- *       is set to "post".
+ *       is set to "POST".
  * - referer: optional referrer URL, without the SPF identifier.
  * - type: optional type of request (e.g. "navigate", "load", etc), used to
  *       alter the URL identifier and XHR header and used to determine whether
@@ -71,7 +71,7 @@ spf.nav.request.Options;
 spf.nav.request.send = function(url, opt_options) {
   spf.debug.debug('nav.request.send ', url, opt_options);
   var options = opt_options || /** @type {spf.nav.request.Options} */ ({});
-  options.method = ((options.method || 'get') + '').toLowerCase();
+  options.method = ((options.method || 'GET') + '').toUpperCase();
   options.type = options.type || 'request';
   // Convert the URL to absolute, to be used for caching the response.
   var absoluteUrl = spf.nav.url.absolute(url);
@@ -125,7 +125,7 @@ spf.nav.request.send = function(url, opt_options) {
       onTimeout: handleComplete
     };
     var xhr;
-    if (options.method == 'post') {
+    if (options.method == 'POST') {
       xhr = spf.net.xhr.post(requestUrl, options.postData, xhrOpts);
     } else {
       xhr = spf.net.xhr.get(requestUrl, xhrOpts);
@@ -307,7 +307,7 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
  */
 spf.nav.request.done_ = function(url, options, timing, response, cache) {
   spf.debug.debug('nav.request.done_', url, options, timing, response, cache);
-  if (cache && options.method != 'post') {
+  if (cache && options.method != 'POST') {
     // Cache the response for future requests.
     // Use the absolute URL without identifier to allow cached responses
     // from prefetching to apply to navigation.

@@ -93,7 +93,7 @@ spf.MultipartResponse.prototype.type;
 spf.RequestOptions;
 
 /**
- * Optional method with which to send the request; defaults to "get".
+ * Optional method with which to send the request; defaults to "GET".
  * @type {string|undefined}
  */
 spf.RequestOptions.prototype.method;
@@ -115,7 +115,7 @@ spf.RequestOptions.prototype.onError;
 spf.RequestOptions.prototype.onSuccess;
 
 /**
- * Optional data to send with the request.  Only used if the method is "post".
+ * Optional data to send with the request.  Only used if the method is "POST".
  * @type {ArrayBuffer|Blob|Document|FormData|null|string|undefined}
  */
 spf.RequestOptions.prototype.postData;
@@ -149,7 +149,7 @@ spf.dispose = function() {};
  * cancelled.
  *
  * NOTE: Currently, the optional {@code onSuccess} and {@code onError}
- * callbacks are ignored in this method.  This will be fixed shortly.
+ * callbacks are ignored in this function.  This will be fixed shortly.
  *
  * @param {string} url The URL to navigate to, without the SPF identifier.
  * @param {(Object|spf.RequestOptions)=} opt_options Optional request options.

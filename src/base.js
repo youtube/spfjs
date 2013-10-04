@@ -48,7 +48,7 @@ var SPF_DEBUG = true;
  * @param {...*} var_args Additional arguments that are partially applied to the
  *     function.
  * @return {!Function} A partially-applied form of the function bind() was
- *     invoked as a method of.
+ *     invoked on.
  * @template T
  */
 spf.bind = function(fn, self, var_args) {
@@ -279,7 +279,7 @@ spf.MultipartResponse;
 
 /**
  * Type definition for the configuration options for requesting a URL.
- * - method: optional method with which to send the request; defaults to "get".
+ * - method: optional method with which to send the request; defaults to "GET".
  * - onError: optional callback to execute if the request fails. The first
  *       argument is the requested URL; the second argument is the Error that
  *       occurred.
@@ -288,7 +288,7 @@ spf.MultipartResponse;
  *       response object will be either a complete single response object or
  *       a complete multipart response object.
  * - postData: optional data to send with a request.  Only used if the method is
- *       set to "post".
+ *       set to "POST".
  *
  * @typedef {{
  *   postData: (ArrayBuffer|Blob|Document|FormData|null|string|undefined),

@@ -74,7 +74,7 @@ spf.dom.insertSiblingAfter = function(newNode, refNode) {
 spf.dom.flattenElement = function(element) {
   var child, parent = element.parentNode;
   if (parent && parent.nodeType != 11) {  // 11 = document fragment
-    // Use IE DOM method (supported by Opera too) if available
+    // Use IE DOM function (supported by Opera too) if available
     if (element.removeNode) {
       return /** @type {Element} */ (element.removeNode(false));
     } else {
