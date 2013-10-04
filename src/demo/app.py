@@ -271,7 +271,7 @@ class Index(Servlet):
 
 
 class IndexAjax(Servlet):
-  def GET(self):  # pylint: disable=invalid-name,missing-docstring
+  def POST(self):  # pylint: disable=invalid-name,missing-docstring
     content = templates.index_ajax()
     # Only support an SPF response
     fragments = {'home_ajax_out': 'home_ajax_out'}

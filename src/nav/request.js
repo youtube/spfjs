@@ -18,10 +18,11 @@ goog.require('spf.string');
 
 /**
  * Type definition for the configuration options for an SPF request.
+ * - method: optional method with which to send the request; defaults to "get".
  * - onPart: optional callback to execute with the parts of a multipart
  *       response.  The first argumet is the requested URL; the second argument
  *       is the partial response object.  If valid
- *       "X-SPF-Response-Type: multipart" and"Transfer-Encoding: chunked"
+ *       "X-SPF-Response-Type: multipart" and "Transfer-Encoding: chunked"
  *       headers are sent, then this callback be executed on-the-fly as chunks
  *       are received.
  * - onError: optional callback to execute if the request fails. The first
@@ -33,6 +34,8 @@ goog.require('spf.string');
  *       argument is the requested URL; the second is the response object.  The
  *       response object will be either a complete single response object or
  *       a complete multipart response object.
+ * - postData: optional data to send with the request.  Only used if the method
+ *       is set to "post".
  * - referer: optional referrer URL, without the SPF identifier.
  * - type: optional type of request (e.g. "navigate", "load", etc), used to
  *       alter the URL identifier and XHR header and used to determine whether
@@ -40,10 +43,12 @@ goog.require('spf.string');
  *       "request".
  *
  * @typedef {{
+ *   method: (string|undefined),
  *   onPart: (function(string, spf.SingleResponse)|undefined),
  *   onError: (function(string, (Error|boolean))|undefined),
  *   onSuccess: (function(string,
  *                   (spf.SingleResponse|spf.MultipartResponse))|undefined),
+ *   postData: spf.net.xhr.PostData,
  *   referer: (string|null|undefined),
  *   type: (string|undefined)
  * }}
@@ -66,8 +71,8 @@ spf.nav.request.Options;
 spf.nav.request.send = function(url, opt_options) {
   spf.debug.debug('nav.request.send ', url, opt_options);
   var options = opt_options || /** @type {spf.nav.request.Options} */ ({});
+  options.method = ((options.method || 'get') + '').toLowerCase();
   options.type = options.type || 'request';
-  options.referer = options.referer || null;
   // Convert the URL to absolute, to be used for caching the response.
   var absoluteUrl = spf.nav.url.absolute(url);
   spf.debug.debug('    absolute url ', absoluteUrl);
@@ -111,14 +116,20 @@ spf.nav.request.send = function(url, opt_options) {
                                url, options, chunking);
     var handleComplete = spf.bind(spf.nav.request.handleCompleteFromXHR_, null,
                                   url, options, timing, chunking);
-    var xhr = spf.net.xhr.get(requestUrl, {
+    var xhrOpts = {
       headers: headers,
       timeoutMs: /** @type {number} */ (spf.config.get('request-timeout')),
       onHeaders: handleHeaders,
       onChunk: handleChunk,
       onDone: handleComplete,
       onTimeout: handleComplete
-    });
+    };
+    var xhr;
+    if (options.method == 'post') {
+      xhr = spf.net.xhr.post(requestUrl, options.postData, xhrOpts);
+    } else {
+      xhr = spf.net.xhr.get(requestUrl, xhrOpts);
+    }
     // Return the XHR being made.
     return xhr;
   }
@@ -287,7 +298,7 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
  * See {@link #send}.
  *
  * @param {string} url The requested URL, without the SPF identifier.
- * @param {spf.nav.request.Options} options Configuration options
+ * @param {spf.nav.request.Options} options Configuration options.
  * @param {Object} timing Timing data.
  * @param {spf.SingleResponse|spf.MultipartResponse} response The received SPF
  *   response object.
@@ -296,7 +307,7 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
  */
 spf.nav.request.done_ = function(url, options, timing, response, cache) {
   spf.debug.debug('nav.request.done_', url, options, timing, response, cache);
-  if (cache) {
+  if (cache && options.method != 'post') {
     // Cache the response for future requests.
     // Use the absolute URL without identifier to allow cached responses
     // from prefetching to apply to navigation.

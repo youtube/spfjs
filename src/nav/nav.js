@@ -22,12 +22,13 @@ goog.require('spf.state');
  * Initializes (enables) pushState navigation.
  */
 spf.nav.init = function() {
+  spf.history.init(spf.nav.handleHistory_);
   if (!spf.state.get('nav-init') && document.addEventListener) {
-    document.addEventListener('click', spf.nav.handleClick, false);
+    document.addEventListener('click', spf.nav.handleClick_, false);
     spf.state.set('nav-init', true);
     spf.state.set('nav-counter', 0);
     spf.state.set('nav-time', spf.now());
-    spf.state.set('nav-listener', spf.nav.handleClick);
+    spf.state.set('nav-listener', spf.nav.handleClick_);
   }
 };
 
@@ -47,6 +48,7 @@ spf.nav.dispose = function() {
     spf.state.set('nav-time', null);
     spf.state.set('nav-listener', null);
   }
+  spf.history.dispose();
 };
 
 
@@ -54,8 +56,9 @@ spf.nav.dispose = function() {
  * Handles page clicks on SPF links and adds pushState history entries for them.
  *
  * @param {Event} evt The click event.
+ * @private
  */
-spf.nav.handleClick = function(evt) {
+spf.nav.handleClick_ = function(evt) {
   spf.debug.debug('nav.handleClick ', 'evt=', evt);
   // Ignore clicks with modifier keys.
   if (evt.metaKey || evt.altKey || evt.ctrlKey || evt.shiftKey) {
@@ -119,36 +122,48 @@ spf.nav.handleClick = function(evt) {
  *
  * @param {string} url The URL the user is browsing to.
  * @param {Object=} opt_state An optional state object associated with the URL.
+ * @private
  */
-spf.nav.handleHistory = function(url, opt_state) {
+spf.nav.handleHistory_ = function(url, opt_state) {
   var reverse = !!(opt_state && opt_state['spf-back']);
   var referer = opt_state && opt_state['spf-referer'];
   spf.debug.debug('nav.handleHistory ', '(url=', url, 'state=', opt_state, ')');
   // Navigate to the URL.
-  spf.nav.navigate_(url, referer, true, reverse);
+  spf.nav.navigate_(url, null, referer, true, reverse);
 };
 
 
 /**
- * Navigates to a URL using the SPF protocol.  A pushState history entry is
- * added for the URL, and if successful, the navigation is performed.  If not,
- * the browser is redirected to the URL.
+ * Navigates to a URL.
  *
- * During the navigation, first the content is requested by {@link #request}.
- * If the reponse is sucessfully parsed, it is processed by {@link #process}.
- * If not, the browser is redirected to the URL. Only a single navigation
- * request can be in flight at once.  If a second URL is navigated to while a
- * first is still pending, the first will be cancelled.
+ * A pushState history entry is added for the URL, and if successful, the
+ * navigation is performed.  If not, the browser is redirected to the URL.
+ * During the navigation, first the content is requested.  If the reponse is
+ * sucessfully parsed, it is processed.  If not, the browser is redirected to
+ * the URL.  Only a single navigation request can be in flight at once.  If a
+ * second URL is navigated to while a first is still pending, the first will be
+ * cancelled.
+ *
+ * NOTE: Currently, the optional {@code onSuccess} and {@code onError}
+ * callbacks are ignored in this method.  This will be fixed shortly.
  *
  * @param {string} url The URL to navigate to, without the SPF identifier.
+ * @param {spf.RequestOptions=} opt_options Optional request options object.
  */
-spf.nav.navigate = function(url) {
+spf.nav.navigate = function(url, opt_options) {
   // Ignore navigation to the same page or to an empty URL.
   if (!url || url == window.location.href) {
     return;
   }
+  //
+  //////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////
+  // TODO: Support onSuccess and onError in navigate requests.
+  //////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////
+  //
   // Navigate to the URL.
-  spf.nav.navigate_(url);
+  spf.nav.navigate_(url, opt_options);
 };
 
 
@@ -157,6 +172,7 @@ spf.nav.navigate = function(url) {
  * See {@link #navigate}, {@link #handleClick}, and {@link #handleHistory}.
  *
  * @param {string} url The URL to navigate to, without the SPF identifier.
+ * @param {?spf.RequestOptions=} opt_options Optional request options object.
  * @param {string=} opt_referer The Referrer URL, without the SPF identifier.
  *     Defaults to the current URL.
  * @param {boolean=} opt_history Whether this navigation is part of a history
@@ -166,8 +182,11 @@ spf.nav.navigate = function(url) {
  *     popState event.
  * @private.
  */
-spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
-  spf.debug.info('nav.navigate ', url, opt_referer, opt_history, opt_reverse);
+spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
+                             opt_reverse) {
+  spf.debug.info('nav.navigate ', url, opt_options, opt_referer, opt_history,
+                 opt_reverse);
+  var options = opt_options || /** @type {spf.RequestOptions} */ ({});
   // Execute the "navigation requested" callback.  If the callback explicitly
   // returns false, cancel this navigation.
   var val = spf.execute(/** @type {Function} */ (
@@ -259,9 +278,11 @@ spf.nav.navigate_ = function(url, opt_referer, opt_history, opt_reverse) {
     }
   };
   var xhr = spf.nav.request.send(url, {
+    method: options['method'],
     onPart: navigatePart,
     onError: navigateError,
     onSuccess: navigateSuccess,
+    postData: options['postData'],
     type: 'navigate',
     referer: referer
   });
@@ -326,28 +347,26 @@ spf.nav.error = function(url, opt_err) {
 
 
 /**
- * Loads a URL using the SPF protocol.  Similar to {@link #navigate}, but
- * intended for traditional content updates, not page navigation.  Not subject
- * to restrictions on the number of simultaneous requests.  The content is
- * requested by {@link #request}.  If the response is successfully parsed, it
- * is processed by {@link #process}, and the URL and response object are passed
- * to the optional {@code opt_onSuccess} callback.  If not, the URL is passed
- * to the optional {@code opt_onError} callback.
+ * Loads a URL.
+ *
+ * Similar to {@link spf.navigate}, but intended for traditional content
+ * updates, not page navigation.  Not subject to restrictions on the number of
+ * simultaneous requests.  The content is first requested.  If the response is
+ * successfully parsed, it is processed and the URL and response object are
+ * passed to the optional {@code onSuccess} callback.  If not, the URL is passed
+ * to the optional {@code onError} callback.
  *
  * @param {string} url The URL to load, without the SPF identifier.
- * @param {function(string, !Object)=} opt_onSuccess The callback to execute if
- *     the load succeeds.
- * @param {function(string, Error)=} opt_onError The callback to
- *     execute if the load fails. The first argument is the requested
- *     URL; the second argument is the Error that occurred.
+ * @param {spf.RequestOptions=} opt_options Optional request options object.
  * @return {XMLHttpRequest} The XHR of the current request.
  */
-spf.nav.load = function(url, opt_onSuccess, opt_onError) {
-  spf.debug.info('nav.load ', url);
+spf.nav.load = function(url, opt_options) {
+  spf.debug.info('nav.load ', url, opt_options);
+  var options = opt_options || /** @type {spf.RequestOptions} */ ({});
   var loadError = function(url, err) {
     spf.debug.warn('load failed ', '(url=', url, ')');
-    if (opt_onError) {
-      opt_onError(url, err);
+    if (options['onError']) {
+      options['onError'](url, err);
     }
   };
   var loadPart = function(url, partial) {
@@ -356,7 +375,12 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
   var loadSuccess = function(url, response) {
     // Check for redirects.
     if (response['redirect']) {
-      spf.nav.load(response['redirect'], opt_onSuccess, opt_onError);
+      // Note that POST is not propagated with redirects.
+      var redirectOpts = /** @type {spf.RequestOptions} */ ({
+        'onSuccess': options['onSuccess'],
+        'onError': options['onError']
+      });
+      spf.nav.load(response['redirect'], redirectOpts);
       return;
     }
     // Process the requested response.
@@ -365,41 +389,44 @@ spf.nav.load = function(url, opt_onSuccess, opt_onError) {
     if (response['type'] != 'multipart') {
       spf.nav.response.process(response);
     }
-    if (opt_onSuccess) {
-      opt_onSuccess(url, response);
+    if (options['onSuccess']) {
+      options['onSuccess'](url, response);
     }
   };
   return spf.nav.request.send(url, {
+    method: options['method'],
     onPart: loadPart,
     onError: loadError,
     onSuccess: loadSuccess,
+    postData: options['postData'],
     type: 'load'
   });
 };
 
 
 /**
- * Prefetches a URL using the SPF protocol.  Use to prime the SPF request cache
- * with the content and the browser cache with script and stylesheet URLs.
- * The content is requested by {@link #request}.  If the response is
- * successfully parsed, it is processed by {@link #preprocess}, and the URL and
- * response object are passed to the optional {@code opt_onSuccess} callback.
- * If not, the URL is passed to the optional {@code opt_onError} callback.
+ * Prefetches a URL.
  *
- * @param {string} url The URL to load, without the SPF identifier.
- * @param {function(string, !Object)=} opt_onSuccess The callback to execute if
- *     the prefetch succeeds.
- * @param {function(string, Error)=} opt_onError The callback to
- *     execute if the prefetch fails. The first argument is the requested
- *     URL; the second argument is the Error that occurred.
+ * Use to prime the SPF request cache with the content and the browser cache
+ * with script and stylesheet URLs.
+ *
+ * The content is first requested.  If the response is successfully parsed, it
+ * is preprocessed to prefetch scripts and stylesheets, and the URL and
+ * response object are then passed to the optional {@code onSuccess}
+ * callback. If not, the URL is passed to the optional {@code onError}
+ * callback.
+ *
+ * @param {string} url The URL to prefetch, without the SPF identifier.
+ * @param {spf.RequestOptions=} opt_options Optional request options object.
  * @return {XMLHttpRequest} The XHR of the current request.
  */
-spf.nav.prefetch = function(url, opt_onSuccess, opt_onError) {
-  spf.debug.info('nav.prefetch ', url);
+spf.nav.prefetch = function(url, opt_options) {
+  spf.debug.info('nav.prefetch ', url, opt_options);
+  var options = opt_options || /** @type {spf.RequestOptions} */ ({});
   var fetchError = function(url, err) {
     spf.debug.warn('prefetch failed ', '(url=', url, ')');
-    if (opt_onError) {
-      opt_onError(url, err);
+    if (options['onError']) {
+      options['onError'](url, err);
     }
   };
   var fetchPart = function(url, partial) {
@@ -408,7 +435,12 @@ spf.nav.prefetch = function(url, opt_onSuccess, opt_onError) {
   var fetchSuccess = function(url, response) {
     // Check for redirects.
     if (response['redirect']) {
-      spf.nav.prefetch(response['redirect'], opt_onSuccess, opt_onError);
+      // Note that POST is not propagated with redirects.
+      var redirectOpts = /** @type {spf.RequestOptions} */ ({
+        'onSuccess': options['onSuccess'],
+        'onError': options['onError']
+      });
+      spf.nav.prefetch(response['redirect'], redirectOpts);
       return;
     }
     // Preprocess the requested response.
@@ -417,14 +449,16 @@ spf.nav.prefetch = function(url, opt_onSuccess, opt_onError) {
     if (response['type'] != 'multipart') {
       spf.nav.response.preprocess(response);
     }
-    if (opt_onSuccess) {
-      opt_onSuccess(url, response);
+    if (options['onSuccess']) {
+      options['onSuccess'](url, response);
     }
   };
   return spf.nav.request.send(url, {
+    method: options['method'],
     onPart: fetchPart,
     onError: fetchError,
     onSuccess: fetchSuccess,
+    postData: options['postData'],
     type: 'prefetch'
   });
 };

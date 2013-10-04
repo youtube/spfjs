@@ -13,9 +13,118 @@ var spf = {};
 
 
 /**
+ * Definition for a single SPF response object.
+ * @interface
+ */
+spf.SingleResponse;
+
+/**
+ * HTML string containing <link> and <style> tags of CSS to install.
+ * @type {string|undefined}
+ */
+spf.SingleResponse.prototype.css;
+
+/**
+ * Map of Element IDs to HTML strings containing content of the Elements.
+ * @type {Object.<string, string>|undefined}
+ */
+spf.SingleResponse.prototype.html;
+
+/**
+ * Map of Element IDs to maps of attibute names to values for the Elements.
+ * @type {Object.<string, Object.<string, string>>|undefined}
+ */
+spf.SingleResponse.prototype.attr;
+
+/**
+ * HTML string containing <script> tags of JS to execute.
+ * @type {string|undefined}
+ */
+spf.SingleResponse.prototype.js;
+
+/**
+ * String of the new Document title.
+ * @type {string|undefined}
+ */
+spf.SingleResponse.prototype.title;
+
+/**
+ * Map of timing attributes to timestamp numbers.
+ * @type {Object.<string, number>|undefined}
+ */
+spf.SingleResponse.prototype.timing;
+
+/**
+ * String of a URL to request instead.
+ * @type {string|undefined}
+ */
+spf.SingleResponse.prototype.redirect;
+
+
+/**
+ * Definition for a multipart SPF response object.
+ * @interface
+ */
+spf.MultipartResponse;
+
+/**
+ * List of response objects.
+ * @type {Array.<spf.SingleResponse>|undefined}
+ */
+spf.MultipartResponse.prototype.parts;
+
+/**
+ * Map of timing attributes to timestamp numbers.
+ * @type {Object.<string, number>|undefined}
+ */
+spf.MultipartResponse.prototype.timing;
+
+/**
+ * The string "multipart".
+ * @type {string}
+ */
+spf.MultipartResponse.prototype.type;
+
+
+/**
+ * Definition for options when requesting a URL.
+ * @interface
+ */
+spf.RequestOptions;
+
+/**
+ * Optional method with which to send the request; defaults to "get".
+ * @type {string|undefined}
+ */
+spf.RequestOptions.prototype.method;
+
+/**
+ * Optional callback to execute if the request fails. The first argument is the
+ * requested URL; the second argument is the Error that occurred.
+ * @type {function(string, Error)|undefined}
+ */
+spf.RequestOptions.prototype.onError;
+
+/**
+ * Optional callback to execute if the request succeeds.  The first argument is
+ * the requested URL; the second is the response object.  The response object
+ * will be either a complete single response object or a complete multipart
+ * response object
+ * @type {function(string,
+ *                   (spf.SingleResponse|spf.MultipartResponse))|undefined} */
+spf.RequestOptions.prototype.onSuccess;
+
+/**
+ * Optional data to send with the request.  Only used if the method is "post".
+ * @type {ArrayBuffer|Blob|Document|FormData|null|string|undefined}
+ */
+spf.RequestOptions.prototype.postData;
+
+
+/**
  * Initializes SPF.
  *
- * @param {Object=} opt_config Optional configuration object.
+ * @param {Object=} opt_config Optional global configuration object.
  * @return {boolean} Whether SPF was successfully initialized.  If the HTML5
  *     history modification API is not supported, returns false.
  */
@@ -29,68 +138,70 @@ spf.dispose = function() {};
 
 
 /**
- * Navigates to a URL using the SPF protocol.  A pushState history entry is
- * added for the URL, and if successful, the navigation is performed.  If not,
- * the browser is redirected to the URL.
+ * Navigates to a URL.
  *
+ * A pushState history entry is added for the URL, and if successful, the
+ * navigation is performed.  If not, the browser is redirected to the URL.
  * During the navigation, first the content is requested.  If the reponse is
- * sucessfully parsed, it is processed by {@link spf.process}.
- * If not, the browser is redirected to the URL.  Only a single navigation
- * request can be in flight at once.  If a second URL is navigated to while a
- * first is still pending, the first will be cancelled.
+ * sucessfully parsed, it is processed.  If not, the browser is redirected to
+ * the URL.  Only a single navigation request can be in flight at once.  If a
+ * second URL is navigated to while a first is still pending, the first will be
+ * cancelled.
+ *
+ * NOTE: Currently, the optional {@code onSuccess} and {@code onError}
+ * callbacks are ignored in this method.  This will be fixed shortly.
  *
  * @param {string} url The URL to navigate to, without the SPF identifier.
+ * @param {(Object|spf.RequestOptions)=} opt_options Optional request options.
  */
-spf.navigate = function(url) {};
+spf.navigate = function(url, opt_options) {};
 
 
 /**
- * Loads a URL using the SPF protocol.  Similar to {@link spf.navigate}, but
- * intended for traditional content updates, not page navigation.  Not subject
- * to restrictions on the number of simultaneous requests.  The content is
- * first requested.  If the response is successfully parsed, it is processed
- * by {@link spf.process}, and the URL and response object are passed
- * to the optional {@code opt_onSuccess} callback.  If not, the URL is passed
- * to the optional {@code opt_onError} callback.
+ * Loads a URL.
+ *
+ * Similar to {@link spf.navigate}, but intended for traditional content
+ * updates, not page navigation.  Not subject to restrictions on the number of
+ * simultaneous requests.  The content is first requested.  If the response is
+ * successfully parsed, it is processed and the URL and response object are
+ * passed to the optional {@code onSuccess} callback.  If not, the URL is passed
+ * to the optional {@code onError} callback.
  *
  * @param {string} url The URL to load, without the SPF identifier.
- * @param {function(string, !Object)=} opt_onSuccess The callback to execute if
- *     the load succeeds.
- * @param {function(string, Error)=} opt_onError The callback to
- *     execute if the load fails. The first argument is the requested
- *     URL; the second argument is the Error that occurred.
+ * @param {(Object|spf.RequestOptions)=} opt_options Optional request options.
  * @return {XMLHttpRequest} The XHR of the current request.
  */
-spf.load = function(url, opt_onSuccess, opt_onError) {};
+spf.load = function(url, opt_options) {};
 
 
 /**
  * Process a response using the SPF protocol.
  *
- * @param {!Object} response The SPF response object to process.
  * @deprecated Use spf.load instead.
+ *
+ * @param {spf.SingleResponse|spf.MultipartResponse} response The SPF response
+ *     object to process.
  */
 spf.process = function(response) {};
 
 
 /**
- * Prefetches a URL using the SPF protocol.  Use to prime the SPF request cache
- * with the content and the browser cache with script and stylesheet URLs.
+ * Prefetches a URL.
+ *
+ * Use to prime the SPF request cache with the content and the browser cache
+ * with script and stylesheet URLs.
+ *
  * The content is first requested.  If the response is successfully parsed, it
  * is preprocessed to prefetch scripts and stylesheets, and the URL and
- * response object are then passed to the optional {@code opt_onSuccess}
- * callback. If not, the URL is passed to the optional {@code opt_onError}
+ * response object are then passed to the optional {@code onSuccess}
+ * callback. If not, the URL is passed to the optional {@code onError}
  * callback.
  *
- * @param {string} url The URL to load, without the SPF identifier.
- * @param {function(string, !Object)=} opt_onSuccess The callback to execute if
- *     the prefetch succeeds.
- * @param {function(string, Error)=} opt_onError The callback to
- *     execute if the prefetch fails. The first argument is the requested
- *     URL; the second argument is the Error that occurred.
+ * @param {string} url The URL to prefetch, without the SPF identifier.
+ * @param {(Object|spf.RequestOptions)=} opt_options Optional request options.
  * @return {XMLHttpRequest} The XHR of the current request.
  */
-spf.prefetch = function(url, opt_onSuccess, opt_onError) {};
+spf.prefetch = function(url, opt_options) {};
 
 
 /**

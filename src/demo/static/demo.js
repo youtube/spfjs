@@ -192,13 +192,7 @@ demo.home.init = function() {
   document.getElementById(id).style.display = '';
   // Enable the extra content button.
   var buttonEl = document.getElementById('home-ajax-get');
-  buttonEl.onclick = demo.home.onGetExtra;
-};
-
-
-/**
- * Event handler for the extra content button.
- */
-demo.home.onGetExtra = function() {
-  spf.load('/index_ajax');
+  buttonEl.onclick = function() {
+    spf.load('/index_ajax', {'method': 'post'});
+  };
 };

@@ -275,3 +275,27 @@ spf.SingleResponse;
  * }}
  */
 spf.MultipartResponse;
+
+
+/**
+ * Type definition for the configuration options for requesting a URL.
+ * - method: optional method with which to send the request; defaults to "get".
+ * - onError: optional callback to execute if the request fails. The first
+ *       argument is the requested URL; the second argument is the Error that
+ *       occurred.
+ * - onSuccess: optional callback to execute if the request succeeds.  The first
+ *       argument is the requested URL; the second is the response object.  The
+ *       response object will be either a complete single response object or
+ *       a complete multipart response object.
+ * - postData: optional data to send with a request.  Only used if the method is
+ *       set to "post".
+ *
+ * @typedef {{
+ *   postData: (ArrayBuffer|Blob|Document|FormData|null|string|undefined),
+ *   method: (string|undefined),
+ *   onError: (function(string, Error)|undefined),
+ *   onSuccess: (function(string,
+ *                   (spf.SingleResponse|spf.MultipartResponse))|undefined)
+ * }}
+ */
+spf.RequestOptions;
