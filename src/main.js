@@ -57,7 +57,6 @@ var api = {
   'dispose': spf.main.dispose,
   'navigate': spf.nav.navigate,
   'load': spf.nav.load,
-  'process': spf.nav.response.process,  // TODO: Remove after deprecation.
   'prefetch': spf.nav.prefetch,
   'scripts': {
     'load': spf.net.scripts.load,

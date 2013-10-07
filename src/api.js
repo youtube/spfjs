@@ -175,17 +175,6 @@ spf.load = function(url, opt_options) {};
 
 
 /**
- * Process a response using the SPF protocol.
- *
- * @deprecated Use spf.load instead.
- *
- * @param {spf.SingleResponse|spf.MultipartResponse} response The SPF response
- *     object to process.
- */
-spf.process = function(response) {};
-
-
-/**
  * Prefetches a URL.
  *
  * Use to prime the SPF request cache with the content and the browser cache

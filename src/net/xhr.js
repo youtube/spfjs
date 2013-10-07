@@ -133,10 +133,19 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
     }
   };
 
+  var addContentType = (method == 'POST');
+
   if (options.headers) {
     for (var key in options.headers) {
       xhr.setRequestHeader(key, options.headers[key]);
+      if ('content-type' == key.toLowerCase()) {
+        addContentType = false;
+      }
     }
+  }
+
+  if (addContentType) {
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
   }
 
   if (options.timeoutMs > 0) {
@@ -150,7 +159,7 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
 
   // Record fetchStart time when request is sent.
   xhr['timing']['fetchStart'] = spf.now();
-  xhr.send(null);
+  xhr.send(data);
 
   return xhr;
 };
