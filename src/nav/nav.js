@@ -247,7 +247,7 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
     }
   };
   var navigatePart = function(url, partial) {
-    spf.nav.response.process(partial, opt_reverse);
+    spf.nav.response.process(url, partial, opt_reverse);
   };
   var navigateSuccess = function(url, response) {
     spf.state.set('nav-request', null);
@@ -260,10 +260,7 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
       spf.history.replace(redirectUrl, state, true);
       return;
     }
-    // Process the requested response.
-    // If a multipart response was received, all processing is already done,
-    // so just execute the global notification.
-    if (response['type'] == 'multipart') {
+    var notifyProcessed = function() {
       // Execute the "navigation processed" callback.  There is no
       // opportunity to cancel the navigation after processing is complete,
       // so explicitly returning false here does nothing.
@@ -273,8 +270,14 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
         spf.debug.warn('failed in "navigate-processed-callback", ignoring',
                        '(val=', val, ')');
       }
+    };
+    // Process the requested response.
+    // If a multipart response was received, all processing is already done,
+    // so just execute the global notification.
+    if (response['type'] == 'multipart') {
+      notifyProcessed();
     } else {
-      spf.nav.response.process(response, opt_reverse, true);
+      spf.nav.response.process(url, response, opt_reverse, notifyProcessed);
     }
   };
   var xhr = spf.nav.request.send(url, {
@@ -370,7 +373,7 @@ spf.nav.load = function(url, opt_options) {
     }
   };
   var loadPart = function(url, partial) {
-    spf.nav.response.process(partial);
+    spf.nav.response.process(url, partial);
   };
   var loadSuccess = function(url, response) {
     // Check for redirects.
@@ -387,7 +390,7 @@ spf.nav.load = function(url, opt_options) {
     // If a multipart response was received, all processing is already done,
     // so just execute the callback.
     if (response['type'] != 'multipart') {
-      spf.nav.response.process(response);
+      spf.nav.response.process(url, response);
     }
     if (options['onSuccess']) {
       options['onSuccess'](url, response);
@@ -430,7 +433,7 @@ spf.nav.prefetch = function(url, opt_options) {
     }
   };
   var fetchPart = function(url, partial) {
-    spf.nav.response.preprocess(partial);
+    spf.nav.response.preprocess(url, partial);
   };
   var fetchSuccess = function(url, response) {
     // Check for redirects.
@@ -447,7 +450,7 @@ spf.nav.prefetch = function(url, opt_options) {
     // If a multipart response was received, all processing is already done,
     // so just execute the callback.
     if (response['type'] != 'multipart') {
-      spf.nav.response.preprocess(response);
+      spf.nav.response.preprocess(url, response);
     }
     if (options['onSuccess']) {
       options['onSuccess'](url, response);

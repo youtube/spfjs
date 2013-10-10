@@ -120,14 +120,14 @@ spf.net.scripts.prefetch = function(url) {
 
 
 /**
- * Executes scripts that have been parsed from an HTML string.
+ * Installs scripts that have been parsed from an HTML string.
  * See {@link #load}, {@link #eval}, and {@link #parse}.
  *
  * @param {!spf.net.scripts.ParseResult} result The parsed HTML result.
  * @param {Function=} opt_callback Callback function to execute after
  *     all scripts are loaded.
  */
-spf.net.scripts.execute = function(result, opt_callback) {
+spf.net.scripts.install = function(result, opt_callback) {
   if (result.scripts.length <= 0) {
     if (opt_callback) {
       opt_callback();
@@ -163,7 +163,7 @@ spf.net.scripts.execute = function(result, opt_callback) {
  *
  * @param {!spf.net.scripts.ParseResult} result The parsed HTML result.
  */
-spf.net.scripts.preexecute = function(result) {
+spf.net.scripts.preinstall = function(result) {
   if (result.scripts.length <= 0) {
     return;
   }
@@ -179,7 +179,7 @@ spf.net.scripts.preexecute = function(result) {
 
 /**
  * Parses scripts from an HTML string.
- * See {@link #execute}.
+ * See {@link #install}.
  *
  * @param {string} html The HTML content to parse.
  * @return {!spf.net.scripts.ParseResult}

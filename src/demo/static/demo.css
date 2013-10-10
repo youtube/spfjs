@@ -91,11 +91,11 @@ html, body {
   padding: .2em .6em;
 }
 
-.spf-transition {
+.spf-animate {
   position: relative;
 }
-.spf-transition .spf-transition-old,
-.spf-transition .spf-transition-new {
+.spf-animate .spf-animate-old,
+.spf-animate .spf-animate-new {
   position: absolute;
   top: 0;
   width: 100%;
@@ -106,28 +106,28 @@ html, body {
   transition: left 400ms ease;
 }
 /* Forward transitions slide in from right to left */
-.spf-transition-forward-start .spf-transition-old {
+.spf-animate-forward-start .spf-animate-old {
   left: 0%;
 }
-.spf-transition-forward-start .spf-transition-new {
+.spf-animate-forward-start .spf-animate-new {
   left: 120%;
 }
-.spf-transition-forward-end .spf-transition-old {
+.spf-animate-forward-end .spf-animate-old {
   left: -120%;
 }
-.spf-transition-forward-end .spf-transition-new {
+.spf-animate-forward-end .spf-animate-new {
   left: 0%;
 }
 /* Reverse transitions slide in from left to right */
-.spf-transition-reverse-start .spf-transition-old {
+.spf-animate-reverse-start .spf-animate-old {
   left: 0%;
 }
-.spf-transition-reverse-start .spf-transition-new {
+.spf-animate-reverse-start .spf-animate-new {
   left: -120%;
 }
-.spf-transition-reverse-end .spf-transition-old {
+.spf-animate-reverse-end .spf-animate-old {
   left: 120%;
 }
-.spf-transition-reverse-end .spf-transition-new {
+.spf-animate-reverse-end .spf-animate-new {
   left: 0%;
 }

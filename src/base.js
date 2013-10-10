@@ -112,6 +112,8 @@ spf.key = function(obj) {
  * @type {Object.<string, string|number|Function>}
  */
 spf.config.defaults = {
+  'animation-class': 'spf-animate',
+  'animation-duration': 425,
   'cache-lifetime': 10 * 60 * 1000,  // 10 minute cache lifetime (ms).
   'cache-max': 50,  // 50 items.
   'link-class': 'spf-link',
@@ -122,11 +124,10 @@ spf.config.defaults = {
   'navigate-received-callback': null,
   'navigate-processed-callback': null,
   'navigate-error-callback': null,
+  'process-async': false,
   'request-timeout': 0,  // No request timeout.
   'script-loading-callback': null,
   'style-loading-callback': null,
-  'transition-class': 'spf-transition',
-  'transition-duration': 425,
   'url-identifier': '?spf=__type__'
 };
 

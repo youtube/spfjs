@@ -19,6 +19,7 @@ demo.init = function() {
   demo.start_ = +new Date();
   demo.timer_ = window.setInterval(demo.updateTime, 500);
   var config = {
+    'process-async': true,
     'navigate-requested-callback': demo.handleNavigateRequested,
     'navigate-received-callback': demo.handleNavigateReceived,
     'navigate-processed-callback': demo.handleNavigateProcessed,
