@@ -8,6 +8,8 @@
 
 goog.provide('spf.net.resources');
 
+goog.require('spf');
+goog.require('spf.config');
 goog.require('spf.dom');
 goog.require('spf.dom.dataset');
 goog.require('spf.pubsub');
@@ -44,7 +46,7 @@ goog.require('spf.string');
  * @return {Element} The dynamically created element.
  */
 spf.net.resources.load = function(type, url, opt_callback, opt_name) {
-  if (type != 'js' && type != 'css') {
+  if ((type != 'js' && type != 'css') || !url) {
     return null;
   }
   var id = type + '-' + spf.string.hashCode(url);
@@ -74,7 +76,7 @@ spf.net.resources.load = function(type, url, opt_callback, opt_name) {
   var elsToRemove = cls ? spf.dom.query(tag + '.' + cls) : [];
   var key = isJS ? 'script-loading-callback' : 'style-loading-callback';
   var val = spf.execute(/** @type {Function} */ (
-        spf.config.get(key)), url, cls);
+      spf.config.get(key)), url, cls);
   // Lexical closures allow this trickiness with the "el" variable.
   el = spf.net.resources.load_(type, url, id, cls, function() {
     if (!spf.dom.dataset.get(el, 'loaded')) {
@@ -104,7 +106,7 @@ spf.net.resources.load = function(type, url, opt_callback, opt_name) {
  * @private
  */
 spf.net.resources.load_ = function(type, url, id, cls, fn, opt_document) {
-  if (type != 'js' && type != 'css') {
+  if ((type != 'js' && type != 'css') || !url) {
     return null;
   }
   var tag = (type == 'js') ? 'script' : 'link';
@@ -156,7 +158,6 @@ spf.net.resources.load_ = function(type, url, id, cls, fn, opt_document) {
   }
   return el;
 };
-
 
 
 /**
