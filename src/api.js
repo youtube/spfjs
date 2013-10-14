@@ -106,12 +106,24 @@ spf.RequestOptions.prototype.method;
 spf.RequestOptions.prototype.onError;
 
 /**
+ * Optional callback to execute upon receiving a part of a multipart SPF
+ * response (see {@link spf.MultipartResponse}).  Called before
+ * {@code onSuccess}, once per part of multipart responses; never called for
+ * single responses. If valid "X-SPF-Response-Type: multipart" and
+ * "Transfer-Encoding: chunked" headers are sent, then this callback will be
+ * executed on-the-fly as chunks are received.  The first argument is the
+ * requested URL; the second is the partial response object.
+ * @type {function(string, spf.SingleResponse)|undefined}
+ */
+spf.RequestOptions.prototype.onPart;
+
+/**
  * Optional callback to execute if the request succeeds.  The first argument is
  * the requested URL; the second is the response object.  The response object
  * will be either a complete single response object or a complete multipart
  * response object
- * @type {function(string,
- *                   (spf.SingleResponse|spf.MultipartResponse))|undefined} */
+ * @type {function(string,(spf.SingleResponse|spf.MultipartResponse))|undefined}
+ */
 spf.RequestOptions.prototype.onSuccess;
 
 /**

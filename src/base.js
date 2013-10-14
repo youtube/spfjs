@@ -121,6 +121,8 @@ spf.config.defaults = {
   'navigate-limit': 20,  // 20 navigations per session.
   'navigate-lifetime': 24 * 60 * 60 * 1000,  // 1 day session lifetime (ms).
   'navigate-requested-callback': null,
+  'navigate-part-received-callback': null,
+  'navigate-part-processed-callback': null,
   'navigate-received-callback': null,
   'navigate-processed-callback': null,
   'navigate-error-callback': null,
@@ -284,6 +286,13 @@ spf.MultipartResponse;
  * - onError: optional callback to execute if the request fails. The first
  *       argument is the requested URL; the second argument is the Error that
  *       occurred.
+ * - onPart: optional callback to execute upon receiving a part of a multipart
+ *       SPF response (see {@link spf.MultipartResponse}).  Called before
+ *       {@code onSuccess}, once per part of multipart responses; never called
+ *       for single responses. If valid "X-SPF-Response-Type: multipart" and
+ *       "Transfer-Encoding: chunked" headers are sent, then this callback will
+ *       be executed on-the-fly as chunks are received.  The first argument is
+ *       the requested URL; the second is the partial response object.
  * - onSuccess: optional callback to execute if the request succeeds.  The first
  *       argument is the requested URL; the second is the response object.  The
  *       response object will be either a complete single response object or
@@ -295,6 +304,7 @@ spf.MultipartResponse;
  *   postData: (ArrayBuffer|Blob|Document|FormData|null|string|undefined),
  *   method: (string|undefined),
  *   onError: (function(string, Error)|undefined),
+ *   onPart: (function(string, spf.SingleResponse)|undefined),
  *   onSuccess: (function(string,
  *                   (spf.SingleResponse|spf.MultipartResponse))|undefined)
  * }}

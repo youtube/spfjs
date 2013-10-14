@@ -102,12 +102,14 @@ spf.nav.response.parse_ = (function() {
  *
  * @param {string} url The URL of the response being processed.
  * @param {spf.SingleResponse} response The SPF response object to process.
+ * @param {function(string, spf.SingleResponse)=} opt_callback Function to
+ *     execute when processing is done; the first argument is {@code url},
+ *     the second argument is {@code response}.
  * @param {boolean=} opt_reverse Whether this is "backwards" navigation. True
  *     when the "back" button is clicked and a request is in response to a
  *     popState event.
- * @param {Function=} opt_callback Function to execute when processing is done.
  */
-spf.nav.response.process = function(url, response, opt_reverse, opt_callback) {
+spf.nav.response.process = function(url, response, opt_callback, opt_reverse) {
   spf.debug.info('nav.response.process ', response, opt_reverse);
 
   // Convert the URL to absolute, to be used for finding the task queue.
@@ -265,7 +267,7 @@ spf.nav.response.process = function(url, response, opt_reverse, opt_callback) {
 
   // Execute callback.
   if (opt_callback) {
-    spf.tasks.add(key, opt_callback);
+    spf.tasks.add(key, spf.bind(opt_callback, null, url, response));
   }
 
   spf.tasks.run(key, sync);
@@ -280,8 +282,11 @@ spf.nav.response.process = function(url, response, opt_reverse, opt_callback) {
  *
  * @param {string} url The URL of the response being preprocessed.
  * @param {spf.SingleResponse} response The SPF response object to preprocess.
+ * @param {function(string, spf.SingleResponse)=} opt_callback Function to
+ *     execute when preprocessing is done; the first argument is {@code url},
+ *     the second argument is {@code response}.
  */
-spf.nav.response.preprocess = function(url, response) {
+spf.nav.response.preprocess = function(url, response, opt_callback) {
   spf.debug.info('nav.response.preprocess ', response);
   // Convert the URL to absolute, to be used for finding the task queue.
   var key = 'preprocess ' + spf.nav.url.absolute(url);
@@ -296,10 +301,12 @@ spf.nav.response.preprocess = function(url, response) {
   }, null, response['css']);
   spf.tasks.add(key, fn);
 
-  // Preinstall fragment scripts (one task per script).
+  // Preinstall fragment scripts (one task per fragment).
   var fragments = response['html'] || {};
   for (var id in fragments) {
     fn = spf.bind(function(id, html) {
+      // NOTE: Suspending the queue is not needed since the JS is not
+      // actually executed and other tasks don't have to wait.
       spf.net.scripts.preinstall(spf.net.scripts.parse(html));
       spf.debug.debug('  preinstalled fragment scripts ', id);
     }, null, id, fragments[id]);
@@ -308,11 +315,19 @@ spf.nav.response.preprocess = function(url, response) {
 
   // Preinstall page scripts (single task).
   fn = spf.bind(function(js) {
+    // NOTE: Suspending the queue is not needed since the JS is not
+    // actually executed and other tasks don't have to wait.
     spf.net.scripts.preinstall(spf.net.scripts.parse(js));
     spf.debug.debug('  preinstalled scripts');
   }, null, response['js']);
   spf.tasks.add(key, fn);
 
+  // Execute callback.
+  if (opt_callback) {
+    spf.tasks.add(key, spf.bind(opt_callback, null, url, response));
+  }
+
+  // The preprocessing queue is always run async.
   spf.tasks.run(key);
 };
 

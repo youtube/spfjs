@@ -21,6 +21,8 @@ demo.init = function() {
   var config = {
     'process-async': true,
     'navigate-requested-callback': demo.handleNavigateRequested,
+    'navigate-part-received-callback': demo.handleNavigatePartReceived,
+    'navigate-part-processed-callback': demo.handleNavigatePartProcessed,
     'navigate-received-callback': demo.handleNavigateReceived,
     'navigate-processed-callback': demo.handleNavigateProcessed,
     'navigate-error-callback': demo.handleNavigateError,
@@ -97,7 +99,27 @@ demo.handleNavigateRequested = function(url) {
 
 
 /**
- * Callback for when navigate requests are received.
+ * Callback for when parts of navigate requests are received.
+ * @param {string} url The requested URL, without the SPF identifier.
+ * @param {Object} part The part of the requested SPF response object.
+ */
+demo.handleNavigatePartReceived = function(url, part) {
+  demo.log('navigate received part');
+};
+
+
+/**
+ * Callback for when parts of navigate responses are processed.
+ * @param {string} url The requested URL, without the SPF identifier.
+ * @param {Object} part The part of the requested SPF response object.
+ */
+demo.handleNavigatePartProcessed = function(url, part) {
+  demo.log('navigate procssed part');
+};
+
+
+/**
+ * Callback for when navigate responses are received.
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {Object} response The requested SPF response object.
  */
@@ -112,7 +134,7 @@ demo.handleNavigateReceived = function(url, response) {
 
 
 /**
- * Callback for navigate response processing.
+ * Callback for when navigate responses are processed.
  * @param {Object} response The processed SPF response object.
  */
 demo.handleNavigateProcessed = function(response) {

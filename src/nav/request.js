@@ -317,20 +317,6 @@ spf.nav.request.done_ = function(url, options, timing, response, cache) {
   }
   // Set the timing for the response (avoid caching stale timing values).
   response['timing'] = timing;
-  if (options.type == 'navigate') {
-    // Execute the "navigation received" callback.  If the callback
-    // explicitly returns false, cancel this navigation.
-    var val = spf.execute(/** @type {Function} */ (
-        spf.config.get('navigate-received-callback')), url, response);
-    if (val === false || val instanceof Error) {
-      spf.debug.warn('failed in "navigate-received-callback", canceling',
-                     '(val=', val, ')');
-      if (options.onError) {
-        options.onError(url, val);
-      }
-      return;
-    }
-  }
   if (options.onSuccess) {
     options.onSuccess(url, response);
   }
