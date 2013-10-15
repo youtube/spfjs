@@ -138,11 +138,11 @@ spf.nav.response.process = function(url, response, opt_callback, opt_reverse) {
   spf.tasks.add(key, fn);
 
   // Update attributes (single task).
-  fn = spf.bind(function(attrs, timing) {
-    for (var id in attrs) {
+  fn = spf.bind(function(elementAttrs, timing) {
+    for (var id in elementAttrs) {
       var el = document.getElementById(id);
       if (el) {
-        spf.dom.setAttributes(el, attrs);
+        spf.dom.setAttributes(el, elementAttrs[id]);
         spf.debug.debug('  set attributes ', id);
       }
     }
