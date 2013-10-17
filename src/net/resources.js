@@ -14,6 +14,7 @@ goog.require('spf.dom');
 goog.require('spf.dom.dataset');
 goog.require('spf.pubsub');
 goog.require('spf.string');
+goog.require('spf.tasks');
 
 
 /**
@@ -230,9 +231,14 @@ spf.net.resources.prefetch = function(type, url) {
     return;
   }
   var iframeId = type + '-prefetch';
-  var iframeEl = document.getElementById(iframeId);
+  var iframeEl =
+      /** @type {HTMLIFrameElement} */ (document.getElementById(iframeId));
   if (!iframeEl) {
-    iframeEl = spf.dom.createIframe(iframeId);
+    iframeEl = spf.dom.createIframe(iframeId, null, function(loadedIframeEl) {
+      // Set the iframe's loaded flag.
+      spf.dom.dataset.set(loadedIframeEl, 'loaded', 'true');
+      spf.tasks.run(iframeId, true);
+    });
   } else {
     // If the resource is already prefetched, return.
     el = iframeEl.contentWindow.document.getElementById(id);
@@ -240,28 +246,47 @@ spf.net.resources.prefetch = function(type, url) {
       return;
     }
   }
+
   // Firefox needs the iframe to be fully created in the DOM before continuing.
-  setTimeout(function() {
-    var iframeDoc = iframeEl.contentWindow.document;
-    if (type == 'js') {
-      // Scripts need to be prefetched without execution.
-      var objectEl = iframeDoc.createElement('object');
-      objectEl.id = id;
-      if (spf.dom.IS_IE) {
-        // IE needs a <script> in order to complete the request, but
-        // fortunately will not execute it unless in the DOM.  Attempting to
-        // use an <object> like other browsers will cause the download to hang.
-        // The <object> will just be a placeholder for the request made.
-        var scriptEl = iframeDoc.createElement('script');
-        scriptEl.src = url;
-      } else {
-        objectEl.data = url;
-      }
-      iframeDoc.body.appendChild(objectEl);
-    } else {
-      // Stylesheets can be prefetched in the same way as loaded.
-      spf.net.resources.load_(type, url, id, '', null, iframeDoc);
-    }
-  }, 0);
+  // So delay adding elements to the iframe until onload.
+  if (!spf.dom.dataset.get(iframeEl, 'loaded')) {
+    spf.tasks.add(iframeId,
+        spf.bind(spf.net.resources.loadResourceInIframe_, null,
+                 iframeEl, type, url, id));
+  } else {
+    spf.net.resources.loadResourceInIframe_(iframeEl, type, url, id);
+  }
 };
 
+
+/**
+ * See {@link #prefetch}.
+ *
+ * @param {HTMLIFrameElement} iframeEl The iframe to load resources in.
+ * @param {string} type Type of the resource, must be either "js" or "css".
+ * @param {string} url Url of the resource.
+ * @param {string} id The computed unique id of the resource.
+ * @private
+ */
+spf.net.resources.loadResourceInIframe_ = function(iframeEl, type, url, id) {
+  var iframeDoc = iframeEl.contentWindow.document;
+  if (type == 'js') {
+    if (spf.dom.IS_IE) {
+      // IE needs a <script> in order to complete the request, but
+      // fortunately will not execute it unless in the DOM.  Attempting to
+      // use an <object> like other browsers will cause the download to hang.
+      // The <object> will just be a placeholder for the request made.
+      var fetchEl = iframeDoc.createElement('script');
+      fetchEl.src = url;
+    } else {
+      // Otherwise scripts need to be prefetched as objects to avoid execution.
+      var fetchEl = iframeDoc.createElement('object');
+      fetchEl.data = url;
+    }
+    fetchEl.id = id;
+    iframeDoc.body.appendChild(fetchEl);
+  } else {
+    // Stylesheets can be prefetched in the same way as loaded.
+    spf.net.resources.load_(type, url, id, '', null, iframeDoc);
+  }
+};

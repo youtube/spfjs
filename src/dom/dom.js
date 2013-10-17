@@ -6,6 +6,8 @@
 
 goog.provide('spf.dom');
 
+goog.require('spf');
+
 
 /**
  * Gets document nodes matching a selector.
@@ -170,15 +172,20 @@ spf.dom.setAttributes = function(element, attributes) {
  *
  * @param {string=} opt_id Id of the iframe element.
  * @param {Document=} opt_document Content document element.
+ * @param {Function=} opt_callback Callback function called onload.
  * @return {!HTMLIFrameElement}
  */
-spf.dom.createIframe = function(opt_id, opt_document) {
+spf.dom.createIframe = function(opt_id, opt_document, opt_callback) {
   var id = opt_id || '';
   var doc = opt_document || document;
   var iframeEl = doc.createElement('iframe');
   iframeEl.id = id;
   iframeEl.src = 'javascript:""';
   iframeEl.style.display = 'none';
+
+  if (opt_callback) {
+    iframeEl.onload = spf.bind(opt_callback, null, iframeEl);
+  }
   doc.body.appendChild(iframeEl);
   return /** @type {!HTMLIFrameElement} */ (iframeEl);
 };
