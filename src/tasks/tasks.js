@@ -8,6 +8,7 @@ goog.provide('spf.tasks');
 
 goog.require('spf');
 goog.require('spf.debug');
+goog.require('spf.string');
 
 
 /**
@@ -99,6 +100,45 @@ spf.tasks.resume = function(key, opt_sync) {
     spf.debug.debug('  queue state = ', queue.items.length,
                     queue.timer, queue.semaphore);
     spf.tasks.run(key, opt_sync);
+  }
+};
+
+
+/**
+ * Cancels execution of a running task queue.
+ *
+ * @param {string} key The key to identify the task queue.
+ */
+spf.tasks.cancel = function(key) {
+  spf.debug.debug('tasks.cancel ', key);
+  var queue = spf.tasks.queues_[key];
+  if (queue) {
+    clearTimeout(queue.timer);
+    delete queue.items
+    delete queue.timer;
+    delete queue.semaphore;
+    delete spf.tasks.queues_[key];
+  }
+};
+
+
+/**
+ * Cancels execution of all current task queues. If the optional key
+ * prefix is provided, only tasks that match that prefix will be
+ * canceled. If the skip key is provided, that key will not be canceled.
+ *
+ * @param {string=} opt_keyPrefix The prefix of the tasks that should
+ *     be canceled.
+ * @param {string=} opt_skipKey The key of the task queue that should not
+ *     be canceled.
+ */
+spf.tasks.cancelAll = function(opt_keyPrefix, opt_skipKey) {
+  var keyPrefix = opt_keyPrefix || '';
+  spf.debug.debug('tasks.cancelAll');
+  for (var key in spf.tasks.queues_) {
+    if (opt_skipKey != key && spf.string.startsWith(key, keyPrefix)) {
+      spf.tasks.cancel(key);
+    }
   }
 };
 

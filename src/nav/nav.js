@@ -15,7 +15,9 @@ goog.require('spf.dom.classlist');
 goog.require('spf.history');
 goog.require('spf.nav.request');
 goog.require('spf.nav.response');
+goog.require('spf.nav.url');
 goog.require('spf.state');
+goog.require('spf.tasks');
 
 
 /**
@@ -194,6 +196,10 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
     spf.nav.redirect(url);
     return;
   }
+  // Cancel all prefetches before navigation.
+  spf.tasks.cancelAll('preprocess');
+  // Abort all ongoing prefetch xhrs.
+  spf.nav.abortAllPrefetches();
   // Abort previous navigation, if needed.
   spf.nav.cancel();
   // If a session limit has been set and reached, redirect.
@@ -478,6 +484,7 @@ spf.nav.prefetch = function(url, opt_options) {
     if (options['onError']) {
       options['onError'](url, err);
     }
+    spf.nav.removePrefetch(url);
   };
   var prefetchPart = function(url, partial) {
     var prefetchPartDone = function() {
@@ -504,6 +511,7 @@ spf.nav.prefetch = function(url, opt_options) {
         options['onSuccess'](url, response);
       }
     };
+    spf.nav.removePrefetch(url);
     // Preprocess the requested response.
     // If a multipart response was received, all processing is already done,
     // so just execute the callback.  Call process with an empty
@@ -511,7 +519,7 @@ spf.nav.prefetch = function(url, opt_options) {
     var r = (response['type'] == 'multipart') ? {} : response;
     spf.nav.response.preprocess(url, r, prefetchSuccessDone);
   };
-  return spf.nav.request.send(url, {
+  var xhr = spf.nav.request.send(url, {
     method: options['method'],
     onPart: prefetchPart,
     onError: prefetchError,
@@ -519,4 +527,79 @@ spf.nav.prefetch = function(url, opt_options) {
     postData: options['postData'],
     type: 'prefetch'
   });
+
+  spf.nav.addPrefetch(url, xhr);
+
+  return xhr;
+};
+
+
+/**
+ * Add a prefetch request to the set of ongoing prefetches.
+ *
+ * @param {string} url The url of the prefetch request.
+ * @param {XMLHttpRequest} xhr The prefetch request object.
+ */
+spf.nav.addPrefetch = function(url, xhr) {
+  spf.debug.debug('nav.addPrefetch ', url, xhr);
+  var absoluteUrl = spf.nav.url.absolute(url);
+  var prefetches = spf.nav.prefetches_();
+  prefetches[absoluteUrl] = xhr;
+};
+
+
+/**
+ * Removes a prefetch request from the set of prefetches.
+ *
+ * @param {string} url The url of the prefetch that is going to be
+ *     removed.
+ */
+spf.nav.removePrefetch = function(url) {
+  spf.debug.debug('nav.removePrefetch ', url);
+  var absoluteUrl = spf.nav.url.absolute(url);
+  var prefetches = spf.nav.prefetches_();
+  delete prefetches[absoluteUrl];
+};
+
+
+/**
+ * Abort all ongoing prefetch requests.
+ */
+spf.nav.abortAllPrefetches = function() {
+  spf.debug.debug('nav.abortAllPrefetches');
+  var prefetches = spf.nav.prefetches_();
+  for (var key in prefetches) {
+    spf.nav.abortPrefetch(key);
+  }
+};
+
+
+/**
+ * Abort a single prefetch request.
+ *
+ * @param {string} url The url of the prefetch to be aborted.
+ */
+spf.nav.abortPrefetch = function(url) {
+  spf.debug.debug('nav.abortPrefetch ', url);
+  var absoluteUrl = spf.nav.url.absolute(url);
+  var prefetches = spf.nav.prefetches_();
+  prefetches[absoluteUrl].abort();
+  delete prefetches[absoluteUrl];
+};
+
+
+/**
+ * @param {!Object.<string, XMLHttpRequest>=} opt_reqs
+ *     Optional set of requests to overwrite the current value.
+ * @return {!Object.<string, XMLHttpRequest>} Current map
+ *     of requests.
+ * @private
+ */
+spf.nav.prefetches_ = function(opt_reqs) {
+  if (opt_reqs || !spf.state.has('nav-prefetches')) {
+    return /** @type {!Object.<string, XMLHttpRequest>} */ (
+        spf.state.set('nav-prefetches', (opt_reqs || {})));
+  }
+  return /** @type {!Object.<string, XMLHttpRequest>} */ (
+      spf.state.get('nav-prefetches'));
 };
