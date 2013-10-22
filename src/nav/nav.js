@@ -196,12 +196,6 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
     spf.nav.redirect(url);
     return;
   }
-  // Cancel all prefetches before navigation.
-  spf.tasks.cancelAll('preprocess');
-  // Abort all ongoing prefetch xhrs.
-  spf.nav.abortAllPrefetches();
-  // Abort previous navigation, if needed.
-  spf.nav.cancel();
   // If a session limit has been set and reached, redirect.
   var count = (parseInt(spf.state.get('nav-counter'), 10) || 0) + 1;
   var limit = parseInt(spf.config.get('navigate-limit'), 10);
@@ -230,6 +224,64 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
   // Only different than the current URL when navigation is in response to
   // a popState event.
   var referer = opt_referer || window.location.href;
+
+  // Cancel all prefetches but the the prefetch we wish to use before
+  // navigating.
+  var key = 'preprocess ' + spf.nav.url.absolute(url);
+  var prefetches = spf.nav.prefetches_();
+  var prefetchXhr = prefetches[url];
+  spf.tasks.cancelAll('preprocess', key);
+  // Abort all ongoing prefetch xhrs except the one that we are
+  // navigating to.
+  spf.nav.abortAllPrefetches(url);
+  // Abort previous navigation, if needed.
+  spf.nav.cancel();
+  // Set the current nav request to be the prefetch xhr.
+  spf.state.set('nav-request', prefetchXhr);
+  // Make sure there is no current nav-intention set.
+  spf.state.set('nav-intention', undefined);
+  // Check the prefetch xhr. If it is not done, state our intention to
+  // navigate. Otherwise, cancel that task and navigate
+  if (prefetchXhr && prefetchXhr.readyState != 4) {
+    // Wait for completion by stating our intention to navigate and
+    // let the onSuccess handler take care of the navigation.
+    var prefetchToNavigate = function(prefetchUrl) {
+      // Check to make sure that we are navigating to the correct url
+      // since other prefetches could have been started after the
+      // navigation request that finished sooner.
+      if (prefetchUrl != url) {
+        return false;
+      }
+      spf.state.set('nav-intention', undefined);
+      spf.tasks.cancel(key);
+      spf.nav.navigateRequest_(url, options, referer,
+                               opt_history, opt_reverse);
+      return true;
+    };
+    spf.state.set('nav-intention', prefetchToNavigate);
+    return;
+  }
+
+  spf.nav.navigateRequest_(url, options, referer,
+                           opt_history, opt_reverse);
+};
+
+
+/**
+ * Create the navigation request.
+ *
+ * @param {string} url The URL to navigate to, without the SPF identifier.
+ * @param {spf.RequestOptions} options Request options object.
+ * @param {string} referer The Referrer URL, without the SPF identifier.
+ * @param {boolean=} opt_history Whether this navigation is part of a history
+ *     change. True when navigation is in response to a popState event.
+ * @param {boolean=} opt_reverse Whether this is "backwards" navigation. True
+ *     when the "back" button is clicked and navigation is in response to a
+ *     popState event.
+ * @private
+ */
+spf.nav.navigateRequest_ = function(url, options, referer,
+                                    opt_history, opt_reverse) {
   var navigateError = function(url, err) {
     spf.debug.warn('navigate failed', '(url=', url, ')');
     spf.state.set('nav-request', null);
@@ -314,6 +366,7 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
     var r = (response['type'] == 'multipart') ? {} : response;
     spf.nav.response.process(url, r, navigateSuccessDone, opt_reverse);
   };
+  var startTime = /** @type {number} */ (spf.state.get('nav-time'));
   var xhr = spf.nav.request.send(url, {
     method: options['method'],
     onPart: navigatePart,
@@ -321,7 +374,8 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
     onSuccess: navigateSuccess,
     postData: options['postData'],
     type: 'navigate',
-    referer: referer
+    referer: referer,
+    startTime: startTime
   });
   spf.state.set('nav-request', xhr);
   // After the request has been sent, check for new navigation that needs
@@ -511,7 +565,14 @@ spf.nav.prefetch = function(url, opt_options) {
         options['onSuccess'](url, response);
       }
     };
+    // Check if there is a navigation intention. If there is, then we
+    // create the navigation request.
     spf.nav.removePrefetch(url);
+    var navIntent = /** @type {Function} */ (
+        spf.state.get('nav-intention'));
+    if (navIntent && navIntent(url)) {
+      return;
+    }
     // Preprocess the requested response.
     // If a multipart response was received, all processing is already done,
     // so just execute the callback.  Call process with an empty
@@ -563,13 +624,19 @@ spf.nav.removePrefetch = function(url) {
 
 
 /**
- * Abort all ongoing prefetch requests.
+ * Abort all ongoing prefetches requests. If the skip url is given, do
+ * not abort that url.
+ *
+ * @param {string=} opt_skipUrl A url of the request that should not
+ *     be canceled.
  */
-spf.nav.abortAllPrefetches = function() {
+spf.nav.abortAllPrefetches = function(opt_skipUrl) {
   spf.debug.debug('nav.abortAllPrefetches');
   var prefetches = spf.nav.prefetches_();
   for (var key in prefetches) {
-    spf.nav.abortPrefetch(key);
+    if (opt_skipUrl != key) {
+      spf.nav.abortPrefetch(key);
+    }
   }
 };
 
