@@ -341,7 +341,7 @@ spf.nav.response.CAN_ANIMATE_ = (function() {
   if ('transition' in testEl.style) {
     return true;
   }
-  var prefixes = ['Webkit', 'Moz', 'Ms', 'O', 'Khtml'];
+  var prefixes = ['webkit', 'Moz', 'Ms', 'O', 'Khtml'];
   for (var i = 0, l = prefixes.length; i < l; i++) {
     if (prefixes[i] + 'Transition' in testEl.style) {
       return true;
