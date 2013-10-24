@@ -239,9 +239,13 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
     // Wait for completion by stating our intention to navigate and
     // let the onSuccess handler take care of the navigation.
     var prefetchToNavigate = function(prefetchUrl) {
-      // Check to make sure that we are navigating to the correct url
-      // since other prefetches could have been started after the
-      // navigation request that finished sooner.
+      // Verify that the navigate url and the prefetch url are the
+      // same. Once all of the prefetches are killed and nav-intention
+      // has been set, other prefetches can still start. If prefetch B
+      // starts after navigate request A, and prefetch B finishes before
+      // the prefetch A, the completion of prefetch B will start the
+      // navigateRequest before prefetch A has finished, resulting in
+      // a cache miss.
       if (prefetchUrl != url) {
         return false;
       }
