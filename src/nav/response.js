@@ -118,6 +118,7 @@ spf.nav.response.process = function(url, response, opt_callback, opt_reverse) {
 
   // NOTE: when adding tasks to a queue, use bind to avoid name/scope errors.
   var fn;
+  var num = 0;
 
   // Initialize the timing object if needed.
   if (!response['timing']) {
@@ -129,29 +130,37 @@ spf.nav.response.process = function(url, response, opt_callback, opt_reverse) {
     document.title = response['title'];
   }
 
-  // Install page styles (single task).
-  fn = spf.bind(function(css, timing) {
-    spf.net.styles.install(spf.net.styles.parse(css));
-    spf.debug.debug('  installed styles');
-    timing['spfProcessCss'] = spf.now();
-  }, null, response['css'], response['timing']);
-  spf.tasks.add(key, fn);
+  // Install page styles (single task), if needed.
+  if (response['css']) {
+    fn = spf.bind(function(css, timing) {
+      spf.net.styles.install(spf.net.styles.parse(css));
+      timing['spfProcessCss'] = spf.now();
+      spf.debug.debug('  process task done: css');
+    }, null, response['css'], response['timing']);
+    num = spf.tasks.add(key, fn);
+    spf.debug.debug('  process task queued: css', num);
+  }
 
-  // Update attributes (single task).
-  fn = spf.bind(function(elementAttrs, timing) {
-    for (var id in elementAttrs) {
-      var el = document.getElementById(id);
-      if (el) {
-        spf.dom.setAttributes(el, elementAttrs[id]);
-        spf.debug.debug('  set attributes ', id);
+  // Update attributes (single task), if needed.
+  if (response['attr']) {
+    fn = spf.bind(function(attrs, timing) {
+      for (var id in attrs) {
+        var el = document.getElementById(id);
+        if (el) {
+          spf.dom.setAttributes(el, attrs[id]);
+          spf.debug.debug('    attr set', id);
+        }
       }
-    }
-    timing['spfProcessAttr'] = spf.now();
-  }, null, (response['attr'] || {}), response['timing']);
-  spf.tasks.add(key, fn);
+      timing['spfProcessAttr'] = spf.now();
+      spf.debug.debug('  process task done: attr');
+    }, null, response['attr'], response['timing']);
+    num = spf.tasks.add(key, fn);
+    spf.debug.debug('  process task queued: attr', num);
+  }
 
   // Update content (one task per fragment or three tasks if animated).
   var fragments = response['html'] || {};
+  var numBeforeFragments = num;
   for (var id in fragments) {
     fn = spf.bind(function(id, html, timing) {
       var el = document.getElementById(id);
@@ -165,12 +174,17 @@ spf.nav.response.process = function(url, response, opt_callback, opt_reverse) {
           // Use the parsed HTML without script tags to avoid any scripts
           // being accidentally considered loading.
           el.innerHTML = jsParseResult.html;
-          spf.debug.debug('  updated fragment content ', id);
+          spf.debug.debug('    html update', id);
           // Install embedded scripts before continuing.
-          spf.tasks.suspend(key);  // Suspend main queue for JS.
+          // Suspend main queue to allow JS execution to occur sequentially
+          // before the page scripts are executed.
+          // TODO(nicksay): Consider disallowing html-level scripts or
+          //     using a sub-queue for JS execution.
+          spf.tasks.suspend(key);
           spf.net.scripts.install(jsParseResult, function() {
-            spf.debug.debug('  installed fragment scripts ', id);
+            spf.debug.debug('    html js', id);
             spf.tasks.resume(key, sync);  // Resume main queue after JS.
+            spf.debug.debug('  process task done: html', id);
           });
         } else {
           spf.tasks.suspend(key);  // Suspend main queue for animation.
@@ -211,63 +225,91 @@ spf.nav.response.process = function(url, response, opt_callback, opt_reverse) {
             } else {
               spf.dom.insertSiblingAfter(data.pendingEl, data.currentEl);
             }
+            spf.debug.debug('  process anim done: add new', data.parentEl.id);
           }, null, animationData);
           spf.tasks.add(animationKey, animationFn, 0);
+          spf.debug.debug('  process anim queued: add new', id);
           // Animation task 2: switch between old and new (delay = 0).
           animationFn = spf.bind(function(data) {
             // Start the switch.
             spf.dom.classlist.remove(data.parentEl, data.startClass);
             spf.dom.classlist.add(data.parentEl, data.endClass);
+            spf.debug.debug('  process anim done: swap', data.parentEl.id);
           }, null, animationData);
           spf.tasks.add(animationKey, animationFn, 0);
+          spf.debug.debug('  process anim queued: swap', id);
           // Animation task 3: remove old (delay = config duration).
           animationFn = spf.bind(function(data) {
-            spf.debug.debug('  updated fragment content ', data.parentEl.id);
             // When done, remove the old content.
             data.parentEl.removeChild(data.currentEl);
             // End the switch.
             spf.dom.classlist.remove(data.parentEl, data.endClass);
             // Reparent the new elements.
             spf.dom.flattenElement(data.pendingEl);
+            spf.debug.debug('    html update', data.parentEl.id);
             // Execute embedded scripts before continuing.
             spf.tasks.suspend(animationKey);  // Suspend sub-queue for JS.
             spf.net.scripts.install(data.jsParseResult, function() {
-              spf.debug.debug('  executed fragment scripts ', data.parentEl.id);
+              spf.debug.debug('    html js', data.parentEl.id);
               spf.tasks.resume(animationKey);  // Resume sub-queue after JS.
+              spf.debug.debug('  process anim done: del old', data.parentEl.id);
             });
           }, null, animationData);
           spf.tasks.add(animationKey, animationFn,
                         parseInt(spf.config.get('animation-duration'), 10));
+          spf.debug.debug('  process anim queued: del old', id);
           // Finish the animation and move on.
-          spf.tasks.add(animationKey, function() {
+          animationFn = spf.bind(function(data, key) {
+            spf.debug.debug('  process anim done: complete', data.parentEl.id);
             spf.tasks.resume(key);  // Resume main queue after animation.
-          });
+            spf.debug.debug('  process task done: html ', data.parentEl.id);
+          }, null, animationData, key);
+          spf.tasks.add(animationKey, animationFn);
+          spf.debug.debug('  process anim queued: complete', id);
           spf.tasks.run(animationKey);
         }
       }
     }, null, id, fragments[id], response['timing']);
-    spf.tasks.add(key, fn);
+    num = spf.tasks.add(key, fn);
+    spf.debug.debug('  process task queued: html', id, num);
   }
-  fn = spf.bind(function(timing) {
-    // TODO: consider tracking the last completion time instead of queuing.
-    timing['spfProcessHtml'] = spf.now();
-  }, null, response['timing']);
-  spf.tasks.add(key, fn);
+  var numAfterFragments = num;
+  var numFragments = numAfterFragments - numBeforeFragments;
 
-  // Install page scripts (single task).
-  fn = spf.bind(function(js, timing) {
-    spf.tasks.suspend(key);  // Suspend main queue for JS.
-    spf.net.scripts.install(spf.net.scripts.parse(js), function() {
-      spf.debug.debug('  installed scripts');
-      timing['spfProcessJs'] = spf.now();
-      spf.tasks.resume(key, sync);  // Resume main queue after JS.
-    });
-  }, null, response['js'], response['timing']);
-  spf.tasks.add(key, fn);
+  // Install page scripts (single task), if needed.
+  if (response['js']) {
+    fn = spf.bind(function(js, timing, numFragments) {
+      // Use the page scripts task as a signal that the content is updated,
+      // only recording the content completion time if fragments were processed.
+      if (numFragments) {
+        timing['spfProcessHtml'] = spf.now();
+      }
+      spf.tasks.suspend(key);  // Suspend main queue for JS.
+      spf.net.scripts.install(spf.net.scripts.parse(js), function() {
+        timing['spfProcessJs'] = spf.now();
+        spf.debug.debug('  process task done: js');
+        spf.tasks.resume(key, sync);  // Resume main queue after JS.
+      });
+    }, null, response['js'], response['timing'], numFragments);
+    num = spf.tasks.add(key, fn);
+    spf.debug.debug('  process task queued: js', num);
+  } else if (numFragments) {
+    // If a page scripts task is unnecessary and fragments were processed,
+    // add a task to record the completion time.  Doing this only if page
+    // scripts won't be installed prevents unnecessary task execution and
+    // potential delays.
+    fn = spf.bind(function(timing) {
+      timing['spfProcessHtml'] = spf.now();
+      spf.debug.debug('  process task done: timing-for-html');
+    }, null, response['timing']);
+    num = spf.tasks.add(key, fn);
+    spf.debug.debug('  process task queued: timing-for-html', num);
+  }
 
   // Execute callback.
   if (opt_callback) {
-    spf.tasks.add(key, spf.bind(opt_callback, null, url, response));
+    num = spf.tasks.add(key, spf.bind(opt_callback, null, url, response));
+    spf.debug.debug('  process task queued: callback', num);
   }
 
   spf.tasks.run(key, sync);
@@ -294,37 +336,48 @@ spf.nav.response.preprocess = function(url, response, opt_callback) {
   // NOTE: when adding tasks to a queue, use bind to avoid name/scope errors.
   var fn;
 
-  // Preinstall page styles (single task).
-  fn = spf.bind(function(css) {
-    spf.net.styles.preinstall(spf.net.styles.parse(css));
-    spf.debug.debug('  preinstalled styles');
-  }, null, response['css']);
-  spf.tasks.add(key, fn);
+  // Preinstall page styles (single task), if needed.
+  if (response['css']) {
+    fn = spf.bind(function(css) {
+      spf.net.styles.preinstall(spf.net.styles.parse(css));
+      spf.debug.debug('  preprocess task done: css');
+    }, null, response['css']);
+    spf.tasks.add(key, fn);
+    spf.debug.debug('  preprocess task queued: css');
+  }
 
   // Preinstall fragment scripts (one task per fragment).
   var fragments = response['html'] || {};
   for (var id in fragments) {
-    fn = spf.bind(function(id, html) {
-      // NOTE: Suspending the queue is not needed since the JS is not
-      // actually executed and other tasks don't have to wait.
-      spf.net.scripts.preinstall(spf.net.scripts.parse(html));
-      spf.debug.debug('  preinstalled fragment scripts ', id);
-    }, null, id, fragments[id]);
-    spf.tasks.add(key, fn);
+    if (fragments[id]) {
+      fn = spf.bind(function(id, html) {
+        // NOTE: Suspending the queue is not needed since the JS is not
+        // actually executed and other tasks don't have to wait.
+        spf.net.scripts.preinstall(spf.net.scripts.parse(html));
+        spf.debug.debug('    html js', id);
+        spf.debug.debug('  preprocess task done: html', id);
+      }, null, id, fragments[id]);
+      spf.tasks.add(key, fn);
+      spf.debug.debug('  preprocess task queued: html', id);
+    }
   }
 
   // Preinstall page scripts (single task).
-  fn = spf.bind(function(js) {
-    // NOTE: Suspending the queue is not needed since the JS is not
-    // actually executed and other tasks don't have to wait.
-    spf.net.scripts.preinstall(spf.net.scripts.parse(js));
-    spf.debug.debug('  preinstalled scripts');
-  }, null, response['js']);
-  spf.tasks.add(key, fn);
+  if (response['js']) {
+    fn = spf.bind(function(js) {
+      // NOTE: Suspending the queue is not needed since the JS is not
+      // actually executed and other tasks don't have to wait.
+      spf.net.scripts.preinstall(spf.net.scripts.parse(js));
+      spf.debug.debug('  preprocess task done: js');
+    }, null, response['js']);
+    spf.tasks.add(key, fn);
+    spf.debug.debug('  preprocess task queued: js');
+  }
 
   // Execute callback.
   if (opt_callback) {
     spf.tasks.add(key, spf.bind(opt_callback, null, url, response));
+    spf.debug.debug('  preprocess task queued: callback');
   }
 
   // The preprocessing queue is always run async.

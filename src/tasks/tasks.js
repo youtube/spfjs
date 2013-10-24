@@ -7,7 +7,6 @@
 goog.provide('spf.tasks');
 
 goog.require('spf');
-goog.require('spf.debug');
 goog.require('spf.string');
 
 
@@ -18,18 +17,19 @@ goog.require('spf.string');
  * @param {!Function} fn The function to execute for this task.
  * @param {number=} opt_delay The time in milliseconds to wait before executing
  *     the function; defaults to 0.
+ * @return {number} The number of tasks in the queue afterwards.
  */
 spf.tasks.add = function(key, fn, opt_delay) {
-  spf.debug.debug('tasks.add ', key, opt_delay);
+  var queues = spf.tasks.queues_;
+  var queue = queues[key];
   if (key && fn) {
-    var queues = spf.tasks.queues_;
-    var queue = queues[key];
     if (!queue) {
       queue = queues[key] = spf.tasks.createQueue_();
     }
     var task = spf.tasks.createTask_(fn, opt_delay || 0);
-    queue.items.push(task);
+    return queue.items.push(task);
   }
+  return (queue && queue.items.length) || 0;
 };
 
 
@@ -41,11 +41,8 @@ spf.tasks.add = function(key, fn, opt_delay) {
  *     defaults to false.
  */
 spf.tasks.run = function(key, opt_sync) {
-  spf.debug.debug('tasks.run ', key, opt_sync);
   var queue = spf.tasks.queues_[key];
   if (queue) {
-    spf.debug.debug('  queue state = ', queue.items.length,
-                    queue.timer, queue.semaphore);
     var active = queue.timer > 0;
     var suspended = !(queue.semaphore > 0);
     if (!suspended && (opt_sync || !active)) {
@@ -62,18 +59,15 @@ spf.tasks.run = function(key, opt_sync) {
  * Queue execution is controlled by values similar to POSIX Semaphores.  Each
  * {@code suspend} decrements a value, and each {@code resume} increments it.
  * Queue execution only continues when the values are positive, so while
- * {@code suspend} may be called multiple times, it much be matched by an equal
+ * {@code suspend} may be called multiple times, it must be matched by an equal
  * number of {@code resume} calls.
  *
  * @param {string} key The key to identify the task queue.
  */
 spf.tasks.suspend = function(key) {
-  spf.debug.debug('tasks.suspend ', key);
   var queue = spf.tasks.queues_[key];
   if (queue) {
     queue.semaphore--;
-    spf.debug.debug('  queue state = ', queue.items.length,
-                    queue.timer, queue.semaphore);
   }
 };
 
@@ -93,12 +87,9 @@ spf.tasks.suspend = function(key) {
  *     defaults to false.
  */
 spf.tasks.resume = function(key, opt_sync) {
-  spf.debug.debug('tasks.resume ', key, opt_sync);
   var queue = spf.tasks.queues_[key];
   if (queue) {
     queue.semaphore++;
-    spf.debug.debug('  queue state = ', queue.items.length,
-                    queue.timer, queue.semaphore);
     spf.tasks.run(key, opt_sync);
   }
 };
@@ -110,7 +101,6 @@ spf.tasks.resume = function(key, opt_sync) {
  * @param {string} key The key to identify the task queue.
  */
 spf.tasks.cancel = function(key) {
-  spf.debug.debug('tasks.cancel ', key);
   var queue = spf.tasks.queues_[key];
   if (queue) {
     clearTimeout(queue.timer);
@@ -134,7 +124,6 @@ spf.tasks.cancel = function(key) {
  */
 spf.tasks.cancelAll = function(opt_keyPrefix, opt_skipKey) {
   var keyPrefix = opt_keyPrefix || '';
-  spf.debug.debug('tasks.cancelAll');
   for (var key in spf.tasks.queues_) {
     if (opt_skipKey != key && spf.string.startsWith(key, keyPrefix)) {
       spf.tasks.cancel(key);
@@ -150,11 +139,8 @@ spf.tasks.cancelAll = function(opt_keyPrefix, opt_skipKey) {
  * @private
  */
 spf.tasks.do_ = function(key, opt_sync) {
-  spf.debug.debug('tasks.do_ ', key, opt_sync);
   var queue = spf.tasks.queues_[key];
   if (queue) {
-    spf.debug.debug('  queue state = ', queue.items.length,
-                    queue.timer, queue.semaphore);
     clearTimeout(queue.timer);
     queue.timer = 0;
     if (queue.semaphore > 0) {
