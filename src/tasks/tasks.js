@@ -104,25 +104,20 @@ spf.tasks.cancel = function(key) {
   var queue = spf.tasks.queues_[key];
   if (queue) {
     clearTimeout(queue.timer);
-    delete queue.items
-    delete queue.timer;
-    delete queue.semaphore;
     delete spf.tasks.queues_[key];
   }
 };
 
 
 /**
- * Cancels execution of all current task queues. If the optional key
- * prefix is provided, only tasks that match that prefix will be
- * canceled. If the skip key is provided, that key will not be canceled.
+ * Cancels execution of all current task queues, optionally limited to
+ * with a given key prefix and optionally skipping the given key.
  *
- * @param {string=} opt_keyPrefix The prefix of the tasks that should
- *     be canceled.
+ * @param {string=} opt_keyPrefix The prefix of the tasks to be canceled.
  * @param {string=} opt_skipKey The key of the task queue that should not
  *     be canceled.
  */
-spf.tasks.cancelAll = function(opt_keyPrefix, opt_skipKey) {
+spf.tasks.cancelAllExcept = function(opt_keyPrefix, opt_skipKey) {
   var keyPrefix = opt_keyPrefix || '';
   for (var key in spf.tasks.queues_) {
     if (opt_skipKey != key && spf.string.startsWith(key, keyPrefix)) {

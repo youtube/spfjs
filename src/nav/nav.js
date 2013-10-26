@@ -218,158 +218,121 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
   // a popState event.
   var referer = opt_referer || window.location.href;
 
-  // Cancel all prefetches but the the prefetch we wish to use before
-  // navigating.
-  var key = 'preprocess ' + spf.nav.url.absolute(url);
-  var prefetches = spf.nav.prefetches_();
-  var prefetchXhr = prefetches[url];
-  spf.tasks.cancelAll('preprocess', key);
-  // Abort all ongoing prefetch xhrs except the one that we are
-  // navigating to.
-  spf.nav.abortAllPrefetches(url);
   // Abort previous navigation, if needed.
   spf.nav.cancel();
-  // Set the current nav request to be the prefetch xhr.
+  // Abort all ongoing prefetch requests, except for the navigation one if it
+  // exists.  This will reduce network contention for the navigation request
+  // by eliminating concurrent reqeuests that will not be used.
+  spf.nav.cancelAllPrefetchesExcept(url);
+  // Cancel all preprocessing being done for completed single or ongoing
+  // multipart prefetch response, except for the navigation one if it exists.
+  // If the navigation one is a completed single response, the task will be
+  // canceled in spf.nav.navigatePromotePrefetch_.  If it is an ongoing
+  // multipart response, allow it to continue processing until the completed.
+  var key = 'preprocess ' + spf.nav.url.absolute(url);
+  spf.tasks.cancelAllExcept('preprocess', key);
+
+
+  // Set the current nav request to be the prefetch, if it exists.
+  var prefetches = spf.nav.prefetches_();
+  var prefetchXhr = prefetches[url];
   spf.state.set('nav-request', prefetchXhr);
-  // Make sure there is no current nav-intention set.
-  spf.state.set('nav-intention', undefined);
-  // Check the prefetch xhr. If it is not done, state our intention to
-  // navigate. Otherwise, cancel that task and navigate
+  // Make sure there is no current nav intention set.
+  spf.state.set('nav-intention', null);
+
+  // Check the prefetch XHR.  If it is not done, state an intention to navigate.
+  // Otherwise, navigate immediately.
   if (prefetchXhr && prefetchXhr.readyState != 4) {
     // Wait for completion by stating our intention to navigate and
     // let the onSuccess handler take care of the navigation.
-    var prefetchToNavigate = function(prefetchUrl) {
-      // Verify that the navigate url and the prefetch url are the
-      // same. Once all of the prefetches are killed and nav-intention
-      // has been set, other prefetches can still start. If prefetch B
-      // starts after navigate request A, and prefetch B finishes before
-      // the prefetch A, the completion of prefetch B will start the
-      // navigateRequest before prefetch A has finished, resulting in
-      // a cache miss.
-      if (prefetchUrl != url) {
-        return false;
-      }
-      spf.state.set('nav-intention', undefined);
-      spf.tasks.cancel(key);
-      spf.nav.navigateRequest_(url, options, referer,
-                               opt_history, opt_reverse);
-      return true;
-    };
-    spf.state.set('nav-intention', prefetchToNavigate);
+    var promotePrefetch = spf.bind(spf.nav.navigatePromotePrefetch_, null,
+                                   url, options, referer, !!opt_history,
+                                   !!opt_reverse);
+    spf.state.set('nav-intention', promotePrefetch);
     return;
   }
-
-  spf.nav.navigateRequest_(url, options, referer,
-                           opt_history, opt_reverse);
+  spf.nav.navigateSendRequest_(url, options, referer, !!opt_history,
+                               !!opt_reverse);
 };
 
 
 /**
- * Create the navigation request.
+ * Promotes a prefetch request to a navigation after it completes.
+ * See {@link navigate}.
  *
  * @param {string} url The URL to navigate to, without the SPF identifier.
  * @param {spf.RequestOptions} options Request options object.
  * @param {string} referer The Referrer URL, without the SPF identifier.
- * @param {boolean=} opt_history Whether this navigation is part of a history
+ * @param {boolean} history Whether this navigation is part of a history
  *     change. True when navigation is in response to a popState event.
- * @param {boolean=} opt_reverse Whether this is "backwards" navigation. True
+ * @param {boolean} reverse Whether this is "backwards" navigation. True
+ *     when the "back" button is clicked and navigation is in response to a
+ *     popState event.
+ * @param {string} prefetchUrl The URL of the prefetch, passed to ensure
+ *     the wrong prefetch request is not promoted.
+ * @return {boolean} Whether the promotion was successful.
+ * @private
+ */
+spf.nav.navigatePromotePrefetch_ = function(url, options, referer, history,
+                                            reverse, prefetchUrl) {
+  // Verify that the navigate url and the prefetch url are the
+  // same. Once all of the prefetches are killed and nav-intention
+  // has been set, other prefetches can still start. If prefetch B
+  // starts after navigate request A, and prefetch B finishes before
+  // the prefetch A, the completion of prefetch B will start the
+  // navigateRequest before prefetch A has finished, resulting in
+  // a cache miss.
+  if (prefetchUrl != url) {
+    return false;
+  }
+  spf.state.set('nav-intention', null);
+  var key = 'preprocess ' + spf.nav.url.absolute(url);
+  spf.tasks.cancel(key);
+  spf.nav.navigateSendRequest_(url, options, referer, history, reverse);
+  return true;
+};
+
+
+/**
+ * Send the navigation request.
+ * See {@link navigate}.
+ *
+ * @param {string} url The URL to navigate to, without the SPF identifier.
+ * @param {spf.RequestOptions} options Request options object.
+ * @param {string} referer The Referrer URL, without the SPF identifier.
+ * @param {boolean} history Whether this navigation is part of a history
+ *     change. True when navigation is in response to a popState event.
+ * @param {boolean} reverse Whether this is "backwards" navigation. True
  *     when the "back" button is clicked and navigation is in response to a
  *     popState event.
  * @private
  */
-spf.nav.navigateRequest_ = function(url, options, referer,
-                                    opt_history, opt_reverse) {
-  var navigateError = function(url, err) {
-    spf.debug.warn('navigate failed', '(url=', url, ')');
-    spf.state.set('nav-request', null);
-    // Execute the "onError" and "navigation error" callbacks.  If either
-    // explicitly cancels (by returning false), ignore the error.
-    // Otherwise, redirect.
-    if (!spf.nav.callback(options['onError'], url, err)) {
-      return;
-    }
-    if (!spf.nav.callback('navigate-error-callback', url, err)) {
-      return;
-    }
-    spf.nav.redirect(url);
-  };
-  var navigatePart = function(url, partial) {
-    // Execute the "navigation part received" callback.  If the callback
-    // explicitly cancels (by returning false), cancel this navigation and
-    // redirect.
-    if (!spf.nav.callback('navigate-part-received-callback', url, partial)) {
-      spf.nav.redirect(url);
-      return;
-    }
-    var navigatePartDone = function() {
-      // Execute the "onPart" and "navigation part processed" callbacks.  If
-      // either explicitly cancels (by returning false), cancel this navigation
-      // and redirect.
-      if (!spf.nav.callback(options['onPart'], url, partial)) {
-        spf.nav.redirect(url);
-        return;
-      }
-      if (!spf.nav.callback('navigate-part-processed-callback', url, partial)) {
-        spf.nav.redirect(url);
-        return;
-      }
-    };
-    spf.nav.response.process(url, partial, navigatePartDone, opt_reverse);
-  };
-  var navigateSuccess = function(url, response) {
-    spf.state.set('nav-request', null);
-    // Execute the "navigation received" callback.  If the callback
-    // explicitly cancels (by returning false), cancel this navigation and
-    // redirect.
-    if (!spf.nav.callback('navigate-received-callback', url, response)) {
-      spf.nav.redirect(url);
-      return;
-    }
+spf.nav.navigateSendRequest_ = function(url, options, referer, history,
+                                        reverse) {
+  var handleError = spf.bind(spf.nav.handleNavigateError_, null,
+                             options);
+  var handlePart = spf.bind(spf.nav.handleNavigatePart_, null,
+                            options, reverse);
+  var handleSuccess = spf.bind(spf.nav.handleNavigateSuccess_, null,
+                               options, referer, reverse);
 
-    // Check for redirect responses.
-    if (response['redirect']) {
-      var redirectUrl = response['redirect'];
-      //
-      // TODO(nicksay): Figure out navigate callbacks + redirects.
-      //
-      // Replace the current history entry with the redirect,
-      // executing the callback to trigger the next navigation.
-      var state = {'spf-referer': referer};
-      spf.history.replace(redirectUrl, state, true);
-      return;
-    }
-    var navigateSuccessDone = function() {
-      // Execute the "onSuccess" and "navigation processed" callbacks.
-      // NOTE: If either explicitly cancels (by returning false), nothing
-      // happens, because there is no longer an opportunity to stop navigation.
-      if (!spf.nav.callback(options['onSuccess'], url, response)) {
-        return;
-      }
-      spf.nav.callback('navigate-processed-callback', url, response);
-    };
-    // Process the requested response.
-    // If a multipart response was received, all processing is already done,
-    // so just execute the global notification.  Call process with an empty
-    // object to ensure the callback is properly queued.
-    var r = (response['type'] == 'multipart') ? {} : response;
-    spf.nav.response.process(url, r, navigateSuccessDone, opt_reverse);
-  };
   var startTime = /** @type {number} */ (spf.state.get('nav-time'));
   var xhr = spf.nav.request.send(url, {
     method: options['method'],
-    onPart: navigatePart,
-    onError: navigateError,
-    onSuccess: navigateSuccess,
+    onPart: handlePart,
+    onError: handleError,
+    onSuccess: handleSuccess,
     postData: options['postData'],
     type: 'navigate',
     referer: referer,
     startTime: startTime
   });
   spf.state.set('nav-request', xhr);
+
   // After the request has been sent, check for new navigation that needs
   // a history entry added.  Do this after sending the XHR to have the
   // correct referer for regular navigation (but not history navigation).
-  if (!opt_history) {
+  if (!history) {
     try {
       // Add the URL to the history stack.
       var state = {'spf-referer': referer};
@@ -381,10 +344,126 @@ spf.nav.navigateRequest_ = function(url, options, referer,
       // URL is not in the same domain.
       spf.debug.error('error caught, redirecting ',
                       '(url=', url, 'err=', err, ')');
-      navigateError(url, err);
-      return;
+      handleError(url, err);
     }
   }
+};
+
+
+/**
+ * Handles a navigation error.
+ * See {@link navigate}.
+ *
+ * @param {spf.RequestOptions} options Request options object.
+ * @param {string} url The requested URL, without the SPF identifier.
+ * @param {Error} err The Error object.
+ * @private
+ */
+spf.nav.handleNavigateError_ = function(options, url, err) {
+  spf.debug.warn('navigate error', '(url=', url, ')');
+  spf.state.set('nav-request', null);
+  // Execute the "onError" and "navigation error" callbacks.  If either
+  // explicitly cancels (by returning false), ignore the error.
+  // Otherwise, redirect.
+  if (!spf.nav.callback(options['onError'], url, err)) {
+    return;
+  }
+  if (!spf.nav.callback('navigate-error-callback', url, err)) {
+    return;
+  }
+  spf.nav.redirect(url);
+};
+
+
+/**
+ * Handles a navigation partial response.
+ * See {@link navigate}.
+ *
+ * @param {spf.RequestOptions} options Request options object.
+ * @param {boolean} reverse Whether this is "backwards" navigation. True
+ *     when the "back" button is clicked and navigation is in response to a
+ *     popState event.
+ * @param {string} url The requested URL, without the SPF identifier.
+ * @param {spf.SingleResponse} partial The partial response object.
+ * @private
+ */
+spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
+  // Execute the "navigation part received" callback.  If the callback
+  // explicitly cancels (by returning false), cancel this navigation and
+  // redirect.
+  if (!spf.nav.callback('navigate-part-received-callback', url, partial)) {
+    spf.nav.redirect(url);
+    return;
+  }
+  spf.nav.response.process(url, partial, function() {
+    // Execute the "onPart" and "navigation part processed" callbacks.  If
+    // either explicitly cancels (by returning false), cancel this navigation
+    // and redirect.
+    if (!spf.nav.callback(options['onPart'], url, partial)) {
+      spf.nav.redirect(url);
+      return;
+    }
+    if (!spf.nav.callback('navigate-part-processed-callback', url, partial)) {
+      spf.nav.redirect(url);
+      return;
+    }
+  }, reverse);
+};
+
+
+/**
+ * Handles a navigation complete response.
+ * See {@link navigate}.
+ *
+ * @param {spf.RequestOptions} options Request options object.
+ * @param {string} referer The Referrer URL, without the SPF identifier.
+ * @param {boolean} reverse Whether this is "backwards" navigation. True
+ *     when the "back" button is clicked and navigation is in response to a
+ *     popState event.
+ * @param {string} url The requested URL, without the SPF identifier.
+ * @param {spf.SingleResponse|spf.MultipartResponse} response The response
+ *     object, either a complete single or multipart response object.
+ * @private
+ */
+spf.nav.handleNavigateSuccess_ = function(options, referer, reverse, url,
+                                          response) {
+  spf.state.set('nav-request', null);
+  // Execute the "navigation received" callback.  If the callback
+  // explicitly cancels (by returning false), cancel this navigation and
+  // redirect.
+  if (!spf.nav.callback('navigate-received-callback', url, response)) {
+    spf.nav.redirect(url);
+    return;
+  }
+
+  // Check for redirect responses.
+  if (response['redirect']) {
+    var redirectUrl = response['redirect'];
+    //
+    // TODO(nicksay): Figure out navigate callbacks + redirects.
+    //
+    // Replace the current history entry with the redirect,
+    // executing the callback to trigger the next navigation.
+    var state = {'spf-referer': referer};
+    spf.history.replace(redirectUrl, state, true);
+    return;
+  }
+
+  // Process the requested response.
+  // If a multipart response was received, all processing is already done,
+  // so just execute the global notification.  Call process with an empty
+  // object to ensure the callback is properly queued.
+  var r = /** @type {spf.SingleResponse} */ (
+      (response['type'] == 'multipart') ? {} : response);
+  spf.nav.response.process(url, r, function() {
+    // Execute the "onSuccess" and "navigation processed" callbacks.
+    // NOTE: If either explicitly cancels (by returning false), nothing
+    // happens, because there is no longer an opportunity to stop navigation.
+    if (!spf.nav.callback(options['onSuccess'], url, response)) {
+      return;
+    }
+    spf.nav.callback('navigate-processed-callback', url, response);
+  }, reverse);
 };
 
 
@@ -434,7 +513,7 @@ spf.nav.callback = function(fn, var_args) {
 spf.nav.redirect = function(url) {
   spf.debug.warn('redirecting (', 'url=', url, ')');
   spf.nav.cancel();
-  spf.nav.abortAllPrefetches();
+  spf.nav.cancelAllPrefetchesExcept();
   window.location.href = url;
 };
 
@@ -451,48 +530,23 @@ spf.nav.redirect = function(url) {
  *
  * @param {string} url The URL to load, without the SPF identifier.
  * @param {spf.RequestOptions=} opt_options Optional request options object.
- * @return {XMLHttpRequest} The XHR of the current request.
  */
 spf.nav.load = function(url, opt_options) {
   spf.debug.info('nav.load ', url, opt_options);
   var options = opt_options || /** @type {spf.RequestOptions} */ ({});
-  var loadError = function(url, err) {
-    spf.debug.warn('load failed ', '(url=', url, ')');
-    spf.nav.callback(options['onError'], url, err);
-  };
-  var loadPart = function(url, partial) {
-    var loadPartDone = function() {
-      spf.nav.callback(options['onPart'], url, partial);
-    };
-    spf.nav.response.process(url, partial, loadPartDone);
-  };
-  var loadSuccess = function(url, response) {
-    // Check for redirects.
-    if (response['redirect']) {
-      // Note that POST is not propagated with redirects.
-      var redirectOpts = /** @type {spf.RequestOptions} */ ({
-        'onSuccess': options['onSuccess'],
-        'onPart': options['onPart'],
-        'onError': options['onError']
-      });
-      spf.nav.load(response['redirect'], redirectOpts);
-      return;
-    }
-    var loadSuccessDone = function() {
-      spf.nav.callback(options['onSuccess'], url, response);
-    };
-    // Process the requested response.
-    // If a multipart response was received, all processing is already done,
-    // so just execute the callback.  Call process with an empty
-    // object to ensure the callback is properly queued.
-    var r = (response['type'] == 'multipart') ? {} : response;
-    spf.nav.response.process(url, r, loadSuccessDone);
-  };
-  return spf.nav.request.send(url, {
+
+  var handleError = spf.bind(spf.nav.handleLoadError_, null,
+                             false, options);
+  var handlePart = spf.bind(spf.nav.handleLoadPart_, null,
+                            false, options);
+  var handleSucces = spf.bind(spf.nav.handleLoadSuccess_, null,
+                              false, options);
+
+  spf.nav.request.send(url, {
     method: options['method'],
-    onPart: loadPart,
-    onError: loadError,
-    onSuccess: loadSuccess,
+    onPart: handlePart,
+    onError: handleError,
+    onSuccess: handleSucces,
     postData: options['postData'],
     type: 'load'
   });
@@ -513,64 +567,113 @@ spf.nav.load = function(url, opt_options) {
  *
  * @param {string} url The URL to prefetch, without the SPF identifier.
  * @param {spf.RequestOptions=} opt_options Optional request options object.
- * @return {XMLHttpRequest} The XHR of the current request.
  */
 spf.nav.prefetch = function(url, opt_options) {
   spf.debug.info('nav.prefetch ', url, opt_options);
   var options = opt_options || /** @type {spf.RequestOptions} */ ({});
-  var prefetchError = function(url, err) {
-    spf.debug.warn('prefetch failed ', '(url=', url, ')');
-    spf.nav.callback(options['onError'], url, err);
-    spf.nav.removePrefetch(url);
-  };
-  var prefetchPart = function(url, partial) {
-    var prefetchPartDone = function() {
-      spf.nav.callback(options['onPart'], url, partial);
-    };
-    spf.nav.response.preprocess(url, partial, prefetchPartDone);
-  };
-  var prefetchSuccess = function(url, response) {
-    // Check for redirects.
-    if (response['redirect']) {
-      // Note that POST is not propagated with redirects.
-      var redirectOpts = /** @type {spf.RequestOptions} */ ({
-        'onSuccess': options['onSuccess'],
-        'onPart': options['onPart'],
-        'onError': options['onError']
-      });
-      spf.nav.prefetch(response['redirect'], redirectOpts);
-      return;
-    }
-    var prefetchSuccessDone = function() {
-      spf.nav.callback(options['onSuccess'], url, response);
-    };
-    // Check if there is a navigation intention. If there is, then we
-    // create the navigation request.
-    spf.nav.removePrefetch(url);
-    var navIntent = /** @type {Function} */ (
-        spf.state.get('nav-intention'));
-    if (navIntent && navIntent(url)) {
-      return;
-    }
-    // Preprocess the requested response.
-    // If a multipart response was received, all processing is already done,
-    // so just execute the callback.  Call process with an empty
-    // object to ensure the callback is properly queued.
-    var r = (response['type'] == 'multipart') ? {} : response;
-    spf.nav.response.preprocess(url, r, prefetchSuccessDone);
-  };
+
+  var handleError = spf.bind(spf.nav.handleLoadError_, null,
+                             true, options);
+  var handlePart = spf.bind(spf.nav.handleLoadPart_, null,
+                            true, options);
+  var handleSucces = spf.bind(spf.nav.handleLoadSuccess_, null,
+                              true, options);
+
   var xhr = spf.nav.request.send(url, {
     method: options['method'],
-    onPart: prefetchPart,
-    onError: prefetchError,
-    onSuccess: prefetchSuccess,
+    onPart: handlePart,
+    onError: handleError,
+    onSuccess: handleSucces,
     postData: options['postData'],
     type: 'prefetch'
   });
-
   spf.nav.addPrefetch(url, xhr);
+};
 
-  return xhr;
+
+/**
+ * Handles a load or prefetch error.
+ * See {@link load} and {@link prefetch}.
+ *
+ * @param {boolean} isPrefetch True for prefetch; false for load.
+ * @param {spf.RequestOptions} options Request options object.
+ * @param {string} url The requested URL, without the SPF identifier.
+ * @param {Error} err The Error object.
+ * @private
+ */
+spf.nav.handleLoadError_ = function(isPrefetch, options, url, err) {
+  spf.debug.warn(isPrefetch ? 'prefetch' : 'load', 'error', '(url=', url, ')');
+  spf.nav.callback(options['onError'], url, err);
+  if (isPrefetch) {
+    spf.nav.cancelPrefetch(url);
+  }
+};
+
+
+/**
+ * Handles a load or prefetch partial response.
+ * See {@link load} and {@link prefetch}.
+ *
+ * @param {boolean} isPrefetch True for prefetch; false for load.
+ * @param {spf.RequestOptions} options Request options object.
+ * @param {string} url The requested URL, without the SPF identifier.
+ * @param {spf.SingleResponse} partial The partial response object.
+ * @private
+ */
+spf.nav.handleLoadPart_ = function(isPrefetch, options, url, partial) {
+  var processFn = isPrefetch ?
+      spf.nav.response.preprocess :
+      spf.nav.response.process;
+  processFn(url, partial, function() {
+    spf.nav.callback(options['onPart'], url, partial);
+  });
+};
+
+
+/**
+ * Handles a load or prefetch complete response.
+ * See {@link load} and {@link prefetch}.
+ *
+ * @param {boolean} isPrefetch True for prefetch; false for load.
+ * @param {spf.RequestOptions} options Request options object.
+ * @param {string} url The requested URL, without the SPF identifier.
+ * @param {spf.SingleResponse|spf.MultipartResponse} response The response
+ *     object, either a complete single or multipart response object.
+ * @private
+ */
+spf.nav.handleLoadSuccess_ = function(isPrefetch, options, url, response) {
+  var redirectFn = isPrefetch ? spf.nav.prefetch : spf.nav.load;
+  // Check for redirects.
+  if (response['redirect']) {
+    // Note that POST is not propagated with redirects.
+    var redirectOpts = /** @type {spf.RequestOptions} */ ({
+      'onSuccess': options['onSuccess'],
+      'onPart': options['onPart'],
+      'onError': options['onError']
+    });
+    redirectFn(response['redirect'], redirectOpts);
+    return;
+  }
+  if (isPrefetch) {
+    // Check if there is a navigation intention.  If there is, call it to
+    // to promote the prefetch to a navigation request.
+    spf.nav.cancelPrefetch(url);
+    var navIntent = /** @type {Function} */ (spf.state.get('nav-intention'));
+    if (navIntent && navIntent(url)) {
+      return;
+    }
+  }
+  // Process the requested response.
+  // If a multipart response was received, all processing is already done,
+  // so just execute the callback.  Call process with an empty
+  // object to ensure the callback is properly queued.
+  var processFn = isPrefetch ?
+      spf.nav.response.preprocess :
+      spf.nav.response.process;
+  var r = (response['type'] == 'multipart') ? {} : response;
+  processFn(url, r, function() {
+    spf.nav.callback(options['onSuccess'], url, response);
+  });
 };
 
 
@@ -587,50 +690,37 @@ spf.nav.addPrefetch = function(url, xhr) {
   prefetches[absoluteUrl] = xhr;
 };
 
-
 /**
- * Removes a prefetch request from the set of prefetches.
+ * Cancels a single prefetch request and removes it from the set.
  *
- * @param {string} url The url of the prefetch that is going to be
- *     removed.
+ * @param {string} url The url of the prefetch to be aborted.
  */
-spf.nav.removePrefetch = function(url) {
-  spf.debug.debug('nav.removePrefetch ', url);
+spf.nav.cancelPrefetch = function(url) {
+  spf.debug.debug('nav.cancelPrefetch ', url);
   var absoluteUrl = spf.nav.url.absolute(url);
   var prefetches = spf.nav.prefetches_();
+  var prefetchXhr = prefetches[absoluteUrl];
+  if (prefetchXhr) {
+    prefetchXhr.abort();
+  }
   delete prefetches[absoluteUrl];
 };
 
 
 /**
- * Abort all ongoing prefetches requests. If the skip url is given, do
- * not abort that url.
+ * Cancels all ongoing prefetch requests, optionally skipping the given url.
  *
  * @param {string=} opt_skipUrl A url of the request that should not
  *     be canceled.
  */
-spf.nav.abortAllPrefetches = function(opt_skipUrl) {
-  spf.debug.debug('nav.abortAllPrefetches');
+spf.nav.cancelAllPrefetchesExcept = function(opt_skipUrl) {
+  spf.debug.debug('nav.cancelAllPrefetchesExcept');
   var prefetches = spf.nav.prefetches_();
   for (var key in prefetches) {
     if (opt_skipUrl != key) {
-      spf.nav.abortPrefetch(key);
+      spf.nav.cancelPrefetch(key);
     }
   }
-};
-
-
-/**
- * Abort a single prefetch request.
- *
- * @param {string} url The url of the prefetch to be aborted.
- */
-spf.nav.abortPrefetch = function(url) {
-  spf.debug.debug('nav.abortPrefetch ', url);
-  var absoluteUrl = spf.nav.url.absolute(url);
-  var prefetches = spf.nav.prefetches_();
-  prefetches[absoluteUrl].abort();
-  delete prefetches[absoluteUrl];
 };
 
 
