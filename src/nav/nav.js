@@ -217,6 +217,7 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
   // Only different than the current URL when navigation is in response to
   // a popState event.
   var referer = opt_referer || window.location.href;
+  spf.state.set('nav-referer', referer);
 
   // Abort previous navigation, if needed.
   spf.nav.cancel();
@@ -229,26 +230,23 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
   // If the navigation one is a completed single response, the task will be
   // canceled in spf.nav.navigatePromotePrefetch_.  If it is an ongoing
   // multipart response, allow it to continue processing until the completed.
-  var key = 'preprocess ' + spf.nav.url.absolute(url);
-  spf.tasks.cancelAllExcept('preprocess', key);
+  var preprocessKey = 'preprocess ' + spf.nav.url.absolute(url);
+  spf.tasks.cancelAllExcept('preprocess', preprocessKey);
 
 
   // Set the current nav request to be the prefetch, if it exists.
   var prefetches = spf.nav.prefetches_();
   var prefetchXhr = prefetches[url];
   spf.state.set('nav-request', prefetchXhr);
-  // Make sure there is no current nav intention set.
-  spf.state.set('nav-intention', null);
+  // Make sure there is no current nav promotion set.
+  spf.state.set('nav-promote', null);
 
-  // Check the prefetch XHR.  If it is not done, state an intention to navigate.
-  // Otherwise, navigate immediately.
+  // Check the prefetch XHR.  If it is not done, promote the prefetch
+  // to navigate.  Otherwise, navigate immediately.
   if (prefetchXhr && prefetchXhr.readyState != 4) {
-    // Wait for completion by stating our intention to navigate and
-    // let the onSuccess handler take care of the navigation.
-    var promotePrefetch = spf.bind(spf.nav.navigatePromotePrefetch_, null,
-                                   url, options, referer, !!opt_history,
-                                   !!opt_reverse);
-    spf.state.set('nav-intention', promotePrefetch);
+    // Begin the prefetch promotion process.
+    spf.nav.navigatePromotePrefetch_(url, options, referer,
+                                     !!opt_history, !!opt_reverse);
     return;
   }
   spf.nav.navigateSendRequest_(url, options, referer, !!opt_history,
@@ -268,28 +266,25 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
  * @param {boolean} reverse Whether this is "backwards" navigation. True
  *     when the "back" button is clicked and navigation is in response to a
  *     popState event.
- * @param {string} prefetchUrl The URL of the prefetch, passed to ensure
- *     the wrong prefetch request is not promoted.
- * @return {boolean} Whether the promotion was successful.
  * @private
  */
 spf.nav.navigatePromotePrefetch_ = function(url, options, referer, history,
-                                            reverse, prefetchUrl) {
-  // Verify that the navigate url and the prefetch url are the
-  // same. Once all of the prefetches are killed and nav-intention
-  // has been set, other prefetches can still start. If prefetch B
-  // starts after navigate request A, and prefetch B finishes before
-  // the prefetch A, the completion of prefetch B will start the
-  // navigateRequest before prefetch A has finished, resulting in
-  // a cache miss.
-  if (prefetchUrl != url) {
-    return false;
+                                            reverse) {
+  spf.debug.debug('nav.navigatePromotePrefetch_ ', url);
+  var absolute = spf.nav.url.absolute(url);
+  var preprocessKey = 'preprocess ' + absolute;
+  var promoteKey = 'promote ' + absolute;
+  spf.state.set('nav-promote', url);
+  spf.tasks.cancel(preprocessKey);
+  spf.tasks.run(promoteKey, true);
+
+  // After starting the promote tasks, check for new navigation that needs
+  // a history entry added.
+  if (!history) {
+    var handleError = spf.bind(spf.nav.handleNavigateError_, null,
+                               options);
+    spf.nav.navigateAddHistory_(url, referer, handleError);
   }
-  spf.state.set('nav-intention', null);
-  var key = 'preprocess ' + spf.nav.url.absolute(url);
-  spf.tasks.cancel(key);
-  spf.nav.navigateSendRequest_(url, options, referer, history, reverse);
-  return true;
 };
 
 
@@ -333,19 +328,32 @@ spf.nav.navigateSendRequest_ = function(url, options, referer, history,
   // a history entry added.  Do this after sending the XHR to have the
   // correct referer for regular navigation (but not history navigation).
   if (!history) {
-    try {
-      // Add the URL to the history stack.
-      var state = {'spf-referer': referer};
-      spf.history.add(url, state);
-    } catch (err) {
-      // Abort the navigation.
-      spf.nav.cancel();
-      // An error is thrown if the state object is too large or if the
-      // URL is not in the same domain.
-      spf.debug.error('error caught, redirecting ',
-                      '(url=', url, 'err=', err, ')');
-      handleError(url, err);
-    }
+    spf.nav.navigateAddHistory_(url, referer, handleError);
+  }
+};
+
+
+/**
+ * Add the navigate state to the history.
+ *
+ * @param {string} url The URL to navigate to, without the SPF identifier.
+ * @param {string} referer The Referrer URL, without the SPF identifier.
+ * @param {function(string, Error)} handleError The error handler the navigate.
+ * @private
+ */
+spf.nav.navigateAddHistory_ = function(url, referer, handleError) {
+  try {
+    // Add the URL to the history stack.
+    var state = {'spf-referer': referer};
+    spf.history.add(url, state);
+  } catch (err) {
+    // Abort the navigation.
+    spf.nav.cancel();
+    // An error is thrown if the state object is too large or if the
+    // URL is not in the same domain.
+    spf.debug.error('error caught, redirecting ',
+                    '(url=', url, 'err=', err, ')');
+    handleError(url, err);
   }
 };
 
@@ -539,14 +547,14 @@ spf.nav.load = function(url, opt_options) {
                              false, options);
   var handlePart = spf.bind(spf.nav.handleLoadPart_, null,
                             false, options);
-  var handleSucces = spf.bind(spf.nav.handleLoadSuccess_, null,
+  var handleSuccess = spf.bind(spf.nav.handleLoadSuccess_, null,
                               false, options);
 
   spf.nav.request.send(url, {
     method: options['method'],
     onPart: handlePart,
     onError: handleError,
-    onSuccess: handleSucces,
+    onSuccess: handleSuccess,
     postData: options['postData'],
     type: 'load'
   });
@@ -576,14 +584,14 @@ spf.nav.prefetch = function(url, opt_options) {
                              true, options);
   var handlePart = spf.bind(spf.nav.handleLoadPart_, null,
                             true, options);
-  var handleSucces = spf.bind(spf.nav.handleLoadSuccess_, null,
-                              true, options);
+  var handleSuccess = spf.bind(spf.nav.handleLoadSuccess_, null,
+                               true, options);
 
   var xhr = spf.nav.request.send(url, {
     method: options['method'],
     onPart: handlePart,
     onError: handleError,
-    onSuccess: handleSucces,
+    onSuccess: handleSuccess,
     postData: options['postData'],
     type: 'prefetch'
   });
@@ -624,9 +632,26 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, url, partial) {
   var processFn = isPrefetch ?
       spf.nav.response.preprocess :
       spf.nav.response.process;
-  processFn(url, partial, function() {
-    spf.nav.callback(options['onPart'], url, partial);
-  });
+  if (isPrefetch) {
+    // Add the navigate part function as a task to be invoked on
+    // prefetch promotion.
+    var fn = spf.bind(spf.nav.handleNavigatePart_, null,
+                      options, false, url, partial);
+    var promoteKey = 'promote ' + spf.nav.url.absolute(url);
+    spf.tasks.add(promoteKey, fn);
+    // If the prefetch has been promoted, run the promotion task after
+    // adding it and do not perform any preprocessing.
+    if (spf.state.get('nav-promote') == url) {
+      spf.tasks.run(key, true);
+      return;
+    }
+  }
+
+  if (!isPrefetch || !spf.state.get('nav-promote') == url) {
+    processFn(url, partial, function() {
+      spf.nav.callback(options['onPart'], url, partial);
+    });
+  }
 };
 
 
@@ -655,12 +680,20 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, url, response) {
     return;
   }
   if (isPrefetch) {
-    // Check if there is a navigation intention.  If there is, call it to
-    // to promote the prefetch to a navigation request.
-    spf.nav.cancelPrefetch(url);
-    var navIntent = /** @type {Function} */ (spf.state.get('nav-intention'));
-    if (navIntent && navIntent(url)) {
-      return;
+    // Add the navigate success function as a task to be invoked on
+    // prefetch promotion.
+    var referer = window.location.href;
+    if (spf.state.get('nav-promote') == url) {
+      referer = spf.state.get('nav-referer');
+    }
+    var fn = spf.bind(spf.nav.handleNavigateSuccess_, null,
+                      options, referer, false, url, response);
+    var promoteKey = 'promote ' + spf.nav.url.absolute(url);
+    spf.tasks.add(promoteKey, fn);
+    // If the prefetch has been promoted, run the promotion task after
+    // adding it and do not perform any preprocessing.
+    if (spf.state.get('nav-promote') == url) {
+      spf.tasks.run(promoteKey, true);
     }
   }
   // Process the requested response.
@@ -671,9 +704,11 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, url, response) {
       spf.nav.response.preprocess :
       spf.nav.response.process;
   var r = (response['type'] == 'multipart') ? {} : response;
-  processFn(url, r, function() {
-    spf.nav.callback(options['onSuccess'], url, response);
-  });
+  if (!isPrefetch || !spf.state.get('nav-promote') == url) {
+    processFn(url, r, function() {
+      spf.nav.callback(options['onSuccess'], url, response);
+    });
+  }
 };
 
 
