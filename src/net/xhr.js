@@ -82,7 +82,7 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
   var offset = 0;
   var timer;
 
-  var xhr = spf.net.xhr.create();
+  var xhr = new XMLHttpRequest();
   xhr.open(method, url, true);
   xhr['timing'] = {};
 
@@ -163,19 +163,6 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
 
   return xhr;
 };
-
-
-/**
- * Creates a new XMLHttpRequest object.
- * @return {XMLHttpRequest} The new XHR object.
- */
-spf.net.xhr.create = (function() {
-  if ('XMLHttpRequest' in window) {
-    return function() { return new XMLHttpRequest(); };
-  } else if ('ActiveXObject' in window) {
-    return function() { return new ActiveXObject('Microsoft.XMLHTTP'); };
-  }
-})();
 
 
 /**

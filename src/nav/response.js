@@ -45,7 +45,7 @@ spf.nav.response.parse = function(text, opt_multipart) {
       chunk = spf.string.trim(text.substring(start, finish));
       start = finish + delimToken.length;
       if (chunk) {
-        parts.push(spf.nav.response.parse_(chunk));
+        parts.push(JSON.parse(chunk));
       }
     }
     finish = text.indexOf(endToken, start);
@@ -53,7 +53,7 @@ spf.nav.response.parse = function(text, opt_multipart) {
       chunk = spf.string.trim(text.substring(start, finish));
       start = finish + endToken.length;
       if (chunk) {
-        parts.push(spf.nav.response.parse_(chunk));
+        parts.push(JSON.parse(chunk));
       }
     }
     var extra = '';
@@ -65,7 +65,7 @@ spf.nav.response.parse = function(text, opt_multipart) {
       extra: extra
     };
   } else {
-    var response = spf.nav.response.parse_(text);
+    var response = JSON.parse(text);
     var parts;
     if (typeof response.length == 'number') {
       parts = response;
@@ -78,23 +78,6 @@ spf.nav.response.parse = function(text, opt_multipart) {
     };
   }
 };
-
-
-/**
- * See {@link #parse}.
- *
- * @param {string} text JSON response text to parse.
- * @throws {Error} If the {@code text} is invalid JSON.
- * @return {*}
- * @private
- */
-spf.nav.response.parse_ = (function() {
-  if ('JSON' in window) {
-    return function(text) { return JSON.parse(text); };
-  } else {
-    return function(text) { return eval('(' + text + ')'); };
-  }
-})();
 
 
 /**

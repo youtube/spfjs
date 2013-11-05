@@ -12,6 +12,15 @@
 // by the compiler, but these primitives are processed and removed during
 // compilation.  For testing and development, these functions are stubbed in
 // testing/stub.js.
+//
+// A general note on browser compatibility.
+//
+// SPF aims to be broadly compatible with the most common browsers, as long as
+// that support does not require an inordinate amount of code.  In addition,
+// the primary functionality of SPF -- pushstate-based navigation -- requires
+// advanced browser functionality not found in older browsers.  In practice,
+// this means that the common library functions are supported in IE 8+, with
+// all functions supported in IE 10+.
 
 goog.provide('spf');
 goog.provide('spf.config');
