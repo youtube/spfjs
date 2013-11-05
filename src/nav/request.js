@@ -196,12 +196,14 @@ spf.nav.request.handleHeadersFromXHR_ = function(url, chunking, xhr) {
  * @param {Object} chunking Chunking status data.
  * @param {XMLHttpRequest} xhr The XHR of the current request.
  * @param {string} chunk The current request chunk.
+ * @param {boolean=} opt_lastDitch Whether to parse the chunk as the final
+ *     one, potentially handling malformed but valid responses.
  * @private
  */
 spf.nav.request.handleChunkFromXHR_ = function(url, options, chunking,
-                                               xhr, chunk) {
+                                               xhr, chunk, opt_lastDitch) {
   spf.debug.debug('nav.request.handleChunkFromXHR_ ',
-                  url, xhr, chunking.extra, chunk);
+                  url, {'extra': chunking.extra, 'chunk': chunk});
   // Processing chunks as they arrive requires multipart responses.
   if (!chunking.multipart) {
     spf.debug.debug('    skipping non-multipart response');
@@ -210,7 +212,7 @@ spf.nav.request.handleChunkFromXHR_ = function(url, options, chunking,
   var text = chunking.extra + chunk;
   var parsed;
   try {
-    parsed = spf.nav.response.parse(text, true);
+    parsed = spf.nav.response.parse(text, true, opt_lastDitch);
   } catch (err) {
     spf.debug.debug('    JSON parse failed', text);
     xhr.abort();
@@ -244,7 +246,7 @@ spf.nav.request.handleChunkFromXHR_ = function(url, options, chunking,
 spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
                                                   chunking, xhr) {
   spf.debug.debug('nav.request.handleCompleteFromXHR_ ',
-                  url, xhr, chunking.extra);
+                  url, {'extra': chunking.extra, 'complete': xhr.responseText});
   // Record the timing information from the XHR.
   if (xhr['timing']) {
     for (var t in xhr['timing']) {
@@ -256,12 +258,30 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
   if (options.type == 'navigate') {
     timing['navigationStart'] = timing['startTime'];
   }
-  // If a multipart repsonse was handled via chunking, nothing needs to be done.
-  // Otherwise, the regular or multipart response still needs to be parsed.
   var parts;
   if (chunking.complete.length) {
-    parts = chunking.complete;
-  } else {
+    // If a multipart response was parsed on-the-fly via chunking, it should be
+    // done.  However, check to see if there is any extra content, which could
+    // occur if the server failed to end a reponse with a token.
+    chunking.extra = spf.string.trim(chunking.extra);
+    if (!chunking.extra) {
+      // If the extra content was just whitespace, indicate parsing is done.
+      parts = chunking.complete;
+    } else {
+      // Otherwise, parse the extra content as a last-ditch effort.
+      var lengthBeforeLastDitch = chunking.complete.length;
+      spf.nav.request.handleChunkFromXHR_(url, options, chunking,
+                                          xhr, '', true);
+      // If the last-ditch effort parsed additional sections successfully,
+      // indicate parsing is done.  If not, then the extra content means
+      // the response is invalid JSON; defer to attempt a full parse with
+      // error handling below.
+      if (chunking.complete.length > lengthBeforeLastDitch) {
+        parts = chunking.complete;
+      }
+    }
+  }
+  if (!parts) {
     try {
       var parsed = spf.nav.response.parse(xhr.responseText);
       parts = parsed.parts;
@@ -273,7 +293,12 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
       return;
     }
     if (options.onPart && parts.length > 1) {
-      for (var i = 0; i < parts.length; i++) {
+      // Only execute callbacks for parts that have not already been processed.
+      // In case there is an edge case where some parts were parsed on-the-fly
+      // but the entire response needed a full parse here, start iteration where
+      // the chunk processing left off.  This is mostly a safety measure and
+      // the number of chunks processed here should be 0.
+      for (var i = chunking.complete.length; i < parts.length; i++) {
         spf.debug.debug('    parsed part', parts[i]);
         options.onPart(url, parts[i]);
       }

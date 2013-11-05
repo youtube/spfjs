@@ -749,7 +749,7 @@ spf.nav.cancelPrefetch = function(url) {
  *     be canceled.
  */
 spf.nav.cancelAllPrefetchesExcept = function(opt_skipUrl) {
-  spf.debug.debug('nav.cancelAllPrefetchesExcept');
+  spf.debug.debug('nav.cancelAllPrefetchesExcept', opt_skipUrl);
   var prefetches = spf.nav.prefetches_();
   for (var key in prefetches) {
     if (opt_skipUrl != key) {

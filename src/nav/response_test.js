@@ -4,6 +4,7 @@
 
 goog.require('spf');
 goog.require('spf.nav.response');
+goog.require('spf.string');
 
 
 describe('spf.nav.response', function() {
@@ -315,6 +316,75 @@ describe('spf.nav.response', function() {
       });
       var parseAsSingle = spf.bind(spf.nav.response.parse, null, str);
       expect(parseAsSingle).toThrow();
+    });
+
+    it('multipart last-ditch: part, delim', function() {
+      var str = JSON.stringify(obj1) +
+                delim;
+      var parseAsMultipartLastDitch = spf.bind(spf.nav.response.parse, null,
+                                               str, true, true);
+      expect(parseAsMultipartLastDitch).not.toThrow();
+      expect(parseAsMultipartLastDitch()).toEqual({
+        parts: [obj1],
+        extra: ''
+      });
+      var parseAsSingle = spf.bind(spf.nav.response.parse, null, str);
+      expect(parseAsSingle).toThrow();
+    });
+
+    it('multipart last-ditch: part, semi-delim', function() {
+      var str = JSON.stringify(obj1) +
+                spf.string.trim(delim);
+      var parseAsMultipartLastDitch = spf.bind(spf.nav.response.parse, null,
+                                               str, true, true);
+      expect(parseAsMultipartLastDitch).not.toThrow();
+      expect(parseAsMultipartLastDitch()).toEqual({
+        parts: [obj1],
+        extra: ''
+      });
+      var parseAsSingle = spf.bind(spf.nav.response.parse, null, str);
+      expect(parseAsSingle).toThrow();
+    });
+
+    it('multipart last-ditch: part, end', function() {
+      var str = JSON.stringify(obj1) +
+                end;
+      var parseAsMultipartLastDitch = spf.bind(spf.nav.response.parse, null,
+                                               str, true, true);
+      expect(parseAsMultipartLastDitch).not.toThrow();
+      expect(parseAsMultipartLastDitch()).toEqual({
+        parts: [obj1],
+        extra: ''
+      });
+      var parseAsSingle = spf.bind(spf.nav.response.parse, null, str);
+      expect(parseAsSingle).toThrow();
+    });
+
+    it('multipart last-ditch: part, semi-end', function() {
+      var str = JSON.stringify(obj1) +
+                spf.string.trim(end);
+      var parseAsMultipartLastDitch = spf.bind(spf.nav.response.parse, null,
+                                               str, true, true);
+      expect(parseAsMultipartLastDitch).not.toThrow();
+      expect(parseAsMultipartLastDitch()).toEqual({
+        parts: [obj1],
+        extra: ''
+      });
+      var parseAsSingle = spf.bind(spf.nav.response.parse, null, str);
+      expect(parseAsSingle).toThrow();
+    });
+
+    it('multipart last-ditch: part', function() {
+      var str = JSON.stringify(obj1);
+      var parseAsMultipartLastDitch = spf.bind(spf.nav.response.parse, null,
+                                               str, true, true);
+      expect(parseAsMultipartLastDitch).not.toThrow();
+      expect(parseAsMultipartLastDitch()).toEqual({
+        parts: [],
+        extra: str
+      });
+      var parseAsSingle = spf.bind(spf.nav.response.parse, null, str);
+      expect(parseAsSingle).not.toThrow();  // The chunk is valid JSON.
     });
 
   });

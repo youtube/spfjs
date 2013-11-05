@@ -26,17 +26,33 @@ goog.require('spf.tasks');
  * @param {string} text Text to parse.
  * @param {boolean=} opt_multipart Whether to attempt to parse the text for
  *     one or more multipart SPF response sections.
- * @throws {Error} If the {@code text} contains invalid JSON.
+ * @param {boolean=} opt_lastDitch Whether to parse the text as the final
+ *     one, potentially handling malformed but valid responses.  Requires
+ *     {@code opt_multipart} to be true.
+ * @throws {Error} If the {@code text} contains invalid JSON, or when
+ *     {@code opt_multipart} is true, if a section of a multipart response
+ *     contains invalid JSON.
  * @return {{parts: Array.<spf.SingleResponse>, extra: string}}
  */
-spf.nav.response.parse = function(text, opt_multipart) {
+spf.nav.response.parse = function(text, opt_multipart, opt_lastDitch) {
   if (opt_multipart) {
     var beginToken = spf.nav.response.Token.BEGIN;
     var delimToken = spf.nav.response.Token.DELIMITER;
     var endToken = spf.nav.response.Token.END;
+    var lastDitchHalfToken = '\r\n';
     var parts = [];
     var chunk;
     var start = 0;
+    // With a last-ditch effort, append the token CRLF chars to the text, which
+    // might allow parsing the final section of a response that ends with a
+    // closing bracket but not the CRLF required of a well-formed END token.
+    // As a side-effect, this will also successfully parse a response section
+    // that ends with a comma (because the CRLF will create a well-formed
+    // DELIMITER token).  If the last character is not a comma or closing
+    // bracket, this last-ditch effort will have no effect.
+    if (opt_lastDitch) {
+      text += lastDitchHalfToken;
+    }
     var finish = text.indexOf(beginToken, start);
     if (finish > -1) {
       start = finish + beginToken.length;
@@ -59,6 +75,9 @@ spf.nav.response.parse = function(text, opt_multipart) {
     var extra = '';
     if (text.length > start) {
       extra = text.substring(start);
+      if (opt_lastDitch && spf.string.endsWith(extra, lastDitchHalfToken)) {
+        extra = extra.substring(0, extra.length - lastDitchHalfToken.length);
+      }
     }
     return {
       parts: /** @type {Array.<spf.SingleResponse>} */(parts),
