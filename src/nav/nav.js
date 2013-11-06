@@ -27,6 +27,10 @@ spf.nav.init = function() {
   spf.history.init(spf.nav.handleHistory_);
   if (!spf.state.get('nav-init') && document.addEventListener) {
     document.addEventListener('click', spf.nav.handleClick_, false);
+    if (spf.config.get('prefetch-on-mousedown')) {
+      document.addEventListener('mousedown', spf.nav.handleMouseDown_, false);
+      spf.state.set('prefetch-listener', spf.nav.handleMouseDown_);
+    }
     spf.state.set('nav-init', true);
     spf.state.set('nav-counter', 0);
     spf.state.set('nav-time', spf.now());
@@ -44,6 +48,11 @@ spf.nav.dispose = function() {
     if (document.removeEventListener) {
       document.removeEventListener('click', /** @type {function(Event)} */ (
           spf.state.get('nav-listener')), false);
+      if (spf.config.get('prefetch-on-mousedown')) {
+          document.removeEventListener('mousedown',
+              /** @type {function(Event)} */ (
+                  spf.state.get('prefetch-listener')), false);
+      }
     }
     spf.state.set('nav-init', false);
     spf.state.set('nav-counter', null);
@@ -55,22 +64,22 @@ spf.nav.dispose = function() {
 
 
 /**
- * Handles page clicks on SPF links and adds pushState history entries for them.
+ *  Given a mouse event, try to get the corresponding navigation URL.
  *
  * @param {Event} evt The click event.
+ * @return {?string} Navigation url of event if applicable.
  * @private
  */
-spf.nav.handleClick_ = function(evt) {
-  spf.debug.debug('nav.handleClick ', 'evt=', evt);
+spf.nav.getEventURL_ = function(evt) {
   // Ignore clicks with modifier keys.
   if (evt.metaKey || evt.altKey || evt.ctrlKey || evt.shiftKey) {
     spf.debug.debug('    ignoring click with modifier key');
-    return;
+    return null;
   }
   // Ignore clicks with alternate buttons (left = 0, middle = 1, right = 2).
   if (evt.button > 0) {
     spf.debug.debug('    ignoring click with alternate button');
-    return;
+    return null;
   }
   // Ignore clicks on targets without the link class or not within
   // a container with the link class.
@@ -80,7 +89,7 @@ spf.nav.handleClick_ = function(evt) {
   });
   if (!linkEl) {
     spf.debug.debug('    ignoring click without link class');
-    return;
+    return null;
   }
   // Ignore clicks on targets with the nolink class or within
   // a container with the nolink class.
@@ -91,7 +100,7 @@ spf.nav.handleClick_ = function(evt) {
     });
     if (nolinkEl) {
       spf.debug.debug('    ignoring click with nolink class');
-      return;
+      return null;
     }
   }
   // Adjust the target element to be the one with an href.
@@ -102,10 +111,23 @@ spf.nav.handleClick_ = function(evt) {
   // Ignore clicks on targets without an href.
   if (!target) {
     spf.debug.debug('    ignoring click without href');
-    return;
+    return null;
   }
+  return target.href;
+};
+
+
+/**
+ * Handles page click events on SPF links, adds pushState history entries for
+ * them, and navigates.
+ *
+ * @param {Event} evt The click event.
+ * @private
+ */
+spf.nav.handleClick_ = function(evt) {
+  spf.debug.debug('nav.handleClick ', 'evt=', evt);
+  var url = spf.nav.getEventURL_(evt);
   // Ignore clicks to the same page or to empty URLs.
-  var url = target.href;
   if (!url || url == window.location.href) {
     spf.debug.debug('    ignoring click to same page');
     // Prevent the default browser navigation to avoid hard refreshes.
@@ -116,6 +138,26 @@ spf.nav.handleClick_ = function(evt) {
   spf.nav.navigate_(url);
   // Prevent the default browser navigation to avoid hard refreshes.
   evt.preventDefault();
+};
+
+
+/**
+ * Handles page mousedown events on SPF links and prefetches them if possible.
+ *
+ * @param {Event} evt The mousedown event.
+ * @private
+ */
+spf.nav.handleMouseDown_ = function(evt) {
+  spf.debug.debug('nav.handleMouseDown ', 'evt=', evt);
+  var url = spf.nav.getEventURL_(evt);
+  // Ignore clicks to the same page or to empty URLs.
+  if (!url || url == window.location.href) {
+    return;
+  }
+  // Allow other mousedown handlers to run before issuing a prefetch request.
+  setTimeout(function() {
+    spf.nav.prefetch(/** @type {string} */(url));
+  }, 0);
 };
 
 

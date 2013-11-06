@@ -133,6 +133,7 @@ spf.config.defaults = {
   'navigate-received-callback': null,
   'navigate-processed-callback': null,
   'navigate-error-callback': null,
+  'prefetch-on-mousedown': false,
   'process-async': false,
   'request-timeout': 0,  // No request timeout.
   'script-loading-callback': null,
