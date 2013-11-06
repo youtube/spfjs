@@ -127,6 +127,10 @@ spf.nav.getEventURL_ = function(evt) {
 spf.nav.handleClick_ = function(evt) {
   spf.debug.debug('nav.handleClick ', 'evt=', evt);
   var url = spf.nav.getEventURL_(evt);
+  if (url === null) {
+    // No relevant URL for event target.
+    return;
+  }
   // Ignore clicks to the same page or to empty URLs.
   if (!url || url == window.location.href) {
     spf.debug.debug('    ignoring click to same page');
