@@ -286,6 +286,7 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
   spf.state.set('nav-request', prefetchXhr);
   // Make sure there is no current nav promotion set.
   spf.state.set('nav-promote', null);
+  spf.state.set('nav-promote-time', null);
 
   // Check the prefetch XHR.  If it is not done, promote the prefetch
   // to navigate.  Otherwise, navigate immediately.
@@ -321,6 +322,7 @@ spf.nav.navigatePromotePrefetch_ = function(url, options, referer, history,
   var preprocessKey = 'preprocess ' + absolute;
   var promoteKey = 'promote ' + absolute;
   spf.state.set('nav-promote', url);
+  spf.state.set('nav-promote-time', spf.now());
   spf.tasks.cancel(preprocessKey);
   spf.tasks.run(promoteKey, true);
 
@@ -357,7 +359,6 @@ spf.nav.navigateSendRequest_ = function(url, options, referer, history,
   var handleSuccess = spf.bind(spf.nav.handleNavigateSuccess_, null,
                                options, referer, reverse);
 
-  var startTime = /** @type {number} */ (spf.state.get('nav-time'));
   var xhr = spf.nav.request.send(url, {
     method: options['method'],
     onPart: handlePart,
@@ -365,8 +366,7 @@ spf.nav.navigateSendRequest_ = function(url, options, referer, history,
     onSuccess: handleSuccess,
     postData: options['postData'],
     type: 'navigate',
-    referer: referer,
-    startTime: startTime
+    referer: referer
   });
   spf.state.set('nav-request', xhr);
 
@@ -482,6 +482,14 @@ spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
 spf.nav.handleNavigateSuccess_ = function(options, referer, reverse, url,
                                           response) {
   spf.state.set('nav-request', null);
+
+  // If this is a navigation from a promotion, manually set the
+  // navigation start time.
+  if (spf.state.get('nav-promote') == url) {
+    var timing = response['timing'] || {};
+    timing['navigationStart'] = spf.state.get('nav-promote-time');
+  }
+
   // Execute the "navigation received" callback.  If the callback
   // explicitly cancels (by returning false), cancel this navigation and
   // redirect.
@@ -516,6 +524,7 @@ spf.nav.handleNavigateSuccess_ = function(options, referer, reverse, url,
     if (!spf.nav.callback(options['onSuccess'], url, response)) {
       return;
     }
+
     spf.nav.callback('navigate-processed-callback', url, response);
   }, reverse);
 };

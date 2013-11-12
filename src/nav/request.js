@@ -50,8 +50,7 @@ goog.require('spf.string');
  *                   (spf.SingleResponse|spf.MultipartResponse))|undefined),
  *   postData: spf.net.xhr.PostData,
  *   referer: (string|null|undefined),
- *   type: (string|undefined),
- *   startTime: (number|undefined)
+ *   type: (string|undefined)
  * }}
  */
 spf.nav.request.Options;
@@ -83,7 +82,7 @@ spf.nav.request.send = function(url, opt_options) {
   // Record a the time before sending the request or loading from cache.
   // The startTime is consistent with W3C PerformanceResourceTiming for XHRs.
   var timing = {};
-  timing['startTime'] = options.startTime || spf.now();
+  timing['startTime'] = spf.now();
   // Try to find a cached response for the request before sending a new XHR.
   // Record fetchStart time before loading from cache. If no cached response
   // is found, this value will be replaced with the one provided by the XHR.
