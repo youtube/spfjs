@@ -64,6 +64,54 @@ spf.nav.dispose = function() {
 
 
 /**
+ * Walks up the DOM hierarchy, returning the first ancestor that has the
+ * link class.
+ *
+ * @param {Node|EventTarget} element The DOM node to start with.
+ * @return {Node} DOM node with the link class or null if not found.
+ * @private
+ */
+spf.nav.getAncestorWithLinkClass_ = function(element) {
+  return spf.dom.getAncestor(element, function(node) {
+    return spf.dom.classlist.contains(node, /** @type {string} */ (
+        spf.config.get('link-class')));
+  });
+};
+
+
+/**
+ * Walks up the DOM hierarchy, returning the first ancestor that has the
+ * nolink class.
+ *
+ * @param {Node|EventTarget} element The DOM node to start with.
+ * @return {Node} DOM node with the nolink class or null if not found.
+ * @private
+ */
+spf.nav.getAncestorWithNoLinkClass_ = function(element) {
+  return spf.dom.getAncestor(element, function(node) {
+    return spf.dom.classlist.contains(node, /** @type {string} */ (
+        spf.config.get('nolink-class')));
+  });
+};
+
+
+/**
+ * Walks up the DOM hierarchy, returning the first ancestor with a href.
+ *
+ * @param {Node|EventTarget} element The DOM node to start with.
+ * @param {Node} parent The DOM node to end with.
+ * @return {Node} DOM node with a href or null if not found.
+ * @private
+ */
+spf.nav.getAncestorWithHref_ = function(element, parent) {
+  return spf.dom.getAncestor(element, function(node) {
+    // Images in IE10 can have an href.
+    return node.href && node.tagName.toLowerCase() != 'img';
+  }, parent);
+};
+
+
+/**
  *  Given a mouse event, try to get the corresponding navigation URL.
  *
  * @param {Event} evt The click event.
@@ -83,10 +131,7 @@ spf.nav.getEventURL_ = function(evt) {
   }
   // Ignore clicks on targets without the link class or not within
   // a container with the link class.
-  var linkEl = spf.dom.getAncestor(evt.target, function(node) {
-    return spf.dom.classlist.contains(node, /** @type {string} */ (
-        spf.config.get('link-class')));
-  });
+  var linkEl = spf.nav.getAncestorWithLinkClass_(evt.target);
   if (!linkEl) {
     spf.debug.debug('    ignoring click without link class');
     return null;
@@ -94,20 +139,13 @@ spf.nav.getEventURL_ = function(evt) {
   // Ignore clicks on targets with the nolink class or within
   // a container with the nolink class.
   if (spf.config.get('nolink-class')) {
-    var nolinkEl = spf.dom.getAncestor(evt.target, function(node) {
-      return spf.dom.classlist.contains(node, /** @type {string} */ (
-          spf.config.get('nolink-class')));
-    });
+    var nolinkEl = spf.nav.getAncestorWithNoLinkClass_(evt.target);
     if (nolinkEl) {
       spf.debug.debug('    ignoring click with nolink class');
       return null;
     }
   }
-  // Adjust the target element to be the one with an href.
-  var target = spf.dom.getAncestor(evt.target, function(node) {
-    // Images in IE10 can have an href.
-    return node.href && node.tagName.toLowerCase() != 'img';
-  }, linkEl);
+  var target = spf.nav.getAncestorWithHref_(evt.target, linkEl);
   // Ignore clicks on targets without an href.
   if (!target) {
     spf.debug.debug('    ignoring click without href');
