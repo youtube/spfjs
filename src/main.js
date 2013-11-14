@@ -49,6 +49,34 @@ spf.main.dispose = function() {
 };
 
 
+/**
+ * Marks existing scripts and styles as loaded, once during initial code
+ * execution and when the document is ready to catch any resources in the
+ * page after SPF is included.
+ * @private
+ */
+spf.main.mark_ = function() {
+  spf.net.scripts.mark();
+  spf.net.styles.mark();
+  if (document.readyState == 'complete') {
+    // Since IE 8+ is supported for common library functions such as script
+    // and style loading, use both standard and legacy event handlers to mark
+    // existing resources.
+    if (document.removeEventListener) {
+      document.removeEventListener('DOMContentLoaded', spf.main.mark_, false);
+    } else if (document.detachEvent) {
+      document.detachEvent('onreadystatechange', spf.main.mark_);
+    }
+  }
+};
+if (document.addEventListener) {
+  document.addEventListener('DOMContentLoaded', spf.main.mark_, false);
+} else if (document.attachEvent) {
+  document.attachEvent('onreadystatechange', spf.main.mark_);
+}
+spf.main.mark_();
+
+
 // Create the API by exporting aliased functions.
 // Core API functions are available on the top-level namespace.
 // Extra API functions are available on second-level namespaces.

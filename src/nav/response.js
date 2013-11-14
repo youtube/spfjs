@@ -11,12 +11,12 @@ goog.require('spf.config');
 goog.require('spf.debug');
 goog.require('spf.dom');
 goog.require('spf.dom.classlist');
-goog.require('spf.nav.url');
 goog.require('spf.net.scripts');
 goog.require('spf.net.styles');
 goog.require('spf.state');
 goog.require('spf.string');
 goog.require('spf.tasks');
+goog.require('spf.url');
 
 
 /**
@@ -115,7 +115,7 @@ spf.nav.response.process = function(url, response, opt_callback, opt_reverse) {
   spf.debug.info('nav.response.process ', response, opt_reverse);
 
   // Convert the URL to absolute, to be used for finding the task queue.
-  var key = 'process ' + spf.nav.url.absolute(url);
+  var key = 'process ' + spf.url.absolute(url);
   var sync = !spf.config.get('process-async');
 
   // NOTE: when adding tasks to a queue, use bind to avoid name/scope errors.
@@ -333,7 +333,7 @@ spf.nav.response.process = function(url, response, opt_callback, opt_reverse) {
 spf.nav.response.preprocess = function(url, response, opt_callback) {
   spf.debug.info('nav.response.preprocess ', response);
   // Convert the URL to absolute, to be used for finding the task queue.
-  var key = 'preprocess ' + spf.nav.url.absolute(url);
+  var key = 'preprocess ' + spf.url.absolute(url);
 
   // NOTE: when adding tasks to a queue, use bind to avoid name/scope errors.
   var fn;

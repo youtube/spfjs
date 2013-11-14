@@ -3,9 +3,8 @@ $def with (content, is_debug, is_dev)
 <html>
 <head>
   <title>$content.title</title>
-  <!-- Pre-fill hashcodes so SPF won't load resources twice -->
   $ demo_css = "/static/demo.css"
-  <link id="css-$hashcode(demo_css)" rel="stylesheet" href="$demo_css" data-loaded="true">
+  <link rel="stylesheet" href="$demo_css">
   $:content.stylesheet
 </head>
 <body>
@@ -35,16 +34,14 @@ $def with (content, is_debug, is_dev)
   <div id="content" class="spf-animate">
     $:content
   </div>
-  <!-- Pre-fill hashcodes so SPF won't load resources twice -->
   $if is_dev:
     $ spf_js = "/static/dev-spf-bundle.js"
   $elif is_debug:
     $ spf_js = "/static/debug-spf.js"
   $else:
     $ spf_js = "/static/spf.js"
-  <script id="js-$hashcode(spf_js)" src="$spf_js" data-loaded="true"></script>
-  $ demo_js = "/static/demo.js"
-  <script id="js-$hashcode(demo_js)" src="$demo_js" data-loaded="true"></script>
+  <script src="$spf_js"></script>
+  <script src="/static/demo.js"></script>
   <script>
     demo.init();
   </script>

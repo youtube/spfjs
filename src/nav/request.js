@@ -11,9 +11,9 @@ goog.require('spf.cache');
 goog.require('spf.config');
 goog.require('spf.debug');
 goog.require('spf.nav.response');
-goog.require('spf.nav.url');
 goog.require('spf.net.xhr');
 goog.require('spf.string');
+goog.require('spf.url');
 
 
 /**
@@ -74,10 +74,10 @@ spf.nav.request.send = function(url, opt_options) {
   options.method = ((options.method || 'GET') + '').toUpperCase();
   options.type = options.type || 'request';
   // Convert the URL to absolute, to be used for caching the response.
-  var absoluteUrl = spf.nav.url.absolute(url);
+  var absoluteUrl = spf.url.absolute(url);
   spf.debug.debug('    absolute url ', absoluteUrl);
   // Add the SPF identifier, to be used for sending the request.
-  var requestUrl = spf.nav.url.identify(absoluteUrl, options.type);
+  var requestUrl = spf.url.identify(absoluteUrl, options.type);
   spf.debug.debug('    identified url ', requestUrl);
   // Record a the time before sending the request or loading from cache.
   // The startTime is consistent with W3C PerformanceResourceTiming for XHRs.
@@ -336,7 +336,7 @@ spf.nav.request.done_ = function(url, options, timing, response, cache) {
     // Cache the response for future requests.
     // Use the absolute URL without identifier to allow cached responses
     // from prefetching to apply to navigation.
-    var absoluteUrl = spf.nav.url.absolute(url);
+    var absoluteUrl = spf.url.absolute(url);
     spf.cache.set(absoluteUrl, response,  /** @type {number} */ (
         spf.config.get('cache-lifetime')));
   }

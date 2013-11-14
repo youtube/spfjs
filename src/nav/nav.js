@@ -15,9 +15,9 @@ goog.require('spf.dom.classlist');
 goog.require('spf.history');
 goog.require('spf.nav.request');
 goog.require('spf.nav.response');
-goog.require('spf.nav.url');
 goog.require('spf.state');
 goog.require('spf.tasks');
+goog.require('spf.url');
 
 
 /**
@@ -276,7 +276,7 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
   // If the navigation one is a completed single response, the task will be
   // canceled in spf.nav.navigatePromotePrefetch_.  If it is an ongoing
   // multipart response, allow it to continue processing until the completed.
-  var preprocessKey = 'preprocess ' + spf.nav.url.absolute(url);
+  var preprocessKey = 'preprocess ' + spf.url.absolute(url);
   spf.tasks.cancelAllExcept('preprocess', preprocessKey);
 
 
@@ -318,7 +318,7 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
 spf.nav.navigatePromotePrefetch_ = function(url, options, referer, history,
                                             reverse) {
   spf.debug.debug('nav.navigatePromotePrefetch_ ', url);
-  var absolute = spf.nav.url.absolute(url);
+  var absolute = spf.url.absolute(url);
   var preprocessKey = 'preprocess ' + absolute;
   var promoteKey = 'promote ' + absolute;
   spf.state.set('nav-promote', url);
@@ -692,7 +692,7 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, url, partial) {
     // prefetch promotion.
     var fn = spf.bind(spf.nav.handleNavigatePart_, null,
                       options, false, url, partial);
-    var promoteKey = 'promote ' + spf.nav.url.absolute(url);
+    var promoteKey = 'promote ' + spf.url.absolute(url);
     spf.tasks.add(promoteKey, fn);
     // If the prefetch has been promoted, run the promotion task after
     // adding it and do not perform any preprocessing.
@@ -743,7 +743,7 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, url, response) {
     }
     var fn = spf.bind(spf.nav.handleNavigateSuccess_, null,
                       options, referer, false, url, response);
-    var promoteKey = 'promote ' + spf.nav.url.absolute(url);
+    var promoteKey = 'promote ' + spf.url.absolute(url);
     spf.tasks.add(promoteKey, fn);
     // If the prefetch has been promoted, run the promotion task after
     // adding it and do not perform any preprocessing.
@@ -775,7 +775,7 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, url, response) {
  */
 spf.nav.addPrefetch = function(url, xhr) {
   spf.debug.debug('nav.addPrefetch ', url, xhr);
-  var absoluteUrl = spf.nav.url.absolute(url);
+  var absoluteUrl = spf.url.absolute(url);
   var prefetches = spf.nav.prefetches_();
   prefetches[absoluteUrl] = xhr;
 };
@@ -787,7 +787,7 @@ spf.nav.addPrefetch = function(url, xhr) {
  */
 spf.nav.cancelPrefetch = function(url) {
   spf.debug.debug('nav.cancelPrefetch ', url);
-  var absoluteUrl = spf.nav.url.absolute(url);
+  var absoluteUrl = spf.url.absolute(url);
   var prefetches = spf.nav.prefetches_();
   var prefetchXhr = prefetches[absoluteUrl];
   if (prefetchXhr) {

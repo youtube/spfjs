@@ -14,9 +14,8 @@ $def _stylesheet():
     .page .sun img { height: 3em;
                      vertical-align: middle; }
   </style>
-  <!-- Pre-fill hashcodes so SPF won't load resources twice -->
   $ page_css = "/static/demo-page.css"
-  <link id="css-$hashcode(page_css)" rel="stylesheet" href="$page_css" data-loaded="true">
+  <link rel="stylesheet" href="$page_css">
 
 $def _attributes():
   { "nav": { "class": "page$page_num" } }
@@ -29,9 +28,7 @@ $var attributes: $:_attributes()
 <div id="page" class="pane page">
   <h1>Demo Page $page_num</h1>
   <!-- Demonstrate scripts in the middle of a content fragment -->
-  <!-- Pre-fill the hashcode and data attribute so SPF won't load the script twice -->
-  $ page_js = "/static/demo-page.js"
-  <script id="js-$hashcode(page_js)" src="$page_js" data-loaded="true"></script>
+  <script src="/static/demo-page.js"></script>
   <script>
     demo.log('page $page_num: embedded javascript')
     demo.log('external js is loaded = ' + !!(window.demo && demo.page && demo.page.loaded));

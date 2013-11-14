@@ -11,6 +11,14 @@ goog.require('spf.string');
 
 
 /**
+ * Marks all existing stylesheet URL elements in the document as loaded.
+ */
+spf.net.styles.mark = function() {
+  spf.net.resources.mark('css');
+};
+
+
+/**
  * Evaluates a set of styles by dynamically creating an element and appending it
  * to the document.
  *

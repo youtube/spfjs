@@ -5,9 +5,9 @@
 goog.require('spf');
 goog.require('spf.cache');
 goog.require('spf.nav.request');
-goog.require('spf.nav.url');
 goog.require('spf.net.xhr');
 goog.require('spf.string');
+goog.require('spf.url');
 
 
 describe('spf.nav.request', function() {
@@ -103,8 +103,8 @@ describe('spf.nav.request', function() {
     it('cache: single', function() {
       var url = '/page';
       var res = {'foo': 'FOO', 'bar': 'BAR'};
-      var absoluteUrl = spf.nav.url.absolute(url);
-      var requestUrl = spf.nav.url.identify(absoluteUrl, options.type);
+      var absoluteUrl = spf.url.absolute(url);
+      var requestUrl = spf.url.identify(absoluteUrl, options.type);
       spf.cache.set(requestUrl, res);
 
       spf.nav.request.send(url, options);
@@ -127,8 +127,8 @@ describe('spf.nav.request', function() {
         parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
         type: 'multipart'
       };
-      var absoluteUrl = spf.nav.url.absolute(url);
-      var requestUrl = spf.nav.url.identify(absoluteUrl, options.type);
+      var absoluteUrl = spf.url.absolute(url);
+      var requestUrl = spf.url.identify(absoluteUrl, options.type);
       spf.cache.set(requestUrl, res);
 
       spf.nav.request.send(url, options);

@@ -16,9 +16,7 @@ $def _attributes():
   { "nav": { "class": "test" } }
 
 $def _javascript():
-  <!-- Pre-fill the hashcode and data attribute so SPF won't load the script twice -->
-  $ test_js = "/static/demo-chunked.js"
-  <script id="js-$hashcode(test_js)" src="$test_js" data-loaded="true"></script>
+  <script src="/static/demo-chunked.js"></script>
   <script>
     demo.chunked.check();
   </script>

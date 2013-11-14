@@ -15,6 +15,29 @@ goog.require('spf.dom.dataset');
 goog.require('spf.pubsub');
 goog.require('spf.string');
 goog.require('spf.tasks');
+goog.require('spf.url');
+
+
+/**
+ * Marks all existing resource URL element in the document as loaded.  Can be
+ * used to mark scripts or styles.  The id of the element will be set and used
+ * to identify the script or style and prevent reloading the resource.  Elements
+ * with pre-existing ids will be ignored.
+ *
+ * @param {string} type Type of the resource, must be either "js" or "css".
+ */
+spf.net.resources.mark = function(type) {
+  var selector = (type == 'js') ? 'script[src]' : 'link[rel~="stylesheet"]';
+  var els = spf.dom.query(selector);
+  for (var i = 0, l = els.length; i < l; i++) {
+    if (!els[i].id) {
+      var url = (type == 'js') ? els[i].src : els[i].href;
+      var id = spf.net.resources.id_(type, url);
+      els[i].id = id;
+      spf.dom.dataset.set(els[i], 'loaded', 'true');
+    }
+  }
+};
 
 
 /**
@@ -50,7 +73,7 @@ spf.net.resources.load = function(type, url, opt_callback, opt_name) {
   if ((type != 'js' && type != 'css') || !url) {
     return null;
   }
-  var id = type + '-' + spf.string.hashCode(url);
+  var id = spf.net.resources.id_(type, url);
   var cls = opt_name || '';
   var el = document.getElementById(id);
   var isLoaded = el && spf.dom.dataset.get(el, 'loaded');
@@ -174,7 +197,7 @@ spf.net.resources.unload = function(type, url) {
   if (type != 'js' && type != 'css') {
     return;
   }
-  var id = type + '-' + spf.string.hashCode(url);
+  var id = spf.net.resources.id_(type, url);
   var el = document.getElementById(id);
   if (el) {
     spf.net.resources.unload_([el]);
@@ -207,10 +230,9 @@ spf.net.resources.ignore = function(type, url) {
   if (type != 'js' && type != 'css') {
     return;
   }
-  var id = type + '-' + spf.string.hashCode(url);
+  var id = spf.net.resources.id_(type, url);
   spf.pubsub.clear(id);
 };
-
 
 /**
  * Prefetches a resource URL; the resource will be requested but not loaded.
@@ -224,7 +246,7 @@ spf.net.resources.prefetch = function(type, url) {
   if (type != 'js' && type != 'css') {
     return;
   }
-  var id = type + '-' + spf.string.hashCode(url);
+  var id = spf.net.resources.id_(type, url);
   var el = document.getElementById(id);
   // If the resource is already loaded, return.
   if (el) {
@@ -289,4 +311,18 @@ spf.net.resources.loadResourceInIframe_ = function(iframeEl, type, url, id) {
     // Stylesheets can be prefetched in the same way as loaded.
     spf.net.resources.load_(type, url, id, '', null, iframeDoc);
   }
+};
+
+
+/**
+ * @param {string} type Type of the resource, must be either "js" or "css".
+ * @param {string} url Url of the resource.
+ * @return {string} The unique id of the resource.
+ * @private
+ */
+spf.net.resources.id_ = function(type, url) {
+  var absolute = spf.url.absolute(url);
+  var unprotocol = spf.url.unprotocol(absolute);
+  var hash = spf.string.hashCode(unprotocol);
+  return type + '-' + hash;
 };

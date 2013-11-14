@@ -23,6 +23,15 @@ goog.provide('spf.net.scripts');
 goog.require('spf.net.resources');
 
 
+
+/**
+ * Marks all existing script URL elements in the document as loaded.
+ */
+spf.net.scripts.mark = function() {
+  spf.net.resources.mark('js');
+};
+
+
 /**
  * Evaluates a script text by dynamically creating an element and appending it
  * to the document.  A callback can be specified to execute once the script
@@ -116,7 +125,6 @@ spf.net.scripts.ignore = function(url) {
 spf.net.scripts.prefetch = function(url) {
   spf.net.resources.prefetch('js', url);
 };
-
 
 
 /**
