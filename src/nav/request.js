@@ -73,11 +73,8 @@ spf.nav.request.send = function(url, opt_options) {
   var options = opt_options || /** @type {spf.nav.request.Options} */ ({});
   options.method = ((options.method || 'GET') + '').toUpperCase();
   options.type = options.type || 'request';
-  // Convert the URL to absolute, to be used for caching the response.
-  var absoluteUrl = spf.url.absolute(url);
-  spf.debug.debug('    absolute url ', absoluteUrl);
   // Add the SPF identifier, to be used for sending the request.
-  var requestUrl = spf.url.identify(absoluteUrl, options.type);
+  var requestUrl = spf.url.identify(url, options.type);
   spf.debug.debug('    identified url ', requestUrl);
   // Record a the time before sending the request or loading from cache.
   // The startTime is consistent with W3C PerformanceResourceTiming for XHRs.
@@ -87,10 +84,11 @@ spf.nav.request.send = function(url, opt_options) {
   // Record fetchStart time before loading from cache. If no cached response
   // is found, this value will be replaced with the one provided by the XHR.
   timing['fetchStart'] = timing['startTime'];
+  var cacheKey = spf.nav.request.cacheKey_(url, options.type, false);
   // Use the absolute URL without identifier to allow cached responses
   // from prefetching to apply to navigation.
   var cached = /** @type {spf.SingleResponse|spf.MultipartResponse} */ (
-      spf.cache.get(absoluteUrl));
+      spf.cache.get(cacheKey));
   if (cached) {
     // To ensure a similar execution pattern as an XHR, ensure the
     // cache response is returned asynchronously.
@@ -150,13 +148,23 @@ spf.nav.request.send = function(url, opt_options) {
 spf.nav.request.handleResponseFromCache_ = function(url, options, timing,
                                                     response) {
   spf.debug.debug('nav.request.handleResponseFromCache_ ', url, response);
+  var updateCache = false;
   // Record the timing information.
   // Record responseStart and responseEnd times after loading from cache.
   timing['responseStart'] = timing['responseEnd'] = spf.now();
   // Also record navigationStart for navigate requests, consistent with
   // W3C PerformanceTiming for page loads.
-  if (options.type == 'navigate') {
+  if (options.type && spf.string.startsWith(options.type, 'navigate')) {
     timing['navigationStart'] = timing['startTime'];
+    // If this cached response was a navigate and a unified cache is not being
+    // used, then it was from prefetch-based caching and is only eligible to
+    // be used once.
+    if (!spf.config.get('cache-unified')) {
+      var cacheKey = spf.nav.request.cacheKey_(url, options.type, false);
+      spf.cache.remove(cacheKey);
+      // Ensure the response will be stored in the history-based caching.
+      updateCache = true;
+    }
   }
   if (options.onPart && response['type'] == 'multipart') {
     var parts = response['parts'];
@@ -164,7 +172,7 @@ spf.nav.request.handleResponseFromCache_ = function(url, options, timing,
       options.onPart(url, parts[i]);
     }
   }
-  spf.nav.request.done_(url, options, timing, response, false);
+  spf.nav.request.done_(url, options, timing, response, updateCache);
 };
 
 
@@ -334,15 +342,50 @@ spf.nav.request.done_ = function(url, options, timing, response, cache) {
   spf.debug.debug('nav.request.done_', url, options, timing, response, cache);
   if (cache && options.method != 'POST') {
     // Cache the response for future requests.
-    // Use the absolute URL without identifier to allow cached responses
-    // from prefetching to apply to navigation.
-    var absoluteUrl = spf.url.absolute(url);
-    spf.cache.set(absoluteUrl, response,  /** @type {number} */ (
-        spf.config.get('cache-lifetime')));
+    var cacheKey = spf.nav.request.cacheKey_(url, options.type, true);
+    if (cacheKey) {
+      spf.cache.set(cacheKey, response,  /** @type {number} */ (
+          spf.config.get('cache-lifetime')));
+    }
   }
   // Set the timing for the response (avoid caching stale timing values).
   response['timing'] = timing;
   if (options.onSuccess) {
     options.onSuccess(url, response);
   }
+};
+
+
+/**
+ * @param {string} url The requested URL, without the SPF identifier.
+ * @param {string=} opt_type Type of request (e.g. "navigate", "load", etc).
+ * @param {boolean=} opt_set Whether getting or setting the cache.
+ * @return {string} The cache key for the URL.
+ * @private
+ */
+spf.nav.request.cacheKey_ = function(url, opt_type, opt_set) {
+  // Use the absolute URL without identifier to ensure consistent caching.
+  var absoluteUrl = spf.url.absolute(url);
+  var cacheKey;
+  if (spf.config.get('cache-unified')) {
+    // If using a unified cache, the key is just the URL to allow cached
+    // responses from prefetching to apply to navigation, etc.  This also
+    // means that load requests are cached unless they are sent via POST.
+    cacheKey = absoluteUrl;
+  } else {
+    // Otherwise, caching is split between history and prefetching by using
+    // a key prefix.  Regular non-history navigation is only eligible for
+    // prefetch-based caching.
+    if (opt_type == 'navigate-back' || opt_type == 'navigate-forward') {
+      // For back/forward, get and set to history cache.
+      cacheKey = 'history ' + absoluteUrl;
+    } else if (opt_type == 'navigate') {
+      // For navigation, get from prefetch cache, but set to history cache.
+      cacheKey = (opt_set ? 'history ' : 'prefetch ') + absoluteUrl;
+    } else if (opt_type == 'prefetch') {
+      // For prefetching, never get, only set to prefetch cache.
+      cacheKey = opt_set ? ('prefetch ' + absoluteUrl) : '';
+    }
+  }
+  return cacheKey || '';
 };

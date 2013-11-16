@@ -403,7 +403,7 @@ spf.nav.navigateSendRequest_ = function(url, options, referer, history,
     onError: handleError,
     onSuccess: handleSuccess,
     postData: options['postData'],
-    type: 'navigate',
+    type: 'navigate' + (history ? (reverse ? '-back' : '-forward') : ''),
     referer: referer
   });
   spf.state.set('nav-request', xhr);

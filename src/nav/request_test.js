@@ -71,7 +71,8 @@ describe('spf.nav.request', function() {
     options = {
       onPart: jasmine.createSpy('onPart'),
       onError: jasmine.createSpy('onError'),
-      onSuccess: jasmine.createSpy('onSuccess')
+      onSuccess: jasmine.createSpy('onSuccess'),
+      type: 'navigate'
     };
     this.addMatchers({
       toEqualObjectIgnoringKeys: function(expected, ignore) {
@@ -103,10 +104,11 @@ describe('spf.nav.request', function() {
     it('cache: single', function() {
       var url = '/page';
       var res = {'foo': 'FOO', 'bar': 'BAR'};
-      var absoluteUrl = spf.url.absolute(url);
-      var requestUrl = spf.url.identify(absoluteUrl, options.type);
-      spf.cache.set(requestUrl, res);
 
+      var cacheKey = 'prefetch ' + spf.url.absolute(url);
+      spf.cache.set(cacheKey, res);
+
+      var requestUrl = spf.url.identify(url, options.type);
       spf.nav.request.send(url, options);
 
       // Simulate waiting for the response.
@@ -127,10 +129,11 @@ describe('spf.nav.request', function() {
         parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
         type: 'multipart'
       };
-      var absoluteUrl = spf.url.absolute(url);
-      var requestUrl = spf.url.identify(absoluteUrl, options.type);
-      spf.cache.set(requestUrl, res);
 
+      var cacheKey = 'prefetch ' + spf.url.absolute(url);
+      spf.cache.set(cacheKey, res);
+
+      var requestUrl = spf.url.identify(url, options.type);
       spf.nav.request.send(url, options);
 
       // Simulate waiting for the response.
