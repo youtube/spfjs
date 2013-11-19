@@ -293,7 +293,7 @@ spf.net.resources.prefetch = function(type, url) {
 spf.net.resources.loadResourceInIframe_ = function(iframeEl, type, url, id) {
   var iframeDoc = iframeEl.contentWindow.document;
   if (type == 'js') {
-    if (spf.dom.IS_IE) {
+    if (spf.net.resources.IS_IE) {
       // IE needs a <script> in order to complete the request, but
       // fortunately will not execute it unless in the DOM.  Attempting to
       // use an <object> like other browsers will cause the download to hang.
@@ -326,3 +326,11 @@ spf.net.resources.id_ = function(type, url) {
   var hash = spf.string.hashCode(unprotocol);
   return type + '-' + hash;
 };
+
+
+/**
+ * @type {boolean} Whether the browser is Internet Explorer; valid for
+ * MSIE 8+ aka Trident 4+.
+ * @const
+ */
+spf.net.resources.IS_IE = spf.string.contains(navigator.userAgent, ' Trident/');

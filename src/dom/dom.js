@@ -175,10 +175,3 @@ spf.dom.createIframe = function(opt_id, opt_document, opt_callback) {
   doc.body.appendChild(iframeEl);
   return /** @type {!HTMLIFrameElement} */ (iframeEl);
 };
-
-
-/**
- * @type {boolean} Whether the browser is Internet Explorer.
- * @const
- */
-spf.dom.IS_IE = navigator.appName == 'Microsoft Internet Explorer';
