@@ -314,13 +314,13 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
   // If the navigation one is a completed single response, the task will be
   // canceled in spf.nav.navigatePromotePrefetch_.  If it is an ongoing
   // multipart response, allow it to continue processing until the completed.
-  var preprocessKey = 'preprocess ' + spf.url.absolute(url);
+  var absoluteUrl = spf.url.absolute(url);
+  var preprocessKey = 'preprocess ' + absoluteUrl;
   spf.tasks.cancelAllExcept('preprocess', preprocessKey);
-
 
   // Set the current nav request to be the prefetch, if it exists.
   var prefetches = spf.nav.prefetches_();
-  var prefetchXhr = prefetches[url];
+  var prefetchXhr = prefetches[absoluteUrl];
   spf.state.set('nav-request', prefetchXhr);
   // Make sure there is no current nav promotion set.
   spf.state.set('nav-promote', null);
@@ -395,7 +395,7 @@ spf.nav.navigateSendRequest_ = function(url, options, referer, history,
   var handlePart = spf.bind(spf.nav.handleNavigatePart_, null,
                             options, reverse);
   var handleSuccess = spf.bind(spf.nav.handleNavigateSuccess_, null,
-                               options, referer, reverse);
+                               options, referer, reverse, '');
 
   var xhr = spf.nav.request.send(url, {
     method: options['method'],
@@ -512,18 +512,20 @@ spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
  * @param {boolean} reverse Whether this is "backwards" navigation. True
  *     when the "back" button is clicked and navigation is in response to a
  *     popState event.
+ * @param {string} original The original request URL. This parameter
+ *     is the empty string if the navigate request was not a promotion.
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {spf.SingleResponse|spf.MultipartResponse} response The response
  *     object, either a complete single or multipart response object.
  * @private
  */
-spf.nav.handleNavigateSuccess_ = function(options, referer, reverse, url,
-                                          response) {
+spf.nav.handleNavigateSuccess_ = function(options, referer, reverse, original,
+                                          url, response) {
   spf.state.set('nav-request', null);
 
   // If this is a navigation from a promotion, manually set the
   // navigation start time.
-  if (spf.state.get('nav-promote') == url) {
+  if (spf.state.get('nav-promote') == original) {
     var timing = response['timing'] || {};
     timing['navigationStart'] = spf.state.get('nav-promote-time');
   }
@@ -633,15 +635,30 @@ spf.nav.redirect = function(url) {
  * @param {spf.RequestOptions=} opt_options Optional request options object.
  */
 spf.nav.load = function(url, opt_options) {
-  spf.debug.info('nav.load ', url, opt_options);
+  spf.nav.load_(url, opt_options);
+};
+
+
+/**
+ * Loads a URL.
+ * See {@link #load}.
+ *
+ * @param {string} url The URL to load, without the SPF identifier.
+ * @param {spf.RequestOptions=} opt_options Optional request options object.
+ * @param {string=} opt_original The original request URL.
+ * @private
+ */
+spf.nav.load_ = function(url, opt_options, opt_original) {
+  spf.debug.info('nav.load ', url, opt_options, opt_original);
   var options = opt_options || /** @type {spf.RequestOptions} */ ({});
+  var original = opt_original || url;
 
   var handleError = spf.bind(spf.nav.handleLoadError_, null,
-                             false, options);
+                             false, options, original);
   var handlePart = spf.bind(spf.nav.handleLoadPart_, null,
-                            false, options);
+                            false, options, original);
   var handleSuccess = spf.bind(spf.nav.handleLoadSuccess_, null,
-                              false, options);
+                               false, options, original);
 
   spf.nav.request.send(url, {
     method: options['method'],
@@ -670,15 +687,30 @@ spf.nav.load = function(url, opt_options) {
  * @param {spf.RequestOptions=} opt_options Optional request options object.
  */
 spf.nav.prefetch = function(url, opt_options) {
-  spf.debug.info('nav.prefetch ', url, opt_options);
+  spf.nav.prefetch_(url, opt_options);
+};
+
+
+/**
+ * Prefetches a URL.
+ * See {@link #prefetch}.
+ *
+ * @param {string} url The URL to prefetch, without the SPF identifier.
+ * @param {spf.RequestOptions=} opt_options Optional request options object.
+ * @param {string=} opt_original The original request URL.
+ * @private
+ */
+spf.nav.prefetch_ = function(url, opt_options, opt_original) {
+  spf.debug.info('nav.prefetch ', url, opt_options, opt_original);
   var options = opt_options || /** @type {spf.RequestOptions} */ ({});
+  var original = opt_original || url;
 
   var handleError = spf.bind(spf.nav.handleLoadError_, null,
-                             true, options);
+                             true, options, original);
   var handlePart = spf.bind(spf.nav.handleLoadPart_, null,
-                            true, options);
+                            true, options, original);
   var handleSuccess = spf.bind(spf.nav.handleLoadSuccess_, null,
-                               true, options);
+                               true, options, original);
 
   var xhr = spf.nav.request.send(url, {
     method: options['method'],
@@ -698,11 +730,12 @@ spf.nav.prefetch = function(url, opt_options) {
  *
  * @param {boolean} isPrefetch True for prefetch; false for load.
  * @param {spf.RequestOptions} options Request options object.
+ * @param {string} original The original request URL.
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {Error} err The Error object.
  * @private
  */
-spf.nav.handleLoadError_ = function(isPrefetch, options, url, err) {
+spf.nav.handleLoadError_ = function(isPrefetch, options, original, url, err) {
   spf.debug.warn(isPrefetch ? 'prefetch' : 'load', 'error', '(url=', url, ')');
   spf.nav.callback(options['onError'], url, err);
   if (isPrefetch) {
@@ -717,11 +750,13 @@ spf.nav.handleLoadError_ = function(isPrefetch, options, url, err) {
  *
  * @param {boolean} isPrefetch True for prefetch; false for load.
  * @param {spf.RequestOptions} options Request options object.
+ * @param {string} original The original request URL.
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {spf.SingleResponse} partial The partial response object.
  * @private
  */
-spf.nav.handleLoadPart_ = function(isPrefetch, options, url, partial) {
+spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
+                                   partial) {
   var processFn = isPrefetch ?
       spf.nav.response.preprocess :
       spf.nav.response.process;
@@ -734,13 +769,13 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, url, partial) {
     spf.tasks.add(promoteKey, fn);
     // If the prefetch has been promoted, run the promotion task after
     // adding it and do not perform any preprocessing.
-    if (spf.state.get('nav-promote') == url) {
+    if (spf.state.get('nav-promote') == original) {
       spf.tasks.run(key, true);
       return;
     }
   }
 
-  if (!isPrefetch || !spf.state.get('nav-promote') == url) {
+  if (!isPrefetch || spf.state.get('nav-promote') != original) {
     processFn(url, partial, function() {
       spf.nav.callback(options['onPart'], url, partial);
     });
@@ -754,13 +789,15 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, url, partial) {
  *
  * @param {boolean} isPrefetch True for prefetch; false for load.
  * @param {spf.RequestOptions} options Request options object.
+ * @param {string} original The original request URL.
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {spf.SingleResponse|spf.MultipartResponse} response The response
  *     object, either a complete single or multipart response object.
  * @private
  */
-spf.nav.handleLoadSuccess_ = function(isPrefetch, options, url, response) {
-  var redirectFn = isPrefetch ? spf.nav.prefetch : spf.nav.load;
+spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
+                                      response) {
+  var redirectFn = isPrefetch ? spf.nav.prefetch_ : spf.nav.load_;
   // Check for redirects.
   if (response['redirect']) {
     // Note that POST is not propagated with redirects.
@@ -769,24 +806,31 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, url, response) {
       'onPart': options['onPart'],
       'onError': options['onError']
     });
-    redirectFn(response['redirect'], redirectOpts);
+    redirectFn(response['redirect'], redirectOpts, original);
     return;
   }
   if (isPrefetch) {
+    // Remove the prefetch xhr from the set of currently active
+    // prefetches upon successful prefetch.
+    spf.nav.cancelPrefetch(url);
     // Add the navigate success function as a task to be invoked on
     // prefetch promotion.
     var referer = window.location.href;
-    if (spf.state.get('nav-promote') == url) {
+    if (spf.state.get('nav-promote') == original) {
       referer = spf.state.get('nav-referer');
     }
     var fn = spf.bind(spf.nav.handleNavigateSuccess_, null,
-                      options, referer, false, url, response);
+                      options, referer, false, original, url, response);
     var promoteKey = 'promote ' + spf.url.absolute(url);
     spf.tasks.add(promoteKey, fn);
     // If the prefetch has been promoted, run the promotion task after
-    // adding it and do not perform any preprocessing.
-    if (spf.state.get('nav-promote') == url) {
+    // adding it and do not perform any preprocessing. If it has not
+    // been promoted, remove the task queues becuase a subsequent
+    // request will hit the cache.
+    if (spf.state.get('nav-promote') == original) {
       spf.tasks.run(promoteKey, true);
+    } else {
+      spf.tasks.cancel(promoteKey);
     }
   }
   // Process the requested response.
@@ -797,7 +841,7 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, url, response) {
       spf.nav.response.preprocess :
       spf.nav.response.process;
   var r = (response['type'] == 'multipart') ? {} : response;
-  if (!isPrefetch || !spf.state.get('nav-promote') == url) {
+  if (!isPrefetch || spf.state.get('nav-promote') != original) {
     processFn(url, r, function() {
       spf.nav.callback(options['onSuccess'], url, response);
     });
@@ -817,6 +861,7 @@ spf.nav.addPrefetch = function(url, xhr) {
   var prefetches = spf.nav.prefetches_();
   prefetches[absoluteUrl] = xhr;
 };
+
 
 /**
  * Cancels a single prefetch request and removes it from the set.
@@ -844,8 +889,9 @@ spf.nav.cancelPrefetch = function(url) {
 spf.nav.cancelAllPrefetchesExcept = function(opt_skipUrl) {
   spf.debug.debug('nav.cancelAllPrefetchesExcept', opt_skipUrl);
   var prefetches = spf.nav.prefetches_();
+  var absoluteUrl = opt_skipUrl && spf.url.absolute(opt_skipUrl);
   for (var key in prefetches) {
-    if (opt_skipUrl != key) {
+    if (absoluteUrl != key) {
       spf.nav.cancelPrefetch(key);
     }
   }
