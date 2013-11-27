@@ -12,6 +12,10 @@ describe('spf.history', function() {
   var time;
 
   beforeEach(function() {
+    // History tests are not run unless the events are supported.
+    if (!window.addEventListener) {
+      return;
+    }
     // Mock history modification.
     stack = [];
     spf.history.__getCurrentUrl_ = spf.history.getCurrentUrl_;
@@ -43,6 +47,10 @@ describe('spf.history', function() {
   });
 
   afterEach(function() {
+    // History tests are not run unless the events are supported.
+    if (!window.addEventListener) {
+      return;
+    }
     spf.history.dispose();
     callbacks = null;
     spf.now = spf.__now;
@@ -53,6 +61,10 @@ describe('spf.history', function() {
   });
 
   it('add', function() {
+    // History tests are not run unless the events are supported.
+    if (!window.addEventListener) {
+      return;
+    }
     var getEntry = function(n) { return stack[stack.length - n]; };
     // Start with the initial entry.
     expect(stack.length).toBe(1);
@@ -82,6 +94,10 @@ describe('spf.history', function() {
   });
 
   it('replace', function() {
+    // History tests are not run unless the events are supported.
+    if (!window.addEventListener) {
+      return;
+    }
     var getEntry = function(n) { return stack[stack.length - n]; };
     // Start with the initial entry.
     expect(stack.length).toBe(1);
@@ -109,6 +125,10 @@ describe('spf.history', function() {
   });
 
   it('pop_', function() {
+    // History tests are not run unless the events are supported.
+    if (!window.addEventListener) {
+      return;
+    }
     var getEntry = function(n) { return stack[stack.length - n]; };
     // Start with the initial entry.
     expect(stack.length).toBe(1);
