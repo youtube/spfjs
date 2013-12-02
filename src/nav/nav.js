@@ -315,7 +315,7 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
   // canceled in spf.nav.navigatePromotePrefetch_.  If it is an ongoing
   // multipart response, allow it to continue processing until the completed.
   var absoluteUrl = spf.url.absolute(url);
-  var preprocessKey = 'preprocess ' + absoluteUrl;
+  var preprocessKey = spf.nav.preprocessKey(absoluteUrl);
   spf.tasks.cancelAllExcept('preprocess', preprocessKey);
 
   // Set the current nav request to be the prefetch, if it exists.
@@ -356,9 +356,8 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
 spf.nav.navigatePromotePrefetch_ = function(url, options, referer, history,
                                             reverse) {
   spf.debug.debug('nav.navigatePromotePrefetch_ ', url);
-  var absolute = spf.url.absolute(url);
-  var preprocessKey = 'preprocess ' + absolute;
-  var promoteKey = 'promote ' + absolute;
+  var preprocessKey = spf.nav.preprocessKey(url);
+  var promoteKey = spf.nav.promoteKey(url);
   spf.state.set('nav-promote', url);
   spf.state.set('nav-promote-time', spf.now());
   spf.tasks.cancel(preprocessKey);
@@ -739,7 +738,7 @@ spf.nav.handleLoadError_ = function(isPrefetch, options, original, url, err) {
   spf.debug.warn(isPrefetch ? 'prefetch' : 'load', 'error', '(url=', url, ')');
   spf.nav.callback(options['onError'], url, err);
   if (isPrefetch) {
-    spf.nav.cancelPrefetch(url);
+    spf.nav.removePrefetch(url);
   }
 };
 
@@ -765,7 +764,7 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
     // prefetch promotion.
     var fn = spf.bind(spf.nav.handleNavigatePart_, null,
                       options, false, url, partial);
-    var promoteKey = 'promote ' + spf.url.absolute(url);
+    var promoteKey = spf.nav.promoteKey(original);
     spf.tasks.add(promoteKey, fn);
     // If the prefetch has been promoted, run the promotion task after
     // adding it and do not perform any preprocessing.
@@ -809,26 +808,26 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
     redirectFn(response['redirect'], redirectOpts, original);
     return;
   }
+  var promoteKey = spf.nav.promoteKey(original);
   if (isPrefetch) {
     // Remove the prefetch xhr from the set of currently active
     // prefetches upon successful prefetch.
-    spf.nav.cancelPrefetch(url);
-    // Add the navigate success function as a task to be invoked on
-    // prefetch promotion.
-    var referer = window.location.href;
-    if (spf.state.get('nav-promote') == original) {
-      referer = spf.state.get('nav-referer');
-    }
-    var fn = spf.bind(spf.nav.handleNavigateSuccess_, null,
-                      options, referer, false, original, url, response);
-    var promoteKey = 'promote ' + spf.url.absolute(url);
-    spf.tasks.add(promoteKey, fn);
+    spf.nav.removePrefetch(url);
     // If the prefetch has been promoted, run the promotion task after
     // adding it and do not perform any preprocessing. If it has not
     // been promoted, remove the task queues becuase a subsequent
     // request will hit the cache.
     if (spf.state.get('nav-promote') == original) {
+      // Add the navigate success function as a task.
+      var referer = window.location.href;
+      if (spf.state.get('nav-promote') == original) {
+        referer = spf.state.get('nav-referer');
+      }
+      var fn = spf.bind(spf.nav.handleNavigateSuccess_, null,
+                        options, referer, false, original, url, response);
+      spf.tasks.add(promoteKey, fn);
       spf.tasks.run(promoteKey, true);
+      return;
     } else {
       spf.tasks.cancel(promoteKey);
     }
@@ -846,6 +845,28 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
       spf.nav.callback(options['onSuccess'], url, response);
     });
   }
+};
+
+
+/**
+ * Generate the promote key given a url.
+ *
+ * @param {string} url The url of the request.
+ * @return {string} The promote key.
+ */
+spf.nav.promoteKey = function(url) {
+  return 'promote ' + spf.url.absolute(url);
+};
+
+
+/**
+ * Generate the preprocess key given a url.
+ *
+ * @param {string} url The url of the request.
+ * @return {string} The preprocess key.
+ */
+spf.nav.preprocessKey = function(url) {
+  return 'preprocess ' + spf.url.absolute(url);
 };
 
 
@@ -868,8 +889,8 @@ spf.nav.addPrefetch = function(url, xhr) {
  *
  * @param {string} url The url of the prefetch to be aborted.
  */
-spf.nav.cancelPrefetch = function(url) {
-  spf.debug.debug('nav.cancelPrefetch ', url);
+spf.nav.removePrefetch = function(url) {
+  spf.debug.debug('nav.removePrefetch ', url);
   var absoluteUrl = spf.url.absolute(url);
   var prefetches = spf.nav.prefetches_();
   var prefetchXhr = prefetches[absoluteUrl];
@@ -892,7 +913,7 @@ spf.nav.cancelAllPrefetchesExcept = function(opt_skipUrl) {
   var absoluteUrl = opt_skipUrl && spf.url.absolute(opt_skipUrl);
   for (var key in prefetches) {
     if (absoluteUrl != key) {
-      spf.nav.cancelPrefetch(key);
+      spf.nav.removePrefetch(key);
     }
   }
 };
