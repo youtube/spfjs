@@ -112,7 +112,7 @@ spf.nav.getAncestorWithHref_ = function(element, parent) {
 
 
 /**
- *  Given a mouse event, try to get the corresponding navigation URL.
+ * Given a mouse event, try to get the corresponding navigation URL.
  *
  * @param {Event} evt The click event.
  * @return {?string} Navigation url of event if applicable.
@@ -156,6 +156,47 @@ spf.nav.getEventURL_ = function(evt) {
 
 
 /**
+ * Whether this URL is eligible for navigation, according to callbacks,
+ * navigation limits and session lifetime.
+ *
+ * @param {string} url The URL to navigate to, without the SPF identifier.
+ * @return {boolean}
+ * @private
+ */
+spf.nav.isNavigateEligible_ = function(url) {
+  // If navigation is requested but SPF is not initialized, cancel.
+  if (!spf.state.get('nav-init')) {
+    spf.debug.warn('navigation not initialized');
+    return false;
+  }
+  // Execute the "navigation requested" callback.  If the callback explicitly
+  // cancels (by returning false), cancel.
+  if (!spf.nav.callback('navigate-requested-callback', url)) {
+    return false;
+  }
+  // If a session limit has been set and reached, cancel.
+  var count = (parseInt(spf.state.get('nav-counter'), 10) || 0) + 1;
+  var limit = parseInt(spf.config.get('navigate-limit'), 10);
+  limit = isNaN(limit) ? Infinity : limit;
+  if (count > limit) {
+    spf.debug.warn('navigation limit reached');
+    return false;
+  }
+  // If a session lifetime has been set and reached, redirect.
+  var timestamp = parseInt(spf.state.get('nav-time'), 10) - 1;
+  var age = spf.now() - timestamp;
+  var lifetime = parseInt(spf.config.get('navigate-lifetime'), 10);
+  lifetime = isNaN(lifetime) ? Infinity : lifetime;
+  if (age > lifetime) {
+    spf.debug.warn('navigation lifetime reached');
+    return false;
+  }
+  return true;
+};
+
+
+
+/**
  * Handles page click events on SPF links, adds pushState history entries for
  * them, and navigates.
  *
@@ -174,6 +215,10 @@ spf.nav.handleClick_ = function(evt) {
     spf.debug.debug('    ignoring click to same page');
     // Prevent the default browser navigation to avoid hard refreshes.
     evt.preventDefault();
+    return;
+  }
+  // Ignore clicks if the URL is not eligible for navigation.
+  if (!spf.nav.isNavigateEligible_(url)) {
     return;
   }
   // Navigate to the URL.
@@ -214,6 +259,11 @@ spf.nav.handleHistory_ = function(url, opt_state) {
   var reverse = !!(opt_state && opt_state['spf-back']);
   var referer = opt_state && opt_state['spf-referer'];
   spf.debug.debug('nav.handleHistory ', '(url=', url, 'state=', opt_state, ')');
+  // Redirect if the URL is not eligible for navigation.
+  if (!spf.nav.isNavigateEligible_(url)) {
+    spf.nav.redirect(url);
+    return;
+  }
   // Navigate to the URL.
   spf.nav.navigate_(url, null, referer, true, reverse);
 };
@@ -234,8 +284,14 @@ spf.nav.handleHistory_ = function(url, opt_state) {
  * @param {spf.RequestOptions=} opt_options Optional request options object.
  */
 spf.nav.navigate = function(url, opt_options) {
+  spf.debug.debug('nav.navigate ', '(url=', url, 'options=', opt_options, ')');
   // Ignore navigation to the same page or to an empty URL.
   if (!url || url == window.location.href) {
+    return;
+  }
+  // Redirect if the URL is not eligible for navigation.
+  if (!spf.nav.isNavigateEligible_(url)) {
+    spf.nav.redirect(url);
     return;
   }
   // Navigate to the URL.
@@ -260,41 +316,14 @@ spf.nav.navigate = function(url, opt_options) {
  */
 spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
                              opt_reverse) {
-  spf.debug.info('nav.navigate ', url, opt_options, opt_referer, opt_history,
+  spf.debug.info('nav.navigate_ ', url, opt_options, opt_referer, opt_history,
                  opt_reverse);
   var options = opt_options || /** @type {spf.RequestOptions} */ ({});
-  // Execute the "navigation requested" callback.  If the callback explicitly
-  // cancels (by returning false), cancel this navigation and redirect.
-  if (!spf.nav.callback('navigate-requested-callback', url)) {
-    spf.nav.redirect(url);
-    return;
-  }
-  // If navigation is requested but SPF is not initialized, redirect.
-  if (!spf.state.get('nav-init')) {
-    spf.debug.warn('navigation not initialized');
-    spf.nav.redirect(url);
-    return;
-  }
-  // If a session limit has been set and reached, redirect.
+
+  // Set the navigation counter.
   var count = (parseInt(spf.state.get('nav-counter'), 10) || 0) + 1;
-  var limit = parseInt(spf.config.get('navigate-limit'), 10);
-  limit = isNaN(limit) ? Infinity : limit;
-  if (count > limit) {
-    spf.debug.warn('navigation limit reached');
-    spf.nav.redirect(url);
-    return;
-  }
   spf.state.set('nav-counter', count);
-  // If a session lifetime has been set and reached, redirect.
-  var timestamp = parseInt(spf.state.get('nav-time'), 10);
-  var age = spf.now() - timestamp;
-  var lifetime = parseInt(spf.config.get('navigate-lifetime'), 10);
-  lifetime = isNaN(lifetime) ? Infinity : lifetime;
-  if (age > lifetime) {
-    spf.debug.warn('navigation lifetime reached');
-    spf.nav.redirect(url);
-    return;
-  }
+  // Set the navigation time.
   spf.state.set('nav-time', spf.now());
   // Set the navigation referer, stored in the history entry state object
   // to allow the correct value to be sent to the server during back/forward.

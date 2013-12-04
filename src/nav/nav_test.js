@@ -3,9 +3,11 @@
  */
 
 goog.require('spf');
+goog.require('spf.config');
 goog.require('spf.history');
 goog.require('spf.nav');
 goog.require('spf.nav.request');
+goog.require('spf.state');
 goog.require('spf.url');
 
 
@@ -14,6 +16,8 @@ describe('spf.nav', function() {
   var MOCK_DELAY = 10;
   var objFunc = function() { return {}; };
   var nullFunc = function() { return null; };
+  var trueFunc = function() { return true; };
+  var falseFunc = function() { return false; };
   var createFakeBrowserEvent = function() {
     var target = {
       href: 'SPF_HREF'
@@ -68,6 +72,7 @@ describe('spf.nav', function() {
   afterEach(function() {
     spf.nav.dispose();
     spf.config.clear();
+    spf.state.values_ = {};
   });
 
 
@@ -76,7 +81,7 @@ describe('spf.nav', function() {
 
     it('prefetches a page', function() {
       var url = '/page';
-      var fake = createFakeRequest({'title': 'my title'});
+      var fake = createFakeRequest({'foobar': true});
       spyOn(spf.nav.request, 'send').andCallFake(fake);
 
       var absoluteUrl = spf.url.absolute(url);
@@ -93,7 +98,7 @@ describe('spf.nav', function() {
       spyOn(spf.nav, 'handleNavigateSuccess_');
 
       var url = '/page';
-      var fake = createFakeRequest({'title': 'my title'});
+      var fake = createFakeRequest({'foobar': true});
       spyOn(spf.nav.request, 'send').andCallFake(fake);
 
 
@@ -112,7 +117,7 @@ describe('spf.nav', function() {
 
       var url = '/page';
       var url2 = '/page2';
-      var fake = createFakeRequest({'redirect': url2}, {'title': 'my title'});
+      var fake = createFakeRequest({'redirect': url2}, {'foobar': true});
       spyOn(spf.nav.request, 'send').andCallFake(fake);
 
       var absoluteUrl = spf.url.absolute(url);
@@ -130,7 +135,7 @@ describe('spf.nav', function() {
 
       var url = '/page';
       var url2 = '/page2';
-      var fake = createFakeRequest({'redirect': url2}, {'title': 'my title'});
+      var fake = createFakeRequest({'redirect': url2}, {'foobar': true});
       spyOn(spf.nav.request, 'send').andCallFake(fake);
 
       var absoluteUrl = spf.url.absolute(url);
@@ -146,7 +151,7 @@ describe('spf.nav', function() {
   });
 
 
-  describe('handleClick_', function() {
+  describe('handleClick', function() {
 
 
     beforeEach(function(argument) {
@@ -177,10 +182,10 @@ describe('spf.nav', function() {
 
 
     it('ignores click with nolink class', function() {
+      var evt = createFakeBrowserEvent();
       spyOn(spf.nav, 'getAncestorWithNoLinkClass_').andCallFake(objFunc);
       spf.config.set('nolink-class', 'NOLINK_CLASS');
 
-      var evt = createFakeBrowserEvent();
       spf.nav.handleClick_(evt);
 
       expect(evt.defaultPrevented).toEqual(false);
@@ -189,10 +194,10 @@ describe('spf.nav', function() {
 
 
     it('ignores click without href', function() {
+      var evt = createFakeBrowserEvent();
       spyOn(spf.nav, 'getAncestorWithHref_').andCallFake(nullFunc);
       spyOn(spf.nav, 'getAncestorWithLinkClass_').andCallFake(objFunc);
 
-      var evt = createFakeBrowserEvent();
       spf.nav.handleClick_(evt);
 
       expect(spf.nav.getAncestorWithHref_).toHaveBeenCalled();
@@ -202,12 +207,27 @@ describe('spf.nav', function() {
 
 
     it('ignores click without link class', function() {
+      var evt = createFakeBrowserEvent();
       spyOn(spf.nav, 'getAncestorWithLinkClass_').andCallFake(nullFunc);
 
-      var evt = createFakeBrowserEvent();
       spf.nav.handleClick_(evt);
 
       expect(spf.nav.getAncestorWithLinkClass_).toHaveBeenCalled();
+      expect(evt.defaultPrevented).toEqual(false);
+      expect(spf.nav.navigate_).not.toHaveBeenCalled();
+    });
+
+
+    it('ignores click if not eligible', function() {
+      var evt = createFakeBrowserEvent();
+      spyOn(spf.nav, 'getAncestorWithHref_').andCallFake(function() {
+          return {href: evt.target.href}; });
+      spyOn(spf.nav, 'getAncestorWithLinkClass_').andCallFake(objFunc);
+      spyOn(spf.nav, 'isNavigateEligible_').andCallFake(falseFunc);
+
+      spf.nav.handleClick_(evt);
+
+      expect(spf.nav.isNavigateEligible_).toHaveBeenCalled();
       expect(evt.defaultPrevented).toEqual(false);
       expect(spf.nav.navigate_).not.toHaveBeenCalled();
     });
@@ -223,6 +243,56 @@ describe('spf.nav', function() {
 
       expect(evt.defaultPrevented).toEqual(true);
       expect(spf.nav.navigate_).toHaveBeenCalledWith(evt.target.href);
+    });
+
+
+  });
+
+
+  describe('isNavigateEligible', function() {
+
+
+    it('respects initialization', function() {
+      var url = '/page';
+      spf.state.set('nav-init', false);
+      expect(spf.nav.isNavigateEligible_(url)).toBe(false);
+      spf.state.set('nav-init', true);
+      expect(spf.nav.isNavigateEligible_(url)).toBe(true);
+    });
+
+
+    it('respects callback', function() {
+      var url = '/page';
+      spf.config.set('navigate-requested-callback', falseFunc);
+      expect(spf.nav.isNavigateEligible_(url)).toBe(false);
+      spf.config.set('navigate-requested-callback', trueFunc);
+      expect(spf.nav.isNavigateEligible_(url)).toBe(true);
+    });
+
+
+    it('respects session navigation limit', function() {
+      var url = '/page';
+      spf.config.set('navigate-limit', 5);
+      spf.state.set('nav-counter', 5);
+      expect(spf.nav.isNavigateEligible_(url)).toBe(false);
+      spf.state.set('nav-counter', 4);
+      expect(spf.nav.isNavigateEligible_(url)).toBe(true);
+      spf.config.set('navigate-limit', null);
+      spf.state.set('nav-counter', 999999);
+      expect(spf.nav.isNavigateEligible_(url)).toBe(true);
+    });
+
+
+    it('respects session lifetime', function() {
+      var url = '/page';
+      spf.config.set('navigate-lifetime', 1000);
+      spf.state.set('nav-time', spf.now() - 1000);
+      expect(spf.nav.isNavigateEligible_(url)).toBe(false);
+      spf.state.set('nav-time', spf.now() - 500);
+      expect(spf.nav.isNavigateEligible_(url)).toBe(true);
+      spf.config.set('navigate-lifetime', null);
+      spf.state.set('nav-time', spf.now() - (10 * 24 * 60 * 60 * 1000));
+      expect(spf.nav.isNavigateEligible_(url)).toBe(true);
     });
 
 
