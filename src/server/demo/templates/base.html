@@ -3,27 +3,26 @@ $def with (content, is_debug, is_dev)
 <html>
 <head>
   <title>$content.title</title>
-  $ demo_css = "/static/demo.css"
-  <link rel="stylesheet" href="$demo_css">
+  <link rel="stylesheet" href="/static/app.css">
   $:content.stylesheet
 </head>
 <body>
   <div id="masthead">
     <strong>S</strong>tructured <strong>P</strong>age <strong>F</strong>ragments
     <span class="info">
-      Status: <span id="demo-status">Disabled</span>
+      Status: <span id="app-status">Disabled</span>
       &nbsp;&nbsp;&nbsp;&nbsp;
-      Last refresh: <span id="demo-timer">0</span>s ago
+      Last refresh: <span id="app-timer">0</span>s ago
     </span>
   </div>
   <div id="nav">
     <!-- pages for testing navigation -->
     <ul style="float:right">
-      <li class="nav-page1"><a class="spf-link" href="/page/1">Page 1</a></li>
-      <li class="nav-page2"><a class="spf-link" href="/page/2">Page 2</a></li>
-      <li class="nav-page3"><a class="spf-link" href="/page/3">Page 3</a></li>
-      <li class="nav-page4"><a class="spf-link" href="/page/4">Page 4</a></li>
-      <li class="nav-page5"><a class="spf-link" href="/page/5">Page 5</a></li>
+      <li class="nav-demo1"><a class="spf-link" href="/demo/1">Demo 1</a></li>
+      <li class="nav-demo2"><a class="spf-link" href="/demo/2">Demo 2</a></li>
+      <li class="nav-demo3"><a class="spf-link" href="/demo/3">Demo 3</a></li>
+      <li class="nav-demo4"><a class="spf-link" href="/demo/4">Demo 4</a></li>
+      <li class="nav-demo5"><a class="spf-link" href="/demo/5">Demo 5</a></li>
     </ul>
     <!-- pages with real content -->
     <ul>
@@ -41,9 +40,9 @@ $def with (content, is_debug, is_dev)
   $else:
     $ spf_js = "/static/spf.js"
   <script src="$spf_js"></script>
-  <script src="/static/demo.js"></script>
+  <script src="/static/app.js"></script>
   <script>
-    demo.init();
+    app.init();
   </script>
   $:content.javascript
 </body>

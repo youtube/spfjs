@@ -16,9 +16,9 @@ $def _attributes():
   { "nav": { "class": "test" } }
 
 $def _javascript():
-  <script src="/static/demo-chunked.js"></script>
+  <script src="/static/app-chunked.js"></script>
   <script>
-    demo.chunked.check();
+    app.chunked.check();
   </script>
 
 
@@ -54,22 +54,22 @@ $var attributes: $:_attributes()
     <p>
       <strong>Valid Responses</strong>
       <br>
-      <button onclick="demo.chunked.requestSingle();">Request Single</button>
-      <button onclick="demo.chunked.requestMultipart();">Request Multipart</button>
+      <button onclick="app.chunked.requestSingle();">Request Single</button>
+      <button onclick="app.chunked.requestMultipart();">Request Multipart</button>
     </p>
 
     <p>
       <strong>Malformed Responses (No Error)</strong>
       <br>
-      <button onclick="demo.chunked.requestMultipart({no_multipart_header: true});">Request Multipart: No Header</button>
-      <button onclick="demo.chunked.requestMultipart({no_final_delimiter: true});">Request Multipart: No Final Delimiter</button>
+      <button onclick="app.chunked.requestMultipart({no_multipart_header: true});">Request Multipart: No Header</button>
+      <button onclick="app.chunked.requestMultipart({no_final_delimiter: true});">Request Multipart: No Final Delimiter</button>
     </p>
 
     <p>
       <strong>Invalid Responses (Error)</strong>
       <br>
-      <button onclick="demo.chunked.requestSingle({add_parse_error: true});">Request Single: Parse Error</button>
-      <button onclick="demo.chunked.requestMultipart({add_parse_error: true});">Request Multipart: Parse Error</button>
+      <button onclick="app.chunked.requestSingle({add_parse_error: true});">Request Single: Parse Error</button>
+      <button onclick="app.chunked.requestMultipart({add_parse_error: true});">Request Multipart: Parse Error</button>
     </p>
 
   </div>

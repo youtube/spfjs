@@ -34,12 +34,12 @@ html, body {
   font-size: .6em;
   color: #DDD;
 }
-#demo-status {
+#app-status {
   color: #F00;
   font-weight: bold;
   text-shadow: 0 0 .1em #000;
 }
-#demo-status.enabled {
+#app-status.enabled {
   color: #19B319;
 }
 #nav {
@@ -70,11 +70,11 @@ html, body {
 }
 #nav.home .nav-home a,
 #nav.spec .nav-spec a,
-#nav.page1 .nav-page1 a,
-#nav.page2 .nav-page2 a,
-#nav.page3 .nav-page3 a,
-#nav.page4 .nav-page4 a,
-#nav.page5 .nav-page5 a {
+#nav.demo1 .nav-demo1 a,
+#nav.demo2 .nav-demo2 a,
+#nav.demo3 .nav-demo3 a,
+#nav.demo4 .nav-demo4 a,
+#nav.demo5 .nav-demo5 a {
   background: rgba(0, 0, 0, .2);
 }
 #content {

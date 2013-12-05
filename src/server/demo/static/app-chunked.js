@@ -7,21 +7,21 @@
 
 // This file exists only to test various subsystems of the framework.
 
-var demo = demo || {};
+var app = app || {};
 
 
 /**
  * The demo app namespace for the chunked page.
  * @type {Object}
  */
-demo.chunked = demo.chunked || {};
+app.chunked = app.chunked || {};
 
 
 /**
  * Check if the page is running in Dev (uncompiled) mode, so that all necessary
  * functions are available.
  */
-demo.chunked.check = function() {
+app.chunked.check = function() {
   if (spf && spf.nav && spf.nav.request && spf.nav.request.send) {
     return;
   }
@@ -38,7 +38,7 @@ demo.chunked.check = function() {
  * @param {...*} var_args Arguments to log onscreen; they will be converted to
  *     strings for rendering.
  */
-demo.chunked.log = function(var_args) {
+app.chunked.log = function(var_args) {
   var args = Array.prototype.slice.call(arguments);
   var text = args.join(' ') + '\n';
   var log = document.getElementById('chunked-log');
@@ -49,7 +49,7 @@ demo.chunked.log = function(var_args) {
 /**
  * Clears the onscreen page log.
  */
-demo.chunked.clear = function() {
+app.chunked.clear = function() {
   var log = document.getElementById('chunked-log');
   log.innerHTML = '';
 };
@@ -61,7 +61,7 @@ demo.chunked.clear = function() {
  * @param {Object=} opt_params The optional map of query params.
  * @return {string} The formatted URL.
  */
-demo.chunked.getRequestUrl = function(page, opt_params) {
+app.chunked.getRequestUrl = function(page, opt_params) {
   var params = {};
   var opt_params = opt_params || {};
   var els = {'chunks-input': 1, 'delay-input': 1};
@@ -90,13 +90,13 @@ demo.chunked.getRequestUrl = function(page, opt_params) {
  * Load a regular response sent across a variable number of transfer chunks.
  * @param {Object=} opt_params
  */
-demo.chunked.requestSingle = function(opt_params) {
-  demo.chunked.clear();
-  var url = demo.chunked.getRequestUrl('/chunked_sample_single', opt_params);
+app.chunked.requestSingle = function(opt_params) {
+  app.chunked.clear();
+  var url = app.chunked.getRequestUrl('/chunked_sample_single', opt_params);
   spf.nav.request.send(url, {
-    onPart: demo.chunked.onPart,
-    onSuccess: demo.chunked.onSuccess,
-    onError: demo.chunked.onError
+    onPart: app.chunked.onPart,
+    onSuccess: app.chunked.onSuccess,
+    onError: app.chunked.onError
   });
 };
 
@@ -106,13 +106,13 @@ demo.chunked.requestSingle = function(opt_params) {
  * number of transfer chunks.
  * @param {Object=} opt_params
  */
-demo.chunked.requestMultipart = function(opt_params) {
-  demo.chunked.clear();
-  var url = demo.chunked.getRequestUrl('/chunked_sample_multipart', opt_params);
+app.chunked.requestMultipart = function(opt_params) {
+  app.chunked.clear();
+  var url = app.chunked.getRequestUrl('/chunked_sample_multipart', opt_params);
   spf.nav.request.send(url, {
-    onPart: demo.chunked.onPart,
-    onSuccess: demo.chunked.onSuccess,
-    onError: demo.chunked.onError
+    onPart: app.chunked.onPart,
+    onSuccess: app.chunked.onSuccess,
+    onError: app.chunked.onError
   });
 };
 
@@ -123,9 +123,9 @@ demo.chunked.requestMultipart = function(opt_params) {
  * @param {string} url The requested URL.
  * @param {Object} partial The partial response object from the chunk.
  */
-demo.chunked.onPart = function(url, partial) {
-  demo.chunked.log('PART RECEIVED', url);
-  demo.chunked.log(JSON.stringify(partial));
+app.chunked.onPart = function(url, partial) {
+  app.chunked.log('PART RECEIVED', url);
+  app.chunked.log(JSON.stringify(partial));
 };
 
 
@@ -135,9 +135,9 @@ demo.chunked.onPart = function(url, partial) {
  * @param {string} url The requested URL.
  * @param {Object} response The response object.
  */
-demo.chunked.onSuccess = function(url, response) {
-  demo.chunked.log('SUCCESS', url);
-  demo.chunked.log(JSON.stringify(response));
+app.chunked.onSuccess = function(url, response) {
+  app.chunked.log('SUCCESS', url);
+  app.chunked.log(JSON.stringify(response));
 };
 
 
@@ -147,25 +147,25 @@ demo.chunked.onSuccess = function(url, response) {
  * @param {string} url The requested URL.
  * @param {Error} err The error.
  */
-demo.chunked.onError = function(url, err) {
-  demo.chunked.log('ERROR', url);
-  demo.chunked.log(err);
+app.chunked.onError = function(url, err) {
+  app.chunked.log('ERROR', url);
+  app.chunked.log(err);
 };
 
 
 /** @override **/
-demo.shimHandleChunk = spf.nav.request.handleChunkFromXHR_;
+app.shimHandleChunk = spf.nav.request.handleChunkFromXHR_;
 /** @private **/
 spf.nav.request.handleChunkFromXHR_ = function() {
-  demo.chunked.log('CHUNK');
-  demo.shimHandleChunk.apply(null, arguments);
+  app.chunked.log('CHUNK');
+  app.shimHandleChunk.apply(null, arguments);
 };
 
 
 /** @override **/
-demo.shimHandleCache = spf.nav.request.handleResponseFromCache_;
+app.shimHandleCache = spf.nav.request.handleResponseFromCache_;
 /** @private **/
 spf.nav.request.handleResponseFromCache_ = function() {
-  demo.chunked.log('CACHE');
-  demo.shimHandleCache.apply(null, arguments);
+  app.chunked.log('CACHE');
+  app.shimHandleCache.apply(null, arguments);
 };

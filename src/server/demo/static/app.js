@@ -9,40 +9,40 @@
  * The demo app namespace.
  * @type {Object}
  */
-var demo = demo || {};
+var app = app || {};
 
 
 /**
  * Initialize the demo app.
  */
-demo.init = function() {
-  demo.start_ = +new Date();
-  demo.timer_ = window.setInterval(demo.updateTime, 500);
+app.init = function() {
+  app.start_ = +new Date();
+  app.timer_ = window.setInterval(app.updateTime, 500);
   var config = {
     'process-async': true,
-    'navigate-requested-callback': demo.handleNavigateRequested,
-    'navigate-part-received-callback': demo.handleNavigatePartReceived,
-    'navigate-part-processed-callback': demo.handleNavigatePartProcessed,
-    'navigate-received-callback': demo.handleNavigateReceived,
-    'navigate-processed-callback': demo.handleNavigateProcessed,
-    'navigate-error-callback': demo.handleNavigateError,
-    'script-loading-callback': demo.handleScriptLoading,
-    'style-loading-callback': demo.handleStyleLoading
+    'navigate-requested-callback': app.handleNavigateRequested,
+    'navigate-part-received-callback': app.handleNavigatePartReceived,
+    'navigate-part-processed-callback': app.handleNavigatePartProcessed,
+    'navigate-received-callback': app.handleNavigateReceived,
+    'navigate-processed-callback': app.handleNavigateProcessed,
+    'navigate-error-callback': app.handleNavigateError,
+    'script-loading-callback': app.handleScriptLoading,
+    'style-loading-callback': app.handleStyleLoading
   };
-  demo.enabled = spf.init(config);
-  demo.updateStatus();
+  app.enabled = spf.init(config);
+  app.updateStatus();
 };
 
 
 /**
  * Dispose the demo app.
  */
-demo.dispose = function() {
-  window.clearInterval(demo.timer_);
-  demo.start_ = 0;
-  demo.enabled = false;
-  demo.updateStatus();
-  demo.updateTime();
+app.dispose = function() {
+  window.clearInterval(app.timer_);
+  app.start_ = 0;
+  app.enabled = false;
+  app.updateStatus();
+  app.updateTime();
 };
 
 
@@ -50,9 +50,9 @@ demo.dispose = function() {
  * Simple central logging function for the demo app.
  * @param {string} msg Message to log.
  */
-demo.log = function(msg) {
+app.log = function(msg) {
   if (window.console) {
-    window.console.log('[demo] ' + msg);
+    window.console.log('[app] ' + msg);
   }
 };
 
@@ -60,10 +60,10 @@ demo.log = function(msg) {
 /**
  * Update the display showing whether SPF is enabled.
  */
-demo.updateStatus = function() {
-  var statusEl = document.getElementById('demo-status');
+app.updateStatus = function() {
+  var statusEl = document.getElementById('app-status');
   if (statusEl) {
-    if (demo.enabled) {
+    if (app.enabled) {
       statusEl.innerHTML = 'Enabled';
       statusEl.className = 'enabled';
     } else {
@@ -77,11 +77,11 @@ demo.updateStatus = function() {
 /**
  * Update the display counting time since last page load.
  */
-demo.updateTime = function() {
-  var timerEl = document.getElementById('demo-timer');
+app.updateTime = function() {
+  var timerEl = document.getElementById('app-timer');
   if (timerEl) {
-    if (demo.start_) {
-      var time = Math.floor((+new Date() - demo.start_) / 1000);
+    if (app.start_) {
+      var time = Math.floor((+new Date() - app.start_) / 1000);
       timerEl.innerHTML = time;
     } else {
       timerEl.innerHTML = '';
@@ -94,8 +94,8 @@ demo.updateTime = function() {
  * Callback for when navigate requests are sent.
  * @param {string} url The new URL.
  */
-demo.handleNavigateRequested = function(url) {
-  demo.log('navigate requested');
+app.handleNavigateRequested = function(url) {
+  app.log('navigate requested');
 };
 
 
@@ -104,8 +104,8 @@ demo.handleNavigateRequested = function(url) {
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {Object} part The part of the requested SPF response object.
  */
-demo.handleNavigatePartReceived = function(url, part) {
-  demo.log('navigate received part');
+app.handleNavigatePartReceived = function(url, part) {
+  app.log('navigate received part');
 };
 
 
@@ -114,8 +114,8 @@ demo.handleNavigatePartReceived = function(url, part) {
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {Object} part The part of the requested SPF response object.
  */
-demo.handleNavigatePartProcessed = function(url, part) {
-  demo.log('navigate procssed part');
+app.handleNavigatePartProcessed = function(url, part) {
+  app.log('navigate procssed part');
 };
 
 
@@ -124,8 +124,8 @@ demo.handleNavigatePartProcessed = function(url, part) {
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {Object} response The requested SPF response object.
  */
-demo.handleNavigateReceived = function(url, response) {
-  demo.log('navigate received');
+app.handleNavigateReceived = function(url, response) {
+  app.log('navigate received');
   // If debug logging is enabled, reset the relative times when each new
   // request is received.
   if (spf.debug) {
@@ -138,8 +138,8 @@ demo.handleNavigateReceived = function(url, response) {
  * Callback for when navigate responses are processed.
  * @param {Object} response The processed SPF response object.
  */
-demo.handleNavigateProcessed = function(response) {
-  demo.log('navigate processed');
+app.handleNavigateProcessed = function(response) {
+  app.log('navigate processed');
 };
 
 
@@ -148,8 +148,8 @@ demo.handleNavigateProcessed = function(response) {
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {Error} err The Error object.
  */
-demo.handleNavigateError = function(url, err) {
-  demo.log('navigate error');
+app.handleNavigateError = function(url, err) {
+  app.log('navigate error');
 };
 
 
@@ -159,8 +159,8 @@ demo.handleNavigateError = function(url, err) {
  * @param {string} name The new script name (to identify it independently of
  *     the URL).
  */
-demo.handleScriptLoading = function(url, name) {
-  demo.log('script loading ' + url + ' ' + name);
+app.handleScriptLoading = function(url, name) {
+  app.log('script loading ' + url + ' ' + name);
 };
 
 /**
@@ -169,8 +169,8 @@ demo.handleScriptLoading = function(url, name) {
  * @param {string} name The new style name (to identify it independently of
  *     the URL).
  */
-demo.handleStyleLoading = function(url, name) {
-  demo.log('style loading ' + url + ' ' + name);
+app.handleStyleLoading = function(url, name) {
+  app.log('style loading ' + url + ' ' + name);
 };
 
 
@@ -178,7 +178,7 @@ demo.handleStyleLoading = function(url, name) {
  * Whether SPF is enabled for the demo app.
  * @type {boolean}
   */
-demo.enabled = false;
+app.enabled = false;
 
 
 /**
@@ -186,7 +186,7 @@ demo.enabled = false;
  * @type {number}
  * @private
  */
-demo.start_ = 0;
+app.start_ = 0;
 
 
 /**
@@ -194,7 +194,7 @@ demo.start_ = 0;
  * @type {number}
  * @private
  */
-demo.timer_ = 0;
+app.timer_ = 0;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -204,15 +204,15 @@ demo.timer_ = 0;
  * The demo app namespace for the home page.
  * @type {Object}
  */
-demo.home = demo.home || {};
+app.home = app.home || {};
 
 
 /**
  * Initialize the demo app home page.
  */
-demo.home.init = function() {
+app.home.init = function() {
   // Show the correct support notice.
-  var id = demo.enabled ? 'home-full' : 'home-partial';
+  var id = app.enabled ? 'home-full' : 'home-partial';
   document.getElementById(id).style.display = '';
   // Enable the extra content button.
   var buttonEl = document.getElementById('home-ajax-get');

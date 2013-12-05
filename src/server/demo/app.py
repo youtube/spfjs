@@ -46,8 +46,8 @@ urls = (
     '/', 'Index',
     '/index_ajax', 'IndexAjax',
     '/spec', 'Spec',
-    '/page', 'Page',
-    '/page/(.*)', 'Page',
+    '/demo', 'Demo',
+    '/demo/(.*)', 'Demo',
     '/missing', 'Missing',
     '/other', 'Other',
     '/other/(.*)', 'Other',
@@ -284,9 +284,9 @@ class Spec(Servlet):
     return self.Render(content)
 
 
-class Page(Servlet):
+class Demo(Servlet):
   def GET(self, page_num=0):  # pylint: disable=invalid-name,missing-docstring
-    content = templates.page(page_num)
+    content = templates.demo(page_num)
     # yield instead of return to support chunked responses
     for chunk in self.ChunkedRender(content):
       yield chunk

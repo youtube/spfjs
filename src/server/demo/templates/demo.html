@@ -3,40 +3,39 @@ $def with (page_num)
 $def _stylesheet():
   <!-- This style is inlined here for demo purposes. -->
   <style type="text/css">
-    .page p { float: left;
+    .demo p { float: left;
               width: 44%; height: 9em;
               margin: 1em; padding: 1em;
               border: 1px solid #eee; }
-    .page .sun { display: inline-block;
+    .demo .sun { display: inline-block;
                  padding: 0.5em;
                  border: 1px solid #fff; }
-    .page a:hover .sun { border-color: #000; }
-    .page .sun img { height: 3em;
+    .demo a:hover .sun { border-color: #000; }
+    .demo .sun img { height: 3em;
                      vertical-align: middle; }
   </style>
-  $ page_css = "/static/demo-page.css"
-  <link rel="stylesheet" href="$page_css">
+  <link rel="stylesheet" href="/static/app-demo.css">
 
 $def _attributes():
-  { "nav": { "class": "page$page_num" } }
+  { "nav": { "class": "demo$page_num" } }
 
 $var title: Demo Page $page_num
 $var stylesheet: $:_stylesheet()
 $var javascript:
 $var attributes: $:_attributes()
 
-<div id="page" class="pane page">
+<div id="demo" class="pane demo">
   <h1>Demo Page $page_num</h1>
   <!-- Demonstrate scripts in the middle of a content fragment -->
-  <script src="/static/demo-page.js"></script>
+  <script src="/static/app-demo.js"></script>
   <script>
-    demo.log('page $page_num: embedded javascript')
-    demo.log('external js is loaded = ' + !!(window.demo && demo.page && demo.page.loaded));
+    app.log('demo $page_num: embedded javascript')
+    app.log('external js is loaded = ' + !!(window.app && app.demo && app.demo.loaded));
   </script>
 
   <div>
     This page is for demonstration purposes only.
-    <span id="page-demo-text">This text should be orange.</span>
+    <span id="demo-text">This text should be orange.</span>
   </div>
 
   <div class="samples">
@@ -54,12 +53,12 @@ $var attributes: $:_attributes()
       </a>
       <a class="spf-link" href="/spec">Spec</a>
       &nbsp;&nbsp;&nbsp;&nbsp;
-      <a class="spf-link" href="/page/1">Page 1</a>
-      <a class="spf-link" href="/page/2">Page 2</a>
-      <a class="spf-link" href="/page/3">Page 3</a>
-      <a class="spf-link" href="/page/4">Page 4</a>
-      <a class="spf-link" href="/page/5">Page 5</a>
-      <a class="spf-link" href="/page/6">Page 6</a>
+      <a class="spf-link" href="/demo/1">Demo 1</a>
+      <a class="spf-link" href="/demo/2">Demo 2</a>
+      <a class="spf-link" href="/demo/3">Demo 3</a>
+      <a class="spf-link" href="/demo/4">Demo 4</a>
+      <a class="spf-link" href="/demo/5">Demo 5</a>
+      <a class="spf-link" href="/demo/6">Demo 6</a>
     </p>
     <p>
       <strong>Sample links:</strong>
@@ -75,12 +74,12 @@ $var attributes: $:_attributes()
       </a>
       <a href="/spec">Spec</a>
       &nbsp;&nbsp;&nbsp;&nbsp;
-      <a href="/page/1">Page 1</a>
-      <a href="/page/2">Page 2</a>
-      <a href="/page/3">Page 3</a>
-      <a href="/page/4">Page 4</a>
-      <a href="/page/5">Page 5</a>
-      <a href="/page/6">Page 6</a>
+      <a href="/demo/1">Demo 1</a>
+      <a href="/demo/2">Demo 2</a>
+      <a href="/demo/3">Demo 3</a>
+      <a href="/demo/4">Demo 4</a>
+      <a href="/demo/5">Demo 5</a>
+      <a href="/demo/6">Demo 6</a>
     </p>
     <p>
       <strong>Sample links in a <code>spf-link</code> container:</strong>
@@ -97,12 +96,12 @@ $var attributes: $:_attributes()
         </a>
         <a href="/spec">Spec</a>
         &nbsp;&nbsp;&nbsp;&nbsp;
-        <a href="/page/1">Page 1</a>
-        <a href="/page/2">Page 2</a>
-        <a href="/page/3">Page 3</a>
-        <a href="/page/4">Page 4</a>
-        <a href="/page/5">Page 5</a>
-        <a href="/page/6">Page 6</a>
+        <a href="/demo/1">Demo 1</a>
+        <a href="/demo/2">Demo 2</a>
+        <a href="/demo/3">Demo 3</a>
+        <a href="/demo/4">Demo 4</a>
+        <a href="/demo/5">Demo 5</a>
+        <a href="/demo/6">Demo 6</a>
       </span>
     </p>
     <p>
@@ -120,12 +119,12 @@ $var attributes: $:_attributes()
         </a>
         <a class="spf-link" href="/spec">Spec</a>
         &nbsp;&nbsp;&nbsp;&nbsp;
-        <a class="spf-link" href="/page/1">Page 1</a>
-        <a class="spf-link" href="/page/2">Page 2</a>
-        <a class="spf-link" href="/page/3">Page 3</a>
-        <a class="spf-link" href="/page/4">Page 4</a>
-        <a class="spf-link" href="/page/5">Page 5</a>
-        <a class="spf-link" href="/page/6">Page 6</a>
+        <a class="spf-link" href="/demo/1">Demo 1</a>
+        <a class="spf-link" href="/demo/2">Demo 2</a>
+        <a class="spf-link" href="/demo/3">Demo 3</a>
+        <a class="spf-link" href="/demo/4">Demo 4</a>
+        <a class="spf-link" href="/demo/5">Demo 5</a>
+        <a class="spf-link" href="/demo/6">Demo 6</a>
       </span>
     </p>
     <p>
@@ -138,12 +137,12 @@ $var attributes: $:_attributes()
       <button onclick="spf.navigate('/')">Overview</button>
       <button onclick="spf.navigate('/spec')">Spec</button>
       &nbsp;&nbsp;&nbsp;&nbsp;
-      <button onclick="spf.navigate('/page/1')">Page 1</button>
-      <button onclick="spf.navigate('/page/2')">Page 2</button>
-      <button onclick="spf.navigate('/page/3')">Page 3</button>
-      <button onclick="spf.navigate('/page/4')">Page 4</button>
-      <button onclick="spf.navigate('/page/5')">Page 5</button>
-      <button onclick="spf.navigate('/page/6')">Page 6</button>
+      <button onclick="spf.navigate('/demo/1')">Demo 1</button>
+      <button onclick="spf.navigate('/demo/2')">Demo 2</button>
+      <button onclick="spf.navigate('/demo/3')">Demo 3</button>
+      <button onclick="spf.navigate('/demo/4')">Demo 4</button>
+      <button onclick="spf.navigate('/demo/5')">Demo 5</button>
+      <button onclick="spf.navigate('/demo/6')">Demo 6</button>
     </p>
     <p>
       <strong>Sample buttons to load content via JavaScript <em>without</em> navigation:</strong>
@@ -155,12 +154,12 @@ $var attributes: $:_attributes()
       <button onclick="spf.load('/')">Overview</button>
       <button onclick="spf.load('/spec')">Spec</button>
       &nbsp;&nbsp;&nbsp;&nbsp;
-      <button onclick="spf.load('/page/1')">Page 1</button>
-      <button onclick="spf.load('/page/2')">Page 2</button>
-      <button onclick="spf.load('/page/3')">Page 3</button>
-      <button onclick="spf.load('/page/4')">Page 4</button>
-      <button onclick="spf.load('/page/5')">Page 5</button>
-      <button onclick="spf.load('/page/6')">Page 6</button>
+      <button onclick="spf.load('/demo/1')">Demo 1</button>
+      <button onclick="spf.load('/demo/2')">Demo 2</button>
+      <button onclick="spf.load('/demo/3')">Demo 3</button>
+      <button onclick="spf.load('/demo/4')">Demo 4</button>
+      <button onclick="spf.load('/demo/5')">Demo 5</button>
+      <button onclick="spf.load('/demo/6')">Demo 6</button>
     </p>
     <p>
       <strong>Sample <code>spf-link</code> links with non-200 responses:</strong>
@@ -200,12 +199,12 @@ $var attributes: $:_attributes()
       <a class="spf-link">Spec</a>
       &nbsp;&nbsp;&nbsp;&nbsp;
       <!-- emtpy hrefs point to the same page -->
-      <a class="spf-link" href="">Page 1</a>
-      <a class="spf-link" href="">Page 2</a>
-      <a class="spf-link" href="">Page 3</a>
-      <a class="spf-link" href="">Page 4</a>
-      <a class="spf-link" href="">Page 5</a>
-      <a class="spf-link" href="">Page 6</a>
+      <a class="spf-link" href="">Demo 1</a>
+      <a class="spf-link" href="">Demo 2</a>
+      <a class="spf-link" href="">Demo 3</a>
+      <a class="spf-link" href="">Demo 4</a>
+      <a class="spf-link" href="">Demo 5</a>
+      <a class="spf-link" href="">Demo 6</a>
     </p>
     <p>
       <strong>Sample links with <code>spf-link</code> children:</strong>
@@ -221,12 +220,12 @@ $var attributes: $:_attributes()
       </a>
       <a href="/spec"><span class="spf-link">Spec</span></a>
       &nbsp;&nbsp;&nbsp;&nbsp;
-      <a href="/page/1"><span class="spf-link">Page 1</span></a>
-      <a href="/page/2"><span class="spf-link">Page 2</span></a>
-      <a href="/page/3"><span class="spf-link">Page 3</span></a>
-      <a href="/page/4"><span class="spf-link">Page 4</span></a>
-      <a href="/page/5"><span class="spf-link">Page 5</span></a>
-      <a href="/page/6"><span class="spf-link">Page 6</span></a>
+      <a href="/demo/1"><span class="spf-link">Demo 1</span></a>
+      <a href="/demo/2"><span class="spf-link">Demo 2</span></a>
+      <a href="/demo/3"><span class="spf-link">Demo 3</span></a>
+      <a href="/demo/4"><span class="spf-link">Demo 4</span></a>
+      <a href="/demo/5"><span class="spf-link">Demo 5</span></a>
+      <a href="/demo/6"><span class="spf-link">Demo 6</span></a>
     </p>
   </div>
 </div>

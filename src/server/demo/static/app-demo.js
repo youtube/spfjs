@@ -7,26 +7,26 @@
 
 // This file only exists to demonstrate external JS being loaded.
 
-var demo = demo || {};
+var app = app || {};
 
 /**
  * Simple central logging function for the demo app.
  * @param {string} msg Message to log.
  */
-demo.log = function(msg) {
+app.log = function(msg) {
   if (window.console) {
-    window.console.log('[demo] ' + msg);
+    window.console.log('[app] ' + msg);
   }
 };
 
 /**
- * The demo app namespace for the page page.
+ * The namespace for the demo page.
  * @type {Object}
  */
-demo.page = demo.page || {};
+app.demo = app.demo || {};
 
 // Set a variable to show the external JS is loaded.
 /** @type {boolean} */
-demo.page.loaded = true;
+app.demo.loaded = true;
 
-demo.log('page: external javascript');
+app.log('demo: external javascript');
