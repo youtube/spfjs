@@ -48,6 +48,7 @@ demo.dispose = function() {
 
 /**
  * Simple central logging function for the demo app.
+ * @param {string} msg Message to log.
  */
 demo.log = function(msg) {
   if (window.console) {
@@ -83,7 +84,7 @@ demo.updateTime = function() {
       var time = Math.floor((+new Date() - demo.start_) / 1000);
       timerEl.innerHTML = time;
     } else {
-      timerEl.innerHTML = ''
+      timerEl.innerHTML = '';
     }
   }
 };

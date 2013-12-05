@@ -7,8 +7,8 @@
 goog.provide('spf.cache');
 
 goog.require('spf');
-goog.require('spf.state');
 goog.require('spf.config');
+goog.require('spf.state');
 
 
 /**

@@ -1,4 +1,4 @@
-"""Simple demo app for SPF."""
+"""Simple demo server app for SPF."""
 
 __author__ = 'nicksay@google.com (Alex Nicksay)'
 
@@ -59,10 +59,10 @@ app = web.application(urls, globals())
 
 
 class Servlet(object):
-  """Basic demo servlet class, containing common functions."""
+  """Basic servlet class, containing common functions."""
 
   def _SetChunkedHeaders(self):
-    # The web.py demo server always sets "Transfer-Encoding: chunked"
+    # The web.py server always sets "Transfer-Encoding: chunked"
     # and uses chunked transfer automatically, so manually setting
     # headers is not necessary.
     pass
@@ -313,6 +313,8 @@ class Chunked(Servlet):
 
 
 class _ChunkedSample(Servlet):
+  """Common root servlet class for permutations for sample chunked responses."""
+
   def _HandleInput(self):
     """Handles request parameters for the sample chunked responses."""
     req = web.input(chunks=1, delay='', no_final_delimiter='',

@@ -11,6 +11,7 @@ var demo = demo || {};
 
 /**
  * Simple central logging function for the demo app.
+ * @param {string} msg Message to log.
  */
 demo.log = function(msg) {
   if (window.console) {
