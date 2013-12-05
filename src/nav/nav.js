@@ -785,9 +785,6 @@ spf.nav.handleLoadError_ = function(isPrefetch, options, original, url, err) {
  */
 spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
                                    partial) {
-  var processFn = isPrefetch ?
-      spf.nav.response.preprocess :
-      spf.nav.response.process;
   if (isPrefetch) {
     // Add the navigate part function as a task to be invoked on
     // prefetch promotion.
@@ -798,16 +795,17 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
     // If the prefetch has been promoted, run the promotion task after
     // adding it and do not perform any preprocessing.
     if (spf.state.get('nav-promote') == original) {
-      spf.tasks.run(key, true);
+      spf.tasks.run(promoteKey, true);
       return;
     }
   }
 
-  if (!isPrefetch || spf.state.get('nav-promote') != original) {
-    processFn(url, partial, function() {
-      spf.nav.callback(options['onPart'], url, partial);
-    });
-  }
+  var processFn = isPrefetch ?
+      spf.nav.response.preprocess :
+      spf.nav.response.process;
+  processFn(url, partial, function() {
+    spf.nav.callback(options['onPart'], url, partial);
+  });
 };
 
 
@@ -825,9 +823,9 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
  */
 spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
                                       response) {
-  var redirectFn = isPrefetch ? spf.nav.prefetch_ : spf.nav.load_;
   // Check for redirects.
   if (response['redirect']) {
+    var redirectFn = isPrefetch ? spf.nav.prefetch_ : spf.nav.load_;
     // Note that POST is not propagated with redirects.
     var redirectOpts = /** @type {spf.RequestOptions} */ ({
       'onSuccess': options['onSuccess'],
@@ -866,14 +864,12 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
   // so just execute the callback.  Call process with an empty
   // object to ensure the callback is properly queued.
   var processFn = isPrefetch ?
-      spf.nav.response.preprocess :
-      spf.nav.response.process;
+    spf.nav.response.preprocess :
+    spf.nav.response.process;
   var r = (response['type'] == 'multipart') ? {} : response;
-  if (!isPrefetch || spf.state.get('nav-promote') != original) {
-    processFn(url, r, function() {
-      spf.nav.callback(options['onSuccess'], url, response);
-    });
-  }
+  processFn(url, r, function() {
+    spf.nav.callback(options['onSuccess'], url, response);
+  });
 };
 
 
