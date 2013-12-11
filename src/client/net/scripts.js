@@ -88,8 +88,6 @@ spf.net.scripts.eval = function(text, opt_callback) {
  * @return {Element} The dynamically created script element.
  */
 spf.net.scripts.load = function(url, opt_callback, opt_name) {
-  spf.debug.warn('unloading script, canceling ALL pending callbacks',
-                 'url=', url);
   return spf.net.resources.load(spf.net.resources.Type.JS, url,
                                 opt_callback, opt_name);
 };
@@ -106,6 +104,8 @@ spf.net.scripts.load = function(url, opt_callback, opt_name) {
  * @param {string} url Url of the script.
  */
 spf.net.scripts.unload = function(url) {
+  spf.debug.warn('unloading script, canceling ALL pending callbacks',
+                 'url=', url);
   spf.net.resources.unload(spf.net.resources.Type.JS, url);
 };
 

@@ -232,16 +232,11 @@ spf.net.resources.unload_ = function(els) {
  * @param {Function} callback Callback function to cancel.
  */
 spf.net.resources.ignore = function(type, url, callback) {
-  // TODO(nicksay): After 1 push, remove support for null callback.
-  if (!url) {
+  if (!url || !callback) {
     return;
   }
   var id = spf.net.resources.id_(type, url);
-  if (!callback) {
-    spf.pubsub.clear(id);
-  } else {
-    spf.pubsub.unsubscribe(id, callback);
-  }
+  spf.pubsub.unsubscribe(id, callback);
 };
 
 
