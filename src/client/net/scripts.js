@@ -20,6 +20,7 @@
 
 goog.provide('spf.net.scripts');
 
+goog.require('spf.debug');
 goog.require('spf.net.resources');
 
 
@@ -28,7 +29,7 @@ goog.require('spf.net.resources');
  * Marks all existing script URL elements in the document as loaded.
  */
 spf.net.scripts.mark = function() {
-  spf.net.resources.mark('js');
+  spf.net.resources.mark(spf.net.resources.Type.JS);
 };
 
 
@@ -87,31 +88,36 @@ spf.net.scripts.eval = function(text, opt_callback) {
  * @return {Element} The dynamically created script element.
  */
 spf.net.scripts.load = function(url, opt_callback, opt_name) {
-  return spf.net.resources.load('js', url, opt_callback, opt_name);
+  spf.debug.warn('unloading script, canceling ALL pending callbacks',
+                 'url=', url);
+  return spf.net.resources.load(spf.net.resources.Type.JS, url,
+                                opt_callback, opt_name);
 };
 
 
 /**
  * "Unloads" a script URL by finding a previously created element and
  * removing it from the document.  This will allow a URL to be loaded again
- * if needed.  Unloading a script will stop execution of a pending callback,
- * but will not stop loading a pending URL.
+ * if needed.
+ *
+ * NOTE: Unloading a script will prevent execution of ALL pending callbacks
+ * but is NOT guaranteed to stop the browser loading a pending URL.
  *
  * @param {string} url Url of the script.
  */
 spf.net.scripts.unload = function(url) {
-  spf.net.resources.unload('js', url);
+  spf.net.resources.unload(spf.net.resources.Type.JS, url);
 };
 
 
 /**
- * "Ignores" a script load by canceling execution of any pending callbacks;
- * does not stop the actual loading of the script.
+ * "Ignores" a script load by canceling execution of a pending callback.
  *
  * @param {string} url Url of the script.
+ * @param {Function} callback Callback function to cancel.
  */
-spf.net.scripts.ignore = function(url) {
-  spf.net.resources.ignore('js', url);
+spf.net.scripts.ignore = function(url, callback) {
+  spf.net.resources.ignore(spf.net.resources.Type.JS, url, callback);
 };
 
 
@@ -123,7 +129,7 @@ spf.net.scripts.ignore = function(url) {
  * @param {string} url Url of the script.
  */
 spf.net.scripts.prefetch = function(url) {
-  spf.net.resources.prefetch('js', url);
+  spf.net.resources.prefetch(spf.net.resources.Type.JS, url);
 };
 
 

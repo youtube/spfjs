@@ -24,14 +24,15 @@ goog.require('spf.url');
  * to identify the script or style and prevent reloading the resource.  Elements
  * with pre-existing ids will be ignored.
  *
- * @param {string} type Type of the resource, must be either "js" or "css".
+ * @param {spf.net.resources.Type} type Type of the resource.
  */
 spf.net.resources.mark = function(type) {
-  var selector = (type == 'js') ? 'script[src]' : 'link[rel~="stylesheet"]';
+  var isJS = type == spf.net.resources.Type.JS;
+  var selector = isJS ? 'script[src]' : 'link[rel~="stylesheet"]';
   var els = spf.dom.query(selector);
   for (var i = 0, l = els.length; i < l; i++) {
     if (!els[i].id) {
-      var url = (type == 'js') ? els[i].src : els[i].href;
+      var url = isJS ? els[i].src : els[i].href;
       var id = spf.net.resources.id_(type, url);
       els[i].id = id;
       spf.dom.dataset.set(els[i], 'loaded', 'true');
@@ -61,7 +62,7 @@ spf.net.resources.mark = function(type) {
  *   before the callback is executed.  This allows switching between
  *   versions of the same resource at different URLs.
  *
- * @param {string} type Type of the resource, must be either "js" or "css".
+ * @param {spf.net.resources.Type} type Type of the resource.
  * @param {string} url Url of the resource.
  * @param {Function=} opt_callback Callback function to execute when the
  *     resource is loaded.
@@ -70,7 +71,7 @@ spf.net.resources.mark = function(type) {
  * @return {Element} The dynamically created element.
  */
 spf.net.resources.load = function(type, url, opt_callback, opt_name) {
-  if ((type != 'js' && type != 'css') || !url) {
+  if (!url) {
     return null;
   }
   var id = spf.net.resources.id_(type, url);
@@ -94,7 +95,7 @@ spf.net.resources.load = function(type, url, opt_callback, opt_name) {
     return el;
   }
   // Otherwise, the resource needs to be loaded.
-  var isJS = type == 'js';
+  var isJS = type == spf.net.resources.Type.JS;
   // First, find old resources to remove after loading, if any.
   var tag = isJS ? 'script' : 'link';
   var elsToRemove = cls ? spf.dom.query(tag + '.' + cls) : [];
@@ -120,7 +121,7 @@ spf.net.resources.load = function(type, url, opt_callback, opt_name) {
 /**
  * See {@link #load}.
  *
- * @param {string} type Type of the resource, must be either "js" or "css".
+ * @param {spf.net.resources.Type} type Type of the resource.
  * @param {string} url Url of the resource.
  * @param {string} id Id of the element.
  * @param {string} cls Class of the element.
@@ -130,40 +131,42 @@ spf.net.resources.load = function(type, url, opt_callback, opt_name) {
  * @private
  */
 spf.net.resources.load_ = function(type, url, id, cls, fn, opt_document) {
-  if ((type != 'js' && type != 'css') || !url) {
-    return null;
-  }
-  var tag = (type == 'js') ? 'script' : 'link';
+  var isJS = type == spf.net.resources.Type.JS;
+  var tag = isJS ? 'script' : 'link';
   var el = document.createElement(tag);
   el.id = id;
   el.className = cls;
-  if (type == 'css') {
+  if (isJS) {
+    el.async = true;
+  } else {
     el.rel = 'stylesheet';
   }
-  // Chrome, Safari and Firefox support the onload event for scripts.
-  // The onload event for stylesheets is supported in IE 5.5, Firefox 9,
-  // and WebKit 535.24 (Chrome 19 / Safari 6).
+  // Chrome, Safari, Firefox, Opera and IE 9 support script onload.
+  // Chrome 19, Safari 6, Firefox 9, Opera and IE 5.5 support stylesheet onload.
+  // To support scripts IE 8 and below, use script onreadystatechange.
+  var loaded = false;
   el.onload = function() {
-    // IE 10 has a bug where it will synchronously call load handlers for
-    // cached resources, we must force this to be async.
-    if (fn) {
-      setTimeout(fn, 0);
+    // Prevent multiple callback execution in IE 9+ where both onload and
+    // onreadystatechange will be executed.
+    if (!loaded) {
+      loaded = true;
+      el.onload = el.onreadystatechange = null;
+      // IE 10 has a bug where it will synchronously call load handlers for
+      // cached resources, we must force this to be async.
+      if (fn) {
+        setTimeout(fn, 0);
+      }
     }
   };
-  // For scripts, IE < 9 does not support the onload handler, so the
-  // onreadystatechange event should be used to manually call onload. This
-  // means fn will be called twice in modern IE, but subsequent invocations
-  // are ignored.  See {@link #load}.
+  el.onerror = el.onload;
   el.onreadystatechange = function() {
-    switch (el.readyState) {
-      case 'loaded':
-      case 'complete':
-        el.onload();
+    if (/complete|loaded/.test(el.readyState)) {
+      el.onload(null);
     }
   };
-  if (type == 'js') {
-    // For scripts, set the onload and onreadystatechange handlers before
-    // setting the src to avoid potential IE bug where handlers are not called.
+  // For scripts, set the onload and onreadystatechange handlers before
+  // setting the src to avoid potential IE bug where handlers are not called.
+  if (isJS) {
     el.src = url;
   } else {
     el.href = url;
@@ -172,7 +175,7 @@ spf.net.resources.load_ = function(type, url, id, cls, fn, opt_document) {
   // called from the head in the first place.
   var doc = opt_document || document;
   var targetEl = doc.getElementsByTagName('head')[0] || doc.body;
-  if (type == 'js') {
+  if (isJS) {
     // Use insertBefore instead of appendChild to avoid errors with loading
     // multiple scripts at once in IE.
     targetEl.insertBefore(el, targetEl.firstChild);
@@ -187,14 +190,16 @@ spf.net.resources.load_ = function(type, url, id, cls, fn, opt_document) {
 /**
  * Unloads a resource URL by finding a previously created element and
  * removing it from the document. This will allow a URL to be loaded again
- * if needed.  Unloading a script will stop execution of a pending callback,
- * but will not stop loading a pending URL.
+ * if needed.
  *
- * @param {string} type Type of the resource, must be either "js" or "css".
+ * WARNING: Unloading a resource will prevent execution of ALL pending callbacks
+ * but is NOT guaranteed to stop the browser loading a pending URL.
+ *
+ * @param {spf.net.resources.Type} type Type of the resource.
  * @param {string} url Url of the resource.
  */
 spf.net.resources.unload = function(type, url) {
-  if (type != 'js' && type != 'css') {
+  if (!url) {
     return;
   }
   var id = spf.net.resources.id_(type, url);
@@ -220,30 +225,36 @@ spf.net.resources.unload_ = function(els) {
 
 
 /**
- * "Ignores" a resource load by canceling execution of any pending callbacks;
- * does not stop the actual loading of the resource.
+ * "Ignores" a resource load by canceling execution of a pending callback.
  *
- * @param {string} type Type of the resource, must be either "js" or "css".
+ * @param {spf.net.resources.Type} type Type of the resource.
  * @param {string} url Url of the resource.
+ * @param {Function} callback Callback function to cancel.
  */
-spf.net.resources.ignore = function(type, url) {
-  if (type != 'js' && type != 'css') {
+spf.net.resources.ignore = function(type, url, callback) {
+  // TODO(nicksay): After 1 push, remove support for null callback.
+  if (!url) {
     return;
   }
   var id = spf.net.resources.id_(type, url);
-  spf.pubsub.clear(id);
+  if (!callback) {
+    spf.pubsub.clear(id);
+  } else {
+    spf.pubsub.unsubscribe(id, callback);
+  }
 };
+
 
 /**
  * Prefetches a resource URL; the resource will be requested but not loaded.
  * Use to prime the browser cache and avoid needing to request the resource
  * when subsequently loaded.  See {@link #load}.
  *
- * @param {string} type Type of the resource, must be either "js" or "css".
+ * @param {spf.net.resources.Type} type Type of the resource.
  * @param {string} url Url of the resource.
  */
 spf.net.resources.prefetch = function(type, url) {
-  if (type != 'js' && type != 'css') {
+  if (!url) {
     return;
   }
   var id = spf.net.resources.id_(type, url);
@@ -285,14 +296,15 @@ spf.net.resources.prefetch = function(type, url) {
  * See {@link #prefetch}.
  *
  * @param {HTMLIFrameElement} iframeEl The iframe to load resources in.
- * @param {string} type Type of the resource, must be either "js" or "css".
+ * @param {spf.net.resources.Type} type Type of the resource.
  * @param {string} url Url of the resource.
  * @param {string} id The computed unique id of the resource.
  * @private
  */
 spf.net.resources.loadResourceInIframe_ = function(iframeEl, type, url, id) {
+  var isJS = type == spf.net.resources.Type.JS;
   var iframeDoc = iframeEl.contentWindow.document;
-  if (type == 'js') {
+  if (isJS) {
     if (spf.net.resources.IS_IE) {
       // IE needs a <script> in order to complete the request, but
       // fortunately will not execute it unless in the DOM.  Attempting to
@@ -315,7 +327,7 @@ spf.net.resources.loadResourceInIframe_ = function(iframeEl, type, url, id) {
 
 
 /**
- * @param {string} type Type of the resource, must be either "js" or "css".
+ * @param {spf.net.resources.Type} type Type of the resource.
  * @param {string} url Url of the resource.
  * @return {string} The unique id of the resource.
  * @private
@@ -334,3 +346,13 @@ spf.net.resources.id_ = function(type, url) {
  * @const
  */
 spf.net.resources.IS_IE = spf.string.contains(navigator.userAgent, ' Trident/');
+
+
+/**
+ * Supported resource types.
+ * @enum {string}
+ */
+spf.net.resources.Type = {
+  CSS: 'css',
+  JS: 'js'
+};

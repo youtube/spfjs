@@ -6,6 +6,7 @@
 
 goog.provide('spf.net.styles');
 
+goog.require('spf.debug');
 goog.require('spf.net.resources');
 goog.require('spf.string');
 
@@ -14,7 +15,7 @@ goog.require('spf.string');
  * Marks all existing stylesheet URL elements in the document as loaded.
  */
 spf.net.styles.mark = function() {
-  spf.net.resources.mark('css');
+  spf.net.resources.mark(spf.net.resources.Type.CSS);
 };
 
 
@@ -67,7 +68,8 @@ spf.net.styles.eval = function(text) {
  * @return {Element} The dynamically created link element.
  */
 spf.net.styles.load = function(url, opt_callback, opt_name) {
-  return spf.net.resources.load('css', url, opt_callback, opt_name);
+  return spf.net.resources.load(spf.net.resources.Type.CSS, url,
+                                opt_callback, opt_name);
 };
 
 
@@ -76,21 +78,26 @@ spf.net.styles.load = function(url, opt_callback, opt_name) {
  * removing it from the document.  This will remove the styles and allow a
  * URL to be loaded again if needed.
  *
+ * NOTE: Unloading a style will prevent execution of ALL pending callbacks
+ * but is NOT guaranteed to stop the browser loading a pending URL.
+ *
  * @param {string} url Url of the stylesheet.
  */
 spf.net.styles.unload = function(url) {
-  spf.net.resources.unload('css', url);
+  spf.debug.warn('unloading stylesheet, canceling ALL pending callbacks',
+                 'url=', url);
+  spf.net.resources.unload(spf.net.resources.Type.CSS, url);
 };
 
 
 /**
- * "Ignores" a stylesheet load by canceling execution of any pending callbacks;
- * does not stop the actual loading of the stylesheet.
+ * "Ignores" a stylesheet load by canceling execution of a pending callback.
  *
  * @param {string} url Url of the stylesheet.
+ * @param {Function} callback Callback function to cancel.
  */
-spf.net.styles.ignore = function(url) {
-  spf.net.resources.ignore('css', url);
+spf.net.styles.ignore = function(url, callback) {
+  spf.net.resources.ignore(spf.net.resources.Type.CSS, url, callback);
 };
 
 
@@ -102,7 +109,7 @@ spf.net.styles.ignore = function(url) {
  * @param {string} url Url of the stylesheet.
  */
 spf.net.styles.prefetch = function(url) {
-  spf.net.resources.prefetch('css', url);
+  spf.net.resources.prefetch(spf.net.resources.Type.CSS, url);
 };
 
 

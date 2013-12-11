@@ -253,8 +253,13 @@ spf.scripts.load = function(url, opt_callback, opt_name) {};
 /**
  * "Unloads" a script URL by finding a previously created element and
  * removing it from the document.  This will allow a URL to be loaded again
- * if needed.  Unloading a script will stop execution of a pending callback,
- * but will not stop loading a pending URL.
+ * if needed.
+ *
+ * NOTE: Unloading a script will prevent execution of ALL pending callbacks
+ * but is NOT guaranteed to stop the browser loading a pending URL.
+ *
+ * WARNING: Unloading a script being loaded as part of navigation response
+ * processing will cause the navigate to stall and not complete.
  *
  * @param {string} url Url of the script.
  */
@@ -262,12 +267,12 @@ spf.scripts.unload = function(url) {};
 
 
 /**
- * "Ignores" a script load by canceling execution of any pending callbacks;
- * does not stop the actual loading of the script.
+ * "Ignores" a script load by canceling execution of a pending callback.
  *
  * @param {string} url Url of the script.
+ * @param {Function} callback Callback function to cancel.
  */
-spf.scripts.ignore = function(url) {};
+spf.scripts.ignore = function(url, callback) {};
 
 
 /**
@@ -321,18 +326,21 @@ spf.styles.load = function(url, opt_callback, opt_name) {};
  * removing it from the document.  This will remove the styles and allow a
  * URL to be loaded again if needed.
  *
+ * NOTE: Unloading a style will prevent execution of ALL pending callbacks
+ * but is NOT guaranteed to stop the browser loading a pending URL.
+ *
  * @param {string} url Url of the stylesheet.
  */
 spf.styles.unload = function(url) {};
 
 
 /**
- * "Ignores" a stylesheet load by canceling execution of any pending callbacks;
- * does not stop the actual loading of the stylesheet.
+ * "Ignores" a stylesheet load by canceling execution of a pending callback.
  *
  * @param {string} url Url of the stylesheet.
+ * @param {Function} callback Callback function to cancel.
  */
-spf.styles.ignore = function(url) {};
+spf.styles.ignore = function(url, callback) {};
 
 
 /**
