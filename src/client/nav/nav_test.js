@@ -261,15 +261,6 @@ describe('spf.nav', function() {
     });
 
 
-    it('respects callback', function() {
-      var url = '/page';
-      spf.config.set('navigate-requested-callback', falseFunc);
-      expect(spf.nav.isNavigateEligible_(url)).toBe(false);
-      spf.config.set('navigate-requested-callback', trueFunc);
-      expect(spf.nav.isNavigateEligible_(url)).toBe(true);
-    });
-
-
     it('respects session navigation limit', function() {
       var url = '/page';
       spf.config.set('navigate-limit', 5);

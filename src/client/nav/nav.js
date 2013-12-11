@@ -169,11 +169,6 @@ spf.nav.isNavigateEligible_ = function(url) {
     spf.debug.warn('navigation not initialized');
     return false;
   }
-  // Execute the "navigation requested" callback.  If the callback explicitly
-  // cancels (by returning false), cancel.
-  if (!spf.nav.callback('navigate-requested-callback', url)) {
-    return false;
-  }
   // If a session limit has been set and reached, cancel.
   var count = (parseInt(spf.state.get('nav-counter'), 10) || 0) + 1;
   var limit = parseInt(spf.config.get('navigate-limit'), 10);
@@ -361,10 +356,15 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
     // Begin the prefetch promotion process.
     spf.nav.navigatePromotePrefetch_(url, options, referer,
                                      !!opt_history, !!opt_reverse);
-    return;
+  } else {
+    spf.nav.navigateSendRequest_(url, options, referer,
+                                 !!opt_history, !!opt_reverse);
   }
-  spf.nav.navigateSendRequest_(url, options, referer, !!opt_history,
-                               !!opt_reverse);
+  // Execute the "navigation requested" callback.  If the callback explicitly
+  // cancels (by returning false), cancel this navigation and redirect.
+  if (!spf.nav.callback('navigate-requested-callback', url)) {
+    spf.nav.redirect(url);
+  }
 };
 
 
