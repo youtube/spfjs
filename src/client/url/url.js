@@ -12,14 +12,15 @@ goog.require('spf.string');
 
 /**
  * Converts a relative URL to absolute based on the current document domain.
+ * Also removes the fragment from the URL, if one exists.
  *
  * @param {string} relative A relative URL.
- * @return {string} An absolute URL.
+ * @return {string} An absolute URL (with fragment removed, if possible).
  */
 spf.url.absolute = function(relative) {
   var aEl = document.createElement('a');
   aEl.href = relative;
-  return aEl.href;
+  return spf.url.unfragment(aEl.href);
 };
 
 
@@ -36,6 +37,12 @@ spf.url.identify = function(url, opt_type) {
   var ident = /** @type {string} */ (spf.config.get('url-identifier')) || '';
   if (ident) {
     var type = opt_type || '';
+    var frag = '';
+    if (spf.string.contains(url, '#')) {
+      var res = spf.string.bisect(url, '#');
+      url = res[0];
+      frag = '#' + res[1];
+    }
     ident = ident.replace('__type__', type);
     if (spf.string.startsWith(ident, '?') &&
         spf.string.contains(url, '?')) {
@@ -43,6 +50,7 @@ spf.url.identify = function(url, opt_type) {
     } else {
       url += ident;
     }
+    url += frag;
   }
   return url;
 };
@@ -52,9 +60,21 @@ spf.url.identify = function(url, opt_type) {
  * Converts an absolute URL to protocol-relative (e.g. no http: or https:).
  * Has no effect on relative URLs.
  *
- * @param {string} absolute An absolute URL.
+ * @param {string} url An absolute URL.
  * @return {string} An protocol-relative URL, if possible.
  */
-spf.url.unprotocol = function(absolute) {
-  return absolute.replace(/^[a-zA-Z]+:\/\//, '//');
+spf.url.unprotocol = function(url) {
+  return url.replace(/^[a-zA-Z]+:\/\//, '//');
+};
+
+
+/**
+ * Removes a fragment from a URL.
+ *
+ * @param {string} url A URL.
+ * @return {string}  A URL without a fragment, if possible.
+ */
+spf.url.unfragment = function(url) {
+  var res = spf.string.bisect(url, '#');
+  return res[0];
 };

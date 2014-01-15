@@ -83,7 +83,7 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
   var timer;
 
   var xhr = new XMLHttpRequest();
-  xhr.open(method, spf.net.xhr.removeFragmentFromUrl_(url), true);
+  xhr.open(method, url, true);
   xhr['timing'] = {};
 
   // Overload the abort method to handle the timer.
@@ -162,19 +162,6 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
   xhr.send(data);
 
   return xhr;
-};
-
-
-/**
- * Removes any fragment from a url because some browsers (IE 10) have a bug
- * that will send the fragment in an XHR request.
- *
- * @param {string} url The URL from which to strip any fragment ('/watch#t=1').
- * @return {string} The URL without the fragment ('/watch').
- * @private
- */
-spf.net.xhr.removeFragmentFromUrl_ = function(url) {
-  return url.split('#')[0];
 };
 
 

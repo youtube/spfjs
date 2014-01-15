@@ -66,6 +66,19 @@ describe('spf.string', function() {
     expect(spf.string.trim(' \t \r\n foo bar \r\n \t ')).toEqual('foo bar');
   });
 
+  it('bisect', function() {
+    // No separator.
+    expect(spf.string.bisect('foobar', '|')).toEqual(['foobar', '']);
+    // One separator.
+    expect(spf.string.bisect('foo|bar', '|')).toEqual(['foo', 'bar']);
+    expect(spf.string.bisect('|foobar', '|')).toEqual(['', 'foobar']);
+    expect(spf.string.bisect('foobar|', '|')).toEqual(['foobar', '']);
+    // Multiple separators.
+    expect(spf.string.bisect('foo|bar|one', '|')).toEqual(['foo', 'bar|one']);
+    expect(spf.string.bisect('|foo|bar|one', '|')).toEqual(['', 'foo|bar|one']);
+    expect(spf.string.bisect('foo|bar|one|', '|')).toEqual(['foo', 'bar|one|']);
+  });
+
   it('hashCode', function() {
     expect(function() {spf.string.hashCode(null)}).toThrow();
     expect(spf.string.hashCode('')).toEqual(0);

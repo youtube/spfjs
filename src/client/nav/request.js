@@ -74,8 +74,8 @@ spf.nav.request.send = function(url, opt_options) {
   options.method = ((options.method || 'GET') + '').toUpperCase();
   options.type = options.type || 'request';
   // Add the SPF identifier, to be used for sending the request.
-  var requestUrl = spf.url.identify(url, options.type);
-  spf.debug.debug('    identified url ', requestUrl);
+  var requestUrl = spf.url.absolute(spf.url.identify(url, options.type));
+  spf.debug.debug('    request url ', requestUrl);
   // Record a the time before sending the request or loading from cache.
   // The startTime is consistent with W3C PerformanceResourceTiming for XHRs.
   var timing = {};

@@ -60,6 +60,23 @@ spf.string.trim = (function() {
 
 
 /**
+ * Bisects a string by dividing into 2 parts on a separator.  The result
+ * is an array of 2 strings containing the two parts (and not the separator).
+ * If the separator is not found, the first array index contains the original
+ * string and the second array index contains an empty string.  Only the first
+ * match of the separator is used, if multiple exist.
+ *
+ * @param {string} str The string to bisect.
+ * @param {string} sep The separator.
+ * @return {!Array.<string>} The bisected string result.
+ */
+spf.string.bisect = function(str, sep) {
+  var arr = str.split(sep);
+  return [arr[0], arr.slice(1).join(sep)];
+};
+
+
+/**
  * String hash function similar to java.lang.String.hashCode().
  * The hash code for a string is computed as
  * s[0] * 31 ^ (n - 1) + s[1] * 31 ^ (n - 2) + ... + s[n - 1],

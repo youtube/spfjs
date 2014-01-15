@@ -84,4 +84,24 @@ describe('spf.url', function() {
   });
 
 
+  describe('unfragment', function() {
+
+    it('no fragment', function() {
+      var url = '/page';
+      expect(spf.url.unfragment(url)).toEqual('/page');
+    });
+
+    it('empty fragment', function() {
+      var url = '/page#';
+      expect(spf.url.unfragment(url)).toEqual('/page');
+    });
+
+    it('fragment', function() {
+      var url = '/page#frag';
+      expect(spf.url.unfragment(url)).toEqual('/page');
+    });
+
+  });
+
+
 });
