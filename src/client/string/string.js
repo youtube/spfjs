@@ -24,10 +24,12 @@ spf.string.contains = function(str, substr) {
  *
  * @param {string} str The string to check.
  * @param {string} prefix A string to look for at the start of {@code str}.
+ * @param {number=} opt_offset Offset from index 0 at which to check.
  * @return {boolean} True if {@code str} begins with {@code prefix}.
  */
-spf.string.startsWith = function(str, prefix) {
-  return str.lastIndexOf(prefix, 0) == 0;
+spf.string.startsWith = function(str, prefix, opt_offset) {
+  var idx = opt_offset || 0;
+  return str.lastIndexOf(prefix, idx) == idx;
 };
 
 

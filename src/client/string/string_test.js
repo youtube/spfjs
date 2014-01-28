@@ -29,6 +29,9 @@ describe('spf.string', function() {
     // Full matching.
     expect(spf.string.startsWith('attr="value"', 'attr="value"')).toBe(true);
     expect(spf.string.startsWith('attr="value"', 'attr="other"')).toBe(false);
+    // Offset matching.
+    expect(spf.string.startsWith('"use strict";', 'use strict', 1)).toBe(true);
+    expect(spf.string.startsWith('"use strict";', 'use strict')).toBe(false);
   });
 
   it('endsWith', function() {

@@ -22,7 +22,7 @@ goog.provide('spf.net.scripts');
 
 goog.require('spf.debug');
 goog.require('spf.net.resources');
-
+goog.require('spf.string');
 
 
 /**
@@ -44,17 +44,26 @@ spf.net.scripts.mark = function() {
  * @return {undefined}
  */
 spf.net.scripts.eval = function(text, opt_callback) {
-  if (window.execScript) {
-    window.execScript(text, 'JavaScript');
-  } else {
-    var scriptEl = document.createElement('script');
-    scriptEl.appendChild(document.createTextNode(text));
-    // Place the scripts in the head instead of the body to avoid errors when
-    // called from the head in the first place.
-    var targetEl = document.getElementsByTagName('head')[0] || document.body;
-    // Use insertBefore instead of appendChild to avoid errors with loading
-    // multiple scripts at once in IE.
-    targetEl.insertBefore(scriptEl, targetEl.firstChild);
+  text = spf.string.trim(text);
+  if (text) {
+    if (window.execScript) {
+      // For IE, reach global scope using execScript to avoid a bug where
+      // indirect eval is treated as direct eval.
+      window.execScript(text);
+    } else if (spf.string.startsWith(text, 'use strict', 1)) {
+      // For strict mode, reach global scope using the slower script injection
+      // method.
+      var scriptEl = document.createElement('script');
+      scriptEl.text = text;
+      // Place the scripts in the head instead of the body to avoid errors when
+      // called from the head in the first place.
+      var targetEl = document.getElementsByTagName('head')[0] || document.body;
+      targetEl.appendChild(scriptEl);
+      targetEl.removeChild(scriptEl);
+    } else {
+      // Otherwise, use indirect eval to reach global scope.
+      (0, eval)(text);
+    }
   }
   if (opt_callback) {
     opt_callback();
