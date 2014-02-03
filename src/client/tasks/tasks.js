@@ -7,6 +7,7 @@
 goog.provide('spf.tasks');
 
 goog.require('spf');
+goog.require('spf.state');
 goog.require('spf.string');
 
 
@@ -124,6 +125,19 @@ spf.tasks.cancelAllExcept = function(opt_keyPrefix, opt_skipKey) {
       spf.tasks.cancel(key);
     }
   }
+};
+
+
+/**
+ * Gets a unique key for an object.  Mutates the object to store the key so
+ * that multiple calls for the same object will return the same key.
+ *
+ * @param {Object} obj The object to get a unique key for.
+ * @return {string} The unique key.
+ */
+spf.tasks.key = function(obj) {
+  var uid = (parseInt(spf.state.get('uid'), 10) || 0) + 1;
+  return obj['spf-key'] || (obj['spf-key'] = '' + spf.state.set('uid', uid));
 };
 
 

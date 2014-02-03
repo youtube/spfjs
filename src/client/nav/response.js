@@ -190,7 +190,7 @@ spf.nav.response.process = function(url, response, opt_callback, opt_reverse) {
           });
         } else {
           spf.tasks.suspend(key);  // Suspend main queue for animation.
-          var animationKey = spf.key(el);
+          var animationKey = spf.tasks.key(el);
           // Finish a previous animation on this sub-queue, if needed.
           spf.tasks.run(animationKey, true);
           var animationFn;
