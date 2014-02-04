@@ -330,7 +330,7 @@ spf.net.resources.loadResourceInIframe_ = function(iframeEl, type, url, id) {
 spf.net.resources.id_ = function(type, url) {
   var absolute = spf.url.absolute(url);
   var unprotocol = spf.url.unprotocol(absolute);
-  var hash = spf.string.hashCode(unprotocol);
+  var hash = spf.string.hashcode(unprotocol);
   return type + '-' + hash;
 };
 

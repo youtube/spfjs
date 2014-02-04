@@ -82,17 +82,18 @@ describe('spf.string', function() {
     expect(spf.string.bisect('foo|bar|one|', '|')).toEqual(['foo', 'bar|one|']);
   });
 
-  it('hashCode', function() {
-    expect(function() {spf.string.hashCode(null)}).toThrow();
-    expect(spf.string.hashCode('')).toEqual(0);
-    expect(spf.string.hashCode('foo')).toEqual(101574);
-    expect(spf.string.hashCode('\uAAAAfoo')).toEqual(1301670364);
+  it('hashcode', function() {
+    expect(function() {spf.string.hashcode(null)}).not.toThrow();
+    expect(spf.string.hashcode(null)).toEqual(0);
+    expect(spf.string.hashcode('')).toEqual(0);
+    expect(spf.string.hashcode('foo')).toEqual(101574);
+    expect(spf.string.hashcode('\uAAAAfoo')).toEqual(1301670364);
     var repeat = function(n, s) { return (new Array(n + 1)).join(s); };
-    expect(spf.string.hashCode(repeat(5, 'a'))).toEqual(92567585);
-    expect(spf.string.hashCode(repeat(6, 'a'))).toEqual(2869595232);
-    expect(spf.string.hashCode(repeat(7, 'a'))).toEqual(3058106369);
-    expect(spf.string.hashCode(repeat(8, 'a'))).toEqual(312017024);
-    expect(spf.string.hashCode(repeat(1024, 'a'))).toEqual(2929737728);
+    expect(spf.string.hashcode(repeat(5, 'a'))).toEqual(92567585);
+    expect(spf.string.hashcode(repeat(6, 'a'))).toEqual(2869595232);
+    expect(spf.string.hashcode(repeat(7, 'a'))).toEqual(3058106369);
+    expect(spf.string.hashcode(repeat(8, 'a'))).toEqual(312017024);
+    expect(spf.string.hashcode(repeat(1024, 'a'))).toEqual(2929737728);
   });
 
   it('toSelectorCase', function() {
@@ -103,6 +104,27 @@ describe('spf.string', function() {
     expect(spf.string.toSelectorCase('one-two')).toEqual('one-two');
     // String object function name.
     expect(spf.string.toSelectorCase('toString')).toEqual('to-string');
+  });
+
+  describe('isString', function() {
+
+    it('evaluates strings', function() {
+      expect(spf.string.isString('')).toBe(true);
+      expect(spf.string.isString('foo')).toBe(true);
+      expect(spf.string.isString(new String())).toBe(true);
+      expect(spf.string.isString(new String('Foo'))).toBe(true);
+    });
+
+    it('evaluates non-strings', function() {
+      expect(spf.string.isString()).toBe(false);
+      expect(spf.string.isString(undefined)).toBe(false);
+      expect(spf.string.isString(null)).toBe(false);
+      expect(spf.string.isString(50)).toBe(false);
+      expect(spf.string.isString([])).toBe(false);
+      expect(spf.string.isString({})).toBe(false);
+      expect(spf.string.isString({length: 1})).toBe(false);
+    });
+
   });
 
 });

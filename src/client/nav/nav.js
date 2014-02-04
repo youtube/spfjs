@@ -625,7 +625,7 @@ spf.nav.callback = function(fn, var_args) {
   if (typeof fn == 'string') {
     fn = /** @type {Function} */ (spf.config.get(fn));
   }
-  var args = Array.prototype.slice.call(arguments, 0);
+  var args = Array.prototype.slice.call(arguments);
   args[0] = fn;
   var val = spf.execute.apply(null, args);
   if (val instanceof Error) {

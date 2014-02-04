@@ -47,6 +47,17 @@ spf.string.endsWith = function(str, suffix) {
 
 
 /**
+ * Simple check for if a value is a string.
+ *
+ * @param {?} val Value to test.
+ * @return {boolean} Whether the value is a string.
+ */
+spf.string.isString = function(val) {
+  return Object.prototype.toString.call(val) == '[object String]';
+};
+
+
+/**
  * Removes leading and trailing whitespace.
  *
  * @param {string} str The string to trim.
@@ -90,7 +101,8 @@ spf.string.bisect = function(str, sep) {
  * @return {number} Hash value for {@code str}, between 0 (inclusive) and 2^32
  *  (exclusive). The empty string returns 0.
  */
-spf.string.hashCode = function(str) {
+spf.string.hashcode = function(str) {
+  str = str || '';
   var result = 0;
   for (var i = 0, l = str.length; i < l; ++i) {
     result = 31 * result + str.charCodeAt(i);

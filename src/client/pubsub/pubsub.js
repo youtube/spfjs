@@ -7,6 +7,7 @@
 
 goog.provide('spf.pubsub');
 
+goog.require('spf.array');
 goog.require('spf.state');
 
 
@@ -16,8 +17,8 @@ goog.require('spf.state');
  * times will result in multiple function invocations while publishing.
  *
  * @param {string} topic Topic to subscribe to.
- * @param {Function} fn Function to be invoked when a message is published to
- *     the given topic.
+ * @param {Function} fn Function to be invoked when a message is published
+ *     to the given topic.
  */
 spf.pubsub.subscribe = function(topic, fn) {
   if (topic && fn) {
@@ -39,12 +40,13 @@ spf.pubsub.subscribe = function(topic, fn) {
 spf.pubsub.unsubscribe = function(topic, fn) {
   var subs = spf.pubsub.subscriptions_();
   if (topic in subs && fn) {
-    for (var i = 0, l = subs[topic].length; i < l; i++) {
-      if (subs[topic][i] == fn) {
-        subs[topic][i] = null;
-        return;
+    spf.array.every(subs[topic], function(subFn, i, arr) {
+      if (subFn == fn) {
+        arr[i] = null;
+        return false;
       }
-    }
+      return true;
+    });
   }
 };
 
@@ -61,12 +63,12 @@ spf.pubsub.unsubscribe = function(topic, fn) {
 spf.pubsub.publish = function(topic, var_args) {
   var subs = spf.pubsub.subscriptions_();
   if (topic in subs) {
-    var args = Array.prototype.slice.call(arguments, 1);
-    for (var i = 0, l = subs[topic].length; i < l; i++) {
-      if (subs[topic][i]) {
-        subs[topic][i].apply(null, args);
+    var args = [].slice.call(arguments, 1);
+    spf.array.each(subs[topic], function(subFn) {
+      if (subFn) {
+        subFn.apply(null, args);
       }
-    }
+    });
   }
 };
 

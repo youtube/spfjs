@@ -73,7 +73,7 @@ spf.debug.log = function(method, prefix, args) {
   if (!SPF_DEBUG || !window.console) {
     return;
   }
-  args = Array.prototype.slice.call(args, 0);
+  args = Array.prototype.slice.call(args);
   var current = spf.now();
   var overall = spf.debug.formatDuration(spf.debug.start_, current);
   if (spf.debug.split_) {
