@@ -25,32 +25,19 @@
 goog.provide('spf');
 
 
-/**
- * @define {boolean} SPF_BETA is provided as a flag so that beta code
- * that should not be included in either a debug or production build can be
- * easily included by the compiler when "--define SPF_BETA=true" is
- * specified (i.e. when generating a beta build).
- * To use, place beta code inside an "if (SPF_BETA)" conditional.
- */
+/** @define {boolean} Compiler flag to include beta code. */
 var SPF_BETA = false;
 
 
-/**
- * @define {boolean} SPF_COMPILED is provided as a flag so that development code
- * that should not be included in either a debug or production build can be
- * easily removed by the compiler when "--define SPF_COMPILED=true" is
- * specified (e.g. making extra functions beyond the API globally available).
- * To use, place development code inside an "if (!SPF_COMPILED)" conditional.
- */
+/** @define {boolean} Compiler flag to build the bootstrap script loader. */
+var SPF_BOOTLOADER = false;
+
+
+/** @define {boolean} Compiler flag to remove development code. */
 var SPF_COMPILED = false;
 
 
-/**
- * @define {boolean} SPF_DEBUG is provided as a flag so that debugging code
- * that should not be included in a production build can be easily removed
- * by the compiler when "--define SPF_DEBUG=false" is specified.  To use,
- * place debugging code inside an "if (SPF_DEBUG)" conditional.
- */
+/** @define {boolean} Compiler flag to include debugging code. */
 var SPF_DEBUG = true;
 
 

@@ -17,11 +17,11 @@ describe('spf.pubsub', function() {
       three: jasmine.createSpy('three'),
       four: jasmine.createSpy('four')
     };
-    subs = spf.pubsub.subscriptions_();
+    subs = spf.pubsub.subscriptions();
   });
 
   afterEach(function() {
-    spf.pubsub.subscriptions_({});
+    spf.pubsub.subscriptions({});
     subs = null;
     callbacks = null;
   });
@@ -125,7 +125,7 @@ describe('spf.pubsub', function() {
     expect(subs['bar'] || []).toContain(callbacks.four);
     // All topics.
     spf.pubsub.clear();
-    subs = spf.pubsub.subscriptions_(); // Needed for testing after full clear.
+    subs = spf.pubsub.subscriptions(); // Needed for testing after full clear.
     expect(subs['foo'] || []).not.toContain(callbacks.one);
     expect(subs['foo'] || []).not.toContain(callbacks.two);
     expect(subs['bar'] || []).not.toContain(callbacks.three);

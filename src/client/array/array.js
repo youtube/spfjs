@@ -58,7 +58,7 @@ spf.array.every = function(arr, fn, opt_obj) {
  * Compatible Array#map implementation.
  *
  * @param {Array.<ITEM>|spf.array.ArrayLike} arr The array.
- * @param {?function(this:THIS, ITEM, number, ?) : boolean} fn The function to
+ * @param {?function(this:THIS, ITEM, number, ?) : RESULT} fn The function to
  *   execute for each item.  The function is executed with three arguments:
  *   the item value, the item index, and the array; it should return the
  *   new result.

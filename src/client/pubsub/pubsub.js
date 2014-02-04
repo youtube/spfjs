@@ -22,7 +22,7 @@ goog.require('spf.state');
  */
 spf.pubsub.subscribe = function(topic, fn) {
   if (topic && fn) {
-    var subs = spf.pubsub.subscriptions_();
+    var subs = spf.pubsub.subscriptions();
     if (!(topic in subs)) {
       subs[topic] = [];
     }
@@ -38,7 +38,7 @@ spf.pubsub.subscribe = function(topic, fn) {
  * @param {Function} fn Function to unsubscribe.
  */
 spf.pubsub.unsubscribe = function(topic, fn) {
-  var subs = spf.pubsub.subscriptions_();
+  var subs = spf.pubsub.subscriptions();
   if (topic in subs && fn) {
     spf.array.every(subs[topic], function(subFn, i, arr) {
       if (subFn == fn) {
@@ -61,7 +61,7 @@ spf.pubsub.unsubscribe = function(topic, fn) {
  *     function.
  */
 spf.pubsub.publish = function(topic, var_args) {
-  var subs = spf.pubsub.subscriptions_();
+  var subs = spf.pubsub.subscriptions();
   if (topic in subs) {
     var args = [].slice.call(arguments, 1);
     spf.array.each(subs[topic], function(subFn) {
@@ -79,13 +79,13 @@ spf.pubsub.publish = function(topic, var_args) {
  * @param {string=} opt_topic Topic to clear (all topics if unspecified).
  */
 spf.pubsub.clear = function(opt_topic) {
-  var subs = spf.pubsub.subscriptions_();
+  var subs = spf.pubsub.subscriptions();
   if (opt_topic) {
     if (opt_topic in subs) {
       delete subs[opt_topic];
     }
   } else {
-    spf.pubsub.subscriptions_({});
+    spf.pubsub.subscriptions({});
   }
 };
 
@@ -94,9 +94,8 @@ spf.pubsub.clear = function(opt_topic) {
  * @param {!Object.<string, Array>=} opt_subs Optional map of subscriptions
  *     to overwrite the current value.
  * @return {!Object.<string, Array>} Current map of subscriptions.
- * @private
  */
-spf.pubsub.subscriptions_ = function(opt_subs) {
+spf.pubsub.subscriptions = function(opt_subs) {
   if (opt_subs || !spf.state.has('pubsub-subs')) {
     return /** @type {!Object.<string, Array>} */ (
         spf.state.set('pubsub-subs', (opt_subs || {})));

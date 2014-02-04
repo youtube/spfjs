@@ -10,6 +10,7 @@ goog.require('spf');
 goog.require('spf.config');
 goog.require('spf.debug');
 goog.require('spf.nav');
+goog.require('spf.net.scriptbeta');
 goog.require('spf.net.scripts');
 goog.require('spf.net.styles');
 goog.require('spf.pubsub');
@@ -80,35 +81,50 @@ spf.main.mark_();
 // Create the API by exporting aliased functions.
 // Core API functions are available on the top-level namespace.
 // Extra API functions are available on second-level namespaces.
-var api = {
+/** @private {Object} */
+spf.main.api_ = {
   'init': spf.main.init,
   'dispose': spf.main.dispose,
   'navigate': spf.nav.navigate,
   'load': spf.nav.load,
   'process': spf.nav.response.process,  // TODO: Remove after deprecation.
-  'prefetch': spf.nav.prefetch,
-  'scripts': {
+  'prefetch': spf.nav.prefetch
+};
+if (SPF_BETA) {
+  spf.main.api_['script'] = {
+    'load': spf.net.scriptbeta.load,
+    'order': spf.net.scriptbeta.order,
+    'get': spf.net.scriptbeta.get,
+    'ready': spf.net.scriptbeta.ready,
+    'done': spf.net.scriptbeta.done,
+    'path': spf.net.scriptbeta.path
+  };
+} else {
+  spf.main.api_['scripts'] = {
     'load': spf.net.scripts.load,
     'unload': spf.net.scripts.unload,
     'ignore': spf.net.scripts.ignore,
     'prefetch': spf.net.scripts.prefetch
-  },
-  'styles': {
+  };
+  spf.main.api_['styles'] = {
     'load': spf.net.styles.load,
     'unload': spf.net.styles.unload,
     'ignore': spf.net.styles.ignore,
     'prefetch': spf.net.styles.prefetch
-  }
-};
+  };
+}
 if (!SPF_COMPILED) {
   // When not compiled, mixin the API to the existing namespace for development.
-  for (var key in api) {
+  for (var key in spf.main.api_) {
     // Work around the "incomplete alias" warning.
-    eval('spf[key] = api[key]');
+    eval('spf[key] = spf.main.api_[key]');
   }
 } else {
   // When compiled for a production/debug build, isolate access to the API.
-  window['spf'] = api;
+  window['spf'] = window['spf'] || {};
+  for (var fn in spf.main.api_) {
+    window['spf'][fn] = spf.main.api_[fn];
+  }
 }
 
 // Signal that the API is ready with custom event.  Only supported in IE 9+.
