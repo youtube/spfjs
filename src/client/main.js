@@ -110,3 +110,8 @@ if (!SPF_COMPILED) {
   // When compiled for a production/debug build, isolate access to the API.
   window['spf'] = api;
 }
+
+// Signal that the API is ready with custom event.  Only supported in IE 9+.
+if (document.dispatchEvent) {
+  document.dispatchEvent(new Event('spfready', {bubbles: true}));
+}
