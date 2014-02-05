@@ -128,6 +128,8 @@ if (!SPF_COMPILED) {
 }
 
 // Signal that the API is ready with custom event.  Only supported in IE 9+.
-if (document.dispatchEvent) {
-  document.dispatchEvent(new Event('spfready', {bubbles: true}));
+if (SPF_BETA) {
+  if (document.dispatchEvent) {
+    document.dispatchEvent(new Event('spfready', {bubbles: true}));
+  }
 }
