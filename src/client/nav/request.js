@@ -36,6 +36,7 @@ goog.require('spf.url');
  *       a complete multipart response object.
  * - postData: optional data to send with the request.  Only used if the method
  *       is set to "POST".
+ * - current: optional current page URL, without the SPF identifier.
  * - referer: optional referrer URL, without the SPF identifier.
  * - type: optional type of request (e.g. "navigate", "load", etc), used to
  *       alter the URL identifier and XHR header and used to determine whether
@@ -49,6 +50,7 @@ goog.require('spf.url');
  *   onSuccess: (function(string,
  *                   (spf.SingleResponse|spf.MultipartResponse))|undefined),
  *   postData: spf.net.xhr.PostData,
+ *   current: (string|null|undefined),
  *   referer: (string|null|undefined),
  *   type: (string|undefined)
  * }}
@@ -84,16 +86,18 @@ spf.nav.request.send = function(url, opt_options) {
   // Record fetchStart time before loading from cache. If no cached response
   // is found, this value will be replaced with the one provided by the XHR.
   timing['fetchStart'] = timing['startTime'];
-  var cacheKey = spf.nav.request.cacheKey_(url, options.type, false);
+  var cacheKey = spf.nav.request.getCacheKey_(url, options.current, null,
+                                              options.type, false);
   // Use the absolute URL without identifier to allow cached responses
   // from prefetching to apply to navigation.
-  var cached = /** @type {spf.SingleResponse|spf.MultipartResponse} */ (
-      spf.cache.get(cacheKey));
+  var cached = spf.nav.request.getCacheObject_(cacheKey, options.current);
   if (cached) {
+    var response = /** @type {spf.SingleResponse|spf.MultipartResponse} */ (
+        cached.response);
     // To ensure a similar execution pattern as an XHR, ensure the
     // cache response is returned asynchronously.
     var handleCache = spf.bind(spf.nav.request.handleResponseFromCache_, null,
-                               url, options, timing, cached);
+                               url, options, timing, cached.key, response);
     setTimeout(handleCache, 0);
     // Return null because no XHR is made.
     return null;
@@ -102,6 +106,9 @@ spf.nav.request.send = function(url, opt_options) {
     var headers = {'X-SPF-Request': options.type};
     if (options.referer) {
       headers['X-SPF-Referer'] = options.referer;
+    }
+    if (options.current) {
+      headers['X-SPF-Previous'] = options.current;
     }
     var chunking = {
       multipart: false,
@@ -141,12 +148,13 @@ spf.nav.request.send = function(url, opt_options) {
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {spf.nav.request.Options} options Configuration options
  * @param {Object} timing Timing data.
+ * @param {string} cacheKey The cache key.
  * @param {spf.SingleResponse|spf.MultipartResponse} response The cached SPF
  *     response object.
  * @private
  */
 spf.nav.request.handleResponseFromCache_ = function(url, options, timing,
-                                                    response) {
+                                                    cacheKey, response) {
   spf.debug.debug('nav.request.handleResponseFromCache_ ', url, response);
   var updateCache = false;
   // Record the timing information.
@@ -160,7 +168,6 @@ spf.nav.request.handleResponseFromCache_ = function(url, options, timing,
     // used, then it was from prefetch-based caching and is only eligible to
     // be used once.
     if (!spf.config.get('cache-unified')) {
-      var cacheKey = spf.nav.request.cacheKey_(url, options.type, false);
       spf.cache.remove(cacheKey);
       // Ensure the response will be stored in the history-based caching.
       updateCache = true;
@@ -313,10 +320,22 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
   }
   var response;
   if (parts.length > 1) {
+    var cacheType;
+    for (var i = 0, l = parts.length; i < l; i++) {
+      var part = parts[i];
+      if (part['cacheType']) {
+        cacheType = part['cacheType'];
+      }
+    }
+
     response = /** @type {spf.MultipartResponse} */ ({
       'parts': parts,
       'type': 'multipart'
     });
+
+    if (cacheType) {
+      response['cacheType'] = cacheType;
+    }
   } else if (parts.length == 1) {
     response = /** @type {spf.SingleResponse} */(parts[0]);
   } else {
@@ -342,10 +361,11 @@ spf.nav.request.done_ = function(url, options, timing, response, cache) {
   spf.debug.debug('nav.request.done_', url, options, timing, response, cache);
   if (cache && options.method != 'POST') {
     // Cache the response for future requests.
-    var cacheKey = spf.nav.request.cacheKey_(url, options.type, true);
+    var cacheKey = spf.nav.request.getCacheKey_(url, options.current,
+                                                response['cacheType'],
+                                                options.type, true);
     if (cacheKey) {
-      spf.cache.set(cacheKey, response,  /** @type {number} */ (
-          spf.config.get('cache-lifetime')));
+      spf.nav.request.setCacheObject_(cacheKey, response);
     }
   }
   // Set the timing for the response (avoid caching stale timing values).
@@ -358,12 +378,18 @@ spf.nav.request.done_ = function(url, options, timing, response, cache) {
 
 /**
  * @param {string} url The requested URL, without the SPF identifier.
- * @param {string=} opt_type Type of request (e.g. "navigate", "load", etc).
+ * @param {string|null|undefined} opt_current The current page's URL. Some
+ *     responses are only cacheable for limited origin URLs.
+ * @param {string|null|undefined} opt_cacheType The type of cache used for
+ *     this request (e.g. "global", "path", "url").
+ * @param {string=} opt_requestType Type of request (e.g. "navigate", "load",
+ *     etc).
  * @param {boolean=} opt_set Whether getting or setting the cache.
  * @return {string} The cache key for the URL.
  * @private
  */
-spf.nav.request.cacheKey_ = function(url, opt_type, opt_set) {
+spf.nav.request.getCacheKey_ = function(url, opt_current, opt_cacheType,
+                                      opt_requestType, opt_set) {
   // Use the absolute URL without identifier to ensure consistent caching.
   var absoluteUrl = spf.url.absolute(url);
   var cacheKey;
@@ -376,16 +402,69 @@ spf.nav.request.cacheKey_ = function(url, opt_type, opt_set) {
     // Otherwise, caching is split between history and prefetching by using
     // a key prefix.  Regular non-history navigation is only eligible for
     // prefetch-based caching.
-    if (opt_type == 'navigate-back' || opt_type == 'navigate-forward') {
+    if (opt_requestType == 'navigate-back' ||
+        opt_requestType == 'navigate-forward') {
       // For back/forward, get and set to history cache.
       cacheKey = 'history ' + absoluteUrl;
-    } else if (opt_type == 'navigate') {
+    } else if (opt_requestType == 'navigate') {
       // For navigation, get from prefetch cache, but set to history cache.
       cacheKey = (opt_set ? 'history ' : 'prefetch ') + absoluteUrl;
-    } else if (opt_type == 'prefetch') {
+    } else if (opt_requestType == 'prefetch') {
       // For prefetching, never get, only set to prefetch cache.
       cacheKey = opt_set ? ('prefetch ' + absoluteUrl) : '';
     }
   }
+
+  if (opt_current && opt_cacheType == 'url') {
+    cacheKey += ' previous ' + opt_current;
+  } else if (opt_current && opt_cacheType == 'path') {
+    cacheKey += ' previous ' + spf.url.path(opt_current);
+  }
+
   return cacheKey || '';
+};
+
+
+/**
+ * Get an object from cache if available.
+ *
+ * @param {string} cacheKey The base cache key for the requested URL.
+ * @param {string|null|undefined} opt_current The current page's URL. Some
+ *     responses are only cacheable for limited origin URLs.
+ * @return {Object.<string, *>} The response object if
+ *     found in the cache.
+ * @private
+ */
+spf.nav.request.getCacheObject_ = function(cacheKey, opt_current) {
+  var keys = [];
+  if (opt_current) {
+    keys.push(cacheKey + ' previous ' + opt_current);
+    keys.push(cacheKey + ' previous ' + spf.url.path(opt_current));
+  }
+  keys.push(cacheKey);
+
+  for (var i = 0, l = keys.length; i < l; i++) {
+    var cached = spf.cache.get(keys[i]);
+
+    if (cached) {
+      return {
+        key: keys[i],
+        response: cached
+      };
+    }
+  }
+};
+
+
+/**
+ * Set a response object into cache with the given key.
+ *
+ * @param {string} cacheKey The base cache key for the requested URL.
+ * @param {spf.SingleResponse|spf.MultipartResponse} response The received SPF
+ *     response object.
+ * @private
+ */
+spf.nav.request.setCacheObject_ = function(cacheKey, response) {
+  spf.cache.set(cacheKey, response,  /** @type {number} */ (
+      spf.config.get('cache-lifetime')));
 };

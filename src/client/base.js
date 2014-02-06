@@ -105,6 +105,7 @@ spf.now = function() {
  *      to set on the Elements.
  * - js: HTML string containing <script> tags of JS to execute.
  * - title: String of the new Document title.
+ * - cacheType: String of the type of caching to use for this response.
  * - timing: Map of timing attributes to timestamp numbers.
  * - redirect: String of a URL to request instead.
  *
@@ -114,6 +115,7 @@ spf.now = function() {
  *   attr: (Object.<string, Object.<string, string>>|undefined),
  *   js: (string|undefined),
  *   title: (string|undefined),
+ *   cacheType: (string|undefined),
  *   timing: (Object.<string, number>|undefined),
  *   redirect: (string|undefined)
  * }}
@@ -124,11 +126,13 @@ spf.SingleResponse;
 /**
  * Type definition for a multipart SPF response object.
  * - parts: List of response objects.
+ * - cacheType: String of the type of caching to use for this response.
  * - timing: Map of timing attributes to timestamp numbers.
  * - type: The string "multipart".
  *
  * @typedef {{
  *   parts: (Array.<spf.SingleResponse>|undefined),
+ *   cacheType: (string|undefined),
  *   timing: (Object.<string, number>|undefined),
  *   type: string
  * }}

@@ -104,4 +104,29 @@ describe('spf.url', function() {
   });
 
 
+  describe('path', function() {
+
+    it('no path', function() {
+      var url = 'http://www.website.com';
+      expect(spf.url.path(url)).toEqual('/');
+    });
+
+    it('path', function() {
+      var url = 'http://www.website.com/path';
+      expect(spf.url.path(url)).toEqual('/path');
+    });
+
+    it('path with parameters', function() {
+      var url = 'http://www.website.com/path?param=value';
+      expect(spf.url.path(url)).toEqual('/path');
+    });
+
+    it('path with hash', function() {
+      var url = 'http://www.website.com/path#state';
+      expect(spf.url.path(url)).toEqual('/path');
+    });
+
+  });
+
+
 });

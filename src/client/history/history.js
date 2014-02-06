@@ -165,6 +165,7 @@ spf.history.pop_ = function(evt) {
     } else {
       var current = parseInt(spf.state.get('history-timestamp'), 10);
       state['spf-back'] = (timestamp < current);
+      state['spf-current'] = spf.state.get('history-url');
       spf.state.set('history-timestamp', timestamp);
       spf.state.set('history-url', url);
       var callback = /** @type {function(string, Object=)} */ (

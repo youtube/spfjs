@@ -148,6 +148,59 @@ describe('spf.nav.request', function() {
     });
 
 
+    it('cached: single with path', function() {
+      var url = '/page';
+      var path = '/last';
+      options.current = 'http://www.website.com/last';
+      var res = {'foo': 'FOO', 'bar': 'BAR'};
+
+      var cacheKey = 'prefetch ' + spf.url.absolute(url) + ' previous ' + path;
+      spf.cache.set(cacheKey, res);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick(MOCK_DELAY + 1);
+
+      expect(options.onPart.calls.length).toEqual(0);
+      expect(options.onSuccess.calls.length).toEqual(1);
+      expect(options.onError.calls.length).toEqual(0);
+      var onSuccessArgs = options.onSuccess.mostRecentCall.args;
+      expect(onSuccessArgs[0]).toEqual(url);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+    });
+
+
+    it('cached: single with incorrect path', function() {
+      var url = '/page';
+      var path = '/other';
+      options.current = 'http://www.website.com/last';
+      var cacheRes = {'foo': 'FOO', 'bar': 'BAR'};
+      var xhrRes = {'foo': 'FOO', 'baz': 'BAZ'};
+      var xhrText = '{"foo": "FOO", "baz": "BAZ"}';
+
+      var cacheKey = 'prefetch ' + spf.url.absolute(url) + ' previous ' + path;
+      spf.cache.set(cacheKey, cacheRes);
+
+      var fake = createFakeRegularXHR(xhrText);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick(MOCK_DELAY + 1);
+
+      expect(options.onPart.calls.length).toEqual(0);
+      expect(options.onSuccess.calls.length).toEqual(1);
+      expect(options.onError.calls.length).toEqual(0);
+      var onSuccessArgs = options.onSuccess.mostRecentCall.args;
+      expect(onSuccessArgs[0]).toEqual(url);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(xhrRes, ['timing']);
+      expect(onSuccessArgs[1]).not.toEqualObjectIgnoringKeys(cacheRes,
+                                                             ['timing']);
+    });
+
+
     it('regular: single', function() {
       var url = '/page';
       var res = {'foo': 'FOO', 'bar': 'BAR'};

@@ -253,6 +253,7 @@ spf.nav.handleMouseDown_ = function(evt) {
 spf.nav.handleHistory_ = function(url, opt_state) {
   var reverse = !!(opt_state && opt_state['spf-back']);
   var referer = opt_state && opt_state['spf-referer'];
+  var current = opt_state && opt_state['spf-current'];
   spf.debug.debug('nav.handleHistory ', '(url=', url, 'state=', opt_state, ')');
   // Redirect if the URL is not eligible for navigation.
   if (!spf.nav.isNavigateEligible_(url)) {
@@ -260,7 +261,7 @@ spf.nav.handleHistory_ = function(url, opt_state) {
     return;
   }
   // Navigate to the URL.
-  spf.nav.navigate_(url, null, referer, true, reverse);
+  spf.nav.navigate_(url, null, current, referer, true, reverse);
 };
 
 
@@ -300,6 +301,9 @@ spf.nav.navigate = function(url, opt_options) {
  *
  * @param {string} url The URL to navigate to, without the SPF identifier.
  * @param {?spf.RequestOptions=} opt_options Optional request options object.
+ * @param {string=} opt_current The current page URL. This differs from the
+ *     referer in that is always represents the current visible page regardless
+ *     of history state.
  * @param {string=} opt_referer The Referrer URL, without the SPF identifier.
  *     Defaults to the current URL.
  * @param {boolean=} opt_history Whether this navigation is part of a history
@@ -309,10 +313,10 @@ spf.nav.navigate = function(url, opt_options) {
  *     popState event.
  * @private.
  */
-spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
-                             opt_reverse) {
-  spf.debug.info('nav.navigate_ ', url, opt_options, opt_referer, opt_history,
-                 opt_reverse);
+spf.nav.navigate_ = function(url, opt_options, opt_current, opt_referer,
+                             opt_history, opt_reverse) {
+  spf.debug.info('nav.navigate_ ', url, opt_options, opt_current,
+                 opt_referer, opt_history, opt_reverse);
   var options = opt_options || /** @type {spf.RequestOptions} */ ({});
 
   // Set the navigation counter.
@@ -326,6 +330,11 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
   // a popState event.
   var referer = opt_referer || window.location.href;
   spf.state.set('nav-referer', referer);
+  // The current URL will have already changed for history events, so in those
+  // cases the current URL is provided from state. The opt_current should
+  // always be used for history states. If it's unavailable that indicates the
+  // visible page is undetermined and should not be relied upon.
+  var current = opt_history ? opt_current : window.location.href;
 
   // Abort previous navigation, if needed.
   spf.nav.cancel();
@@ -357,7 +366,7 @@ spf.nav.navigate_ = function(url, opt_options, opt_referer, opt_history,
     spf.nav.navigatePromotePrefetch_(url, options, referer,
                                      !!opt_history, !!opt_reverse);
   } else {
-    spf.nav.navigateSendRequest_(url, options, referer,
+    spf.nav.navigateSendRequest_(url, options, current, referer,
                                  !!opt_history, !!opt_reverse);
   }
   // Execute the "navigation requested" callback.  If the callback explicitly
@@ -408,6 +417,8 @@ spf.nav.navigatePromotePrefetch_ = function(url, options, referer, history,
  *
  * @param {string} url The URL to navigate to, without the SPF identifier.
  * @param {spf.RequestOptions} options Request options object.
+ * @param {string|undefined} current The current page URL, without the SPF
+ *     identifier.
  * @param {string} referer The Referrer URL, without the SPF identifier.
  * @param {boolean} history Whether this navigation is part of a history
  *     change. True when navigation is in response to a popState event.
@@ -416,8 +427,8 @@ spf.nav.navigatePromotePrefetch_ = function(url, options, referer, history,
  *     popState event.
  * @private
  */
-spf.nav.navigateSendRequest_ = function(url, options, referer, history,
-                                        reverse) {
+spf.nav.navigateSendRequest_ = function(url, options, current, referer,
+                                        history, reverse) {
   var handleError = spf.bind(spf.nav.handleNavigateError_, null,
                              options);
   var handlePart = spf.bind(spf.nav.handleNavigatePart_, null,
@@ -432,6 +443,7 @@ spf.nav.navigateSendRequest_ = function(url, options, referer, history,
     onSuccess: handleSuccess,
     postData: options['postData'],
     type: 'navigate' + (history ? (reverse ? '-back' : '-forward') : ''),
+    current: current,
     referer: referer
   });
   spf.state.set('nav-request', xhr);
@@ -732,6 +744,7 @@ spf.nav.prefetch_ = function(url, opt_options, opt_original) {
   spf.debug.info('nav.prefetch ', url, opt_options, opt_original);
   var options = opt_options || /** @type {spf.RequestOptions} */ ({});
   var original = opt_original || url;
+  var current = window.location.href;
 
   var handleError = spf.bind(spf.nav.handleLoadError_, null,
                              true, options, original);
@@ -746,7 +759,8 @@ spf.nav.prefetch_ = function(url, opt_options, opt_original) {
     onError: handleError,
     onSuccess: handleSuccess,
     postData: options['postData'],
-    type: 'prefetch'
+    type: 'prefetch',
+    current: current
   });
   spf.nav.addPrefetch(url, xhr);
 };

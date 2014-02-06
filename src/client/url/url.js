@@ -25,6 +25,26 @@ spf.url.absolute = function(relative) {
 
 
 /**
+ * Returns just the path portion of a given URL, relative or absolute.
+ *
+ * @param {string} url The full URL.
+ * @return {string} The path portion of the URL.
+ */
+spf.url.path = function(url) {
+  var aEl = document.createElement('a');
+  aEl.href = url;
+  var path = aEl.pathname;
+  // IE does not include the leading slash on a path. So if the path is
+  // available, but no leading slash is present, prepend one.
+  if (!!path && path[0] == '/') {
+    return path;
+  } else {
+    return '/' + path;
+  }
+};
+
+
+/**
  * Appends the SPF identifier to a URL, to be used in requests.  If the
  * identifier contains {@code __type__} then that value will be replaced
  * with the value of {@code opt_type}.

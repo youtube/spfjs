@@ -49,6 +49,12 @@ spf.SingleResponse.prototype.js;
 spf.SingleResponse.prototype.title;
 
 /**
+ * String of the type of caching to use for this response.
+ * @type {string|undefined}
+ */
+spf.SingleResponse.prototype.cacheType;
+
+/**
  * Map of timing attributes to timestamp numbers.
  * @type {Object.<string, number>|undefined}
  */
@@ -72,6 +78,12 @@ spf.MultipartResponse;
  * @type {Array.<spf.SingleResponse>|undefined}
  */
 spf.MultipartResponse.prototype.parts;
+
+/**
+ * String of the type of caching to use for this response.
+ * @type {string|undefined}
+ */
+spf.MultipartResponse.prototype.cacheType;
 
 /**
  * Map of timing attributes to timestamp numbers.
