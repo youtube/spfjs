@@ -86,6 +86,23 @@ spf.execute = function(fn, var_args) {
 
 
 /**
+ * Dispatches a custom event.
+ *
+ * @param {string} name The custom event name.
+ * @param {?} opt_detail The custom event detail (data).
+ */
+spf.dispatch = function(name, opt_detail) {
+  if (document.createEvent) {
+    var evt = document.createEvent('CustomEvent');
+    var bubbles = true;
+    var cancelable = false;
+    evt.initCustomEvent('spf' + name, bubbles, cancelable, opt_detail);
+    document.dispatchEvent(evt);
+  }
+};
+
+
+/**
  * Gets the current timestamp.
  *
  * @return {number} An integer value representing the number of milliseconds
