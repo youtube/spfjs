@@ -9,9 +9,12 @@
 goog.provide('spf.net.resourcebeta');
 
 goog.require('spf');
+goog.require('spf.tasks');
 
 
 /**
+ * Loads a resource by creating an element and appending it to the document.
+ *
  * @param {spf.net.resourcebeta.Type} type Type of the resource.
  * @param {string} url Url of the resource.
  * @param {Function} opt_callback Callback for when the resource has loaded.
@@ -77,6 +80,113 @@ spf.net.resourcebeta.get = function(type, url, opt_callback, opt_document) {
   }
   return el;
 };
+
+
+/**
+ * Remove a previously created element that was appended to the document.
+ * See {@link #load}.
+ *
+ * @param {Element} el A created element
+ */
+spf.net.resourcebeta.remove = function(el) {
+  if (el.parentNode) {
+    el.parentNode.removeChild(el);
+  }
+};
+
+
+/**
+ * Prefetches a resource by creating a dummy element and appending it to an
+ * iframe document.  The resource will be requested but not loaded. Use to
+ * prime the browser cache and avoid needing to request the resource when
+ * subsequently loaded.  See {@link #get}.
+ *
+ * @param {spf.net.resourcebeta.Type} type Type of the resource.
+ * @param {string} url Url of the resource.
+ */
+spf.net.resourcebeta.prefetch = function(type, url) {
+  if (!url) {
+    return;
+  }
+  var id = type + '-' + spf.net.resourcebeta.label(url);
+  var key = type + '-prefetch';
+  var el = /** @type {HTMLIFrameElement} */ (document.getElementById(key));
+  if (!el) {
+    el = spf.dom.createIframe(key, null, function(el) {
+      // Set the iframe's loaded flag.
+      el.title = 'loaded';
+      spf.tasks.run(key, true);
+    });
+  } else {
+    // If the resource is already prefetched, return.
+    if (el.contentWindow.document.getElementById(id)) {
+      return;
+    }
+  }
+  // Firefox needs the iframe to be fully created in the DOM before continuing.
+  // So delay adding elements to the iframe until onload.
+  var next = spf.bind(spf.net.resourcebeta.prefetch_, null, el, type, url, id);
+  if (!el.title) {
+    spf.tasks.add(key, next);
+  } else {
+    next();
+  }
+};
+
+
+/**
+ * See {@link #prefetch}.
+ *
+ * @param {HTMLIFrameElement} el The iframe to load resources in.
+ * @param {spf.net.resourcebeta.Type} type Type of the resource.
+ * @param {string} url Url of the resource.
+ * @param {string} id The computed unique id of the resource.
+ * @private
+ */
+spf.net.resourcebeta.prefetch_ = function(el, type, url, id) {
+  var isJS = type == spf.net.resourcebeta.Type.JS;
+  var doc = el.contentWindow.document;
+  if (isJS) {
+    var fetchEl = doc.createElement('object');
+    if (spf.net.resourcebeta.IS_IE) {
+      // IE needs a <script> in order to complete the request, but
+      // fortunately will not execute it unless in the DOM.  Attempting to
+      // use an <object> like other browsers will cause the download to hang.
+      // The <object> will just be a placeholder for the request made.
+      var extraElForIE = doc.createElement('script');
+      extraElForIE.src = url;
+    } else {
+      // Otherwise scripts need to be prefetched as objects to avoid execution.
+      fetchEl.data = url;
+    }
+    fetchEl.id = id;
+    doc.body.appendChild(fetchEl);
+  } else {
+    // Stylesheets can be prefetched in the same way as loaded.
+    var fetchEl = spf.net.resourcebeta.get(type, url, null, doc);
+    fetchEl.id = id;
+  }
+};
+
+
+/**
+ * Convert a URL to an internal "name" for use in identifying it.
+ *
+ * @param {string} url The resource URL.
+ * @return {string} The name.
+ */
+spf.net.resourcebeta.label = function(url) {
+  return url ? url.replace(/[^\w]/g, '') : '';
+};
+
+
+/**
+ * Whether the browser is Internet Explorer; valid for MSIE 8+ aka Trident 4+.
+ * @type {boolean}
+ * @const
+ */
+spf.net.resourcebeta.IS_IE = spf.string.contains(
+    navigator.userAgent, ' Trident/');
 
 
 /**

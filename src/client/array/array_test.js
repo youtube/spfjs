@@ -96,6 +96,35 @@ describe('spf.array', function() {
 
   });
 
+  describe('filter', function() {
+
+    var greaterThanOne = function(x) { return x > 1; };
+
+    it('handles filtering', function() {
+      var a = [0, 1, 2, 3];
+      expect(spf.array.filter(a, greaterThanOne)).toEqual([2, 3]);
+    });
+
+    it('handles empty arrays', function() {
+      var a = new Array(100);
+      expect(spf.array.filter(a, greaterThanOne)).toEqual([]);
+    });
+
+    it('handles sparse arrays', function() {
+      // Setting values.
+      var a = new Array(10);
+      a[1] = 1;
+      a[5] = 5;
+      expect(spf.array.filter(a, greaterThanOne)).toEqual([5]);
+      // Deleting values.
+      a = [0, 1, 2, 3];
+      delete a[1];
+      delete a[2];
+      expect(spf.array.filter(a, greaterThanOne)).toEqual([3]);
+    });
+
+  });
+
   describe('map', function() {
 
     var square = function(x) { return x * x; };

@@ -158,7 +158,7 @@ spf.dom.setAttributes = function(element, attributes) {
  *
  * @param {string=} opt_id Id of the iframe element.
  * @param {Document=} opt_document Content document element.
- * @param {Function=} opt_callback Callback function called onload.
+ * @param {Function=} opt_callback Callback function to execute onload.
  * @return {!HTMLIFrameElement}
  */
 spf.dom.createIframe = function(opt_id, opt_document, opt_callback) {
@@ -168,7 +168,6 @@ spf.dom.createIframe = function(opt_id, opt_document, opt_callback) {
   iframeEl.id = id;
   iframeEl.src = 'javascript:""';
   iframeEl.style.display = 'none';
-
   if (opt_callback) {
     iframeEl.onload = spf.bind(opt_callback, null, iframeEl);
   }

@@ -14,15 +14,17 @@ goog.require('spf');
 goog.require('spf.net.scriptbeta');
 
 
-// Create the script loader API by exporting aliased functions.
+// Create the bootloader API by exporting aliased functions.
 /** @private {Object} */
 spf.bootloader.api_ = {
   'script': {
     'load': spf.net.scriptbeta.load,
     'order': spf.net.scriptbeta.order,
+    'unload': spf.net.scriptbeta.unload,
     'get': spf.net.scriptbeta.get,
     'ready': spf.net.scriptbeta.ready,
     'done': spf.net.scriptbeta.done,
+    'ignore': spf.net.scriptbeta.ignore,
     'path': spf.net.scriptbeta.path
   }
 };

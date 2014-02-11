@@ -90,41 +90,68 @@ spf.main.api_ = {
   'process': spf.nav.response.process,  // TODO: Remove after deprecation.
   'prefetch': spf.nav.prefetch
 };
+/** @private {Object} */
+spf.main.extra_ = {};
 if (SPF_BETA) {
-  spf.main.api_['script'] = {
-    'load': spf.net.scriptbeta.load,
-    'order': spf.net.scriptbeta.order,
-    'get': spf.net.scriptbeta.get,
-    'ready': spf.net.scriptbeta.ready,
-    'done': spf.net.scriptbeta.done,
-    'path': spf.net.scriptbeta.path
+  spf.main.extra_ = {
+    'script': {
+      // The bootloader API.
+      'load': spf.net.scriptbeta.load,
+      'order': spf.net.scriptbeta.order,
+      'unload': spf.net.scriptbeta.unload,
+      'get': spf.net.scriptbeta.get,
+      'ready': spf.net.scriptbeta.ready,
+      'done': spf.net.scriptbeta.done,
+      'ignore': spf.net.scriptbeta.ignore,
+      'path': spf.net.scriptbeta.path,
+      // Additions.
+      'prefetch': spf.net.scriptbeta.prefetch
+    }
   };
 } else {
-  spf.main.api_['scripts'] = {
-    'load': spf.net.scripts.load,
-    'unload': spf.net.scripts.unload,
-    'ignore': spf.net.scripts.ignore,
-    'prefetch': spf.net.scripts.prefetch
-  };
-  spf.main.api_['styles'] = {
-    'load': spf.net.styles.load,
-    'unload': spf.net.styles.unload,
-    'ignore': spf.net.styles.ignore,
-    'prefetch': spf.net.styles.prefetch
+  spf.main.extra_ = {
+    'scripts': {
+      'load': spf.net.scripts.load,
+      'unload': spf.net.scripts.unload,
+      'ignore': spf.net.scripts.ignore,
+      'prefetch': spf.net.scripts.prefetch
+    },
+    'styles': {
+      'load': spf.net.styles.load,
+      'unload': spf.net.styles.unload,
+      'ignore': spf.net.styles.ignore,
+      'prefetch': spf.net.styles.prefetch
+    }
   };
 }
 if (!SPF_COMPILED) {
   // When not compiled, mixin the API to the existing namespace for development.
-  for (var key in spf.main.api_) {
-    // Work around the "incomplete alias" warning.
-    eval('spf[key] = spf.main.api_[key]');
+  // Use eval to work around the "incomplete alias" warning.
+  for (var fn1 in spf.main.api_) {
+    eval('spf[fn1] = spf.main.api_[fn1]');
+  }
+  for (var ns in spf.main.extra_) {
+    for (var fn2 in spf.main.extra_[ns]) {
+      eval('spf[ns] = spf[ns] || {};');
+      eval('spf[ns][fn2] = spf.main.extra_[ns][fn2]');
+    }
   }
 } else {
   // When compiled for a production/debug build, isolate access to the API.
-  window['spf'] = window['spf'] || {};
-  for (var fn in spf.main.api_) {
-    window['spf'][fn] = spf.main.api_[fn];
-  }
+  (function() {
+    window['spf'] = window['spf'] || {};
+    for (var fn1 in spf.main.api_) {
+      window['spf'][fn1] = spf.main.api_[fn1];
+    }
+    // Use two-stage exporting to allow aliasing intermediate namespaces
+    // created by the bootloader (e.g. s = spf.script; s.load(...)).
+    for (var ns in spf.main.extra_) {
+      for (var fn2 in spf.main.extra_[ns]) {
+        window['spf'][ns] = window['spf'][ns] || {};
+        window['spf'][ns][fn2] = spf.main.extra_[ns][fn2];
+      }
+    }
+  })();
 }
 
 // Signal that the API is ready with custom event.  Only supported in IE 9+.

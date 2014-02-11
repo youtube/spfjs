@@ -34,6 +34,7 @@ goog.provide('spf.net.scriptbeta');
 
 goog.require('spf.array');
 goog.require('spf.debug');
+goog.require('spf.dom');
 goog.require('spf.net.resourcebeta');
 goog.require('spf.pubsub');
 goog.require('spf.state');
@@ -57,50 +58,63 @@ goog.require('spf.string');
  *   before the callback is executed.  This allows switching between
  *   versions of the same script at different URLs.
  *
- * @param {string|Array.<string>} urls One or more urls of scripts to load.
- * @param {(string|Function)=} opt_nameOrCallback Name to identify the script(s)
- *     independently or a callback to execute when the script is loaded.
- * @param {Function=} opt_callback Callback function to execute when the
- *     script is loaded.
+ * @param {string|Array.<string>} urls One or more URLs of scripts to load.
+ * @param {(string|Function)=} opt_nameOrFn Name to identify the script(s)
+ *     or callback function to execute when the script is loaded.
+ * @param {Function=} opt_fn Callback function to execute when the script is
+ *     loaded.
+ * @param {boolean=} opt_order Whether to load the scripts in squential order.
  */
-spf.net.scriptbeta.load = function(urls, opt_nameOrCallback, opt_callback) {
+spf.net.scriptbeta.load = function(urls, opt_nameOrFn, opt_fn, opt_order) {
   // Convert to an array if needed.
   urls = /** @type {Array} */ (spf.array.isArray(urls) ? urls : [urls]);
-  // Determine if a name was provided with 2 or 3 arguments.
-  var withName = spf.string.isString(opt_nameOrCallback);
-  var name = /** @type {string} */ (
-      withName ? opt_nameOrCallback : '^' + urls.join(''));
-  var callback = /** @type {Function} */ (
-      withName ? opt_callback : opt_nameOrCallback);
-  spf.debug.debug('script', urls, name);
-
-  // TODO(nicksay): Implement "unloading" of scripts.
-  //
-  // If loading new scripts for a name, handle unloading previous ones.
-  // if (name in spf.net.scriptbeta.names_) {
-  // }
-
-  // Associate the scripts with the name.
   urls = spf.array.map(urls, spf.net.scriptbeta.canonicalize_);
-  spf.net.scriptbeta.names_[name] = urls;
-  spf.debug.debug('  ', urls);
 
-  // If all the scripts are already loaded, execute the callback;
-  if (spf.net.scriptbeta.allLoaded_(name)) {
-    spf.debug.debug('  all urls already loaded');
-    if (callback) {
-      callback();
+  // Determine if a name was provided with 2 or 3 arguments.
+  var withName = spf.string.isString(opt_nameOrFn);
+  var name = /** @type {string} */ (withName ? opt_nameOrFn : '');
+  var callback = /** @type {Function} */ (withName ? opt_fn : opt_nameOrFn);
+  spf.debug.debug('script.load', urls, name);
+
+  var loaded = spf.array.every(urls, spf.net.scriptbeta.isLoaded_);
+
+  if (name) {
+    // If loading new scripts for a name, handle unloading previous ones.
+    if (!loaded && name in spf.net.scriptbeta.urls_) {
+      spf.net.scriptbeta.unload(name);
     }
-    setTimeout(spf.net.scriptbeta.check_, 0);
+    // Associate the scripts with the name.
+    spf.net.scriptbeta.urls_[name] = urls;
+  }
+
+  var pseudonym = name || spf.net.scriptbeta.label_(urls.sort().join(''));
+  var topic = spf.net.scriptbeta.prefix_(pseudonym);
+  spf.net.scriptbeta.urls_[pseudonym] = urls;
+  spf.debug.debug('  subscribing', topic);
+  spf.pubsub.subscribe(topic, callback);
+  // Start asynchronously loading all the scripts.
+  if (opt_order) {
+    var i = -1, l = urls.length;
+    var next = function() {
+      setTimeout(spf.net.scriptbeta.check, 0);
+      i++;
+      if (i < urls.length) {
+        // Use a self-referencing callback for sequential loading.
+        if (spf.net.scriptbeta.stats_[urls[i]]) {
+          next();
+        } else {
+          spf.net.scriptbeta.get(urls[i], next);
+        }
+      }
+    };
+    next();
   } else {
-    // Otherwise, wait for them to be loaded.
-    spf.debug.debug('  subscribing', name);
-    spf.pubsub.subscribe(name, callback);
-    // Start asynchronously loading all the scripts.
     spf.array.each(urls, function(url) {
-      if (!spf.net.scriptbeta.isLoaded_(url) &&
-          !spf.net.scriptbeta.isLoading_(url)) {
-        spf.net.scriptbeta.get(url, spf.net.scriptbeta.check_);
+      // If a status exists, the script is already loading or loaded.
+      if (spf.net.scriptbeta.stats_[url]) {
+        setTimeout(spf.net.scriptbeta.check, 0);
+      } else {
+        spf.net.scriptbeta.get(url, spf.net.scriptbeta.check);
       }
     });
   }
@@ -114,28 +128,40 @@ spf.net.scriptbeta.load = function(urls, opt_nameOrCallback, opt_callback) {
  * to be loaded.
  *
  * @param {Array.<string>} urls An array for scripts to load sequentially.
- * @param {(string|Function)=} opt_nameOrCallback Name to identify the script
+ * @param {(string|Function)=} opt_nameOrFn Name to identify the script
  *     independently or a callback to execute when the script is loaded.
- * @param {Function=} opt_callback Callback function to execute when the
+ * @param {Function=} opt_fn Callback function to execute when the
  *     script is loaded.
  */
-spf.net.scriptbeta.order = function(urls, opt_nameOrCallback, opt_callback) {
+spf.net.scriptbeta.order = function(urls, opt_nameOrFn, opt_fn) {
   spf.debug.debug('script.order', urls);
-  var completed = [];
-  var next = function() {
-    if (urls.length) {
-      var url = urls.shift();
-      completed.push(url);
-      spf.debug.debug('  processing', completed, urls);
-      // Use a self-referencing callback for sequential loading.
-      spf.net.scriptbeta.load(url, next);
-    } else {
-      spf.debug.debug('  completed');
-      // Call load with the completed urls to store them all by name.
-      spf.net.scriptbeta.load(completed, opt_nameOrCallback, opt_callback);
-    }
-  };
-  next();
+  spf.net.scriptbeta.load(urls, opt_nameOrFn, opt_fn, true);
+};
+
+
+/**
+ * Unloads scripts identified by dependency name.  See {@link #load}.
+ *
+ * NOTE: Unloading a script will prevent execution of ALL pending callbacks
+ * but is NOT guaranteed to stop the browser loading a pending URL.
+ *
+ * @param {string} name The dependency name.
+ */
+spf.net.scriptbeta.unload = function(name) {
+  spf.debug.warn('script.unload', name);
+  // Convert to an array if needed.
+  var urls = spf.net.scriptbeta.urls_[name] || [];
+  if (urls.length) {
+    spf.debug.warn('  >', urls);
+    spf.dispatch('jsunload', name);
+    spf.array.each(urls, function(url) {
+      var cls = spf.net.scriptbeta.prefix_(spf.net.scriptbeta.label_(url));
+      var els = spf.dom.query('.' + cls);
+      spf.array.each(els, spf.net.resourcebeta.remove);
+      delete spf.net.scriptbeta.stats_[url];
+    });
+  }
+  delete spf.net.scriptbeta.urls_[name];
 };
 
 
@@ -145,20 +171,25 @@ spf.net.scriptbeta.order = function(urls, opt_nameOrCallback, opt_callback) {
  * has been loaded before.  Compare to {@link #load}.
  *
  * @param {string} url The URL of the script to load.
- * @param {Function=} opt_callback Function to execute when loaded.
+ * @param {Function=} opt_fn Function to execute when loaded.
  * @return {Element} The newly created script element.
  */
-spf.net.scriptbeta.get = function(url, opt_callback) {
+spf.net.scriptbeta.get = function(url, opt_fn) {
   spf.debug.debug('script.get loading', url);
-  spf.net.scriptbeta.urls_[url] = spf.net.scriptbeta.Status.LOADING;
+  spf.net.scriptbeta.stats_[url] = spf.net.scriptbeta.Status.LOADING;
   var type = spf.net.resourcebeta.Type.JS;
-  return spf.net.resourcebeta.get(type, url, function() {
+  var el = spf.net.resourcebeta.get(type, url, function() {
     spf.debug.debug('script.get loaded', url);
-    spf.net.scriptbeta.urls_[url] = spf.net.scriptbeta.Status.LOADED;
-    if (opt_callback) {
-      opt_callback();
+    // Only update the status if the script has not been unloaded.
+    if (spf.net.scriptbeta.stats_[url]) {
+      spf.net.scriptbeta.stats_[url] = spf.net.scriptbeta.Status.LOADED;
+    }
+    if (opt_fn) {
+      opt_fn();
     }
   });
+  el.className = spf.net.scriptbeta.prefix_(spf.net.scriptbeta.label_(url));
+  return el;
 };
 
 
@@ -166,37 +197,37 @@ spf.net.scriptbeta.get = function(url, opt_callback) {
  * Waits for one or more scripts identified by name to be loaded and executes
  * the callback function.  See {@link #load} or {@link #done} to define names.
  *
- * @param {string|Array.<string>} deps One or more dependencies names.
- * @param {Function=} opt_callback Callback function to execute when the
+ * @param {string|Array.<string>} names One or more dependencies names.
+ * @param {Function=} opt_fn Callback function to execute when the
  *     scripts have loaded.
  * @param {Function=} opt_require Callback function to execute if dependencies
  *     are specified that have not yet been defined/loaded.
  */
-spf.net.scriptbeta.ready = function(deps, opt_callback, opt_require) {
+spf.net.scriptbeta.ready = function(names, opt_fn, opt_require) {
   // Convert to an array if needed.
-  deps = /** @type {Array} */ (spf.array.isArray(deps) ? deps : [deps]);
-  spf.debug.debug('script.ready', deps);
+  names = /** @type {Array} */ (spf.array.isArray(names) ? names : [names]);
+  spf.debug.debug('script.ready', names);
 
   // Find missing dependencies.
   var unknown = [];
-  spf.array.each(deps, function(dep) {
-    if (!spf.net.scriptbeta.names_[dep]) {
-      unknown.push(dep);
+  spf.array.each(names, function(name) {
+    if (!spf.net.scriptbeta.urls_[name]) {
+      unknown.push(name);
     }
   });
 
   // Check if all dependencies are loaded.
   var known = !unknown.length;
-  if (opt_callback) {
-    var ready = known && spf.array.every(deps, spf.net.scriptbeta.allLoaded_);
-    if (ready) {
+  if (opt_fn) {
+    var ready = spf.array.every(names, spf.net.scriptbeta.allLoadedForName_);
+    if (known && ready) {
       // If ready, execute the callback.
-      opt_callback();
+      opt_fn();
     } else {
       // Otherwise, wait for them to be loaded.
-      var name = deps.join('|');
-      spf.debug.debug('  subscribing', name);
-      spf.pubsub.subscribe(name, opt_callback);
+      var topic = spf.net.scriptbeta.prefix_(names.sort().join('|'));
+      spf.debug.debug('  subscribing', topic);
+      spf.pubsub.subscribe(topic, opt_fn);
     }
   }
   // If provided, call the require function to allow lazy-loading.
@@ -213,27 +244,110 @@ spf.net.scriptbeta.ready = function(deps, opt_callback, opt_require) {
  * @param {string} name The ready name.
  */
 spf.net.scriptbeta.done = function(name) {
-  spf.net.scriptbeta.load('', name);
+  spf.net.scriptbeta.urls_[name] = [];
+  spf.net.scriptbeta.check();
+};
+
+
+/**
+ * "Ignores" a script load by canceling execution of a pending callback.
+ *
+ * Stops waiting for one or more scripts identified by name to be loaded and
+ * cancels the pending callback execution.  The callback must have been
+ * registered by {@link #load}, {@link #order} or {@link #ready}.  If the
+ * callback was registered by {@link #ready} and more than one name was
+ * provided, the same names must be used here.
+ *
+ * @param {string|Array.<string>} names One or more dependencies names.
+ * @param {Function} fn Callback function to cancel.
+ */
+spf.net.scriptbeta.ignore = function(names, fn) {
+  // Convert to an array if needed.
+  names = /** @type {Array} */ (spf.array.isArray(names) ? names : [names]);
+  spf.debug.debug('script.ignore', names);
+  var topic = spf.net.scriptbeta.prefix_(names.sort().join('|'));
+  spf.debug.debug('  unsubscribing', topic);
+  spf.pubsub.unsubscribe(topic, fn);
 };
 
 
 /**
  * Executes any pending callbacks possible by checking if all pending
  * dependecies have loaded.
- * @private
  */
-spf.net.scriptbeta.check_ = function() {
+spf.net.scriptbeta.check = function() {
   spf.debug.debug('script.check');
-  spf.debug.debug(spf.pubsub.subscriptions());
-  for (var name in spf.pubsub.subscriptions()) {
-    var deps = name.split('|');
-    var ready = spf.array.every(deps, spf.net.scriptbeta.allLoaded_);
-    spf.debug.debug(' ', name, '->', deps, '=', ready);
-    if (ready) {
-      spf.debug.debug('  publishing', name);
-      spf.pubsub.publish(name);
-      spf.pubsub.clear(name);
+  spf.debug.debug('  subs', spf.pubsub.subscriptions());
+  spf.debug.debug('  urls', spf.net.scriptbeta.urls_);
+  spf.debug.debug('  stats', spf.net.scriptbeta.stats_);
+  for (var topic in spf.pubsub.subscriptions()) {
+    if (topic.indexOf(spf.net.scriptbeta.PREFIX) == 0) {
+      var names = topic.substring(spf.net.scriptbeta.PREFIX.length).split('|');
+      var ready = spf.array.every(names, spf.net.scriptbeta.allLoadedForName_);
+      spf.debug.debug(' ', topic, '->', names, '=', ready);
+      if (ready) {
+        spf.debug.debug('  publishing', topic);
+        spf.pubsub.publish(topic);
+        spf.pubsub.clear(topic);
+      }
     }
+  }
+};
+
+
+/**
+ * Prefetchs one or more scripts; the scripts will be requested but not loaded.
+ * Use to prime the browser cache and avoid needing to request the script when
+ * subsequently loaded.  See {@link #load}.
+ *
+ * @param {string|Array.<string>} urls One or more URLs of scripts to prefetch.
+ */
+spf.net.scriptbeta.prefetch = function(urls) {
+  // Convert to an array if needed.
+  urls = /** @type {Array} */ (spf.array.isArray(urls) ? urls : [urls]);
+  urls = spf.array.map(urls, spf.net.scriptbeta.canonicalize_);
+  var type = spf.net.resourcebeta.Type.JS;
+  spf.array.each(urls, function(url) {
+    if (!spf.net.scriptbeta.stats_[url]) {
+      spf.net.resourcebeta.prefetch(type, url);
+    }
+  });
+};
+
+
+/**
+ * Evaluates script text.  A callback can be specified to execute once
+ * evaluation is done.
+ *
+ * @param {string} text The text of the script.
+ * @param {Function=} opt_callback Callback function to execute when the
+ *     script is loaded.
+ * @return {undefined}
+ */
+spf.net.scriptbeta.eval = function(text, opt_callback) {
+  text = spf.string.trim(text);
+  if (text) {
+    if (window.execScript) {
+      // For IE, reach global scope using execScript to avoid a bug where
+      // indirect eval is treated as direct eval.
+      window.execScript(text);
+    } else if (spf.string.startsWith(text, 'use strict', 1)) {
+      // For strict mode, reach global scope using the slower script injection
+      // method.
+      var scriptEl = document.createElement('script');
+      scriptEl.text = text;
+      // Place the scripts in the head instead of the body to avoid errors when
+      // called from the head in the first place.
+      var targetEl = document.getElementsByTagName('head')[0] || document.body;
+      targetEl.appendChild(scriptEl);
+      targetEl.removeChild(scriptEl);
+    } else {
+      // Otherwise, use indirect eval to reach global scope.
+      (0, eval)(text);
+    }
+  }
+  if (opt_callback) {
+    opt_callback();
   }
 };
 
@@ -267,13 +381,37 @@ spf.net.scriptbeta.canonicalize_ = function(url) {
 
 
 /**
+ * Prefix a name to avoid conflicts.
+ *
+ * @param {?} name The name
+ * @return {string} The prefixed name.
+ * @private
+ */
+spf.net.scriptbeta.prefix_ = function(name) {
+  return spf.net.scriptbeta.PREFIX + name;
+};
+
+
+/**
+ * Convert a URL to an internal "name" for use in identifying it.
+ *
+ * @param {string} url The script URL.
+ * @return {string} The name.
+ * @private
+ */
+spf.net.scriptbeta.label_ = function(url) {
+  return spf.net.resourcebeta.label(url);
+};
+
+
+/**
  * Checks to see if all urls for a dependency have been loaded.
- * @param {string} dep The dependency name.
+ * @param {string} name The dependency name.
  * @return {boolean}
  * @private
  */
-spf.net.scriptbeta.allLoaded_ = function(dep) {
-  var urls = spf.net.scriptbeta.names_[dep];
+spf.net.scriptbeta.allLoadedForName_ = function(name) {
+  var urls = spf.net.scriptbeta.urls_[name];
   return !!urls && spf.array.every(urls, spf.net.scriptbeta.isLoaded_);
 };
 
@@ -288,49 +426,14 @@ spf.net.scriptbeta.allLoaded_ = function(dep) {
  * @private
  */
 spf.net.scriptbeta.isLoaded_ = function(url) {
-  var status = spf.net.scriptbeta.urls_[url];
+  var status = spf.net.scriptbeta.stats_[url];
   return !url || status == spf.net.scriptbeta.Status.LOADED;
 };
 
 
 /**
- * Checks to see if a url is currently loading.
- * Note that falsey values (e.g. null or an empty string) are never loading.
- *
- * string is considered always loaded.
- * @param {string} url The url.
- * @return {boolean} Whether the url is loading.
- * @private
- */
-spf.net.scriptbeta.isLoading_ = function(url) {
-  var status = spf.net.scriptbeta.urls_[url];
-  return status == spf.net.scriptbeta.Status.LOADING;
-};
-
-
-/**
- * Map of names to urls.
+ * Map a dependency name to associated urls.
  * @type {!Object.<Array.<string>>}
- * @private
- */
-spf.net.scriptbeta.names_ = {};
-if (SPF_BETA || SPF_BOOTLOADER) {
-  // When built for the script loader, only set the map.
-  if (SPF_BOOTLOADER) {
-    spf.state.set('script-names', spf.net.scriptbeta.names_);
-  } else {
-    if (!spf.state.has('script-names')) {
-      spf.state.set('script-names', {});
-    }
-    spf.net.scriptbeta.names_ = /** @type {!Object.<Array.<string>>} */ (
-        spf.state.get('script-names'));
-  }
-}
-
-
-/**
- * Map of urls to status.
- * @type {!Object.<spf.net.scriptbeta.Status>}
  * @private
  */
 spf.net.scriptbeta.urls_ = {};
@@ -342,11 +445,39 @@ if (SPF_BETA || SPF_BOOTLOADER) {
     if (!spf.state.has('script-urls')) {
       spf.state.set('script-urls', {});
     }
-    spf.net.scriptbeta.urls_ =
-        /** @type {!Object.<spf.net.scriptbeta.Status>} */ (
+    spf.net.scriptbeta.urls_ = /** @type {!Object.<Array.<string>>} */ (
         spf.state.get('script-urls'));
   }
 }
+
+
+/**
+ * Map a url to a script status.
+ * @type {!Object.<spf.net.scriptbeta.Status>}
+ * @private
+ */
+spf.net.scriptbeta.stats_ = {};
+if (SPF_BETA || SPF_BOOTLOADER) {
+  // When built for the script loader, only set the map.
+  if (SPF_BOOTLOADER) {
+    spf.state.set('script-stats', spf.net.scriptbeta.stats_);
+  } else {
+    if (!spf.state.has('script-stats')) {
+      spf.state.set('script-stats', {});
+    }
+    spf.net.scriptbeta.stats_ =
+        /** @type {!Object.<spf.net.scriptbeta.Status>} */ (
+        spf.state.get('script-stats'));
+  }
+}
+
+
+/**
+ * The prefixed used to internally identify script names.
+ * @type {string}
+ * @const
+ */
+spf.net.scriptbeta.PREFIX = spf.net.resourcebeta.Type.JS + '-';
 
 
 /**
