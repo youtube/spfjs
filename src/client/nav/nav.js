@@ -27,7 +27,8 @@ spf.nav.init = function() {
   spf.history.init(spf.nav.handleHistory_);
   if (!spf.state.get('nav-init') && document.addEventListener) {
     document.addEventListener('click', spf.nav.handleClick_, false);
-    if (spf.config.get('prefetch-on-mousedown')) {
+    if (spf.config.get('prefetch-on-mousedown') &&
+        !spf.nav.isTouchCapablePlatform_()) {
       document.addEventListener('mousedown', spf.nav.handleMouseDown_, false);
       spf.state.set('prefetch-listener', spf.nav.handleMouseDown_);
     }
@@ -973,3 +974,16 @@ spf.nav.prefetches_ = function(opt_reqs) {
   return /** @type {!Object.<string, XMLHttpRequest>} */ (
       spf.state.get('nav-prefetches'));
 };
+
+
+/**
+ * Detects touch-capable platforms.
+ *
+ * @return {boolean} True if this is a touch capable platform.
+ * @private
+ */
+spf.nav.isTouchCapablePlatform_ = function() {
+  return ('ontouchstart' in window || window.navigator['maxTouchPoints'] > 0 ||
+     window.navigator['msMaxTouchPoints'] > 0);
+};
+
