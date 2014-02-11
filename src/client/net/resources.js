@@ -300,16 +300,16 @@ spf.net.resources.loadResourceInIframe_ = function(iframeEl, type, url, id) {
   var isJS = type == spf.net.resources.Type.JS;
   var iframeDoc = iframeEl.contentWindow.document;
   if (isJS) {
+    var fetchEl = iframeDoc.createElement('object');
     if (spf.net.resources.IS_IE) {
       // IE needs a <script> in order to complete the request, but
       // fortunately will not execute it unless in the DOM.  Attempting to
       // use an <object> like other browsers will cause the download to hang.
       // The <object> will just be a placeholder for the request made.
-      var fetchEl = iframeDoc.createElement('script');
-      fetchEl.src = url;
+      var extraElForIE = iframeDoc.createElement('script');
+      extraElForIE.src = url;
     } else {
       // Otherwise scripts need to be prefetched as objects to avoid execution.
-      var fetchEl = iframeDoc.createElement('object');
       fetchEl.data = url;
     }
     fetchEl.id = id;
