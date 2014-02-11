@@ -135,7 +135,7 @@ spf.nav.response.process = function(url, response, opt_callback, opt_reverse) {
   // Install page styles (single task), if needed.
   if (response['css']) {
     fn = spf.bind(function(css, timing) {
-      spf.net.styles.install(spf.net.styles.parse(css));
+      spf.nav.response.installStyles_(spf.nav.response.parseStyles_(css));
       timing['spfProcessCss'] = spf.now();
       spf.debug.debug('  process task done: css');
     }, null, response['css'], response['timing']);
@@ -167,7 +167,7 @@ spf.nav.response.process = function(url, response, opt_callback, opt_reverse) {
     fn = spf.bind(function(id, html, timing) {
       var el = document.getElementById(id);
       if (el) {
-        var jsParseResult = spf.net.scripts.parse(html);
+        var jsParseResult = spf.nav.response.parseScripts_(html);
         var animationClass = /** @type {string} */ (
             spf.config.get('animation-class'));
         var noAnimation = (!spf.nav.response.CAN_ANIMATE_ ||
@@ -183,7 +183,7 @@ spf.nav.response.process = function(url, response, opt_callback, opt_reverse) {
           // TODO(nicksay): Consider disallowing html-level scripts or
           //     using a sub-queue for JS execution.
           spf.tasks.suspend(key);
-          spf.net.scripts.install(jsParseResult, function() {
+          spf.nav.response.installScripts_(jsParseResult, function() {
             spf.debug.debug('    html js', id);
             spf.tasks.resume(key, sync);  // Resume main queue after JS.
             spf.debug.debug('  process task done: html', id);
@@ -251,7 +251,7 @@ spf.nav.response.process = function(url, response, opt_callback, opt_reverse) {
             spf.debug.debug('    html update', data.parentEl.id);
             // Execute embedded scripts before continuing.
             spf.tasks.suspend(animationKey);  // Suspend sub-queue for JS.
-            spf.net.scripts.install(data.jsParseResult, function() {
+            spf.nav.response.installScripts_(data.jsParseResult, function() {
               spf.debug.debug('    html js', data.parentEl.id);
               spf.tasks.resume(animationKey);  // Resume sub-queue after JS.
               spf.debug.debug('  process anim done: del old', data.parentEl.id);
@@ -287,11 +287,13 @@ spf.nav.response.process = function(url, response, opt_callback, opt_reverse) {
         timing['spfProcessHtml'] = spf.now();
       }
       spf.tasks.suspend(key);  // Suspend main queue for JS.
-      spf.net.scripts.install(spf.net.scripts.parse(js), function() {
-        timing['spfProcessJs'] = spf.now();
-        spf.debug.debug('  process task done: js');
-        spf.tasks.resume(key, sync);  // Resume main queue after JS.
-      });
+      spf.nav.response.installScripts_(
+          spf.nav.response.parseScripts_(js),
+          function() {
+            timing['spfProcessJs'] = spf.now();
+            spf.debug.debug('  process task done: js');
+            spf.tasks.resume(key, sync);  // Resume main queue after JS.
+          });
     }, null, response['js'], response['timing'], numFragments);
     num = spf.tasks.add(key, fn);
     spf.debug.debug('  process task queued: js', num);
@@ -341,7 +343,7 @@ spf.nav.response.preprocess = function(url, response, opt_callback) {
   // Preinstall page styles (single task), if needed.
   if (response['css']) {
     fn = spf.bind(function(css) {
-      spf.net.styles.preinstall(spf.net.styles.parse(css));
+      spf.nav.response.preinstallStyles_(spf.nav.response.parseStyles_(css));
       spf.debug.debug('  preprocess task done: css');
     }, null, response['css']);
     spf.tasks.add(key, fn);
@@ -355,7 +357,8 @@ spf.nav.response.preprocess = function(url, response, opt_callback) {
       fn = spf.bind(function(id, html) {
         // NOTE: Suspending the queue is not needed since the JS is not
         // actually executed and other tasks don't have to wait.
-        spf.net.scripts.preinstall(spf.net.scripts.parse(html));
+        spf.nav.response.preinstallScripts_(
+            spf.nav.response.parseScripts_(html));
         spf.debug.debug('    html js', id);
         spf.debug.debug('  preprocess task done: html', id);
       }, null, id, fragments[id]);
@@ -369,7 +372,7 @@ spf.nav.response.preprocess = function(url, response, opt_callback) {
     fn = spf.bind(function(js) {
       // NOTE: Suspending the queue is not needed since the JS is not
       // actually executed and other tasks don't have to wait.
-      spf.net.scripts.preinstall(spf.net.scripts.parse(js));
+      spf.nav.response.preinstallScripts_(spf.nav.response.parseScripts_(js));
       spf.debug.debug('  preprocess task done: js');
     }, null, response['js']);
     spf.tasks.add(key, fn);
@@ -384,6 +387,201 @@ spf.nav.response.preprocess = function(url, response, opt_callback) {
 
   // The preprocessing queue is always run async.
   spf.tasks.run(key);
+};
+
+
+/**
+ * Parses scripts from an HTML string.
+ * See {@link #installScripts_}.
+ *
+ * @param {string} html The HTML content to parse.
+ * @return {!spf.nav.response.ParseScriptsResult_}
+ * @private
+ */
+spf.nav.response.parseScripts_ = function(html) {
+  var result = new spf.nav.response.ParseScriptsResult_();
+  if (!html) {
+    return result;
+  }
+  html = html.replace(spf.nav.response.SCRIPT_TAG_REGEXP,
+      function(fullMatch, attr, text) {
+        var url = attr.match(spf.nav.response.SRC_ATTR_REGEXP);
+        url = url ? url[1] : '';
+        var name = attr.match(spf.nav.response.CLASS_ATTR_REGEXP);
+        name = name ? name[1] : '';
+        result.scripts.push({url: url, text: text, name: name});
+        return '';
+      });
+  result.html = html;
+  return result;
+};
+
+
+/**
+ * Installs scripts that have been parsed from an HTML string.
+ * See {@link spf.net.scripts.load}, {@link spf.net.scripts.eval}, and
+ * {@link #parseScripts_}.
+ *
+ * @param {!spf.nav.response.ParseScriptsResult_} result The parsed HTML result.
+ * @param {Function=} opt_callback Callback function to execute after
+ *     all scripts are loaded.
+ * @private
+ */
+spf.nav.response.installScripts_ = function(result, opt_callback) {
+  if (result.scripts.length <= 0) {
+    if (opt_callback) {
+      opt_callback();
+    }
+    return;
+  }
+  // Load or evaluate the scripts in order.
+  var index = -1;
+  var getNextScript = function() {
+    index++;
+    if (index < result.scripts.length) {
+      var item = result.scripts[index];
+      if (item.url) {
+        spf.net.scripts.load(item.url, getNextScript, item.name);
+      } else if (item.text) {
+        spf.net.scripts.eval(item.text, getNextScript);
+      } else {
+        getNextScript();
+      }
+    } else {
+      if (opt_callback) {
+        opt_callback();
+      }
+    }
+  };
+  getNextScript();
+};
+
+
+/**
+ * Prefetches scripts that have been parsed from an HTML string.
+ * See {@link spf.net.scripts.prefetch} and {@link #parseScripts_}.
+ *
+ * @param {!spf.nav.response.ParseScriptsResult_} result The parsed HTML result.
+ * @private
+ */
+spf.nav.response.preinstallScripts_ = function(result) {
+  if (result.scripts.length <= 0) {
+    return;
+  }
+  // Prefetch the scripts.
+  for (var i = 0, l = result.scripts.length; i < l; i++) {
+    var item = result.scripts[i];
+    if (item.url) {
+      spf.net.scripts.prefetch(item.url);
+    }
+  }
+};
+
+
+/**
+ * Parses styles from an HTML string.
+ *
+ * @param {string} html The HTML content to parse.
+ * @return {!spf.nav.response.ParseStylesResult_}
+ * @private
+ */
+spf.nav.response.parseStyles_ = function(html) {
+  var result = new spf.nav.response.ParseStylesResult_();
+  if (!html) {
+    return result;
+  }
+  html = html.replace(spf.nav.response.LINK_TAG_REGEXP,
+      function(fullMatch, attr) {
+        var isStyleSheet = spf.string.contains(attr, 'rel="stylesheet"');
+        if (isStyleSheet) {
+          var url = attr.match(spf.nav.response.HREF_ATTR_REGEXP);
+          url = url ? url[1] : '';
+          var name = attr.match(spf.nav.response.CLASS_ATTR_REGEXP);
+          name = name ? name[1] : '';
+          result.styles.push({url: url, text: '', name: name});
+          return '';
+        } else {
+          return fullMatch;
+        }
+      });
+  html = html.replace(spf.nav.response.STYLE_TAG_REGEXP,
+      function(fullMatch, attr, text) {
+        result.styles.push({url: '', text: text, name: ''});
+        return '';
+      });
+  result.html = html;
+  return result;
+};
+
+
+/**
+ * Installs styles that have been parsed from an HTML string.
+ * See {@link spf.net.styles.load}, {@link spf.net.styles.eval}, and
+ * {@link #parseStyles_}.
+ *
+ * @param {!spf.nav.response.ParseStylesResult_} result The parsed HTML result.
+ * @private
+ */
+spf.nav.response.installStyles_ = function(result) {
+  if (result.styles.length <= 0) {
+    return;
+  }
+  // Install the styles.
+  for (var i = 0, l = result.styles.length; i < l; i++) {
+    var item = result.styles[i];
+    if (item.url) {
+      spf.net.styles.load(item.url, null, item.name);
+    } else if (item.text) {
+      spf.net.styles.eval(item.text);
+    }
+  }
+};
+
+
+/**
+ * Prefetches styles that have been parsed from an HTML string.
+ * See {@link spf.net.styles.prefetch} and {@link #parseStyles_}.
+ *
+ * @param {!spf.nav.response.ParseStylesResult_} result The parsed HTML result.
+ * @private
+ */
+spf.nav.response.preinstallStyles_ = function(result) {
+  if (result.styles.length <= 0) {
+    return;
+  }
+  // Prefetch the styles.
+  for (var i = 0, l = result.styles.length; i < l; i++) {
+    var item = result.styles[i];
+    if (item.url) {
+      spf.net.styles.prefetch(item.url);
+    }
+  }
+};
+
+
+/**
+ * A container for holding the result of parsing styles from an HTML string.
+ * @constructor
+ * @private
+ */
+spf.nav.response.ParseStylesResult_ = function() {
+  /** @type {string} */
+  this.html = '';
+  /** @type {Array.<{url:string, text:string, name:string}>} */
+  this.styles = [];
+};
+
+
+/**
+ * A container for holding the result of parsing scripts from an HTML string.
+ * @constructor
+ * @private
+ */
+spf.nav.response.ParseScriptsResult_ = function() {
+  /** @type {string} */
+  this.html = '';
+  /** @type {Array.<{url:string, text:string, name:string}>} */
+  this.scripts = [];
 };
 
 
@@ -404,6 +602,68 @@ spf.nav.response.CAN_ANIMATE_ = (function() {
   }
   return false;
 })();
+
+
+/**
+ * Regular expression used to locate script tags in a string.
+ * See {@link #parseScripts_}.
+ *
+ * @type {RegExp}
+ * @const
+ */
+spf.nav.response.SCRIPT_TAG_REGEXP =
+    /\x3cscript([\s\S]*?)\x3e([\s\S]*?)\x3c\/script\x3e/ig;
+
+
+/**
+ * Regular expression used to locate style tags in a string.
+ * See {@link #parseStyles_}.
+ *
+ * @type {RegExp}
+ * @const
+ */
+spf.nav.response.STYLE_TAG_REGEXP =
+    /\x3cstyle([\s\S]*?)\x3e([\s\S]*?)\x3c\/style/ig;
+
+
+/**
+ * Regular expression used to locate link tags in a string.
+ * See {@link #parseStyles_}.
+ *
+ * @type {RegExp}
+ * @const
+ */
+spf.nav.response.LINK_TAG_REGEXP = /\x3clink([\s\S]*?)\x3e/ig;
+
+
+/**
+ * Regular expression used to locate class attributes in a string.
+ * See {@link #parseScripts_} and {@link #parseStyles_.
+ *
+ * @type {RegExp}
+ * @const
+ */
+spf.nav.response.CLASS_ATTR_REGEXP = /class="([\S]+)"/;
+
+
+/**
+ * Regular expression used to locate href attributes in a string.
+ * See {@link #parseStyles_}.
+ *
+ * @type {RegExp}
+ * @const
+ */
+spf.nav.response.HREF_ATTR_REGEXP = /href="([\S]+)"/;
+
+
+/**
+ * Regular expression used to locate src attributes in a string.
+ * See {@link #parseScripts_}.
+ *
+ * @type {RegExp}
+ * @const
+ */
+spf.nav.response.SRC_ATTR_REGEXP = /src="([\S]+)"/;
 
 
 /**
