@@ -7,11 +7,14 @@
 goog.provide('spf.nav.response');
 
 goog.require('spf');
+goog.require('spf.array');
 goog.require('spf.config');
 goog.require('spf.debug');
 goog.require('spf.dom');
 goog.require('spf.dom.classlist');
+goog.require('spf.net.scriptbeta');
 goog.require('spf.net.scripts');
+goog.require('spf.net.stylebeta');
 goog.require('spf.net.styles');
 goog.require('spf.state');
 goog.require('spf.string');
@@ -407,8 +410,13 @@ spf.nav.response.parseScripts_ = function(html) {
       function(fullMatch, attr, text) {
         var url = attr.match(spf.nav.response.SRC_ATTR_REGEXP);
         url = url ? url[1] : '';
-        var name = attr.match(spf.nav.response.CLASS_ATTR_REGEXP);
-        name = name ? name[1] : '';
+        if (SPF_BETA) {
+          var name = attr.match(spf.nav.response.TITLE_ATTR_REGEXP);
+          name = name ? name[1] : '';
+        } else {
+          var name = attr.match(spf.nav.response.CLASS_ATTR_REGEXP);
+          name = name ? name[1] : '';
+        }
         result.scripts.push({url: url, text: text, name: name});
         return '';
       });
@@ -435,15 +443,24 @@ spf.nav.response.installScripts_ = function(result, opt_callback) {
     return;
   }
   // Load or evaluate the scripts in order.
+  // TODO(nicksay): Support async as well as ordered loading.
   var index = -1;
   var getNextScript = function() {
     index++;
     if (index < result.scripts.length) {
       var item = result.scripts[index];
       if (item.url) {
-        spf.net.scripts.load(item.url, getNextScript, item.name);
+        if (SPF_BETA) {
+          spf.net.scriptbeta.load(item.url, item.name, getNextScript);
+        } else {
+          spf.net.scripts.load(item.url, getNextScript, item.name);
+        }
       } else if (item.text) {
-        spf.net.scripts.eval(item.text, getNextScript);
+        if (SPF_BETA) {
+          spf.net.scriptbeta.eval(item.text, getNextScript);
+        } else {
+          spf.net.scripts.eval(item.text, getNextScript);
+        }
       } else {
         getNextScript();
       }
@@ -469,10 +486,17 @@ spf.nav.response.preinstallScripts_ = function(result) {
     return;
   }
   // Prefetch the scripts.
-  for (var i = 0, l = result.scripts.length; i < l; i++) {
-    var item = result.scripts[i];
-    if (item.url) {
-      spf.net.scripts.prefetch(item.url);
+  if (SPF_BETA) {
+    var urls = spf.array.map(result.scripts, function(item) {
+      return item.url;
+    });
+    spf.net.scriptbeta.prefetch(urls);
+  } else {
+    for (var i = 0, l = result.scripts.length; i < l; i++) {
+      var item = result.scripts[i];
+      if (item.url) {
+        spf.net.scripts.prefetch(item.url);
+      }
     }
   }
 };
@@ -496,8 +520,13 @@ spf.nav.response.parseStyles_ = function(html) {
         if (isStyleSheet) {
           var url = attr.match(spf.nav.response.HREF_ATTR_REGEXP);
           url = url ? url[1] : '';
-          var name = attr.match(spf.nav.response.CLASS_ATTR_REGEXP);
-          name = name ? name[1] : '';
+          if (SPF_BETA) {
+            var name = attr.match(spf.nav.response.TITLE_ATTR_REGEXP);
+            name = name ? name[1] : '';
+          } else {
+            var name = attr.match(spf.nav.response.CLASS_ATTR_REGEXP);
+            name = name ? name[1] : '';
+          }
           result.styles.push({url: url, text: '', name: name});
           return '';
         } else {
@@ -530,9 +559,17 @@ spf.nav.response.installStyles_ = function(result) {
   for (var i = 0, l = result.styles.length; i < l; i++) {
     var item = result.styles[i];
     if (item.url) {
-      spf.net.styles.load(item.url, null, item.name);
+      if (SPF_BETA) {
+        spf.net.stylebeta.load(item.url, item.name);
+      } else {
+        spf.net.styles.load(item.url, null, item.name);
+      }
     } else if (item.text) {
-      spf.net.styles.eval(item.text);
+      if (SPF_BETA) {
+        spf.net.stylebeta.eval(item.text);
+      } else {
+        spf.net.styles.eval(item.text);
+      }
     }
   }
 };
@@ -550,10 +587,17 @@ spf.nav.response.preinstallStyles_ = function(result) {
     return;
   }
   // Prefetch the styles.
-  for (var i = 0, l = result.styles.length; i < l; i++) {
-    var item = result.styles[i];
-    if (item.url) {
-      spf.net.styles.prefetch(item.url);
+  if (SPF_BETA) {
+    var urls = spf.array.map(result.styles, function(item) {
+      return item.url;
+    });
+    spf.net.stylebeta.prefetch(urls);
+  } else {
+    for (var i = 0, l = result.styles.length; i < l; i++) {
+      var item = result.styles[i];
+      if (item.url) {
+        spf.net.styles.prefetch(item.url);
+      }
     }
   }
 };
@@ -664,6 +708,16 @@ spf.nav.response.HREF_ATTR_REGEXP = /href="([\S]+)"/;
  * @const
  */
 spf.nav.response.SRC_ATTR_REGEXP = /src="([\S]+)"/;
+
+
+/**
+ * Regular expression used to locate title attributes in a string.
+ * See {@link #parseScripts_} and {@link #parseStyles_}.
+ *
+ * @type {RegExp}
+ * @const
+ */
+spf.nav.response.TITLE_ATTR_REGEXP = /title="([\S]+)"/;
 
 
 /**

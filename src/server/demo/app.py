@@ -203,10 +203,11 @@ class Servlet(object):
     Returns:
       The rendered HTML response.
     """
-    req = web.input(dev=None)
+    req = web.input(dev=None, beta=None)
     is_debug = web.config.debug
     is_dev = web.config.debug and bool(req.dev)
-    return templates.base(content, is_debug, is_dev)
+    is_beta = bool(req.beta)
+    return templates.base(content, is_debug, is_dev, is_beta)
 
   def ChunkedRenderHTML(self, content):
     """Returns a rendered HTML response for chunking.
@@ -220,10 +221,11 @@ class Servlet(object):
       The rendered HTML response.
     """
     self._SetChunkedHeaders()
-    req = web.input(dev=None)
+    req = web.input(dev=None, beta=None)
     is_debug = web.config.debug
     is_dev = web.config.debug and bool(req.dev)
-    yield templates.base(content, is_debug, is_dev)
+    is_beta = bool(req.beta)
+    yield templates.base(content, is_debug, is_dev, is_beta)
 
   def Render(self, content):
     """Returns a rendered HTML or SPF response as needed.

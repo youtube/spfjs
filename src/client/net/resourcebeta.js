@@ -1,7 +1,7 @@
 /**
  * @fileoverview Functions for loading and unloading external resources such
  * as scripts and styles.
- * See {@link spf.net.scriptbeta}.
+ * See {@link spf.net.scriptbeta} and {@link spf.net.stylebeta}.
  *
  * @author nicksay@google.com (Alex Nicksay)
  */
@@ -9,6 +9,9 @@
 goog.provide('spf.net.resourcebeta');
 
 goog.require('spf');
+goog.require('spf.debug');
+goog.require('spf.dom');
+goog.require('spf.dom.classlist');
 goog.require('spf.tasks');
 
 
@@ -16,13 +19,21 @@ goog.require('spf.tasks');
  * Loads a resource by creating an element and appending it to the document.
  *
  * @param {spf.net.resourcebeta.Type} type Type of the resource.
- * @param {string} url Url of the resource.
- * @param {Function} opt_callback Callback for when the resource has loaded.
+ * @param {string} url URL of the resource.
+ * @param {Function=} opt_callback Callback for when the resource has loaded.
  * @param {Document=} opt_document Content document element.
  * @return {Element} The dynamically created element.
  */
-spf.net.resourcebeta.get = function(type, url, opt_callback, opt_document) {
+spf.net.resourcebeta.create = function(type, url, opt_callback, opt_document) {
+  spf.debug.debug('resource.create', url, 'loading');
+  spf.net.resourcebeta.stats_[url] = spf.net.resourcebeta.Status.LOADING;
   var next = function() {
+    spf.debug.debug('resource.create', url, 'done');
+    // Only update status if the resource has not been removed in the interim.
+    if (spf.net.resourcebeta.stats_[url]) {
+      spf.debug.debug('resource.create', url, 'loaded');
+      spf.net.resourcebeta.stats_[url] = spf.net.resourcebeta.Status.LOADED;
+    }
     // IE 10 has a bug where it will synchronously call load handlers for
     // cached resources, force this to be async for consistency.
     if (opt_callback) {
@@ -42,6 +53,8 @@ spf.net.resourcebeta.get = function(type, url, opt_callback, opt_document) {
   var tag = isJS ? 'script' : 'link';
   var doc = opt_document || document;
   var el = doc.createElement(tag);
+  var name = spf.net.resourcebeta.label(url);
+  el.className = spf.net.resourcebeta.prefix(type, name);
   // Chrome, Safari, Firefox, Opera and IE 9 support script onload.
   // Chrome 19, Safari 6, Firefox 9, Opera and IE 5.5 support stylesheet onload.
   // To support scripts IE 8 and below, use script onreadystatechange.
@@ -83,15 +96,50 @@ spf.net.resourcebeta.get = function(type, url, opt_callback, opt_document) {
 
 
 /**
- * Remove a previously created element that was appended to the document.
- * See {@link #load}.
+ * Unloads a resource by removing a previously created element that was
+ * appended to the document.
+ * See {@link #create}.
  *
- * @param {Element} el A created element
+ * @param {spf.net.resourcebeta.Type} type Type of the resource.
+ * @param {string} url URL of the resource.
  */
-spf.net.resourcebeta.remove = function(el) {
-  if (el.parentNode) {
-    el.parentNode.removeChild(el);
-  }
+spf.net.resourcebeta.destroy = function(type, url) {
+  var name = spf.net.resourcebeta.label(url);
+  var cls = spf.net.resourcebeta.prefix(type, name);
+  var els = spf.dom.query('.' + cls);
+  spf.array.each(els, function(el) {
+    if (el.parentNode) {
+      el.parentNode.removeChild(el);
+    }
+  });
+  delete spf.net.resourcebeta.stats_[url];
+};
+
+
+/**
+ * Discovers existing resources in the document and registers them as loaded.
+ *
+ * @param {spf.net.resourcebeta.Type} type Type of the resource.
+ * @return {Array.<Node>|NodeList} The newly found elements.
+ */
+spf.net.resourcebeta.discover = function(type) {
+  spf.debug.debug('resource.discover', type);
+  var isJS = type == spf.net.resourcebeta.Type.JS;
+  var selector = isJS ? 'script[src]' : 'link[rel~="stylesheet"]';
+  var els = [];
+  spf.array.each(spf.dom.query(selector), function(el) {
+    var url = isJS ? el.src : el.href;
+    // Ignore if already loading or loaded.
+    if (!spf.net.resourcebeta.stats_[url]) {
+      spf.net.resourcebeta.stats_[url] = spf.net.resourcebeta.Status.LOADED;
+      var name = spf.net.resourcebeta.label(url);
+      var cls = spf.net.resourcebeta.prefix(type, name);
+      spf.dom.classlist.add(el, cls);
+      els.push(el);
+      spf.debug.debug('  found', url, cls);
+    }
+  });
+  return els;
 };
 
 
@@ -102,19 +150,20 @@ spf.net.resourcebeta.remove = function(el) {
  * subsequently loaded.  See {@link #get}.
  *
  * @param {spf.net.resourcebeta.Type} type Type of the resource.
- * @param {string} url Url of the resource.
+ * @param {string} url URL of the resource.
  */
 spf.net.resourcebeta.prefetch = function(type, url) {
-  if (!url) {
+  if (!url || spf.net.resourcebeta.stats_[url]) {
     return;
   }
-  var id = type + '-' + spf.net.resourcebeta.label(url);
-  var key = type + '-prefetch';
+  var name = spf.net.resourcebeta.label(url);
+  var id = spf.net.resourcebeta.prefix(type, name);
+  var key = spf.net.resourcebeta.prefix(type, 'prefetch');
   var el = /** @type {HTMLIFrameElement} */ (document.getElementById(key));
   if (!el) {
     el = spf.dom.createIframe(key, null, function(el) {
-      // Set the iframe's loaded flag.
-      el.title = 'loaded';
+      // Use the title attribute as the iframe's loaded flag.
+      el.title = key;
       spf.tasks.run(key, true);
     });
   } else {
@@ -139,7 +188,7 @@ spf.net.resourcebeta.prefetch = function(type, url) {
  *
  * @param {HTMLIFrameElement} el The iframe to load resources in.
  * @param {spf.net.resourcebeta.Type} type Type of the resource.
- * @param {string} url Url of the resource.
+ * @param {string} url URL of the resource.
  * @param {string} id The computed unique id of the resource.
  * @private
  */
@@ -163,9 +212,117 @@ spf.net.resourcebeta.prefetch_ = function(el, type, url, id) {
     doc.body.appendChild(fetchEl);
   } else {
     // Stylesheets can be prefetched in the same way as loaded.
-    var fetchEl = spf.net.resourcebeta.get(type, url, null, doc);
+    var fetchEl = spf.net.resourcebeta.create(type, url, null, doc);
     fetchEl.id = id;
   }
+};
+
+
+/**
+ * Associates a list of resource URLs with a dependency name.
+ *
+ * @param {spf.net.resourcebeta.Type} type Type of the resource.
+ * @param {string} name The dependency name.
+ * @param {Array.<string>} urls The URLs.
+ */
+spf.net.resourcebeta.register = function(type, name, urls) {
+  var key = spf.net.resourcebeta.prefix(type, name);
+  spf.net.resourcebeta.urls_[key] = urls;
+};
+
+
+/**
+ * Unassociates any previously assocated URLs for a dependency name.
+ *
+ * @param {spf.net.resourcebeta.Type} type Type of the resource.
+ * @param {string} name The dependency name.
+ */
+spf.net.resourcebeta.unregister = function(type, name) {
+  var key = spf.net.resourcebeta.prefix(type, name);
+  delete spf.net.resourcebeta.urls_[key];
+};
+
+
+/**
+ * Returns the list of URLs currently associated with a dependency name.
+ *
+ * @param {spf.net.resourcebeta.Type} type Type of the resource.
+ * @param {string} name The dependency name.
+ * @return {Array.<string>} The URLs.
+ */
+spf.net.resourcebeta.list = function(type, name) {
+  var key = spf.net.resourcebeta.prefix(type, name);
+  return spf.net.resourcebeta.urls_[key];
+};
+
+
+/**
+ * Sets the base path to use when resolving relative URLs.
+ * See {@link #canonicalize}.
+ *
+ * @param {spf.net.resourcebeta.Type} type Type of the resource.
+ * @param {string} path The path.
+ */
+spf.net.resourcebeta.path = function(type, path) {
+  var key = spf.net.resourcebeta.PATHS_KEY_PREFIX + type;
+  spf.state.set(key, path);
+};
+
+
+/**
+ * Convert a resource URL to the "canonical" version by prepending the base path
+ * and appending a suffix if needed.  See {@link #path}.  Ignores absolute URLs
+ * (i.e. those that start with http://, etc).
+ *
+ * @param {spf.net.resourcebeta.Type} type Type of the resource.
+ * @param {string} url The initial url.
+ * @return {string} The adjusted url.
+ */
+spf.net.resourcebeta.canonicalize = function(type, url) {
+  var key = spf.net.resourcebeta.PATHS_KEY_PREFIX + type;
+  if (url && url.indexOf('//') < 0) {
+    url = (spf.state.get(key) || '') + url;
+    url = url.indexOf('.' + type) < 0 ? url + '.' + type : url;
+  }
+  return url;
+};
+
+
+/**
+ * Checks to see if a resource exists.
+ * (If a URL is loading or loaded, then it exists.)
+ *
+ * @param {string} url The URL.
+ * @return {boolean} Whether the URL is loaded.
+ */
+spf.net.resourcebeta.exists = function(url) {
+  return !!spf.net.resourcebeta.stats_[url];
+};
+
+
+/**
+ * Checks to see if a resource has been loaded.
+ * (Falsey URL values (e.g. null or an empty string) are always "loaded".)
+ *
+ * @param {string} url The URL.
+ * @return {boolean} Whether the URL is loaded.
+ */
+spf.net.resourcebeta.loaded = function(url) {
+  var status = spf.net.resourcebeta.stats_[url];
+  return !url || status == spf.net.resourcebeta.Status.LOADED;
+};
+
+
+
+/**
+ * Prefix a name to avoid conflicts.
+ *
+ * @param {spf.net.resourcebeta.Type} type Type of the resource.
+ * @param {?} name The name
+ * @return {string} The prefixed name.
+ */
+spf.net.resourcebeta.prefix = function(type, name) {
+  return type + '-' + name;
 };
 
 
@@ -181,12 +338,83 @@ spf.net.resourcebeta.label = function(url) {
 
 
 /**
+ * Map a url to a resource status.
+ * @type {!Object.<spf.net.resourcebeta.Status>}
+ * @private
+ */
+spf.net.resourcebeta.stats_ = {};
+// When built for the script loader, only set the map.
+if (SPF_BOOTLOADER) {
+  spf.state.set(spf.net.resourcebeta.STATS_KEY, spf.net.resourcebeta.stats_);
+} else if (SPF_BETA) {
+  if (!spf.state.has(spf.net.resourcebeta.STATS_KEY)) {
+    spf.state.set(spf.net.resourcebeta.STATS_KEY, {});
+  }
+  spf.net.resourcebeta.stats_ =
+      /** @type {!Object.<spf.net.resourcebeta.Status>} */ (
+      spf.state.get(spf.net.resourcebeta.STATS_KEY));
+}
+
+
+/**
+ * Map a dependency name to associated urls.
+ * @type {!Object.<Array.<string>>}
+ * @private
+ */
+spf.net.resourcebeta.urls_ = {};
+// When built for the script loader, only set the map.
+if (SPF_BOOTLOADER) {
+  spf.state.set(spf.net.resourcebeta.URLS_KEY, spf.net.resourcebeta.urls_);
+} else if (SPF_BETA) {
+  if (!spf.state.has(spf.net.resourcebeta.URLS_KEY)) {
+    spf.state.set(spf.net.resourcebeta.URLS_KEY, {});
+  }
+  spf.net.resourcebeta.urls_ = /** @type {!Object.<Array.<string>>} */ (
+      spf.state.get(spf.net.resourcebeta.URLS_KEY));
+}
+
+
+/**
+ * Key used to store and retrieve resource status in state.
+ * @type {string}
+ * @const
+ */
+spf.net.resourcebeta.STATS_KEY = 'rsrc-s';
+
+
+/**
+ * Key used to store and retrieve resource urls in state.
+ * @type {string}
+ * @const
+ */
+spf.net.resourcebeta.URLS_KEY = 'rsrc-u';
+
+
+/**
+ * Key prefix used to store and retrieve base paths in state.
+ * @type {string}
+ * @const
+ */
+spf.net.resourcebeta.PATHS_KEY_PREFIX = 'rsrc-p-';
+
+
+/**
  * Whether the browser is Internet Explorer; valid for MSIE 8+ aka Trident 4+.
  * @type {boolean}
  * @const
  */
 spf.net.resourcebeta.IS_IE = spf.string.contains(
     navigator.userAgent, ' Trident/');
+
+
+/**
+ * The status of a resource.
+ * @enum {number}
+ */
+spf.net.resourcebeta.Status = {
+  LOADING: 1,
+  LOADED: 2
+};
 
 
 /**

@@ -1,13 +1,11 @@
 /**
- * @fileoverview Tests for dynamically loading scripts without blocking.
+ * @fileoverview Tests for dynamically loading scripts.
  */
 
 goog.require('spf.array');
-goog.require('spf.dom');
 goog.require('spf.net.resourcebeta');
 goog.require('spf.net.scriptbeta');
 goog.require('spf.pubsub');
-goog.require('spf.string');
 
 
 describe('spf.net.scriptbeta', function() {
@@ -19,6 +17,8 @@ describe('spf.net.scriptbeta', function() {
   var urls;
   var stats;
   var nodes;
+  var loading = spf.net.resourcebeta.Status.LOADING;
+  var loaded = spf.net.resourcebeta.Status.LOADED;
 
   beforeEach(function() {
     jasmine.Clock.useMock();
@@ -30,46 +30,39 @@ describe('spf.net.scriptbeta', function() {
     };
     fakes = {
       // Replace DOM-based functions with fakes.
-      dom: {
-        query: function(sel) {
-          // Only support simple selectors in the fake.
-          var cls = spf.string.startsWith(sel, '.') ? sel.substring(1) : sel;
-          var els = spf.array.filter(nodes, function(n) {
-            return n.className == cls;
-          });
-          return els;
-        }
-      },
       resourcebeta: {
-        get: function(type, url, opt_callback, opt_document) {
+        create: function(type, url, opt_callback, opt_document) {
           var el = {};
           el.src = url;
+          el.className = type + '-' + url.replace(/[^\w]/g, '');
           nodes.push(el);
+          stats[url] = loaded;
           opt_callback && opt_callback();
           return el;
         },
-        remove: function(el) {
+        destroy: function(type, url) {
           var idx = -1;
           spf.array.every(nodes, function(n, i, arr) {
-            if (n.src == el.src) {
+            if (n.src == url) {
               idx = i;
               return false;
             }
             return true;
           });
           nodes.splice(idx, 1);
+          delete stats[url];
         }
       }
     };
-    spyOn(spf.dom, 'query').andCallFake(fakes.dom.query);
-    spyOn(spf.net.resourcebeta, 'get').andCallFake(fakes.resourcebeta.get);
-    spyOn(spf.net.resourcebeta, 'remove').andCallFake(
-        fakes.resourcebeta.remove);
+    spyOn(spf.net.resourcebeta, 'create').andCallFake(
+        fakes.resourcebeta.create);
+    spyOn(spf.net.resourcebeta, 'destroy').andCallFake(
+        fakes.resourcebeta.destroy);
     spf.state.values_ = {};
     subs = spf.pubsub.subscriptions();
     deps = spf.net.scriptbeta.deps_ = {};
-    urls = spf.net.scriptbeta.urls_ = {};
-    stats = spf.net.scriptbeta.stats_ = {};
+    urls = spf.net.resourcebeta.urls_ = {};
+    stats = spf.net.resourcebeta.stats_ = {};
     nodes = [];
     for (var i = 1; i < 9; i++) {
       window['_global_' + i + '_'] = undefined;
@@ -407,42 +400,42 @@ describe('spf.net.scriptbeta', function() {
       expect(callbacks.three.calls.length).toEqual(0);
       expect(callbacks.four.calls.length).toEqual(0);
       // Not loaded.
-      urls['foo'] = ['foo1.js', 'foo2.js'];
-      urls['bar'] = ['bar.js'];
+      urls['js-foo'] = ['foo1.js', 'foo2.js'];
+      urls['js-bar'] = ['bar.js'];
       spf.net.scriptbeta.check();
       expect(callbacks.one.calls.length).toEqual(0);
       expect(callbacks.two.calls.length).toEqual(0);
       expect(callbacks.three.calls.length).toEqual(0);
       expect(callbacks.four.calls.length).toEqual(0);
       // Some loading.
-      stats['bar.js'] = spf.net.scriptbeta.Status.LOADING;
+      stats['bar.js'] = loading;
       spf.net.scriptbeta.check();
       expect(callbacks.one.calls.length).toEqual(0);
       expect(callbacks.two.calls.length).toEqual(0);
       expect(callbacks.three.calls.length).toEqual(0);
       expect(callbacks.four.calls.length).toEqual(0);
       // All loading.
-      stats['bar.js'] = spf.net.scriptbeta.Status.LOADING;
-      stats['foo1.js'] = spf.net.scriptbeta.Status.LOADING;
-      stats['foo2.js'] = spf.net.scriptbeta.Status.LOADING;
+      stats['bar.js'] = loading;
+      stats['foo1.js'] = loading;
+      stats['foo2.js'] = loading;
       spf.net.scriptbeta.check();
       expect(callbacks.one.calls.length).toEqual(0);
       expect(callbacks.two.calls.length).toEqual(0);
       expect(callbacks.three.calls.length).toEqual(0);
       expect(callbacks.four.calls.length).toEqual(0);
       // Some loaded, some loading.
-      stats['bar.js'] = spf.net.scriptbeta.Status.LOADED;
-      stats['foo1.js'] = spf.net.scriptbeta.Status.LOADING;
-      stats['foo2.js'] = spf.net.scriptbeta.Status.LOADED;
+      stats['bar.js'] = loaded;
+      stats['foo1.js'] = loading;
+      stats['foo2.js'] = loaded;
       spf.net.scriptbeta.check();
       expect(callbacks.one.calls.length).toEqual(0);
       expect(callbacks.two.calls.length).toEqual(1);
       expect(callbacks.three.calls.length).toEqual(0);
       expect(callbacks.four.calls.length).toEqual(0);
       // All loaded.
-      stats['bar.js'] = spf.net.scriptbeta.Status.LOADED;
-      stats['foo1.js'] = spf.net.scriptbeta.Status.LOADED;
-      stats['foo2.js'] = spf.net.scriptbeta.Status.LOADED;
+      stats['bar.js'] = loaded;
+      stats['foo1.js'] = loaded;
+      stats['foo2.js'] = loaded;
       spf.net.scriptbeta.check();
       expect(callbacks.one.calls.length).toEqual(1);
       expect(callbacks.two.calls.length).toEqual(1);

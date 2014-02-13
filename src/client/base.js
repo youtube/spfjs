@@ -89,7 +89,7 @@ spf.execute = function(fn, var_args) {
  * Dispatches a custom event.
  *
  * @param {string} name The custom event name.
- * @param {?} opt_detail The custom event detail (data).
+ * @param {?=} opt_detail The custom event detail (data).
  */
 spf.dispatch = function(name, opt_detail) {
   if (document.createEvent) {

@@ -12,6 +12,7 @@ goog.require('spf.debug');
 goog.require('spf.nav');
 goog.require('spf.net.scriptbeta');
 goog.require('spf.net.scripts');
+goog.require('spf.net.stylebeta');
 goog.require('spf.net.styles');
 goog.require('spf.pubsub');
 
@@ -51,31 +52,40 @@ spf.main.dispose = function() {
 
 
 /**
- * Marks existing scripts and styles as loaded, once during initial code
- * execution and when the document is ready to catch any resources in the
- * page after SPF is included.
+ * Discovers existing script and style elements in the document and registers
+ * them as loaded, once during initial code execution and again when the
+ * document is ready to catch any resources in the page after SPF is included.
  * @private
  */
-spf.main.mark_ = function() {
-  spf.net.scripts.mark();
-  spf.net.styles.mark();
+spf.main.discover_ = function() {
+  if (SPF_BETA) {
+    spf.net.scriptbeta.discover();
+    spf.net.stylebeta.discover();
+  } else {
+    spf.net.scripts.mark();
+    spf.net.styles.mark();
+  }
   if (document.readyState == 'complete') {
     // Since IE 8+ is supported for common library functions such as script
     // and style loading, use both standard and legacy event handlers to mark
     // existing resources.
     if (document.removeEventListener) {
-      document.removeEventListener('DOMContentLoaded', spf.main.mark_, false);
+      document.removeEventListener(
+          'DOMContentLoaded', spf.main.discover_, false);
     } else if (document.detachEvent) {
-      document.detachEvent('onreadystatechange', spf.main.mark_);
+      document.detachEvent(
+          'onreadystatechange', spf.main.discover_);
     }
   }
 };
 if (document.addEventListener) {
-  document.addEventListener('DOMContentLoaded', spf.main.mark_, false);
+  document.addEventListener(
+      'DOMContentLoaded', spf.main.discover_, false);
 } else if (document.attachEvent) {
-  document.attachEvent('onreadystatechange', spf.main.mark_);
+  document.attachEvent(
+        'onreadystatechange', spf.main.discover_);
 }
-spf.main.mark_();
+spf.main.discover_();
 
 
 // Create the API by exporting aliased functions.
@@ -106,6 +116,13 @@ if (SPF_BETA) {
       'path': spf.net.scriptbeta.path,
       // Additions.
       'prefetch': spf.net.scriptbeta.prefetch
+    },
+    'style': {
+      'load': spf.net.stylebeta.load,
+      'unload': spf.net.stylebeta.unload,
+      'get': spf.net.stylebeta.get,
+      'prefetch': spf.net.stylebeta.prefetch,
+      'path': spf.net.stylebeta.path
     }
   };
 } else {

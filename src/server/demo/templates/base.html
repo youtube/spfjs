@@ -1,4 +1,4 @@
-$def with (content, is_debug, is_dev)
+$def with (content, is_debug, is_dev, is_beta)
 <!doctype HTML>
 <html>
 <head>
@@ -36,9 +36,15 @@ $def with (content, is_debug, is_dev)
   $if is_dev:
     $ spf_js = "/static/dev-spf-bundle.js"
   $elif is_debug:
-    $ spf_js = "/static/debug-spf.js"
+    $if is_beta:
+      $ spf_js = "/static/debug-spf-beta.js"
+    $else:
+      $ spf_js = "/static/debug-spf.js"
   $else:
-    $ spf_js = "/static/spf.js"
+    $if is_beta:
+      $ spf_js = "/static/spf-beta.js"
+    $else:
+      $ spf_js = "/static/spf.js"
   <script src="$spf_js"></script>
   <script src="/static/app.js"></script>
   <script>
