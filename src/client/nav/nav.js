@@ -588,7 +588,14 @@ spf.nav.handleNavigateSuccess_ = function(options, referer, reverse, original,
     // Replace the current history entry with the redirect,
     // executing the callback to trigger the next navigation.
     var state = {'spf-referer': referer};
-    spf.history.replace(redirectUrl, state, true);
+    try {
+      spf.history.replace(redirectUrl, state, true);
+    } catch (err) {
+      spf.nav.cancel();
+      spf.debug.error('error caught, redirecting ',
+                      '(url=', redirectUrl, 'err=', err, ')');
+      spf.nav.handleNavigateError_(options, redirectUrl, err);
+    }
     return;
   }
 
@@ -986,4 +993,3 @@ spf.nav.isTouchCapablePlatform_ = function() {
   return ('ontouchstart' in window || window.navigator['maxTouchPoints'] > 0 ||
      window.navigator['msMaxTouchPoints'] > 0);
 };
-

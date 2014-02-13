@@ -78,6 +78,7 @@ spf.history.dispose = function() {
  *     pass the object to JSON.stringify and impose a 640k character limit.
  * @throws {Error} If the URL is not in the same domain, a SECURITY_ERR
  *     (code == 18) is thrown.
+ * @throws {Error} If window.history.pushState is not a function.
  */
 spf.history.add = function(opt_url, opt_state, opt_doCallback) {
   spf.debug.info('history.add ', opt_url);
@@ -99,6 +100,7 @@ spf.history.add = function(opt_url, opt_state, opt_doCallback) {
  *     pass the object to JSON.stringify and impose a 640k character limit.
  * @throws {Error} If the URL is not in the same domain, a SECURITY_ERR
  *     (code == 18) is thrown.
+ * @throws {Error} If window.history.replaceState is not a function.
  */
 spf.history.replace = function(opt_url, opt_state, opt_doCallback) {
   spf.debug.info('history.replace ', opt_url);
@@ -194,7 +196,14 @@ spf.history.getCurrentUrl_ = function() {
  * @private
  */
 spf.history.doPushState_ = function(data, title, opt_url) {
-  window.history.pushState(data, title, opt_url);
+  // It is common for third party code to interfere with pushState.
+  // This check makes sure that pushState is a function when called to
+  // avoid js errors and a state where the back arrow stops working.
+  if (typeof window.history.pushState == 'function') {
+    window.history.pushState(data, title, opt_url);
+  } else {
+    throw new Error('history.pushState is not a function');
+  }
 };
 
 
@@ -205,5 +214,9 @@ spf.history.doPushState_ = function(data, title, opt_url) {
  * @private
  */
 spf.history.doReplaceState_ = function(data, title, opt_url) {
-  window.history.replaceState(data, title, opt_url);
+  if (typeof window.history.replaceState == 'function') {
+    window.history.replaceState(data, title, opt_url);
+  } else {
+    throw new Error('history.replaceState is not a function');
+  }
 };
