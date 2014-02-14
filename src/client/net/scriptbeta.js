@@ -69,7 +69,6 @@ spf.net.scriptbeta.load = function(urls, opt_nameOrFn, opt_fn, opt_order) {
 
   // Convert to an array if needed.
   urls = /** @type {Array} */ (spf.array.isArray(urls) ? urls : [urls]);
-  urls = spf.array.map(urls, spf.net.scriptbeta.canonicalize_);
 
   // Determine if a name was provided with 2 or 3 arguments.
   var withName = spf.string.isString(opt_nameOrFn);
@@ -88,7 +87,7 @@ spf.net.scriptbeta.load = function(urls, opt_nameOrFn, opt_fn, opt_order) {
     spf.net.resourcebeta.register(type, name, urls);
   }
 
-  var pseudonym = name || spf.net.scriptbeta.label_(urls.sort().join(''));
+  var pseudonym = name || '^' + urls.join('^');
   var topic = spf.net.scriptbeta.prefix_(pseudonym);
   spf.net.resourcebeta.register(type, pseudonym, urls);
   spf.debug.debug('  subscribing', topic);
@@ -99,7 +98,7 @@ spf.net.scriptbeta.load = function(urls, opt_nameOrFn, opt_fn, opt_order) {
     var next = function() {
       setTimeout(spf.net.scriptbeta.check, 0);
       i++;
-      if (i < urls.length) {
+      if (i < l) {
         // Use a self-referencing callback for sequential loading.
         if (spf.net.scriptbeta.exists_(urls[i])) {
           next();
@@ -229,7 +228,7 @@ spf.net.scriptbeta.ready = function(names, opt_fn, opt_require) {
   // Check if all dependencies are loaded.
   var known = !unknown.length;
   if (opt_fn) {
-    var ready = spf.array.every(names, spf.net.scriptbeta.allLoadedForName_);
+    var ready = spf.array.every(names, spf.net.scriptbeta.allLoaded_);
     if (known && ready) {
       // If ready, execute the callback.
       opt_fn();
@@ -289,10 +288,10 @@ spf.net.scriptbeta.ignore = function(names, fn) {
 spf.net.scriptbeta.check = function() {
   spf.debug.debug('script.check');
   var prefix = spf.net.scriptbeta.prefix_('');
-  for (var topic in spf.pubsub.subscriptions()) {
+  for (var topic in spf.pubsub.subscriptions) {
     if (topic.indexOf(prefix) == 0) {
       var names = topic.substring(prefix.length).split('|');
-      var ready = spf.array.every(names, spf.net.scriptbeta.allLoadedForName_);
+      var ready = spf.array.every(names, spf.net.scriptbeta.allLoaded_);
       spf.debug.debug(' ', topic, '->', names, '=', ready);
       if (ready) {
         spf.debug.debug('  publishing', topic);
@@ -315,7 +314,6 @@ spf.net.scriptbeta.prefetch = function(urls) {
   var type = spf.net.resourcebeta.Type.JS;
   // Convert to an array if needed.
   urls = /** @type {Array} */ (spf.array.isArray(urls) ? urls : [urls]);
-  urls = spf.array.map(urls, spf.net.scriptbeta.canonicalize_);
   spf.array.each(urls, function(url) {
     spf.net.resourcebeta.prefetch(type, url);
   });
@@ -369,22 +367,6 @@ spf.net.scriptbeta.path = function(path) {
   spf.net.resourcebeta.path(type, path);
 };
 
-
-/**
- * Convert a script URL to the "canonical" version by prepending the base path
- * and appending .js if needed.  See {@link #path}.  Ignores absolute URLs
- * (i.e. those that start with http://, etc).
- *
- * @param {string} url The initial url.
- * @return {string} The adjusted url.
- * @private
- */
-spf.net.scriptbeta.canonicalize_ = function(url) {
-  var type = spf.net.resourcebeta.Type.JS;
-  return spf.net.resourcebeta.canonicalize(type, url);
-};
-
-
 /**
  * Prefix a name to avoid conflicts.
  *
@@ -399,31 +381,6 @@ spf.net.scriptbeta.prefix_ = function(name) {
 
 
 /**
- * Convert a URL to an internal "name" for use in identifying it.
- *
- * @param {string} url The script URL.
- * @return {string} The name.
- * @private
- */
-spf.net.scriptbeta.label_ = function(url) {
-  return spf.net.resourcebeta.label(url);
-};
-
-
-/**
- * Checks to see if all urls for a dependency have been loaded.
- * @param {string} name The dependency name.
- * @return {boolean}
- * @private
- */
-spf.net.scriptbeta.allLoadedForName_ = function(name) {
-  var type = spf.net.resourcebeta.Type.JS;
-  var urls = spf.net.resourcebeta.list(type, name);
-  return !!urls && spf.array.every(urls, spf.net.scriptbeta.loaded_);
-};
-
-
-/**
  * Checks to see if a script exists.
  * (If a URL is loading or loaded, then it exists.)
  *
@@ -432,7 +389,8 @@ spf.net.scriptbeta.allLoadedForName_ = function(name) {
  * @private
  */
 spf.net.scriptbeta.exists_ = function(url) {
-  return spf.net.resourcebeta.exists(url);
+  var type = spf.net.resourcebeta.Type.JS;
+  return spf.net.resourcebeta.exists(type, url);
 };
 
 
@@ -445,5 +403,19 @@ spf.net.scriptbeta.exists_ = function(url) {
  * @private
  */
 spf.net.scriptbeta.loaded_ = function(url) {
-  return spf.net.resourcebeta.loaded(url);
+  var type = spf.net.resourcebeta.Type.JS;
+  return spf.net.resourcebeta.loaded(type, url);
+};
+
+
+/**
+ * Checks to see if all urls for a dependency have been loaded.
+ * @param {string} name The dependency name.
+ * @return {boolean}
+ * @private
+ */
+spf.net.scriptbeta.allLoaded_ = function(name) {
+  var type = spf.net.resourcebeta.Type.JS;
+  var urls = spf.net.resourcebeta.list(type, name);
+  return !!urls && spf.array.every(urls, spf.net.scriptbeta.loaded_);
 };

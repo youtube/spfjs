@@ -7,6 +7,7 @@
 
 goog.provide('spf.pubsub');
 
+goog.require('spf');
 goog.require('spf.array');
 goog.require('spf.state');
 
@@ -22,11 +23,10 @@ goog.require('spf.state');
  */
 spf.pubsub.subscribe = function(topic, fn) {
   if (topic && fn) {
-    var subs = spf.pubsub.subscriptions();
-    if (!(topic in subs)) {
-      subs[topic] = [];
+    if (!(topic in spf.pubsub.subscriptions)) {
+      spf.pubsub.subscriptions[topic] = [];
     }
-    subs[topic].push(fn);
+    spf.pubsub.subscriptions[topic].push(fn);
   }
 };
 
@@ -38,9 +38,8 @@ spf.pubsub.subscribe = function(topic, fn) {
  * @param {Function} fn Function to unsubscribe.
  */
 spf.pubsub.unsubscribe = function(topic, fn) {
-  var subs = spf.pubsub.subscriptions();
-  if (topic in subs && fn) {
-    spf.array.every(subs[topic], function(subFn, i, arr) {
+  if (topic in spf.pubsub.subscriptions && fn) {
+    spf.array.every(spf.pubsub.subscriptions[topic], function(subFn, i, arr) {
       if (subFn == fn) {
         arr[i] = null;
         return false;
@@ -52,21 +51,17 @@ spf.pubsub.unsubscribe = function(topic, fn) {
 
 
 /**
- * Publishes a message to a topic.  Calls functions subscribed to the topic in
- * the order in which they were added, passing all arguments along.  If any of
- * the functions throws an uncaught error, publishing is aborted.
+ * Publishes a topic.  Calls functions subscribed to the topic in
+ * the order in which they were added.  If any of the functions throws an
+ * uncaught error, publishing is aborted.
  *
- * @param {string} topic Topic to publish to.
- * @param {...*} var_args Arguments that are applied to each subscription
- *     function.
+ * @param {string} topic Topic to publish.
  */
-spf.pubsub.publish = function(topic, var_args) {
-  var subs = spf.pubsub.subscriptions();
-  if (topic in subs) {
-    var args = [].slice.call(arguments, 1);
-    spf.array.each(subs[topic], function(subFn) {
+spf.pubsub.publish = function(topic) {
+  if (topic in spf.pubsub.subscriptions) {
+    spf.array.each(spf.pubsub.subscriptions[topic], function(subFn) {
       if (subFn) {
-        subFn.apply(null, args);
+        subFn();
       }
     });
   }
@@ -74,32 +69,43 @@ spf.pubsub.publish = function(topic, var_args) {
 
 
 /**
- * Clears the subscription list for a topic, or all topics if unspecified.
+ * Clears the subscription list for a topic.
  *
- * @param {string=} opt_topic Topic to clear (all topics if unspecified).
+ * @param {string} topic Topic to clear.
  */
-spf.pubsub.clear = function(opt_topic) {
-  var subs = spf.pubsub.subscriptions();
-  if (opt_topic) {
-    if (opt_topic in subs) {
-      delete subs[opt_topic];
-    }
-  } else {
-    spf.pubsub.subscriptions({});
-  }
+spf.pubsub.clear = function(topic) {
+  delete spf.pubsub.subscriptions[topic];
 };
 
 
 /**
- * @param {!Object.<string, Array>=} opt_subs Optional map of subscriptions
- *     to overwrite the current value.
- * @return {!Object.<string, Array>} Current map of subscriptions.
+ * Map of subscriptions.
+ * @type {!Object.<Array>}
  */
-spf.pubsub.subscriptions = function(opt_subs) {
-  if (opt_subs || !spf.state.has('pubsub-subs')) {
-    return /** @type {!Object.<string, Array>} */ (
-        spf.state.set('pubsub-subs', (opt_subs || {})));
+spf.pubsub.subscriptions = {};
+// When built for the bootloader, unconditionally set the map in state.
+if (SPF_BOOTLOADER) {
+  spf.state.set(spf.pubsub.SUBS_KEY, spf.pubsub.subscriptions);
+} else {
+  if (SPF_BETA) {
+    if (!spf.state.has(spf.pubsub.SUBS_KEY)) {
+      spf.state.set(spf.pubsub.SUBS_KEY, {});
+    }
+    spf.pubsub.subscriptions = /** @type {!Object.<Array>} */ (
+        spf.state.get(spf.pubsub.SUBS_KEY));
+  } else {
+    if (!spf.state.has('pubsub-subs')) {
+      spf.state.set('pubsub-subs', {});
+    }
+    spf.pubsub.subscriptions = /** @type {!Object.<Array>} */ (
+        spf.state.get('pubsub-subs'));
   }
-  return /** @type {!Object.<string, Array>} */ (
-      spf.state.get('pubsub-subs'));
-};
+}
+
+
+/**
+ * Key used to store and retrieve subscriptions in state.
+ * @type {string}
+ * @const
+ */
+spf.pubsub.SUBS_KEY = 'ps-s';

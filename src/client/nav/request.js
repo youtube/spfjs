@@ -431,8 +431,7 @@ spf.nav.request.getCacheKey_ = function(url, opt_current, opt_cacheType,
  * @param {string} cacheKey The base cache key for the requested URL.
  * @param {string|null|undefined} opt_current The current page's URL. Some
  *     responses are only cacheable for limited origin URLs.
- * @return {Object.<string, *>} The response object if
- *     found in the cache.
+ * @return {Object.<string, *>} The response object if found in the cache.
  * @private
  */
 spf.nav.request.getCacheObject_ = function(cacheKey, opt_current) {
@@ -453,6 +452,7 @@ spf.nav.request.getCacheObject_ = function(cacheKey, opt_current) {
       };
     }
   }
+  return null;
 };
 
 

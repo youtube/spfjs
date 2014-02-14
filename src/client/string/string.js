@@ -6,6 +6,8 @@
 
 goog.provide('spf.string');
 
+goog.require('spf');
+
 
 /**
  * Checks whether a string contains a given substring.
@@ -53,6 +55,20 @@ spf.string.endsWith = function(str, suffix) {
  * @return {boolean} Whether the value is a string.
  */
 spf.string.isString = function(val) {
+  // When built for the bootloader, optimize for size over complete accuracy.
+  if (SPF_BOOTLOADER) {
+    // The return value for typeof will be one of the following:
+    // * number
+    // * string
+    // * boolean
+    // * function
+    // * object
+    // * undefined
+    // Match "string" to provide an identity test.
+    // This test will fail if a string object like "new String()" is passed in,
+    // but for the bootloader, this is an acceptable trade off.
+    return typeof val == 'string';
+  }
   return Object.prototype.toString.call(val) == '[object String]';
 };
 

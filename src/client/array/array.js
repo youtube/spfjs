@@ -6,6 +6,8 @@
 
 goog.provide('spf.array');
 
+goog.require('spf');
+
 
 /**
  * @typedef {Array|NodeList|Arguments|{length: number}}
@@ -24,7 +26,8 @@ spf.array.ArrayLike;
  * @template THIS, ITEM
  */
 spf.array.each = function(arr, fn, opt_obj) {
-  if (arr.forEach) {
+  // When built for the bootloader, optimize for size over speed.
+  if (!SPF_BOOTLOADER && arr.forEach) {
     arr.forEach(fn, opt_obj);
     return;
   }
@@ -49,7 +52,8 @@ spf.array.each = function(arr, fn, opt_obj) {
  * @template THIS, ITEM
  */
 spf.array.every = function(arr, fn, opt_obj) {
-  if (arr.every) {
+  // When built for the bootloader, optimize for size over speed.
+  if (!SPF_BOOTLOADER && arr.every) {
     return arr.every(fn, opt_obj);
   }
   for (var i = 0, l = arr.length; i < l; i++) {
@@ -74,7 +78,8 @@ spf.array.every = function(arr, fn, opt_obj) {
  * @template THIS, ITEM, RESULT
  */
 spf.array.filter = function(arr, fn, opt_obj) {
-  if (arr.filter) {
+  // When built for the bootloader, optimize for size over speed.
+  if (!SPF_BOOTLOADER && arr.filter) {
     return arr.filter(fn, opt_obj);
   }
   var res = [];
@@ -100,7 +105,8 @@ spf.array.filter = function(arr, fn, opt_obj) {
  * @template THIS, ITEM, RESULT
  */
 spf.array.map = function(arr, fn, opt_obj) {
-  if (arr.map) {
+  // When built for the bootloader, optimize for size over speed.
+  if (!SPF_BOOTLOADER && arr.map) {
     return arr.map(fn, opt_obj);
   }
   var res = [];
@@ -119,5 +125,11 @@ spf.array.map = function(arr, fn, opt_obj) {
  * @return {boolean} Whether the value is an array.
  */
 spf.array.isArray = function(val) {
+  // When built for the bootloader, optimize for size over complete accuracy.
+  if (SPF_BOOTLOADER) {
+    // This test will fail if a fake object like "{push: 1}" is passed in, but
+    // for the bootloader, this is an acceptable trade off.
+    return !!(val && val.push);
+  }
   return Object.prototype.toString.call(val) == '[object Array]';
 };

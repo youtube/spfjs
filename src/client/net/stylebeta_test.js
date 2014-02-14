@@ -13,6 +13,7 @@ describe('spf.net.stylebeta', function() {
   var urls;
   var stats;
   var nodes;
+  var css = spf.net.resourcebeta.Type.CSS;
   var loading = spf.net.resourcebeta.Status.LOADING;
   var loaded = spf.net.resourcebeta.Status.LOADED;
 
@@ -23,6 +24,7 @@ describe('spf.net.stylebeta', function() {
       resourcebeta: {
         create: function(type, url, opt_callback, opt_document) {
           var el = {};
+          url = spf.net.resourcebeta.canonicalize(css, url);
           el.href = url;
           el.className = type + '-' + url.replace(/[^\w]/g, '');
           nodes.push(el);
@@ -182,100 +184,4 @@ describe('spf.net.stylebeta', function() {
 
   });
 
-  describe('canonicalize_', function() {
-
-    it('files', function() {
-      var canonical = spf.net.stylebeta.canonicalize_('foo');
-      expect(canonical).toEqual('foo.css');
-      canonical = spf.net.stylebeta.canonicalize_('foo.css');
-      expect(canonical).toEqual('foo.css');
-      canonical = spf.net.stylebeta.canonicalize_('foo.css.extra');
-      expect(canonical).toEqual('foo.css.extra');
-      // With a base.
-      spf.net.stylebeta.path('/base/');
-      canonical = spf.net.stylebeta.canonicalize_('foo');
-      expect(canonical).toEqual('/base/foo.css');
-      canonical = spf.net.stylebeta.canonicalize_('foo.css');
-      expect(canonical).toEqual('/base/foo.css');
-      canonical = spf.net.stylebeta.canonicalize_('foo.css.extra');
-      expect(canonical).toEqual('/base/foo.css.extra');
-    });
-
-    it('relative paths', function() {
-      var canonical = spf.net.stylebeta.canonicalize_('path/foo');
-      expect(canonical).toEqual('path/foo.css');
-      canonical = spf.net.stylebeta.canonicalize_('path/foo.css');
-      expect(canonical).toEqual('path/foo.css');
-      canonical = spf.net.stylebeta.canonicalize_('path/foo.css.extra');
-      expect(canonical).toEqual('path/foo.css.extra');
-      // With a base.
-      spf.net.stylebeta.path('/base/');
-      canonical = spf.net.stylebeta.canonicalize_('path/foo');
-      expect(canonical).toEqual('/base/path/foo.css');
-      canonical = spf.net.stylebeta.canonicalize_('path/foo.css');
-      expect(canonical).toEqual('/base/path/foo.css');
-      canonical = spf.net.stylebeta.canonicalize_('path/foo.css.extra');
-      expect(canonical).toEqual('/base/path/foo.css.extra');
-    });
-
-    it('absolute paths', function() {
-      var canonical = spf.net.stylebeta.canonicalize_('/path/foo');
-      expect(canonical).toEqual('/path/foo.css');
-      canonical = spf.net.stylebeta.canonicalize_('/path/foo.css');
-      expect(canonical).toEqual('/path/foo.css');
-      canonical = spf.net.stylebeta.canonicalize_('/path/foo.css.extra');
-      expect(canonical).toEqual('/path/foo.css.extra');
-      // With a base.
-      spf.net.stylebeta.path('http://domain');
-      canonical = spf.net.stylebeta.canonicalize_('/path/foo');
-      expect(canonical).toEqual('http://domain/path/foo.css');
-      canonical = spf.net.stylebeta.canonicalize_('/path/foo.css');
-      expect(canonical).toEqual('http://domain/path/foo.css');
-      canonical = spf.net.stylebeta.canonicalize_('/path/foo.css.extra');
-      expect(canonical).toEqual('http://domain/path/foo.css.extra');
-    });
-
-    it('urls', function() {
-      var unprotocol = '//domain/path/bar.css';
-      var http = 'http://domain/path/bar.css';
-      var https = 'https://domain/path/bar.css';
-      var local = 'file:///user/folder/bar.css';
-      expect(spf.net.stylebeta.canonicalize_(unprotocol)).toEqual(unprotocol);
-      expect(spf.net.stylebeta.canonicalize_(http)).toEqual(http);
-      expect(spf.net.stylebeta.canonicalize_(https)).toEqual(https);
-      expect(spf.net.stylebeta.canonicalize_(local)).toEqual(local);
-      // With a base.
-      spf.net.stylebeta.path('http://otherdomain/otherpath/');
-      expect(spf.net.stylebeta.canonicalize_(unprotocol)).toEqual(unprotocol);
-      expect(spf.net.stylebeta.canonicalize_(http)).toEqual(http);
-      expect(spf.net.stylebeta.canonicalize_(https)).toEqual(https);
-      expect(spf.net.stylebeta.canonicalize_(local)).toEqual(local);
-    });
-
-  });
-
-  describe('prefix_', function() {
-
-    it('adds prefixes', function() {
-      expect(spf.net.stylebeta.prefix_('foo')).toEqual('css-foo');
-    });
-
-  });
-
-  describe('label_', function() {
-
-    it('removes special characters', function() {
-      var name = spf.net.stylebeta.label_('foo~!@#$%^&');
-      expect(name).toEqual('foo');
-      name = spf.net.stylebeta.label_('*+-=()[]{}|foo');
-      expect(name).toEqual('foo');
-      name = spf.net.stylebeta.label_('`\\;:"foo,./<>?');
-      expect(name).toEqual('foo');
-      name = spf.net.stylebeta.label_('foo\uD83D\uDCA9');
-      expect(name).toEqual('foo');
-    });
-
-  });
-
 });
-

@@ -26,6 +26,9 @@ goog.require('spf.tasks');
  */
 spf.net.resourcebeta.create = function(type, url, opt_callback, opt_document) {
   spf.debug.debug('resource.create', url, 'loading');
+  // When built for the bootloader, always assume JS is being loaded.
+  var isJS = SPF_BOOTLOADER || type == spf.net.resourcebeta.Type.JS;
+  url = spf.net.resourcebeta.canonicalize(type, url);
   spf.net.resourcebeta.stats_[url] = spf.net.resourcebeta.Status.LOADING;
   var next = function() {
     spf.debug.debug('resource.create', url, 'done');
@@ -43,12 +46,6 @@ spf.net.resourcebeta.create = function(type, url, opt_callback, opt_document) {
   };
   if (!url) {
     return next();
-  }
-  // When built for the script loader, always assume JS is being loaded.
-  if (SPF_BOOTLOADER) {
-    var isJS = true;
-  } else {
-    var isJS = type == spf.net.resourcebeta.Type.JS;
   }
   var tag = isJS ? 'script' : 'link';
   var doc = opt_document || document;
@@ -104,6 +101,7 @@ spf.net.resourcebeta.create = function(type, url, opt_callback, opt_document) {
  * @param {string} url URL of the resource.
  */
 spf.net.resourcebeta.destroy = function(type, url) {
+  url = spf.net.resourcebeta.canonicalize(type, url);
   var name = spf.net.resourcebeta.label(url);
   var cls = spf.net.resourcebeta.prefix(type, name);
   var els = spf.dom.query('.' + cls);
@@ -129,6 +127,7 @@ spf.net.resourcebeta.discover = function(type) {
   var els = [];
   spf.array.each(spf.dom.query(selector), function(el) {
     var url = isJS ? el.src : el.href;
+    url = spf.net.resourcebeta.canonicalize(type, url);
     // Ignore if already loading or loaded.
     if (!spf.net.resourcebeta.stats_[url]) {
       spf.net.resourcebeta.stats_[url] = spf.net.resourcebeta.Status.LOADED;
@@ -153,7 +152,11 @@ spf.net.resourcebeta.discover = function(type) {
  * @param {string} url URL of the resource.
  */
 spf.net.resourcebeta.prefetch = function(type, url) {
-  if (!url || spf.net.resourcebeta.stats_[url]) {
+  if (!url) {
+    return;
+  }
+  url = spf.net.resourcebeta.canonicalize(type, url);
+  if (spf.net.resourcebeta.stats_[url]) {
     return;
   }
   var name = spf.net.resourcebeta.label(url);
@@ -232,7 +235,7 @@ spf.net.resourcebeta.register = function(type, name, urls) {
 
 
 /**
- * Unassociates any previously assocated URLs for a dependency name.
+ * Unassociates any previously associated URLs for a dependency name.
  *
  * @param {spf.net.resourcebeta.Type} type Type of the resource.
  * @param {string} name The dependency name.
@@ -292,10 +295,12 @@ spf.net.resourcebeta.canonicalize = function(type, url) {
  * Checks to see if a resource exists.
  * (If a URL is loading or loaded, then it exists.)
  *
+ * @param {spf.net.resourcebeta.Type} type Type of the resource.
  * @param {string} url The URL.
  * @return {boolean} Whether the URL is loaded.
  */
-spf.net.resourcebeta.exists = function(url) {
+spf.net.resourcebeta.exists = function(type, url) {
+  url = spf.net.resourcebeta.canonicalize(type, url);
   return !!spf.net.resourcebeta.stats_[url];
 };
 
@@ -304,12 +309,17 @@ spf.net.resourcebeta.exists = function(url) {
  * Checks to see if a resource has been loaded.
  * (Falsey URL values (e.g. null or an empty string) are always "loaded".)
  *
+ * @param {spf.net.resourcebeta.Type} type Type of the resource.
  * @param {string} url The URL.
  * @return {boolean} Whether the URL is loaded.
  */
-spf.net.resourcebeta.loaded = function(url) {
-  var status = spf.net.resourcebeta.stats_[url];
-  return !url || status == spf.net.resourcebeta.Status.LOADED;
+spf.net.resourcebeta.loaded = function(type, url) {
+  var status = 0;
+  if (url) {
+    url = spf.net.resourcebeta.canonicalize(type, url);
+    status = spf.net.resourcebeta.stats_[url];
+  }
+  return status == spf.net.resourcebeta.Status.LOADED;
 };
 
 
@@ -343,7 +353,7 @@ spf.net.resourcebeta.label = function(url) {
  * @private
  */
 spf.net.resourcebeta.stats_ = {};
-// When built for the script loader, only set the map.
+// When built for the bootloader, unconditionally set the map in state.
 if (SPF_BOOTLOADER) {
   spf.state.set(spf.net.resourcebeta.STATS_KEY, spf.net.resourcebeta.stats_);
 } else if (SPF_BETA) {
@@ -362,7 +372,7 @@ if (SPF_BOOTLOADER) {
  * @private
  */
 spf.net.resourcebeta.urls_ = {};
-// When built for the script loader, only set the map.
+// When built for the bootloader, unconditionally set the map in state.
 if (SPF_BOOTLOADER) {
   spf.state.set(spf.net.resourcebeta.URLS_KEY, spf.net.resourcebeta.urls_);
 } else if (SPF_BETA) {

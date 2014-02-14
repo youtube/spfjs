@@ -33,7 +33,6 @@ spf.net.stylebeta.load = function(urls, opt_name) {
 
   // Convert to an array if needed.
   urls = /** @type {Array} */ (spf.array.isArray(urls) ? urls : [urls]);
-  urls = spf.array.map(urls, spf.net.stylebeta.canonicalize_);
 
   var name = opt_name || '';
   spf.debug.debug('script.load', urls, name);
@@ -52,7 +51,7 @@ spf.net.stylebeta.load = function(urls, opt_name) {
   spf.array.each(urls, function(url) {
     // If a status exists, the style is already loading or loaded.
     if (url && !spf.net.stylebeta.exists_(url)) {
-      var el = spf.net.resourcebeta.create(type, url);
+      var el = spf.net.stylebeta.get(url);
       if (name) {
         el.title = name;
       }
@@ -124,7 +123,6 @@ spf.net.stylebeta.prefetch = function(urls) {
   var type = spf.net.resourcebeta.Type.CSS;
   // Convert to an array if needed.
   urls = /** @type {Array} */ (spf.array.isArray(urls) ? urls : [urls]);
-  urls = spf.array.map(urls, spf.net.stylebeta.canonicalize_);
   spf.array.each(urls, function(url) {
     spf.net.resourcebeta.prefetch(type, url);
   });
@@ -168,46 +166,6 @@ spf.net.stylebeta.path = function(path) {
 
 
 /**
- * Convert a style URL to the "canonical" version by prepending the base path
- * and appending .css if needed.  See {@link #path}.  Ignores absolute URLs
- * (i.e. those that start with http://, etc).
- *
- * @param {string} url The initial url.
- * @return {string} The adjusted url.
- * @private
- */
-spf.net.stylebeta.canonicalize_ = function(url) {
-  var type = spf.net.resourcebeta.Type.CSS;
-  return spf.net.resourcebeta.canonicalize(type, url);
-};
-
-
-/**
- * Prefix a name to avoid conflicts.
- *
- * @param {?} name The name
- * @return {string} The prefixed name.
- * @private
- */
-spf.net.stylebeta.prefix_ = function(name) {
-  var type = spf.net.resourcebeta.Type.CSS;
-  return spf.net.resourcebeta.prefix(type, name);
-};
-
-
-/**
- * Convert a URL to an internal "name" for use in identifying it.
- *
- * @param {string} url The style URL.
- * @return {string} The name.
- * @private
- */
-spf.net.stylebeta.label_ = function(url) {
-  return spf.net.resourcebeta.label(url);
-};
-
-
-/**
  * Checks to see if a style exists.
  * (If a URL is loading or loaded, then it exists.)
  *
@@ -216,7 +174,8 @@ spf.net.stylebeta.label_ = function(url) {
  * @private
  */
 spf.net.stylebeta.exists_ = function(url) {
-  return spf.net.resourcebeta.exists(url);
+  var type = spf.net.resourcebeta.Type.CSS;
+  return spf.net.resourcebeta.exists(type, url);
 };
 
 
@@ -229,5 +188,6 @@ spf.net.stylebeta.exists_ = function(url) {
  * @private
  */
 spf.net.stylebeta.loaded_ = function(url) {
-  return spf.net.resourcebeta.loaded(url);
+  var type = spf.net.resourcebeta.Type.CSS;
+  return spf.net.resourcebeta.loaded(type, url);
 };

@@ -17,6 +17,7 @@ describe('spf.net.scriptbeta', function() {
   var urls;
   var stats;
   var nodes;
+  var js = spf.net.resourcebeta.Type.JS;
   var loading = spf.net.resourcebeta.Status.LOADING;
   var loaded = spf.net.resourcebeta.Status.LOADED;
 
@@ -32,6 +33,7 @@ describe('spf.net.scriptbeta', function() {
       // Replace DOM-based functions with fakes.
       resourcebeta: {
         create: function(type, url, opt_callback, opt_document) {
+          url = spf.net.resourcebeta.canonicalize(js, url);
           var el = {};
           el.src = url;
           el.className = type + '-' + url.replace(/[^\w]/g, '');
@@ -59,7 +61,7 @@ describe('spf.net.scriptbeta', function() {
     spyOn(spf.net.resourcebeta, 'destroy').andCallFake(
         fakes.resourcebeta.destroy);
     spf.state.values_ = {};
-    subs = spf.pubsub.subscriptions();
+    subs = spf.pubsub.subscriptions = {};
     deps = spf.net.scriptbeta.deps_ = {};
     urls = spf.net.resourcebeta.urls_ = {};
     stats = spf.net.resourcebeta.stats_ = {};
@@ -490,101 +492,6 @@ describe('spf.net.scriptbeta', function() {
       spf.net.scriptbeta.eval(text);
       expect(window['_global_7_']).toEqual(7);
       expect(window['_global_8_']).toEqual(8);
-    });
-
-  });
-
-  describe('canonicalize_', function() {
-
-    it('files', function() {
-      var canonical = spf.net.scriptbeta.canonicalize_('foo');
-      expect(canonical).toEqual('foo.js');
-      canonical = spf.net.scriptbeta.canonicalize_('foo.js');
-      expect(canonical).toEqual('foo.js');
-      canonical = spf.net.scriptbeta.canonicalize_('foo.js.extra');
-      expect(canonical).toEqual('foo.js.extra');
-      // With a base.
-      spf.net.scriptbeta.path('/base/');
-      canonical = spf.net.scriptbeta.canonicalize_('foo');
-      expect(canonical).toEqual('/base/foo.js');
-      canonical = spf.net.scriptbeta.canonicalize_('foo.js');
-      expect(canonical).toEqual('/base/foo.js');
-      canonical = spf.net.scriptbeta.canonicalize_('foo.js.extra');
-      expect(canonical).toEqual('/base/foo.js.extra');
-    });
-
-    it('relative paths', function() {
-      var canonical = spf.net.scriptbeta.canonicalize_('path/foo');
-      expect(canonical).toEqual('path/foo.js');
-      canonical = spf.net.scriptbeta.canonicalize_('path/foo.js');
-      expect(canonical).toEqual('path/foo.js');
-      canonical = spf.net.scriptbeta.canonicalize_('path/foo.js.extra');
-      expect(canonical).toEqual('path/foo.js.extra');
-      // With a base.
-      spf.net.scriptbeta.path('/base/');
-      canonical = spf.net.scriptbeta.canonicalize_('path/foo');
-      expect(canonical).toEqual('/base/path/foo.js');
-      canonical = spf.net.scriptbeta.canonicalize_('path/foo.js');
-      expect(canonical).toEqual('/base/path/foo.js');
-      canonical = spf.net.scriptbeta.canonicalize_('path/foo.js.extra');
-      expect(canonical).toEqual('/base/path/foo.js.extra');
-    });
-
-    it('absolute paths', function() {
-      var canonical = spf.net.scriptbeta.canonicalize_('/path/foo');
-      expect(canonical).toEqual('/path/foo.js');
-      canonical = spf.net.scriptbeta.canonicalize_('/path/foo.js');
-      expect(canonical).toEqual('/path/foo.js');
-      canonical = spf.net.scriptbeta.canonicalize_('/path/foo.js.extra');
-      expect(canonical).toEqual('/path/foo.js.extra');
-      // With a base.
-      spf.net.scriptbeta.path('http://domain');
-      canonical = spf.net.scriptbeta.canonicalize_('/path/foo');
-      expect(canonical).toEqual('http://domain/path/foo.js');
-      canonical = spf.net.scriptbeta.canonicalize_('/path/foo.js');
-      expect(canonical).toEqual('http://domain/path/foo.js');
-      canonical = spf.net.scriptbeta.canonicalize_('/path/foo.js.extra');
-      expect(canonical).toEqual('http://domain/path/foo.js.extra');
-    });
-
-    it('urls', function() {
-      var unprotocol = '//domain/path/bar.js';
-      var http = 'http://domain/path/bar.js';
-      var https = 'https://domain/path/bar.js';
-      var local = 'file:///user/folder/bar.js';
-      expect(spf.net.scriptbeta.canonicalize_(unprotocol)).toEqual(unprotocol);
-      expect(spf.net.scriptbeta.canonicalize_(http)).toEqual(http);
-      expect(spf.net.scriptbeta.canonicalize_(https)).toEqual(https);
-      expect(spf.net.scriptbeta.canonicalize_(local)).toEqual(local);
-      // With a base.
-      spf.net.scriptbeta.path('http://otherdomain/otherpath/');
-      expect(spf.net.scriptbeta.canonicalize_(unprotocol)).toEqual(unprotocol);
-      expect(spf.net.scriptbeta.canonicalize_(http)).toEqual(http);
-      expect(spf.net.scriptbeta.canonicalize_(https)).toEqual(https);
-      expect(spf.net.scriptbeta.canonicalize_(local)).toEqual(local);
-    });
-
-  });
-
-  describe('prefix_', function() {
-
-    it('adds prefixes', function() {
-      expect(spf.net.scriptbeta.prefix_('foo')).toEqual('js-foo');
-    });
-
-  });
-
-  describe('label_', function() {
-
-    it('removes special characters', function() {
-      var name = spf.net.scriptbeta.label_('foo~!@#$%^&');
-      expect(name).toEqual('foo');
-      name = spf.net.scriptbeta.label_('*+-=()[]{}|foo');
-      expect(name).toEqual('foo');
-      name = spf.net.scriptbeta.label_('`\\;:"foo,./<>?');
-      expect(name).toEqual('foo');
-      name = spf.net.scriptbeta.label_('foo\uD83D\uDCA9');
-      expect(name).toEqual('foo');
     });
 
   });
