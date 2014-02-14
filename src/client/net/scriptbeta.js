@@ -76,15 +76,20 @@ spf.net.scriptbeta.load = function(urls, opt_nameOrFn, opt_fn, opt_order) {
   var callback = /** @type {Function} */ (withName ? opt_fn : opt_nameOrFn);
   spf.debug.debug('script.load', urls, name);
 
-  var loaded = spf.array.every(urls, spf.net.scriptbeta.loaded_);
-
-  if (name) {
-    // If loading new scripts for a name, handle unloading previous ones.
-    if (!loaded && spf.net.resourcebeta.list(type, name)) {
-      spf.net.scriptbeta.unload(name);
+  // When built for the bootloader, automatic unloading of scripts is not
+  // supported.  If someone is attempting to load a new version of a script
+  // before loading the main SPF code, then this should be an error.  Automatic
+  // unloading of scripts is primarily intended for navigation between versions.
+  if (!SPF_BOOTLOADER) {
+    var loaded = spf.array.every(urls, spf.net.scriptbeta.loaded_);
+    if (name) {
+      // If loading new scripts for a name, handle unloading previous ones.
+      if (!loaded && spf.net.resourcebeta.list(type, name)) {
+        spf.net.scriptbeta.unload(name);
+      }
+      // Associate the scripts with the name.
+      spf.net.resourcebeta.register(type, name, urls);
     }
-    // Associate the scripts with the name.
-    spf.net.resourcebeta.register(type, name, urls);
   }
 
   var pseudonym = name || '^' + urls.join('^');

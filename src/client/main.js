@@ -108,13 +108,13 @@ if (SPF_BETA) {
       // The bootloader API.
       'load': spf.net.scriptbeta.load,
       'order': spf.net.scriptbeta.order,
-      'unload': spf.net.scriptbeta.unload,
       'get': spf.net.scriptbeta.get,
       'ready': spf.net.scriptbeta.ready,
-      'done': spf.net.scriptbeta.done,
       'ignore': spf.net.scriptbeta.ignore,
+      'done': spf.net.scriptbeta.done,
       'path': spf.net.scriptbeta.path,
       // Additions.
+      'unload': spf.net.scriptbeta.unload,
       'prefetch': spf.net.scriptbeta.prefetch
     },
     'style': {
