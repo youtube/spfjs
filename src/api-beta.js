@@ -7,6 +7,7 @@
 
 /**
  * The top-level SPF namespace.
+ * @suppress {duplicate}
  * @noalias
  */
 var spf = {};
@@ -236,11 +237,12 @@ spf.script = {};
 
 /**
  * Loads one or more scripts asynchronously and optionally defines a name to
- * use for dependency management.  See {@link #ready} to wait for named scripts
- * to be loaded.
+ * use for dependency management and unloading.  See {@link #ready} to wait
+ * for named scripts to be loaded and {@link #unload} to remove previously
+ * loaded scripts.
  *
  * - Subsequent calls to load the same URL will not reload the script.  To
- *   reload a script, unload it first with {@link #unload}
+ *   reload a script, unload it first with {@link #unload}.
  *
  * - A callback can be specified to execute once the script has loaded.  The
  *   callback will be execute each time, even if the script is not reloaded.
@@ -251,52 +253,65 @@ spf.script = {};
  *   before the callback is executed.  This allows switching between
  *   versions of the same script at different URLs.
  *
- * @param {string|Array.<string>} urls One or more urls of scripts to load.
- * @param {(string|Function)=} opt_nameOrCallback Name to identify the script(s)
- *     independently or a callback to execute when the script is loaded.
- * @param {Function=} opt_callback Callback function to execute when the
- *     script is loaded.
+ * @param {string|Array.<string>} urls One or more URLs of scripts to load.
+ * @param {(string|Function)=} opt_nameOrFn Name to identify the script(s)
+ *     or callback function to execute when the script is loaded.
+ * @param {Function=} opt_fn Callback function to execute when the script is
+ *     loaded.
  */
-spf.script.load = function(urls, opt_nameOrCallback, opt_callback) {};
+spf.script.load = function(urls, opt_nameOrFn, opt_fn) {};
 
 
 /**
- * Loads multiple scripts asynchronously in sequential order and optionally
- * defines a name to use for dependency management.  See {@link #load} for
- * non-sequential loading and {@link #ready} to wait for named scripts
- * to be loaded.
+ * Unloads scripts identified by name.  See {@link #load}.
  *
- * @param {Array.<string>} urls An array for scripts to load sequentially.
- * @param {(string|Function)=} opt_nameOrCallback Name to identify the script
- *     independently or a callback to execute when the script is loaded.
- * @param {Function=} opt_callback Callback function to execute when the
- *     script is loaded.
+ * NOTE: Unloading a script will prevent execution of ALL pending callbacks
+ * but is NOT guaranteed to stop the browser loading a pending URL.
+ *
+ * @param {string} name The name.
  */
-spf.script.order = function(urls, opt_nameOrCallback, opt_callback) {};
+spf.script.unload = function(name) {};
+
 
 /**
  * Unconditionally loads a script by dynamically creating an element and
  * appending it to the document without regard for dependencies or whether it
- * has been loaded before.  Compare to {@link #load}.
+ * has been loaded before.  A script directly loaded by this method cannot
+ * be unloaded by name.  Compare to {@link #load}.
  *
  * @param {string} url The URL of the script to load.
- * @param {Function=} opt_callback Function to execute when loaded.
- * @return {Element} The newly created script element.
+ * @param {Function=} opt_fn Function to execute when loaded.
+ * @return {Element} The newly created element.
  */
-spf.script.get = function(url, opt_callback) {};
+spf.script.get = function(url, opt_fn) {};
 
 
 /**
  * Waits for one or more scripts identified by name to be loaded and executes
  * the callback function.  See {@link #load} or {@link #done} to define names.
  *
- * @param {string|Array.<string>} deps One or more dependencies names.
- * @param {Function=} opt_callback Callback function to execute when the
+ * @param {string|Array.<string>} names One or more names.
+ * @param {Function=} opt_fn Callback function to execute when the
  *     scripts have loaded.
- * @param {Function=} opt_require Callback function to execute if dependencies
+ * @param {Function=} opt_require Callback function to execute if names
  *     are specified that have not yet been defined/loaded.
  */
-spf.script.ready = function(deps, opt_callback, opt_require) {};
+spf.script.ready = function(names, opt_fn, opt_require) {};
+
+
+/**
+ * "Ignores" a script load by canceling execution of a pending callback.
+ *
+ * Stops waiting for one or more scripts identified by name to be loaded and
+ * cancels the pending callback execution.  The callback must have been
+ * registered by {@link #load} or {@link #ready}.  If the callback was
+ * registered by {@link #ready} and more than one name was provided, the same
+ * names must be used here.
+ *
+ * @param {string|Array.<string>} names One or more names.
+ * @param {Function} fn Callback function to cancel.
+ */
+spf.script.ignore = function(names, fn) {};
 
 
 /**
@@ -306,3 +321,113 @@ spf.script.ready = function(deps, opt_callback, opt_require) {};
  * @param {string} name The ready name.
  */
 spf.script.done = function(name) {};
+
+
+/**
+ * Recursively loads scripts identified by name, first loading
+ * any dependendent scripts.  Use {@link #declare} to define dependencies.
+ *
+ * @param {string|Array.<string>} names One or more names.
+ * @param {Function=} opt_fn Callback function to execute when the
+ *     scripts have loaded.
+ */
+spf.script.require = function(names, opt_fn) {};
+
+
+/**
+ * Recursively unloads scripts identified by name, first unloading
+ * any dependendent scripts.  Use {@link #declare} to define dependencies.
+ *
+ * @param {string|Array.<string>} names One or more names.
+ */
+spf.script.unrequire = function(names) {};
+
+
+/**
+ * Sets the dependency map and optional URL map used when requiring scripts.
+ * See {@link #require}.
+ *
+ * @param {Object.<(string|Array.<string>)>} deps The dependency map.
+ * @param {Object.<(string|Array.<string>)>=} opt_urls The optional URL map.
+ */
+spf.script.declare = function(deps, opt_urls) {};
+
+
+/**
+ * Sets the path to use when resolving relative URLs.
+ *
+ * @param {string} path The path.
+ */
+spf.script.path = function(path) {};
+
+/**
+ * Prefetchs one or more scripts; the scripts will be requested but not loaded.
+ * Use to prime the browser cache and avoid needing to request the script when
+ * subsequently loaded.  See {@link #load}.
+ *
+ * @param {string|Array.<string>} urls One or more URLs of scripts to prefetch.
+ */
+spf.script.prefetch = function(urls) {};
+
+
+/**
+ * Namespace for style-loading functions.
+ */
+spf.style = {};
+
+
+/**
+ * Loads one or more styles asynchronously and optionally defines a name to
+ * use for dependency management and unloading.  See {@link #unload} to
+ * remove previously loaded styles.
+ *
+ * - Subsequent calls to load the same URL will not reload the style.  To
+ *   reload a style, unload it first with {@link #unload}.
+ *
+ * - A name can be specified to identify the same style at different URLs.
+ *   (For example, "main-A.css" and "main-B.css" are both "main".)  If a name
+ *   is specified, all other styles with the same name will be unloaded.
+ *   This allows switching between versions of the same style at different URLs.
+ *
+ * @param {string|Array.<string>} urls One or more URLs of styles to load.
+ * @param {string=} opt_name Name to identify the style(s).
+ */
+spf.style.load = function(urls, opt_name) {};
+
+
+/**
+ * Unloads styles identified by dependency name.  See {@link #load}.
+ *
+ * @param {string} name The dependency name.
+ */
+spf.style.unload = function(name) {};
+
+
+/**
+ * Unconditionally loads a style by dynamically creating an element and
+ * appending it to the document without regard for whether it has been loaded
+ * before. A style directly loaded by this method cannot be unloaded by name.
+ * Compare to {@link #load}.
+ *
+ * @param {string} url The URL of the style to load.
+ * @return {Element} The newly created element.
+ */
+spf.style.get = function(url) {};
+
+
+/**
+ * Sets the path to use when resolving relative URLs.
+ *
+ * @param {string} path The path.
+ */
+spf.style.path = function(path) {};
+
+
+/**
+ * Prefetchs one or more styles; the styles will be requested but not loaded.
+ * Use to prime the browser cache and avoid needing to request the style when
+ * subsequently loaded.  See {@link #load}.
+ *
+ * @param {string|Array.<string>} urls One or more URLs of styles to prefetch.
+ */
+spf.style.prefetch = function(urls) {};
