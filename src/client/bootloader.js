@@ -3,7 +3,8 @@
  *
  * A minimal subset of the SPF API to load scripts, designed to be inlined in
  * the document head and extended by the main SPF code.  Provides an interface
- * similar to $script.js (see {@link https://github.com/ded/script.js/}).
+ * loosely similar to $script.js {@link https://github.com/ded/script.js/} but
+ * with enhancements.
  *
  * @author nicksay@google.com (Alex Nicksay)
  */
@@ -24,10 +25,7 @@ spf.bootloader.api_ = {
     'get': spf.net.scriptbeta.get,
     // * Wait until ready.
     'ready': spf.net.scriptbeta.ready,
-    'ignore': spf.net.scriptbeta.ignore,
     'done': spf.net.scriptbeta.done,
-    // * Load in sequential order.
-    'order': spf.net.scriptbeta.order,
     // * Load in depedency order.
     'require': spf.net.scriptbeta.require,
     // * Set dependencies and paths.

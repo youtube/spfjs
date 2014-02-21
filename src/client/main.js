@@ -111,10 +111,7 @@ if (SPF_BETA) {
       'get': spf.net.scriptbeta.get,
       // * Wait until ready.
       'ready': spf.net.scriptbeta.ready,
-      'ignore': spf.net.scriptbeta.ignore,
       'done': spf.net.scriptbeta.done,
-      // * Load in sequential order.
-      'order': spf.net.scriptbeta.order,
       // * Load in depedency order.
       'require': spf.net.scriptbeta.require,
       // * Set dependencies and paths.
@@ -123,6 +120,8 @@ if (SPF_BETA) {
       // Extended script loading API.
       // * Unload scripts.
       'unload': spf.net.scriptbeta.unload,
+      // * Ignore ready.
+      'ignore': spf.net.scriptbeta.ignore,
       // * Unload in depedency order.
       'unrequire': spf.net.scriptbeta.unrequire,
       // * Prefetch.

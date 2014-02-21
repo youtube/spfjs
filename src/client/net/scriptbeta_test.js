@@ -153,26 +153,6 @@ describe('spf.net.scriptbeta', function() {
 
   });
 
-  describe('order', function() {
-
-    it('loads in sequence', function() {
-      spf.net.scriptbeta.order(['a', 'b', 'c'], callbacks.one);
-      jasmine.Clock.tick(1);
-      expect(callbacks.one.calls.length).toEqual(1);
-      var result = spf.array.map(nodes, function(a) { return a.src; });
-      expect(result).toEqual(['//test/a.js', '//test/b.js', '//test/c.js']);
-    });
-
-    it('loads in sequence with name', function() {
-      spf.net.scriptbeta.order(['a', 'b', 'c.js'], 'alpha', callbacks.one);
-      jasmine.Clock.tick(1);
-      expect(callbacks.one.calls.length).toEqual(1);
-      var result = spf.array.map(nodes, function(a) { return a.src; });
-      expect(result).toEqual(['//test/a.js', '//test/b.js', '//test/c.js']);
-    });
-
-  });
-
   describe('unload', function() {
 
     it('single url by name', function() {

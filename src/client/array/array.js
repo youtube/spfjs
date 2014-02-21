@@ -119,6 +119,17 @@ spf.array.map = function(arr, fn, opt_obj) {
 
 
 /**
+ * Converts to an array if needed.
+ *
+ * @param {?} val The value.
+ * @return {Array} An array.
+ */
+spf.array.toArray = function(val) {
+  return spf.array.isArray(val) ? val : [val];
+};
+
+
+/**
  * Simple Array.isArray implementation.
  *
  * @param {?} val Value to test.

@@ -33,7 +33,7 @@ spf.net.stylebeta.load = function(urls, opt_name) {
   var type = spf.net.resourcebeta.Type.CSS;
 
   // Convert to an array if needed.
-  urls = /** @type {Array} */ (spf.array.isArray(urls) ? urls : [urls]);
+  urls = spf.array.toArray(urls);
 
   var name = opt_name || '';
   spf.debug.debug('script.load', urls, name);
@@ -123,7 +123,7 @@ spf.net.stylebeta.get = function(url) {
 spf.net.stylebeta.prefetch = function(urls) {
   var type = spf.net.resourcebeta.Type.CSS;
   // Convert to an array if needed.
-  urls = /** @type {Array} */ (spf.array.isArray(urls) ? urls : [urls]);
+  urls = spf.array.toArray(urls);
   spf.array.each(urls, function(url) {
     spf.net.resourcebeta.prefetch(type, url);
   });
