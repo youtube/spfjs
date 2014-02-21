@@ -7,12 +7,15 @@
  */
 
 goog.provide('spf.net.resourcebeta');
+goog.provide('spf.net.resourcebeta.urls');
 
 goog.require('spf');
+goog.require('spf.array');
 goog.require('spf.debug');
 goog.require('spf.dom');
 goog.require('spf.dom.classlist');
 goog.require('spf.tasks');
+goog.require('spf.url');
 
 
 /**
@@ -222,45 +225,7 @@ spf.net.resourcebeta.prefetch_ = function(el, type, url, id) {
 
 
 /**
- * Associates a list of resource URLs with a dependency name.
- *
- * @param {spf.net.resourcebeta.Type} type Type of the resource.
- * @param {string} name The dependency name.
- * @param {Array.<string>} urls The URLs.
- */
-spf.net.resourcebeta.register = function(type, name, urls) {
-  var key = spf.net.resourcebeta.prefix(type, name);
-  spf.net.resourcebeta.urls_[key] = urls;
-};
-
-
-/**
- * Unassociates any previously associated URLs for a dependency name.
- *
- * @param {spf.net.resourcebeta.Type} type Type of the resource.
- * @param {string} name The dependency name.
- */
-spf.net.resourcebeta.unregister = function(type, name) {
-  var key = spf.net.resourcebeta.prefix(type, name);
-  delete spf.net.resourcebeta.urls_[key];
-};
-
-
-/**
- * Returns the list of URLs currently associated with a dependency name.
- *
- * @param {spf.net.resourcebeta.Type} type Type of the resource.
- * @param {string} name The dependency name.
- * @return {Array.<string>} The URLs.
- */
-spf.net.resourcebeta.list = function(type, name) {
-  var key = spf.net.resourcebeta.prefix(type, name);
-  return spf.net.resourcebeta.urls_[key];
-};
-
-
-/**
- * Sets the base path to use when resolving relative URLs.
+ * Sets the path to use when resolving relative URLs.
  * See {@link #canonicalize}.
  *
  * @param {spf.net.resourcebeta.Type} type Type of the resource.
@@ -273,7 +238,7 @@ spf.net.resourcebeta.path = function(type, path) {
 
 
 /**
- * Convert a resource URL to the "canonical" version by prepending the base path
+ * Convert a resource URL to the "canonical" version by prepending the path
  * and appending a suffix if needed.  See {@link #path}.  Ignores absolute URLs
  * (i.e. those that start with http://, etc).
  *
@@ -286,6 +251,7 @@ spf.net.resourcebeta.canonicalize = function(type, url) {
   if (url && url.indexOf('//') < 0) {
     url = (spf.state.get(key) || '') + url;
     url = url.indexOf('.' + type) < 0 ? url + '.' + type : url;
+    url = spf.url.absolute(url);
   }
   return url;
 };
@@ -307,18 +273,14 @@ spf.net.resourcebeta.exists = function(type, url) {
 
 /**
  * Checks to see if a resource has been loaded.
- * (Falsey URL values (e.g. null or an empty string) are always "loaded".)
  *
  * @param {spf.net.resourcebeta.Type} type Type of the resource.
  * @param {string} url The URL.
  * @return {boolean} Whether the URL is loaded.
  */
 spf.net.resourcebeta.loaded = function(type, url) {
-  var status = 0;
-  if (url) {
-    url = spf.net.resourcebeta.canonicalize(type, url);
-    status = spf.net.resourcebeta.stats_[url];
-  }
+  url = spf.net.resourcebeta.canonicalize(type, url);
+  var status = spf.net.resourcebeta.stats_[url];
   return status == spf.net.resourcebeta.Status.LOADED;
 };
 
@@ -336,6 +298,7 @@ spf.net.resourcebeta.prefix = function(type, name) {
 };
 
 
+
 /**
  * Convert a URL to an internal "name" for use in identifying it.
  *
@@ -344,6 +307,48 @@ spf.net.resourcebeta.prefix = function(type, name) {
  */
 spf.net.resourcebeta.label = function(url) {
   return url ? url.replace(/[^\w]/g, '') : '';
+};
+
+
+/**
+ * Sets the resource URLs for a dependency name.
+ *
+ * @param {spf.net.resourcebeta.Type} type Type of the resource.
+ * @param {string} name The dependency name.
+ * @param {Array.<string>} urls The URLs.
+ */
+spf.net.resourcebeta.urls.set = function(type, name, urls) {
+  var key = spf.net.resourcebeta.prefix(type, name);
+  spf.net.resourcebeta.urls_[key] = [];
+  spf.array.each(urls, function(url) {
+    url = spf.net.resourcebeta.canonicalize(type, url);
+    spf.net.resourcebeta.urls_[key].push(url);
+  });
+};
+
+
+/**
+ * Returns the list of resource URLs currently set for a dependency name.
+ *
+ * @param {spf.net.resourcebeta.Type} type Type of the resource.
+ * @param {string} name The dependency name.
+ * @return {Array.<string>} The URLs.
+ */
+spf.net.resourcebeta.urls.get = function(type, name) {
+  var key = spf.net.resourcebeta.prefix(type, name);
+  return spf.net.resourcebeta.urls_[key];
+};
+
+
+/**
+ * Clears all the previously set resource URLs for a dependency name.
+ *
+ * @param {spf.net.resourcebeta.Type} type Type of the resource.
+ * @param {string} name The dependency name.
+ */
+spf.net.resourcebeta.urls.clear = function(type, name) {
+  var key = spf.net.resourcebeta.prefix(type, name);
+  delete spf.net.resourcebeta.urls_[key];
 };
 
 
@@ -401,7 +406,7 @@ spf.net.resourcebeta.URLS_KEY = 'rsrc-u';
 
 
 /**
- * Key prefix used to store and retrieve base paths in state.
+ * Key prefix used to store and retrieve paths in state.
  * @type {string}
  * @const
  */

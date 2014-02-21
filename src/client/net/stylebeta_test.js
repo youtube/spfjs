@@ -10,8 +10,6 @@ goog.require('spf.net.stylebeta');
 describe('spf.net.stylebeta', function() {
 
   var fakes;
-  var urls;
-  var stats;
   var nodes;
   var css = spf.net.resourcebeta.Type.CSS;
   var loading = spf.net.resourcebeta.Status.LOADING;
@@ -21,6 +19,17 @@ describe('spf.net.stylebeta', function() {
     jasmine.Clock.useMock();
     fakes = {
       // Replace DOM-based functions with fakes.
+      url: {
+        absolute: function(relative) {
+          if (relative.indexOf('//') > -1) {
+            return relative;
+          } else if (relative.indexOf('/') == 0) {
+            return '//test' + relative;
+          } else {
+            return '//test/' + relative;
+          }
+        }
+      },
       resourcebeta: {
         create: function(type, url, opt_callback, opt_document) {
           var el = {};
@@ -28,7 +37,7 @@ describe('spf.net.stylebeta', function() {
           el.href = url;
           el.className = type + '-' + url.replace(/[^\w]/g, '');
           nodes.push(el);
-          stats[url] = loaded;
+          spf.net.resourcebeta.stats_[url] = loaded;
           opt_callback && opt_callback();
           return el;
         },
@@ -42,17 +51,18 @@ describe('spf.net.stylebeta', function() {
             return true;
           });
           nodes.splice(idx, 1);
-          delete stats[url];
+          delete spf.net.resourcebeta.stats_[url];
         }
       }
     };
+    spyOn(spf.url, 'absolute').andCallFake(fakes.url.absolute);
     spyOn(spf.net.resourcebeta, 'create').andCallFake(
         fakes.resourcebeta.create);
     spyOn(spf.net.resourcebeta, 'destroy').andCallFake(
         fakes.resourcebeta.destroy);
     spf.state.values_ = {};
-    urls = spf.net.resourcebeta.urls_ = {};
-    stats = spf.net.resourcebeta.stats_ = {};
+    spf.net.resourcebeta.urls_ = {};
+    spf.net.resourcebeta.stats_ = {};
     nodes = [];
   });
 
@@ -123,18 +133,18 @@ describe('spf.net.stylebeta', function() {
       spf.net.stylebeta.load('url-a.css', 'a');
       jasmine.Clock.tick(1);
       var result = spf.array.map(nodes, function(a) { return a.href; });
-      expect(result).toContain('url-a.css');
+      expect(result).toContain('//test/url-a.css');
       // Unload it.
       spf.net.stylebeta.unload('a');
       result = spf.array.map(nodes, function(a) { return a.href; });
-      expect('url-a.css' in stats).toBe(false);
-      expect(result).not.toContain('url-a.css');
+      expect('//test/url-a.css' in spf.net.resourcebeta.stats_).toBe(false);
+      expect(result).not.toContain('//test/url-a.css');
       // Repeated calls should be no-ops.
       spf.net.stylebeta.unload('a');
       spf.net.stylebeta.unload('a');
       result = spf.array.map(nodes, function(a) { return a.href; });
-      expect('url-a.css' in stats).toBe(false);
-      expect(result).not.toContain('url-a.css');
+      expect('//test/url-a.css' in spf.net.resourcebeta.stats_).toBe(false);
+      expect(result).not.toContain('//test/url-a.css');
     });
 
     it('multiple urls by name', function() {
@@ -142,44 +152,44 @@ describe('spf.net.stylebeta', function() {
       spf.net.stylebeta.load(['url-a-1.css', 'url-a-2.css'], 'a');
       jasmine.Clock.tick(1);
       var result = spf.array.map(nodes, function(a) { return a.href; });
-      expect(result).toContain('url-a-1.css');
-      expect(result).toContain('url-a-2.css');
+      expect(result).toContain('//test/url-a-1.css');
+      expect(result).toContain('//test/url-a-2.css');
       // Remove them (and check that they are no longer "ready").
       spf.net.stylebeta.unload('a');
       result = spf.array.map(nodes, function(a) { return a.href; });
-      expect('url-a-1.css' in stats).toBe(false);
-      expect('url-a-2.css' in stats).toBe(false);
-      expect(result).not.toContain('url-a-1.css');
-      expect(result).not.toContain('url-a-2.css');
+      expect('//test/url-a-1.css' in spf.net.resourcebeta.stats_).toBe(false);
+      expect('//test/url-a-2.css' in spf.net.resourcebeta.stats_).toBe(false);
+      expect(result).not.toContain('//test/url-a-1.css');
+      expect(result).not.toContain('//test/url-a-2.css');
       // Repeated calls should be no-ops.
       spf.net.stylebeta.unload('a');
       spf.net.stylebeta.unload('a');
       result = spf.array.map(nodes, function(a) { return a.href; });
-      expect('url-a-1.css' in stats).toBe(false);
-      expect('url-a-2.css' in stats).toBe(false);
-      expect(result).not.toContain('url-a-1.css');
-      expect(result).not.toContain('url-a-2.css');
+      expect('//test/url-a-1.css' in spf.net.resourcebeta.stats_).toBe(false);
+      expect('//test/url-a-2.css' in spf.net.resourcebeta.stats_).toBe(false);
+      expect(result).not.toContain('//test/url-a-1.css');
+      expect(result).not.toContain('//test/url-a-2.css');
       // Check multiple names.
       spf.net.stylebeta.load(['url-a-1.css', 'url-a-2.css'], 'a');
       spf.net.stylebeta.load(['url-b-1.css', 'url-b-2.css'], 'b');
       jasmine.Clock.tick(1);
       var result = spf.array.map(nodes, function(a) { return a.href; });
-      expect(result).toContain('url-a-1.css');
-      expect(result).toContain('url-a-2.css');
-      expect(result).toContain('url-b-1.css');
-      expect(result).toContain('url-b-2.css');
+      expect(result).toContain('//test/url-a-1.css');
+      expect(result).toContain('//test/url-a-2.css');
+      expect(result).toContain('//test/url-b-1.css');
+      expect(result).toContain('//test/url-b-2.css');
       spf.net.stylebeta.unload('b');
       result = spf.array.map(nodes, function(a) { return a.href; });
-      expect(result).toContain('url-a-1.css');
-      expect(result).toContain('url-a-2.css');
-      expect(result).not.toContain('url-b-1.css');
-      expect(result).not.toContain('url-b-2.css');
+      expect(result).toContain('//test/url-a-1.css');
+      expect(result).toContain('//test/url-a-2.css');
+      expect(result).not.toContain('//test/url-b-1.css');
+      expect(result).not.toContain('//test/url-b-2.css');
       spf.net.stylebeta.unload('a');
       result = spf.array.map(nodes, function(a) { return a.href; });
-      expect(result).not.toContain('url-a-1.css');
-      expect(result).not.toContain('url-a-2.css');
-      expect(result).not.toContain('url-b-1.css');
-      expect(result).not.toContain('url-b-2.css');
+      expect(result).not.toContain('//test/url-a-1.css');
+      expect(result).not.toContain('//test/url-a-2.css');
+      expect(result).not.toContain('//test/url-b-1.css');
+      expect(result).not.toContain('//test/url-b-2.css');
     });
 
   });

@@ -9,6 +9,7 @@ goog.provide('spf.net.stylebeta');
 goog.require('spf.array');
 goog.require('spf.debug');
 goog.require('spf.net.resourcebeta');
+goog.require('spf.net.resourcebeta.urls');
 goog.require('spf.string');
 
 
@@ -37,15 +38,15 @@ spf.net.stylebeta.load = function(urls, opt_name) {
   var name = opt_name || '';
   spf.debug.debug('script.load', urls, name);
 
-  var loaded = spf.array.every(urls, spf.net.stylebeta.loaded_);
-
   if (name) {
+    var loaded = spf.array.every(urls, spf.net.stylebeta.loaded_);
+    var previous = spf.net.resourcebeta.urls.get(type, name);
     // If loading new styles for a name, handle unloading previous ones.
-    if (!loaded && spf.net.resourcebeta.list(type, name)) {
+    if (!loaded && previous) {
       spf.net.stylebeta.unload(name);
     }
-    // Associate the styles with the name.
-    spf.net.resourcebeta.register(type, name, urls);
+    // Associate the styles with the name to allow unloading.
+    spf.net.resourcebeta.urls.set(type, name, urls);
   }
 
   spf.array.each(urls, function(url) {
@@ -69,7 +70,7 @@ spf.net.stylebeta.unload = function(name) {
   spf.debug.warn('style.unload', name);
   var type = spf.net.resourcebeta.Type.CSS;
   // Convert to an array if needed.
-  var urls = spf.net.resourcebeta.list(type, name) || [];
+  var urls = spf.net.resourcebeta.urls.get(type, name) || [];
   if (urls.length) {
     spf.debug.warn('  >', urls);
     spf.dispatch('cssunload', name);
@@ -77,7 +78,7 @@ spf.net.stylebeta.unload = function(name) {
       spf.net.resourcebeta.destroy(type, url);
     });
   }
-  spf.net.resourcebeta.unregister(type, name);
+  spf.net.resourcebeta.urls.clear(type, name);
 };
 
 
@@ -90,7 +91,7 @@ spf.net.stylebeta.discover = function() {
   var els = spf.net.resourcebeta.discover(type);
   spf.array.each(els, function(el) {
     if (el.title) {
-      spf.net.resourcebeta.register(type, el.title, [el.href]);
+      spf.net.resourcebeta.urls.set(type, el.title, [el.href]);
     }
     spf.debug.debug('  found', el.href, el.title);
   });
@@ -155,7 +156,7 @@ spf.net.stylebeta.eval = function(text) {
 
 
 /**
- * Sets the base path to use when resolving relative URLs.
+ * Sets the path to use when resolving relative URLs.
  *
  * @param {string} path The path.
  */

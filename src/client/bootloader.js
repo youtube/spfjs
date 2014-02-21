@@ -18,12 +18,20 @@ goog.require('spf.net.scriptbeta');
 /** @private {Object} */
 spf.bootloader.api_ = {
   'script': {
+    // The bootloader API.
+    // * Load scripts.
     'load': spf.net.scriptbeta.load,
-    'order': spf.net.scriptbeta.order,
     'get': spf.net.scriptbeta.get,
+    // * Wait until ready.
     'ready': spf.net.scriptbeta.ready,
     'ignore': spf.net.scriptbeta.ignore,
     'done': spf.net.scriptbeta.done,
+    // * Load in sequential order.
+    'order': spf.net.scriptbeta.order,
+    // * Load in depedency order.
+    'require': spf.net.scriptbeta.require,
+    // * Set dependencies and paths.
+    'declare': spf.net.scriptbeta.declare,
     'path': spf.net.scriptbeta.path
   }
 };

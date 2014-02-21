@@ -106,23 +106,39 @@ if (SPF_BETA) {
   spf.main.extra_ = {
     'script': {
       // The bootloader API.
+      // * Load scripts.
       'load': spf.net.scriptbeta.load,
-      'order': spf.net.scriptbeta.order,
       'get': spf.net.scriptbeta.get,
+      // * Wait until ready.
       'ready': spf.net.scriptbeta.ready,
       'ignore': spf.net.scriptbeta.ignore,
       'done': spf.net.scriptbeta.done,
+      // * Load in sequential order.
+      'order': spf.net.scriptbeta.order,
+      // * Load in depedency order.
+      'require': spf.net.scriptbeta.require,
+      // * Set dependencies and paths.
+      'declare': spf.net.scriptbeta.declare,
       'path': spf.net.scriptbeta.path,
-      // Additions.
+      // Extended script loading API.
+      // * Unload scripts.
       'unload': spf.net.scriptbeta.unload,
+      // * Unload in depedency order.
+      'unrequire': spf.net.scriptbeta.unrequire,
+      // * Prefetch.
       'prefetch': spf.net.scriptbeta.prefetch
     },
     'style': {
+      // Style loading API.
+      // * Load styles.
       'load': spf.net.stylebeta.load,
-      'unload': spf.net.stylebeta.unload,
       'get': spf.net.stylebeta.get,
-      'prefetch': spf.net.stylebeta.prefetch,
-      'path': spf.net.stylebeta.path
+      // * Unload styles.
+      'unload': spf.net.stylebeta.unload,
+      // * Set paths.
+      'path': spf.net.stylebeta.path,
+      // * Prefetch.
+      'prefetch': spf.net.stylebeta.prefetch
     }
   };
 } else {
