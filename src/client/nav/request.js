@@ -103,7 +103,7 @@ spf.nav.request.send = function(url, opt_options) {
     return null;
   } else {
     spf.debug.debug('    sending XHR');
-    var headers = {'X-SPF-Request': options.type};
+    var headers = {};
     if (options.referer) {
       headers['X-SPF-Referer'] = options.referer;
     }
