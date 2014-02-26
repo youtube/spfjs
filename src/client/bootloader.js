@@ -33,6 +33,10 @@ spf.bootloader.api_ = {
     'path': spf.net.scriptbeta.path
   }
 };
+// For beta builds, add an identifying flag.
+if (SPF_BETA) {
+  spf.bootloader.api_['beta'] = true;
+}
 if (!SPF_COMPILED) {
   // When not compiled, mixin the API to the existing namespace for development.
   for (var key in spf.bootloader.api_) {

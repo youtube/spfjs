@@ -100,6 +100,10 @@ spf.main.api_ = {
   'process': spf.nav.response.process,  // TODO: Remove after deprecation.
   'prefetch': spf.nav.prefetch
 };
+// For beta builds, add an identifying flag.
+if (SPF_BETA) {
+  spf.main.api_['beta'] = true;
+}
 /** @private {Object} */
 spf.main.extra_ = {};
 if (SPF_BETA) {
