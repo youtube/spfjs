@@ -361,11 +361,13 @@ spf.script.declare = function(deps, opt_urls) {};
 
 
 /**
- * Sets the path to use when resolving relative URLs.
+ * Sets the path prefix or replacement map to use when resolving relative URLs.
  *
- * @param {string} path The path.
+ * Note: The order in which replacements are made is not guaranteed.
+ *
+ * @param {string|Object.<string>} paths The paths.
  */
-spf.script.path = function(path) {};
+spf.script.path = function(paths) {};
 
 /**
  * Prefetchs one or more scripts; the scripts will be requested but not loaded.
@@ -423,11 +425,13 @@ spf.style.get = function(url) {};
 
 
 /**
- * Sets the path to use when resolving relative URLs.
+ * Sets the path prefix or replacement map to use when resolving relative URLs.
  *
- * @param {string} path The path.
+ * Note: The order in which replacements are made is not guaranteed.
+ *
+ * @param {string|Object.<string>} paths The paths.
  */
-spf.style.path = function(path) {};
+spf.style.path = function(paths) {};
 
 
 /**

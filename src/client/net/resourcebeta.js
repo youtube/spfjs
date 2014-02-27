@@ -14,6 +14,7 @@ goog.require('spf.array');
 goog.require('spf.debug');
 goog.require('spf.dom');
 goog.require('spf.dom.classlist');
+goog.require('spf.string');
 goog.require('spf.tasks');
 goog.require('spf.url');
 
@@ -225,22 +226,24 @@ spf.net.resourcebeta.prefetch_ = function(el, type, url, id) {
 
 
 /**
- * Sets the path to use when resolving relative URLs.
+ * Sets the path prefix or replacement map to use when resolving relative URLs.
  * See {@link #canonicalize}.
  *
+ * Note: The order in which replacements are made is not guaranteed.
+ *
  * @param {spf.net.resourcebeta.Type} type Type of the resource.
- * @param {string} path The path.
+ * @param {string|Object.<string>} paths The paths.
  */
-spf.net.resourcebeta.path = function(type, path) {
+spf.net.resourcebeta.path = function(type, paths) {
   var key = spf.net.resourcebeta.PATHS_KEY_PREFIX + type;
-  spf.state.set(key, path);
+  spf.state.set(key, paths);
 };
 
 
 /**
- * Convert a resource URL to the "canonical" version by prepending the path
- * and appending a suffix if needed.  See {@link #path}.  Ignores absolute URLs
- * (i.e. those that start with http://, etc).
+ * Convert a resource URL to the "canonical" version by replacing path segments
+ * and appending a prefix/suffix if needed.  See {@link #path}.
+ * Ignores absolute URLs (i.e. those that start with http://, etc).
  *
  * @param {spf.net.resourcebeta.Type} type Type of the resource.
  * @param {string} url The initial url.
@@ -249,7 +252,14 @@ spf.net.resourcebeta.path = function(type, path) {
 spf.net.resourcebeta.canonicalize = function(type, url) {
   var key = spf.net.resourcebeta.PATHS_KEY_PREFIX + type;
   if (url && url.indexOf('//') < 0) {
-    url = (spf.state.get(key) || '') + url;
+    var paths = spf.state.get(key) || '';
+    if (spf.string.isString(paths)) {
+      url = paths + url;
+    } else {
+      for (var p in paths) {
+        url = url.replace(p, paths[p]);
+      }
+    }
     url = url.indexOf('.' + type) < 0 ? url + '.' + type : url;
     url = spf.url.absolute(url);
   }

@@ -432,13 +432,15 @@ spf.net.scriptbeta.declare = function(deps, opt_urls) {
 
 
 /**
- * Sets the path to use when resolving relative URLs.
+ * Sets the path prefix or replacement map to use when resolving relative URLs.
  *
- * @param {string} path The path.
+ * Note: The order in which replacements are made is not guaranteed.
+ *
+ * @param {string|Object.<string>} paths The paths.
  */
-spf.net.scriptbeta.path = function(path) {
+spf.net.scriptbeta.path = function(paths) {
   var type = spf.net.resourcebeta.Type.JS;
-  spf.net.resourcebeta.path(type, path);
+  spf.net.resourcebeta.path(type, paths);
 };
 
 

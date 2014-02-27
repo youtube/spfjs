@@ -36,7 +36,7 @@ spf.net.stylebeta.load = function(urls, opt_name) {
   urls = spf.array.toArray(urls);
 
   var name = opt_name || '';
-  spf.debug.debug('script.load', urls, name);
+  spf.debug.debug('style.load', urls, name);
 
   if (name) {
     var loaded = spf.array.every(urls, spf.net.stylebeta.loaded_);
@@ -156,14 +156,17 @@ spf.net.stylebeta.eval = function(text) {
 
 
 /**
- * Sets the path to use when resolving relative URLs.
+ * Sets the path prefix or replacement map to use when resolving relative URLs.
  *
- * @param {string} path The path.
+ * Note: The order in which replacements are made is not guaranteed.
+ *
+ * @param {string|Object.<string>} paths The paths.
  */
-spf.net.stylebeta.path = function(path) {
+spf.net.stylebeta.path = function(paths) {
   var type = spf.net.resourcebeta.Type.CSS;
-  spf.net.resourcebeta.path(type, path);
+  spf.net.resourcebeta.path(type, paths);
 };
+
 
 
 /**
