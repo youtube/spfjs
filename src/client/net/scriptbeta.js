@@ -185,7 +185,7 @@ spf.net.scriptbeta.ready = function(names, opt_fn, opt_require) {
   // Find unknown names.
   var unknown = [];
   spf.array.each(names, function(name) {
-    if (!spf.net.resourcebeta.urls.get(type, name)) {
+    if (name && !spf.net.resourcebeta.urls.get(type, name)) {
       unknown.push(name);
     }
   });
@@ -266,10 +266,12 @@ spf.net.scriptbeta.require = function(names, opt_fn) {
     // Convert to an array if needed.
     names = spf.array.toArray(names);
     spf.array.each(names, function(name) {
-      var current = spf.net.scriptbeta.urls_[name] || name;
-      var different = spf.net.scriptbeta.anyDifferent_(name, current);
-      if (different) {
-        spf.net.scriptbeta.unrequire(name);
+      if (name) {
+        var current = spf.net.scriptbeta.urls_[name] || name;
+        var different = spf.net.scriptbeta.anyDifferent_(name, current);
+        if (different) {
+          spf.net.scriptbeta.unrequire(name);
+        }
       }
     });
   }
@@ -483,6 +485,7 @@ spf.net.scriptbeta.loaded_ = function(url) {
 
 /**
  * Checks to see if all urls for a dependency have been loaded.
+ * (Falsey dependency names (e.g. null or an empty string) are alwasy "loaded".)
  *
  * @param {string} name The dependency name.
  * @return {boolean}
@@ -491,7 +494,7 @@ spf.net.scriptbeta.loaded_ = function(url) {
 spf.net.scriptbeta.allLoaded_ = function(name) {
   var type = spf.net.resourcebeta.Type.JS;
   var urls = spf.net.resourcebeta.urls.get(type, name);
-  return !!urls && spf.array.every(urls, spf.net.scriptbeta.loaded_);
+  return !name || (!!urls && spf.array.every(urls, spf.net.scriptbeta.loaded_));
 };
 
 
