@@ -48,7 +48,7 @@ $def with (content, is_debug, is_dev, is_beta)
   <script src="$spf_js"></script>
   <script src="/static/app.js"></script>
   <script>
-    app.init();
+    app.init($json_encode(is_beta));
   </script>
   $:content.javascript
 </body>

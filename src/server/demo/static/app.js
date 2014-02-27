@@ -14,21 +14,40 @@ var app = app || {};
 
 /**
  * Initialize the demo app.
+ * @param {boolean} isBeta Whether to use the beta API.
  */
-app.init = function() {
+app.init = function(isBeta) {
   app.start_ = +new Date();
   app.timer_ = window.setInterval(app.updateTime, 500);
-  var config = {
-    'process-async': true,
-    'navigate-requested-callback': app.handleNavigateRequested,
-    'navigate-part-received-callback': app.handleNavigatePartReceived,
-    'navigate-part-processed-callback': app.handleNavigatePartProcessed,
-    'navigate-received-callback': app.handleNavigateReceived,
-    'navigate-processed-callback': app.handleNavigateProcessed,
-    'navigate-error-callback': app.handleNavigateError,
-    'script-loading-callback': app.handleScriptLoading,
-    'style-loading-callback': app.handleStyleLoading
-  };
+  if (isBeta) {
+    app.log('using beta api');
+    var config = {
+      'process-async': true,
+      'script-loading-callback': app.handleScriptLoading,
+      'style-loading-callback': app.handleStyleLoading
+    };
+    if (window.addEventListener) {
+      window.addEventListener('spfrequested', app.onRequested);
+      window.addEventListener('spfpartreceived', app.onPartReceived);
+      window.addEventListener('spfpartprocessed', app.onPartProcessed);
+      window.addEventListener('spfreceived', app.onReceived);
+      window.addEventListener('spfprocessed', app.onProcessed);
+      window.addEventListener('spferror', app.onError);
+    }
+  } else {
+    var config = {
+      'process-async': true,
+      'navigate-requested-callback': app.handleNavigateRequested,
+      'navigate-part-received-callback': app.handleNavigatePartReceived,
+      'navigate-part-processed-callback': app.handleNavigatePartProcessed,
+      'navigate-received-callback': app.handleNavigateReceived,
+      'navigate-processed-callback': app.handleNavigateProcessed,
+      'navigate-error-callback': app.handleNavigateError,
+      'script-loading-callback': app.handleScriptLoading,
+      'style-loading-callback': app.handleStyleLoading
+    };
+    app.enabled = spf.init(config);
+  }
   app.enabled = spf.init(config);
   app.updateStatus();
 };
@@ -43,6 +62,14 @@ app.dispose = function() {
   app.enabled = false;
   app.updateStatus();
   app.updateTime();
+  if (window.removeEventListener) {
+    window.removeEventListener('spfrequested', app.onRequested);
+    window.removeEventListener('spfpartreceived', app.onPartReceived);
+    window.removeEventListener('spfpartprocessed', app.onPartProcessed);
+    window.removeEventListener('spfreceived', app.onReceived);
+    window.removeEventListener('spfprocessed', app.onProcessed);
+    window.removeEventListener('spferror', app.onError);
+  }
 };
 
 
@@ -91,11 +118,29 @@ app.updateTime = function() {
 
 
 /**
+ * Event handler for when navigate requests are sent (beta API).
+ * @param {CustomEvent} evt The event.
+ */
+app.onRequested = function(evt) {
+  app.handleNavigateRequested(evt.detail.url);
+};
+
+
+/**
  * Callback for when navigate requests are sent.
  * @param {string} url The new URL.
  */
 app.handleNavigateRequested = function(url) {
-  app.log('navigate requested');
+  app.log('navigate requested ' + url);
+};
+
+
+/**
+ * Event handler for when parts of navigate requests are received (beta API).
+ * @param {CustomEvent} evt The event.
+ */
+app.onPartReceived = function(evt) {
+  app.handleNavigatePartReceived(evt.detail.url, evt.detail.part);
 };
 
 
@@ -105,7 +150,16 @@ app.handleNavigateRequested = function(url) {
  * @param {Object} part The part of the requested SPF response object.
  */
 app.handleNavigatePartReceived = function(url, part) {
-  app.log('navigate received part');
+  app.log('navigate received part ' + url);
+};
+
+
+/**
+ * Event handler for when parts of navigate requests are processed (beta API).
+ * @param {CustomEvent} evt The event.
+ */
+app.onPartProcessed = function(evt) {
+  app.handleNavigatePartProcessed(evt.detail.url, evt.detail.part);
 };
 
 
@@ -115,7 +169,16 @@ app.handleNavigatePartReceived = function(url, part) {
  * @param {Object} part The part of the requested SPF response object.
  */
 app.handleNavigatePartProcessed = function(url, part) {
-  app.log('navigate procssed part');
+  app.log('navigate procssed part ' + url);
+};
+
+
+/**
+ * Event handler for when navigate responses are received (beta API).
+ * @param {CustomEvent} evt The event.
+ */
+app.onReceived = function(evt) {
+  app.handleNavigateReceived(evt.detail.url, evt.detail.response);
 };
 
 
@@ -125,7 +188,7 @@ app.handleNavigatePartProcessed = function(url, part) {
  * @param {Object} response The requested SPF response object.
  */
 app.handleNavigateReceived = function(url, response) {
-  app.log('navigate received');
+  app.log('navigate received ' + url);
   // If debug logging is enabled, reset the relative times when each new
   // request is received.
   if (spf.debug) {
@@ -135,11 +198,31 @@ app.handleNavigateReceived = function(url, response) {
 
 
 /**
+ * Event handler for when navigate responses are processed (beta API).
+ * @param {CustomEvent} evt The event.
+ */
+app.onProcessed = function(evt) {
+  app.handleNavigateProcessed(evt.detail.url, evt.detail.response);
+};
+
+
+
+/**
  * Callback for when navigate responses are processed.
+ * @param {string} url The requested URL, without the SPF identifier.
  * @param {Object} response The processed SPF response object.
  */
-app.handleNavigateProcessed = function(response) {
-  app.log('navigate processed');
+app.handleNavigateProcessed = function(url, response) {
+  app.log('navigate processed ' + url);
+};
+
+
+/**
+ * Event handler for navigate errors (beta API).
+ * @param {CustomEvent} evt The event.
+ */
+app.onError = function(evt) {
+  app.handleNavigateError(evt.detail.url, evt.detail.err);
 };
 
 
@@ -149,7 +232,7 @@ app.handleNavigateProcessed = function(response) {
  * @param {Error} err The Error object.
  */
 app.handleNavigateError = function(url, err) {
-  app.log('navigate error');
+  app.log('navigate error ' + url);
 };
 
 

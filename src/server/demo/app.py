@@ -40,7 +40,8 @@ def Hashcode(s):
 # Set up the basic app config.
 templates = web.template.render('templates/',
                                 globals={'randint': random.randint,
-                                         'hashcode': Hashcode})
+                                         'hashcode': Hashcode,
+                                         'json_encode': json.dumps})
 
 urls = (
     '/', 'Index',

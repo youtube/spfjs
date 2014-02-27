@@ -90,15 +90,17 @@ spf.execute = function(fn, var_args) {
  *
  * @param {string} name The custom event name.
  * @param {?=} opt_detail The custom event detail (data).
+ * @return {boolean} False if the event was canceled.
  */
 spf.dispatch = function(name, opt_detail) {
   if (document.createEvent) {
     var evt = document.createEvent('CustomEvent');
     var bubbles = true;
-    var cancelable = false;
+    var cancelable = true;
     evt.initCustomEvent('spf' + name, bubbles, cancelable, opt_detail);
-    document.dispatchEvent(evt);
+    return document.dispatchEvent(evt);
   }
+  return true;
 };
 
 
