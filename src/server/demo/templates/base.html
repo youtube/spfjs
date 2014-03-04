@@ -3,7 +3,7 @@ $def with (content, is_debug, is_dev, is_beta)
 <html>
 <head>
   <title>$content.title</title>
-  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/app.css" name="app">
   $:content.stylesheet
 </head>
 <body>
@@ -45,8 +45,8 @@ $def with (content, is_debug, is_dev, is_beta)
       $ spf_js = "/static/spf-beta.js"
     $else:
       $ spf_js = "/static/spf.js"
-  <script src="$spf_js"></script>
-  <script src="/static/app.js"></script>
+  <script src="$spf_js" name="spf"></script>
+  <script src="/static/app.js" name="app"></script>
   <script>
     app.init($json_encode(is_beta));
   </script>

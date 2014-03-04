@@ -54,7 +54,7 @@ spf.net.stylebeta.load = function(urls, opt_name) {
     if (url && !spf.net.stylebeta.exists_(url)) {
       var el = spf.net.stylebeta.get(url);
       if (name) {
-        el.title = name;
+        el.setAttribute('name', name);
       }
     }
   });
@@ -90,10 +90,11 @@ spf.net.stylebeta.discover = function() {
   var type = spf.net.resourcebeta.Type.CSS;
   var els = spf.net.resourcebeta.discover(type);
   spf.array.each(els, function(el) {
-    if (el.title) {
-      spf.net.resourcebeta.urls.set(type, el.title, [el.href]);
+    var name = el.getAttribute('name');
+    if (name) {
+      spf.net.resourcebeta.urls.set(type, name, [el.href]);
     }
-    spf.debug.debug('  found', el.href, el.title);
+    spf.debug.debug('  found', el.href, name);
   });
 };
 

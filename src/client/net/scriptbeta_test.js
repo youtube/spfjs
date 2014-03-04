@@ -42,7 +42,14 @@ describe('spf.net.scriptbeta', function() {
       resourcebeta: {
         create: function(type, url, opt_callback, opt_document) {
           url = spf.net.resourcebeta.canonicalize(js, url);
-          var el = {};
+          var el = {
+            setAttribute: function(n, v) {
+              el[n] = v;
+            },
+            getAttribute: function(n) {
+              return el[n];
+            }
+          };
           el.src = url;
           el.className = type + '-' + url.replace(/[^\w]/g, '');
           nodes.push(el);

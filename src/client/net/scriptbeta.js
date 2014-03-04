@@ -103,7 +103,7 @@ spf.net.scriptbeta.load = function(urls, opt_nameOrFn, opt_fn) {
     } else {
       var el = spf.net.scriptbeta.get(url, spf.net.scriptbeta.check);
       if (name) {
-        el.title = name;
+        el.setAttribute('name', name);
       }
     }
   });
@@ -142,10 +142,11 @@ spf.net.scriptbeta.discover = function() {
   var type = spf.net.resourcebeta.Type.JS;
   var els = spf.net.resourcebeta.discover(type);
   spf.array.each(els, function(el) {
-    if (el.title) {
-      spf.net.resourcebeta.urls.set(type, el.title, [el.src]);
+    var name = el.getAttribute('name');
+    if (name) {
+      spf.net.resourcebeta.urls.set(type, name, [el.src]);
     }
-    spf.debug.debug('  found', el.src, el.title);
+    spf.debug.debug('  found', el.src, name);
   });
 };
 

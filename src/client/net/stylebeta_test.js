@@ -32,7 +32,14 @@ describe('spf.net.stylebeta', function() {
       },
       resourcebeta: {
         create: function(type, url, opt_callback, opt_document) {
-          var el = {};
+          var el = {
+            setAttribute: function(n, v) {
+              el[n] = v;
+            },
+            getAttribute: function(n) {
+              return el[n];
+            }
+          };
           url = spf.net.resourcebeta.canonicalize(css, url);
           el.href = url;
           el.className = type + '-' + url.replace(/[^\w]/g, '');

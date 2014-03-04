@@ -411,7 +411,7 @@ spf.nav.response.parseScripts_ = function(html) {
         var url = attr.match(spf.nav.response.SRC_ATTR_REGEXP);
         url = url ? url[1] : '';
         if (SPF_BETA) {
-          var name = attr.match(spf.nav.response.TITLE_ATTR_REGEXP);
+          var name = attr.match(spf.nav.response.NAME_ATTR_REGEXP);
           name = name ? name[1] : '';
         } else {
           var name = attr.match(spf.nav.response.CLASS_ATTR_REGEXP);
@@ -521,7 +521,7 @@ spf.nav.response.parseStyles_ = function(html) {
           var url = attr.match(spf.nav.response.HREF_ATTR_REGEXP);
           url = url ? url[1] : '';
           if (SPF_BETA) {
-            var name = attr.match(spf.nav.response.TITLE_ATTR_REGEXP);
+            var name = attr.match(spf.nav.response.NAME_ATTR_REGEXP);
             name = name ? name[1] : '';
           } else {
             var name = attr.match(spf.nav.response.CLASS_ATTR_REGEXP);
@@ -711,13 +711,13 @@ spf.nav.response.SRC_ATTR_REGEXP = /src="([\S]+)"/;
 
 
 /**
- * Regular expression used to locate title attributes in a string.
+ * Regular expression used to locate name attributes in a string.
  * See {@link #parseScripts_} and {@link #parseStyles_}.
  *
  * @type {RegExp}
  * @const
  */
-spf.nav.response.TITLE_ATTR_REGEXP = /title="([\S]+)"/;
+spf.nav.response.NAME_ATTR_REGEXP = /name="([\S]+)"/;
 
 
 /**
