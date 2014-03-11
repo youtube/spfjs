@@ -22,9 +22,7 @@ app.init = function(isBeta) {
   if (isBeta) {
     app.log('using beta api');
     var config = {
-      'process-async': true,
-      'script-loading-callback': app.handleScriptLoading,
-      'style-loading-callback': app.handleStyleLoading
+      'process-async': true
     };
     if (window.addEventListener) {
       window.addEventListener('spfrequested', app.onRequested);
@@ -33,6 +31,10 @@ app.init = function(isBeta) {
       window.addEventListener('spfreceived', app.onReceived);
       window.addEventListener('spfprocessed', app.onProcessed);
       window.addEventListener('spferror', app.onError);
+      window.addEventListener('spfjsbeforeunload', app.onScriptBeforeUnload);
+      window.addEventListener('spfjsunload', app.onScriptUnload);
+      window.addEventListener('spfcssbeforeunload', app.onStyleBeforeUnload);
+      window.addEventListener('spfcssunload', app.onStyleUnload);
     }
   } else {
     var config = {
@@ -69,6 +71,10 @@ app.dispose = function() {
     window.removeEventListener('spfreceived', app.onReceived);
     window.removeEventListener('spfprocessed', app.onProcessed);
     window.removeEventListener('spferror', app.onError);
+    window.removeEventListener('spfjsbeforeunload', app.onScriptBeforeUnload);
+    window.removeEventListener('spfjsunload', app.onScriptUnload);
+    window.removeEventListener('spfcssbeforeunload', app.onStyleBeforeUnload);
+    window.removeEventListener('spfcssunload', app.onStyleUnload);
   }
 };
 
@@ -237,6 +243,27 @@ app.handleNavigateError = function(url, err) {
 
 
 /**
+ * Event handler for script before unload (beta API).
+ * @param {CustomEvent} evt The event.
+ */
+app.onScriptBeforeUnload = function(evt) {
+  var name = evt.detail.name;
+  app.log('script before unload ' + name);
+};
+
+
+/**
+ * Event handler for script unload (beta API).
+ * @param {CustomEvent} evt The event.
+ */
+app.onScriptUnload = function(evt) {
+  var name = evt.detail.name;
+  var urls = evt.detail.urls;
+  app.log('script unload ' + name + ' ' + urls);
+};
+
+
+/**
  * Callback for script loading.
  * @param {string} url The new script URL.
  * @param {string} name The new script name (to identify it independently of
@@ -245,6 +272,28 @@ app.handleNavigateError = function(url, err) {
 app.handleScriptLoading = function(url, name) {
   app.log('script loading ' + url + ' ' + name);
 };
+
+
+/**
+ * Event handler for style before unload (beta API).
+ * @param {CustomEvent} evt The event.
+ */
+app.onStyleBeforeUnload = function(evt) {
+  var name = evt.detail.name;
+  app.log('style before unload ' + name);
+};
+
+
+/**
+ * Event handler for style unload (beta API).
+ * @param {CustomEvent} evt The event.
+ */
+app.onStyleUnload = function(evt) {
+  var name = evt.detail.name;
+  var urls = evt.detail.urls;
+  app.log('style unload ' + name + ' ' + urls);
+};
+
 
 /**
  * Callback for style loading.

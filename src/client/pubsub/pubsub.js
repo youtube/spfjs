@@ -83,7 +83,18 @@ spf.pubsub.clear = function(topic) {
  * @type {!Object.<Array>}
  */
 spf.pubsub.subscriptions = {};
-// When built for the bootloader, unconditionally set the map in state.
+
+
+/**
+ * Key used to store and retrieve subscriptions in state.
+ * @type {string}
+ * @const
+ */
+spf.pubsub.SUBS_KEY = 'ps-s';
+
+
+// Automatic initialization for spf.pubsub.subscriptions.
+// When built for the bootloader, unconditionally set in state.
 if (SPF_BOOTLOADER) {
   spf.state.set(spf.pubsub.SUBS_KEY, spf.pubsub.subscriptions);
 } else {
@@ -101,11 +112,3 @@ if (SPF_BOOTLOADER) {
         spf.state.get('pubsub-subs'));
   }
 }
-
-
-/**
- * Key used to store and retrieve subscriptions in state.
- * @type {string}
- * @const
- */
-spf.pubsub.SUBS_KEY = 'ps-s';

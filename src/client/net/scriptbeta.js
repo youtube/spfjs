@@ -73,7 +73,13 @@ spf.net.scriptbeta.load = function(urls, opt_nameOrFn, opt_fn) {
   var callback = /** @type {Function} */ (withName ? opt_fn : opt_nameOrFn);
   spf.debug.debug('script.load', urls, name);
 
-  // When built for the bootloader, automatic unloading of scripts is not
+  // After the scripts are loaded, execute the callback by default.
+  var done = callback;
+
+  // If a name is provided with different URLs, then also unload the previous
+  // versions after the scripts are loaded.
+  //
+  // NOTE: When built for the bootloader, automatic unloading of scripts is not
   // supported.  If someone is attempting to load a new version of a script
   // before loading the main SPF code, then this should be an error.  Automatic
   // unloading of scripts is primarily intended for navigation between versions.
@@ -83,7 +89,12 @@ spf.net.scriptbeta.load = function(urls, opt_nameOrFn, opt_fn) {
       var previous = spf.net.resourcebeta.urls.get(type, name);
       // If loading new scripts for a name, handle unloading previous ones.
       if (!loaded && previous) {
-        spf.net.scriptbeta.unload(name);
+        spf.dispatch('jsbeforeunload', {'name': name, 'urls': previous});
+        spf.net.resourcebeta.urls.clear(type, name);
+        done = function() {
+          spf.net.scriptbeta.unload_(name, previous);
+          callback && callback();
+        };
       }
     }
   }
@@ -93,8 +104,8 @@ spf.net.scriptbeta.load = function(urls, opt_nameOrFn, opt_fn) {
   spf.net.resourcebeta.urls.set(type, pseudonym, urls);
   // Subscribe the callback to execute when all urls are loaded.
   var topic = spf.net.scriptbeta.prefix_(pseudonym);
-  spf.debug.debug('  subscribing', topic);
-  spf.pubsub.subscribe(topic, callback);
+  spf.debug.debug('  subscribing', topic, done);
+  spf.pubsub.subscribe(topic, done);
   // Start asynchronously loading all the scripts.
   spf.array.each(urls, function(url) {
     // If a status exists, the script is already loading or loaded.
@@ -123,14 +134,27 @@ spf.net.scriptbeta.unload = function(name) {
   var type = spf.net.resourcebeta.Type.JS;
   // Convert to an array if needed.
   var urls = spf.net.resourcebeta.urls.get(type, name) || [];
+  spf.net.resourcebeta.urls.clear(type, name);
+  spf.net.scriptbeta.unload_(name, urls);
+};
+
+
+/**
+ * See {@link unload}.
+ *
+ * @param {string} name The name.
+ * @param {Array.<string>} urls The URLs.
+ * @private
+*/
+spf.net.scriptbeta.unload_ = function(name, urls) {
+  var type = spf.net.resourcebeta.Type.JS;
   if (urls.length) {
-    spf.debug.warn('  unload >', urls);
-    spf.dispatch('jsunload', name);
+    spf.debug.warn('  > script.unload', urls);
+    spf.dispatch('jsunload', {'name': name, 'urls': urls});
     spf.array.each(urls, function(url) {
       spf.net.resourcebeta.destroy(type, url);
     });
   }
-  spf.net.resourcebeta.urls.clear(type, name);
 };
 
 
@@ -488,7 +512,7 @@ spf.net.scriptbeta.loaded_ = function(url) {
 
 /**
  * Checks to see if all urls for a dependency have been loaded.
- * (Falsey dependency names (e.g. null or an empty string) are alwasy "loaded".)
+ * (Falsey dependency names (e.g. null or an empty string) are always "loaded".)
  *
  * @param {string} name The dependency name.
  * @return {boolean}

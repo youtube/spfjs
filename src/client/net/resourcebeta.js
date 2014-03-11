@@ -241,9 +241,13 @@ spf.net.resourcebeta.path = function(type, paths) {
 
 
 /**
- * Convert a resource URL to the "canonical" version by replacing path segments
- * and appending a prefix/suffix if needed.  See {@link #path}.
- * Ignores absolute URLs (i.e. those that start with http://, etc).
+ * Convert a resource URL to the "canonical" version in three steps:
+ *   1: replacing path segments (see {@link #path})
+ *   2: appending a file type extension
+ *   3: converting to absolute (see {@link spf.url.absolute})
+ * Absolute URLs (i.e. those that start with http://) are ignored for all
+ * three steps.  Protocol-relative URLs (i.e. those that start with //)
+ * are ignored for steps 1 and 2.
  *
  * @param {spf.net.resourcebeta.Type} type Type of the resource.
  * @param {string} url The initial url.
@@ -251,17 +255,24 @@ spf.net.resourcebeta.path = function(type, paths) {
  */
 spf.net.resourcebeta.canonicalize = function(type, url) {
   var key = spf.net.resourcebeta.PATHS_KEY_PREFIX + type;
-  if (url && url.indexOf('//') < 0) {
-    var paths = spf.state.get(key) || '';
-    if (spf.string.isString(paths)) {
-      url = paths + url;
-    } else {
-      for (var p in paths) {
-        url = url.replace(p, paths[p]);
+  if (url) {
+    var index = url.indexOf('//');
+    if (index < 0) {
+      // Relative URL: "//" not found.
+      var paths = spf.state.get(key) || '';
+      if (spf.string.isString(paths)) {
+        url = paths + url;
+      } else {
+        for (var p in paths) {
+          url = url.replace(p, paths[p]);
+        }
       }
+      url = url.indexOf('.' + type) < 0 ? url + '.' + type : url;
+      url = spf.url.absolute(url);
+    } else if (index == 0) {
+      // Protocol-Relative URL: "//" found at start.
+      url = spf.url.absolute(url);
     }
-    url = url.indexOf('.' + type) < 0 ? url + '.' + type : url;
-    url = spf.url.absolute(url);
   }
   return url;
 };
@@ -368,17 +379,6 @@ spf.net.resourcebeta.urls.clear = function(type, name) {
  * @private
  */
 spf.net.resourcebeta.stats_ = {};
-// When built for the bootloader, unconditionally set the map in state.
-if (SPF_BOOTLOADER) {
-  spf.state.set(spf.net.resourcebeta.STATS_KEY, spf.net.resourcebeta.stats_);
-} else if (SPF_BETA) {
-  if (!spf.state.has(spf.net.resourcebeta.STATS_KEY)) {
-    spf.state.set(spf.net.resourcebeta.STATS_KEY, {});
-  }
-  spf.net.resourcebeta.stats_ =
-      /** @type {!Object.<spf.net.resourcebeta.Status>} */ (
-      spf.state.get(spf.net.resourcebeta.STATS_KEY));
-}
 
 
 /**
@@ -387,16 +387,6 @@ if (SPF_BOOTLOADER) {
  * @private
  */
 spf.net.resourcebeta.urls_ = {};
-// When built for the bootloader, unconditionally set the map in state.
-if (SPF_BOOTLOADER) {
-  spf.state.set(spf.net.resourcebeta.URLS_KEY, spf.net.resourcebeta.urls_);
-} else if (SPF_BETA) {
-  if (!spf.state.has(spf.net.resourcebeta.URLS_KEY)) {
-    spf.state.set(spf.net.resourcebeta.URLS_KEY, {});
-  }
-  spf.net.resourcebeta.urls_ = /** @type {!Object.<Array.<string>>} */ (
-      spf.state.get(spf.net.resourcebeta.URLS_KEY));
-}
 
 
 /**
@@ -450,3 +440,29 @@ spf.net.resourcebeta.Type = {
   CSS: 'css',
   JS: 'js'
 };
+
+
+// Automatic initiazation for spf.net.resourcebeta.stats_.
+// When built for the bootloader, unconditionally set in state.
+if (SPF_BOOTLOADER) {
+  spf.state.set(spf.net.resourcebeta.STATS_KEY, spf.net.resourcebeta.stats_);
+} else if (SPF_BETA) {
+  if (!spf.state.has(spf.net.resourcebeta.STATS_KEY)) {
+    spf.state.set(spf.net.resourcebeta.STATS_KEY, {});
+  }
+  spf.net.resourcebeta.stats_ =
+      /** @type {!Object.<spf.net.resourcebeta.Status>} */ (
+      spf.state.get(spf.net.resourcebeta.STATS_KEY));
+}
+
+// Automatic initiazation for spf.net.resourcebeta.urls_.
+// When built for the bootloader, unconditionally set the map in state.
+if (SPF_BOOTLOADER) {
+  spf.state.set(spf.net.resourcebeta.URLS_KEY, spf.net.resourcebeta.urls_);
+} else if (SPF_BETA) {
+  if (!spf.state.has(spf.net.resourcebeta.URLS_KEY)) {
+    spf.state.set(spf.net.resourcebeta.URLS_KEY, {});
+  }
+  spf.net.resourcebeta.urls_ = /** @type {!Object.<Array.<string>>} */ (
+      spf.state.get(spf.net.resourcebeta.URLS_KEY));
+}

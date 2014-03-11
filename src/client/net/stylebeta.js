@@ -10,6 +10,7 @@ goog.require('spf.array');
 goog.require('spf.debug');
 goog.require('spf.net.resourcebeta');
 goog.require('spf.net.resourcebeta.urls');
+goog.require('spf.pubsub');
 goog.require('spf.string');
 
 
@@ -38,21 +39,41 @@ spf.net.stylebeta.load = function(urls, opt_name) {
   var name = opt_name || '';
   spf.debug.debug('style.load', urls, name);
 
+  // After the styles are loaded, do nothing by default.
+  var done = null;
+
+  // If a name is provided with different URLs, then also unload the previous
+  // versions after the styles are loaded.
+  //
+  // NOTE: Unloading styles depends on onload support and is best effort.
+  // Chrome 19, Safari 6, Firefox 9, Opera and IE 5.5 support stylesheet onload.
   if (name) {
     var loaded = spf.array.every(urls, spf.net.stylebeta.loaded_);
     var previous = spf.net.resourcebeta.urls.get(type, name);
     // If loading new styles for a name, handle unloading previous ones.
     if (!loaded && previous) {
-      spf.net.stylebeta.unload(name);
+      spf.dispatch('cssbeforeunload', {'name': name, 'urls': previous});
+      spf.net.resourcebeta.urls.clear(type, name);
+      done = function() {
+        spf.net.stylebeta.unload_(name, previous);
+      };
     }
-    // Associate the styles with the name to allow unloading.
-    spf.net.resourcebeta.urls.set(type, name, urls);
   }
 
+  var pseudonym = name || '^' + urls.join('^');
+  // Associate the styles with the name (or pseudonym) to allow unloading.
+  spf.net.resourcebeta.urls.set(type, pseudonym, urls);
+  // Subscribe the callback to execute when all urls are loaded.
+  var topic = spf.net.stylebeta.prefix_(pseudonym);
+  spf.debug.debug('  subscribing', topic, done);
+  spf.pubsub.subscribe(topic, done);
+  // Start asynchronously loading all the styles.
   spf.array.each(urls, function(url) {
     // If a status exists, the style is already loading or loaded.
-    if (url && !spf.net.stylebeta.exists_(url)) {
-      var el = spf.net.stylebeta.get(url);
+    if (spf.net.stylebeta.exists_(url)) {
+      setTimeout(spf.net.stylebeta.check, 0);
+    } else {
+      var el = spf.net.stylebeta.get(url, spf.net.stylebeta.check);
       if (name) {
         el.setAttribute('name', name);
       }
@@ -71,16 +92,28 @@ spf.net.stylebeta.unload = function(name) {
   var type = spf.net.resourcebeta.Type.CSS;
   // Convert to an array if needed.
   var urls = spf.net.resourcebeta.urls.get(type, name) || [];
+  spf.net.resourcebeta.urls.clear(type, name);
+  spf.net.stylebeta.unload_(name, urls);
+};
+
+
+/**
+ * See {@link unload}.
+ *
+ * @param {string} name The name.
+ * @param {Array.<string>} urls The URLs.
+ * @private
+ */
+spf.net.stylebeta.unload_ = function(name, urls) {
+  var type = spf.net.resourcebeta.Type.CSS;
   if (urls.length) {
-    spf.debug.warn('  >', urls);
-    spf.dispatch('cssunload', name);
+    spf.debug.debug('  > style.unload', urls);
+    spf.dispatch('cssunload', {'name': name, 'urls': urls});
     spf.array.each(urls, function(url) {
       spf.net.resourcebeta.destroy(type, url);
     });
   }
-  spf.net.resourcebeta.urls.clear(type, name);
 };
-
 
 /**
  * Discovers existing styles in the document and registers them as loaded.
@@ -106,11 +139,36 @@ spf.net.stylebeta.discover = function() {
  * Compare to {@link #load}.
  *
  * @param {string} url The URL of the style to load.
+ * @param {Function=} opt_fn Function to execute when loaded.
  * @return {Element} The newly created element.
  */
-spf.net.stylebeta.get = function(url) {
+spf.net.stylebeta.get = function(url, opt_fn) {
   var type = spf.net.resourcebeta.Type.CSS;
-  return spf.net.resourcebeta.create(type, url);
+  // NOTE: Callback execution depends on onload support and is best effort.
+  // Chrome 19, Safari 6, Firefox 9, Opera and IE 5.5 support stylesheet onload.
+  return spf.net.resourcebeta.create(type, url, opt_fn);
+};
+
+
+/**
+ * Executes any pending callbacks possible by checking if all pending
+ * urls for a name have loaded.
+ */
+spf.net.stylebeta.check = function() {
+  spf.debug.debug('style.check');
+  var prefix = spf.net.stylebeta.prefix_('');
+  for (var topic in spf.pubsub.subscriptions) {
+    if (topic.indexOf(prefix) == 0) {
+      var names = topic.substring(prefix.length).split('|');
+      var ready = spf.array.every(names, spf.net.stylebeta.allLoaded_);
+      spf.debug.debug(' ', topic, '->', names, '=', ready);
+      if (ready) {
+        spf.debug.debug('  publishing', topic);
+        spf.pubsub.publish(topic);
+        spf.pubsub.clear(topic);
+      }
+    }
+  }
 };
 
 
@@ -169,6 +227,18 @@ spf.net.stylebeta.path = function(paths) {
 };
 
 
+/**
+ * Prefix a name to avoid conflicts.
+ *
+ * @param {?} name The name
+ * @return {string} The prefixed name.
+ * @private
+ */
+spf.net.stylebeta.prefix_ = function(name) {
+  var type = spf.net.resourcebeta.Type.CSS;
+  return spf.net.resourcebeta.prefix(type, name);
+};
+
 
 /**
  * Checks to see if a style exists.
@@ -195,4 +265,19 @@ spf.net.stylebeta.exists_ = function(url) {
 spf.net.stylebeta.loaded_ = function(url) {
   var type = spf.net.resourcebeta.Type.CSS;
   return spf.net.resourcebeta.loaded(type, url);
+};
+
+
+/**
+ * Checks to see if all urls for a dependency have been loaded.
+ * (Falsey dependency names (e.g. null or an empty string) are always "loaded".)
+ *
+ * @param {string} name The dependency name.
+ * @return {boolean}
+ * @private
+ */
+spf.net.stylebeta.allLoaded_ = function(name) {
+  var type = spf.net.resourcebeta.Type.CSS;
+  var urls = spf.net.resourcebeta.urls.get(type, name);
+  return !name || (!!urls && spf.array.every(urls, spf.net.stylebeta.loaded_));
 };
