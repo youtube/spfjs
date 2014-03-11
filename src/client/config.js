@@ -33,6 +33,7 @@ spf.config.defaults = {
   'process-async': false,
   'request-timeout': 0,  // No request timeout.
   'script-loading-callback': null,
+  'cache-session-storage': false,
   'style-loading-callback': null,
   'url-identifier': '?spf=__type__'
 };

@@ -8,6 +8,7 @@
 goog.provide('spf.nav');
 
 goog.require('spf');
+goog.require('spf.cache');
 goog.require('spf.config');
 goog.require('spf.debug');
 goog.require('spf.dom');
@@ -50,9 +51,9 @@ spf.nav.dispose = function() {
       document.removeEventListener('click', /** @type {function(Event)} */ (
           spf.state.get('nav-listener')), false);
       if (spf.config.get('prefetch-on-mousedown')) {
-          document.removeEventListener('mousedown',
-              /** @type {function(Event)} */ (
-                  spf.state.get('prefetch-listener')), false);
+        document.removeEventListener('mousedown',
+            /** @type {function(Event)} */ (
+                spf.state.get('prefetch-listener')), false);
       }
     }
     spf.state.set('nav-init', false);
@@ -191,7 +192,6 @@ spf.nav.isNavigateEligible_ = function(url) {
 };
 
 
-
 /**
  * Handles page click events on SPF links, adds pushState history entries for
  * them, and navigates.
@@ -215,6 +215,10 @@ spf.nav.handleClick_ = function(evt) {
   }
   // Ignore clicks if the URL is not eligible for navigation.
   if (!spf.nav.isNavigateEligible_(url)) {
+    if (spf.config.get('cache-session-storage')) {
+      // Clearing the cache to prevent session cache entries with no pointers.
+      spf.cache.clear();
+    }
     return;
   }
   // Navigate to the URL.
@@ -258,6 +262,10 @@ spf.nav.handleHistory_ = function(url, opt_state) {
   spf.debug.debug('nav.handleHistory ', '(url=', url, 'state=', opt_state, ')');
   // Redirect if the URL is not eligible for navigation.
   if (!spf.nav.isNavigateEligible_(url)) {
+    if (spf.config.get('cache-session-storage')) {
+      // Clearing the cache to prevent session cache entries with no pointers.
+      spf.cache.clear();
+    }
     spf.nav.redirect(url);
     return;
   }
@@ -288,6 +296,10 @@ spf.nav.navigate = function(url, opt_options) {
   }
   // Redirect if the URL is not eligible for navigation.
   if (!spf.nav.isNavigateEligible_(url)) {
+    if (spf.config.get('cache-session-storage')) {
+      // Clearing the cache to prevent session cache entries with no pointers.
+      spf.cache.clear();
+    }
     spf.nav.redirect(url);
     return;
   }
@@ -948,8 +960,8 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
   // so just execute the callback.  Call process with an empty
   // object to ensure the callback is properly queued.
   var processFn = isPrefetch ?
-    spf.nav.response.preprocess :
-    spf.nav.response.process;
+      spf.nav.response.preprocess :
+      spf.nav.response.process;
   var r = (response['type'] == 'multipart') ? {} : response;
   processFn(url, r, function() {
     if (SPF_BETA) {
@@ -1058,7 +1070,7 @@ spf.nav.prefetches_ = function(opt_reqs) {
  */
 spf.nav.isTouchCapablePlatform_ = function() {
   return ('ontouchstart' in window || window.navigator['maxTouchPoints'] > 0 ||
-     window.navigator['msMaxTouchPoints'] > 0);
+      window.navigator['msMaxTouchPoints'] > 0);
 };
 
 
