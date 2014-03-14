@@ -202,7 +202,20 @@ spf.history.doPushState_ = function(data, title, opt_url) {
   if (typeof window.history.pushState == 'function') {
     window.history.pushState(data, title, opt_url);
   } else {
-    throw new Error('history.pushState is not a function');
+    // TODO(awbraunstein): Remove this once we determine the issue
+    // behind b/12608311 and add a better check in spf.init.
+    var pushStateString = '';
+    try {
+      pushStateString = JSON.stringify(window.history.pushState);
+    } catch (err) {
+      if (window.history.pushState == undefined) {
+        pushStateString = 'undefined';
+      } else {
+        pushStateString = window.history.pushState.toString();
+      }
+    }
+    throw new Error('history.pushState is not a function. history.pushState: ' +
+        pushStateString);
   }
 };
 
