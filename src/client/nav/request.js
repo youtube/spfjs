@@ -104,7 +104,8 @@ spf.nav.request.send = function(url, opt_options) {
   } else {
     spf.debug.debug('    sending XHR');
     var headers = {};
-    if (options.referer) {
+    // Compare against "undefined" to allow empty referrer values in history.
+    if (options.referer != undefined) {
       headers['X-SPF-Referer'] = options.referer;
     }
     if (options.current) {

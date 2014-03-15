@@ -341,7 +341,8 @@ spf.nav.navigate_ = function(url, opt_options, opt_current, opt_referer,
   // to allow the correct value to be sent to the server during back/forward.
   // Only different than the current URL when navigation is in response to
   // a popState event.
-  var referer = opt_referer || window.location.href;
+  // Compare against "undefined" to allow empty referrer values in history.
+  var referer = opt_referer == undefined ? window.location.href : opt_referer;
   spf.state.set('nav-referer', referer);
   // The current URL will have already changed for history events, so in those
   // cases the current URL is provided from state. The opt_current should
