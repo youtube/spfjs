@@ -202,11 +202,7 @@ spf.history.doPushState_ = function(data, title, opt_url) {
   if (typeof window.history.pushState == 'function') {
     window.history.pushState(data, title, opt_url);
   } else {
-    // TODO(awbraunstein): Remove this once we determine the issue
-    // behind b/12608311 and add a better check in spf.init.
-    var spfEnabled = !!spf.state.get('nav-init');
-    throw new Error('history.pushState is not a function. spf enabled: ' +
-        spfEnabled);
+    throw new Error('history.pushState is not a function.');
   }
 };
 

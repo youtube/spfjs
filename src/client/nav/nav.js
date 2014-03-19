@@ -270,7 +270,10 @@ spf.nav.handleHistory_ = function(url, opt_state) {
     return;
   }
   // Navigate to the URL.
-  spf.nav.navigate_(url, null, current, referer, true, reverse);
+  // TODO(awbraunstein): Make this synchronous if this doesn't stop
+  // the errors in b/12608311.
+  setTimeout(spf.bind(
+      spf.nav.navigate_, null, url, null, current, referer, true, reverse), 0);
 };
 
 
