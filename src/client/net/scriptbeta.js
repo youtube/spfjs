@@ -35,6 +35,7 @@ goog.require('spf.net.resourcebeta');
 goog.require('spf.net.resourcebeta.urls');
 goog.require('spf.pubsub');
 goog.require('spf.string');
+goog.require('spf.tracing');
 
 
 /**
@@ -598,3 +599,51 @@ spf.net.scriptbeta.DEPS_KEY = 'js-d';
  * @const
  */
 spf.net.scriptbeta.URLS_KEY = 'js-u';
+
+
+if (spf.tracing.ENABLED) {
+  (function() {
+    spf.net.scriptbeta.load = spf.tracing.instrument(
+        spf.net.scriptbeta.load, 'spf.net.scriptbeta.load');
+    spf.net.scriptbeta.unload = spf.tracing.instrument(
+        spf.net.scriptbeta.unload, 'spf.net.scriptbeta.unload');
+    spf.net.scriptbeta.unload_ = spf.tracing.instrument(
+        spf.net.scriptbeta.unload_, 'spf.net.scriptbeta.unload_');
+    spf.net.scriptbeta.discover = spf.tracing.instrument(
+        spf.net.scriptbeta.discover, 'spf.net.scriptbeta.discover');
+    spf.net.scriptbeta.get = spf.tracing.instrument(
+        spf.net.scriptbeta.get, 'spf.net.scriptbeta.get');
+    spf.net.scriptbeta.ready = spf.tracing.instrument(
+        spf.net.scriptbeta.ready, 'spf.net.scriptbeta.ready');
+    spf.net.scriptbeta.done = spf.tracing.instrument(
+        spf.net.scriptbeta.done, 'spf.net.scriptbeta.done');
+    spf.net.scriptbeta.ignore = spf.tracing.instrument(
+        spf.net.scriptbeta.ignore, 'spf.net.scriptbeta.ignore');
+    spf.net.scriptbeta.require = spf.tracing.instrument(
+        spf.net.scriptbeta.require, 'spf.net.scriptbeta.require');
+    spf.net.scriptbeta.require_ = spf.tracing.instrument(
+        spf.net.scriptbeta.require_, 'spf.net.scriptbeta.require_');
+    spf.net.scriptbeta.unrequire = spf.tracing.instrument(
+        spf.net.scriptbeta.unrequire, 'spf.net.scriptbeta.unrequire');
+    spf.net.scriptbeta.check = spf.tracing.instrument(
+        spf.net.scriptbeta.check, 'spf.net.scriptbeta.check');
+    spf.net.scriptbeta.prefetch = spf.tracing.instrument(
+        spf.net.scriptbeta.prefetch, 'spf.net.scriptbeta.prefetch');
+    spf.net.scriptbeta.eval = spf.tracing.instrument(
+        spf.net.scriptbeta.eval, 'spf.net.scriptbeta.eval');
+    spf.net.scriptbeta.declare = spf.tracing.instrument(
+        spf.net.scriptbeta.declare, 'spf.net.scriptbeta.declare');
+    spf.net.scriptbeta.path = spf.tracing.instrument(
+        spf.net.scriptbeta.path, 'spf.net.scriptbeta.path');
+    spf.net.scriptbeta.prefix_ = spf.tracing.instrument(
+        spf.net.scriptbeta.prefix_, 'spf.net.scriptbeta.prefix_');
+    spf.net.scriptbeta.exists_ = spf.tracing.instrument(
+        spf.net.scriptbeta.exists_, 'spf.net.scriptbeta.exists_');
+    spf.net.scriptbeta.loaded_ = spf.tracing.instrument(
+        spf.net.scriptbeta.loaded_, 'spf.net.scriptbeta.loaded_');
+    spf.net.scriptbeta.allLoaded_ = spf.tracing.instrument(
+        spf.net.scriptbeta.allLoaded_, 'spf.net.scriptbeta.allLoaded_');
+    spf.net.scriptbeta.anyDifferent_ = spf.tracing.instrument(
+        spf.net.scriptbeta.anyDifferent_, 'spf.net.scriptbeta.anyDifferent_');
+  })();
+}

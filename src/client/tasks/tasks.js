@@ -9,6 +9,7 @@ goog.provide('spf.tasks');
 goog.require('spf');
 goog.require('spf.state');
 goog.require('spf.string');
+goog.require('spf.tracing');
 
 
 /**
@@ -226,3 +227,29 @@ spf.tasks.createTask_ = function(fn, delay) {
  * @private
  */
 spf.tasks.queues_ = {};
+
+
+if (spf.tracing.ENABLED) {
+  (function() {
+    spf.tasks.add = spf.tracing.instrument(
+        spf.tasks.add, 'spf.tasks.add');
+    spf.tasks.run = spf.tracing.instrument(
+        spf.tasks.run, 'spf.tasks.run');
+    spf.tasks.suspend = spf.tracing.instrument(
+        spf.tasks.suspend, 'spf.tasks.suspend');
+    spf.tasks.resume = spf.tracing.instrument(
+        spf.tasks.resume, 'spf.tasks.resume');
+    spf.tasks.cancel = spf.tracing.instrument(
+        spf.tasks.cancel, 'spf.tasks.cancel');
+    spf.tasks.cancelAllExcept = spf.tracing.instrument(
+        spf.tasks.cancelAllExcept, 'spf.tasks.cancelAllExcept');
+    spf.tasks.key = spf.tracing.instrument(
+        spf.tasks.key, 'spf.tasks.key');
+    spf.tasks.do_ = spf.tracing.instrument(
+        spf.tasks.do_, 'spf.tasks.do_');
+    spf.tasks.createQueue_ = spf.tracing.instrument(
+        spf.tasks.createQueue_, 'spf.tasks.createQueue_');
+    spf.tasks.createTask_ = spf.tracing.instrument(
+        spf.tasks.createTask_, 'spf.tasks.createTask_');
+  })();
+}

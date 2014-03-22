@@ -18,6 +18,7 @@ goog.require('spf.nav.request');
 goog.require('spf.nav.response');
 goog.require('spf.state');
 goog.require('spf.tasks');
+goog.require('spf.tracing');
 goog.require('spf.url');
 
 
@@ -1089,3 +1090,39 @@ spf.nav.Events = {
   RECEIVED: 'received',
   PROCESSED: 'processed'
 };
+
+
+if (spf.tracing.ENABLED) {
+  (function() {
+    var nav = spf.nav;
+    nav.init = spf.tracing.instrument(nav.init, 'spf.nav.init');
+    nav.dispose = spf.tracing.instrument(nav.dispose, 'spf.nav.dispose');
+    nav.handleClick_ = spf.tracing.instrument(
+        nav.handleClick_, 'spf.nav.handleClick_');
+    nav.handleHistory_ = spf.tracing.instrument(
+        nav.handleHistory_, 'spf.nav.handleHistory_');
+    nav.navigate = spf.tracing.instrument(nav.navigate, 'spf.nav.navigate');
+    nav.navigate_ = spf.tracing.instrument(
+        nav.navigate_, 'spf.nav.navigate_');
+    nav.navigatePromotePrefetch_ = spf.tracing.instrument(
+        nav.navigatePromotePrefetch_, 'spf.nav.navigatePromotePrefetch_');
+    nav.navigateSendRequest_ = spf.tracing.instrument(
+        nav.navigateSendRequest_, 'spf.nav.navigateSendRequest_');
+    nav.handleNavigateError_ = spf.tracing.instrument(
+        nav.handleNavigateError_, 'spf.nav.handleNavigateError_');
+    nav.handleNavigatePart_ = spf.tracing.instrument(
+        nav.handleNavigatePart_, 'spf.nav.handleNavigatePart_');
+    nav.handleNavigateSuccess_ = spf.tracing.instrument(
+        nav.handleNavigateSuccess_, 'spf.nav.handleNavigateSuccess_');
+    nav.cancel = spf.tracing.instrument(nav.cancel, 'spf.nav.cancel');
+    nav.callback = spf.tracing.instrument(nav.callback, 'spf.nav.callback');
+    nav.redirect = spf.tracing.instrument(nav.redirect, 'spf.nav.redirect');
+    nav.load = spf.tracing.instrument(nav.load, 'spf.nav.load');
+    nav.handleLoadError_ = spf.tracing.instrument(
+        nav.handleLoadError_, 'spf.nav.handleLoadError_');
+    nav.handleLoadPart_ = spf.tracing.instrument(
+        nav.handleLoadPart_, 'spf.nav.handleLoadPart_');
+    nav.handleLoadSuccess_ = spf.tracing.instrument(
+        nav.handleLoadSuccess_, 'spf.nav.handleLoadSuccess_');
+  })();
+}

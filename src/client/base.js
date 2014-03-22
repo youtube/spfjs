@@ -41,6 +41,10 @@ var SPF_COMPILED = false;
 var SPF_DEBUG = true;
 
 
+/** @define {boolean} Compiler flag to include tracing code. */
+var SPF_TRACING = false;
+
+
 /**
  * Creates a new function that, when called, has its {@code this} set to the
  * provided value, with a given sequence of arguments preceding any provided

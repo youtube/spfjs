@@ -15,6 +15,7 @@ goog.require('spf.dom.dataset');
 goog.require('spf.pubsub');
 goog.require('spf.string');
 goog.require('spf.tasks');
+goog.require('spf.tracing');
 goog.require('spf.url');
 
 
@@ -351,3 +352,28 @@ spf.net.resources.Type = {
   CSS: 'css',
   JS: 'js'
 };
+
+
+if (spf.tracing.ENABLED) {
+  (function() {
+    spf.net.resources.mark = spf.tracing.instrument(
+        spf.net.resources.mark, 'spf.net.resources.mark');
+    spf.net.resources.load = spf.tracing.instrument(
+        spf.net.resources.load,
+        'spf.net.resources.load(ascii type, ascii url)');
+    spf.net.resources.load_ = spf.tracing.instrument(
+        spf.net.resources.load_, 'spf.net.resources.load_');
+    spf.net.resources.unload = spf.tracing.instrument(
+        spf.net.resources.unload,
+        'spf.net.resources.unload(ascii type, ascii url)');
+    spf.net.resources.unload_ = spf.tracing.instrument(
+        spf.net.resources.unload_, 'spf.net.resources.unload_');
+    spf.net.resources.ignore = spf.tracing.instrument(
+        spf.net.resources.ignore, 'spf.net.resources.ignore');
+    spf.net.resources.prefetch = spf.tracing.instrument(
+        spf.net.resources.prefetch, 'spf.net.resources.prefetch');
+    spf.net.resources.loadResourceInIframe_ = spf.tracing.instrument(
+        spf.net.resources.loadResourceInIframe_,
+        'spf.net.resources.loadResourceInIframe_');
+  })();
+}

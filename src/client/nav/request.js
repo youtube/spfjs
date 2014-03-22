@@ -13,6 +13,7 @@ goog.require('spf.debug');
 goog.require('spf.nav.response');
 goog.require('spf.net.xhr');
 goog.require('spf.string');
+goog.require('spf.tracing');
 goog.require('spf.url');
 
 
@@ -469,3 +470,27 @@ spf.nav.request.setCacheObject_ = function(cacheKey, response) {
   spf.cache.set(cacheKey, response,  /** @type {number} */ (
       spf.config.get('cache-lifetime')));
 };
+
+
+
+if (spf.tracing.ENABLED) {
+  (function() {
+    var request = spf.nav.request;
+    request.send = spf.tracing.instrument(
+        request.send, 'spf.nav.request.send');
+    request.handleResponseFromCache_ = spf.tracing.instrument(
+        request.handleResponseFromCache_,
+        'spf.nav.request.handleResponseFromCache_');
+    request.handleHeadersFromXHR_ = spf.tracing.instrument(
+        request.handleHeadersFromXHR_,
+        'spf.nav.request.handleHeadersFromXHR_');
+    request.handleChunkFromXHR_ = spf.tracing.instrument(
+        request.handleChunkFromXHR_,
+        'spf.nav.request.handleChunkFromXHR_');
+    request.handleCompleteFromXHR_ = spf.tracing.instrument(
+        request.handleCompleteFromXHR_,
+        'spf.nav.request.handleCompleteFromXHR_');
+    request.done_ = spf.tracing.instrument(
+        request.done_, 'spf.nav.request.done_');
+  })();
+}

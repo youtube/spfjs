@@ -16,6 +16,7 @@ goog.require('spf.dom');
 goog.require('spf.dom.classlist');
 goog.require('spf.string');
 goog.require('spf.tasks');
+goog.require('spf.tracing');
 goog.require('spf.url');
 
 
@@ -465,4 +466,30 @@ if (SPF_BOOTLOADER) {
   }
   spf.net.resourcebeta.urls_ = /** @type {!Object.<Array.<string>>} */ (
       spf.state.get(spf.net.resourcebeta.URLS_KEY));
+}
+
+
+if (spf.tracing.ENABLED) {
+  (function() {
+    spf.net.resourcebeta.create = spf.tracing.instrument(
+        spf.net.resourcebeta.create, 'spf.net.resourcebeta.create');
+    spf.net.resourcebeta.destroy = spf.tracing.instrument(
+        spf.net.resourcebeta.destroy, 'spf.net.resourcebeta.destroy');
+    spf.net.resourcebeta.discover = spf.tracing.instrument(
+        spf.net.resourcebeta.discover, 'spf.net.resourcebeta.discover');
+    spf.net.resourcebeta.prefetch = spf.tracing.instrument(
+        spf.net.resourcebeta.prefetch, 'spf.net.resourcebeta.prefetch');
+    spf.net.resourcebeta.prefetch_ = spf.tracing.instrument(
+        spf.net.resourcebeta.prefetch_, 'spf.net.resourcebeta.prefetch_');
+    spf.net.resourcebeta.path = spf.tracing.instrument(
+        spf.net.resourcebeta.path, 'spf.net.resourcebeta.path');
+    spf.net.resourcebeta.canonicalize = spf.tracing.instrument(
+        spf.net.resourcebeta.canonicalize, 'spf.net.resourcebeta.canonicalize');
+    spf.net.resourcebeta.exists = spf.tracing.instrument(
+        spf.net.resourcebeta.exists, 'spf.net.resourcebeta.exists');
+    spf.net.resourcebeta.loaded = spf.tracing.instrument(
+        spf.net.resourcebeta.loaded, 'spf.net.resourcebeta.loaded');
+    spf.net.resourcebeta.urls.set = spf.tracing.instrument(
+        spf.net.resourcebeta.urls.set, 'spf.net.resourcebeta.urls.set');
+  })();
 }

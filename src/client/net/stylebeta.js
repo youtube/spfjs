@@ -12,6 +12,7 @@ goog.require('spf.net.resourcebeta');
 goog.require('spf.net.resourcebeta.urls');
 goog.require('spf.pubsub');
 goog.require('spf.string');
+goog.require('spf.tracing');
 
 
 /**
@@ -281,3 +282,35 @@ spf.net.stylebeta.allLoaded_ = function(name) {
   var urls = spf.net.resourcebeta.urls.get(type, name);
   return !name || (!!urls && spf.array.every(urls, spf.net.stylebeta.loaded_));
 };
+
+
+if (spf.tracing.ENABLED) {
+  (function() {
+    spf.net.stylebeta.load = spf.tracing.instrument(
+        spf.net.stylebeta.load, 'spf.net.stylebeta.load');
+    spf.net.stylebeta.unload = spf.tracing.instrument(
+        spf.net.stylebeta.unload, 'spf.net.stylebeta.unload');
+    spf.net.stylebeta.unload_ = spf.tracing.instrument(
+        spf.net.stylebeta.unload_, 'spf.net.stylebeta.unload_');
+    spf.net.stylebeta.discover = spf.tracing.instrument(
+        spf.net.stylebeta.discover, 'spf.net.stylebeta.discover');
+    spf.net.stylebeta.get = spf.tracing.instrument(
+        spf.net.stylebeta.get, 'spf.net.stylebeta.get');
+    spf.net.stylebeta.check = spf.tracing.instrument(
+        spf.net.stylebeta.check, 'spf.net.stylebeta.check');
+    spf.net.stylebeta.prefetch = spf.tracing.instrument(
+        spf.net.stylebeta.prefetch, 'spf.net.stylebeta.prefetch');
+    spf.net.stylebeta.eval = spf.tracing.instrument(
+        spf.net.stylebeta.eval, 'spf.net.stylebeta.eval');
+    spf.net.stylebeta.path = spf.tracing.instrument(
+        spf.net.stylebeta.path, 'spf.net.stylebeta.path');
+    spf.net.stylebeta.prefix_ = spf.tracing.instrument(
+        spf.net.stylebeta.prefix_, 'spf.net.stylebeta.prefix_');
+    spf.net.stylebeta.exists_ = spf.tracing.instrument(
+        spf.net.stylebeta.exists_, 'spf.net.stylebeta.exists_');
+    spf.net.stylebeta.loaded_ = spf.tracing.instrument(
+        spf.net.stylebeta.loaded_, 'spf.net.stylebeta.loaded_');
+    spf.net.stylebeta.allLoaded_ = spf.tracing.instrument(
+        spf.net.stylebeta.allLoaded_, 'spf.net.stylebeta.allLoaded_');
+  })();
+}

@@ -8,6 +8,7 @@ goog.provide('spf.net.styles');
 
 goog.require('spf.debug');
 goog.require('spf.net.resources');
+goog.require('spf.tracing');
 
 
 /**
@@ -110,3 +111,19 @@ spf.net.styles.ignore = function(url, callback) {
 spf.net.styles.prefetch = function(url) {
   spf.net.resources.prefetch(spf.net.resources.Type.CSS, url);
 };
+
+
+if (spf.tracing.ENABLED) {
+  (function() {
+    spf.net.styles.eval = spf.tracing.instrument(
+        spf.net.styles.eval, 'spf.net.styles.eval');
+    spf.net.styles.load = spf.tracing.instrument(
+        spf.net.styles.load, 'spf.net.styles.load');
+    spf.net.styles.unload = spf.tracing.instrument(
+        spf.net.styles.unload, 'spf.net.styles.unload');
+    spf.net.styles.ignore = spf.tracing.instrument(
+        spf.net.styles.ignore, 'spf.net.styles.ignore');
+    spf.net.styles.prefetch = spf.tracing.instrument(
+        spf.net.styles.prefetch, 'spf.net.styles.prefetch');
+  })();
+}

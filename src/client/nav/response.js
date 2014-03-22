@@ -16,9 +16,9 @@ goog.require('spf.net.scriptbeta');
 goog.require('spf.net.scripts');
 goog.require('spf.net.stylebeta');
 goog.require('spf.net.styles');
-goog.require('spf.state');
 goog.require('spf.string');
 goog.require('spf.tasks');
+goog.require('spf.tracing');
 goog.require('spf.url');
 
 
@@ -603,6 +603,7 @@ spf.nav.response.preinstallStyles_ = function(result) {
 };
 
 
+
 /**
  * A container for holding the result of parsing styles from an HTML string.
  * @constructor
@@ -614,6 +615,7 @@ spf.nav.response.ParseStylesResult_ = function() {
   /** @type {Array.<{url:string, text:string, name:string}>} */
   this.styles = [];
 };
+
 
 
 /**
@@ -729,3 +731,32 @@ spf.nav.response.Token = {
   DELIMITER: ',\r\n',
   END: ']\r\n'
 };
+
+
+if (spf.tracing.ENABLED) {
+  (function() {
+    spf.nav.response.parse = spf.tracing.instrument(
+        spf.nav.response.parse, 'spf.nav.response.parse');
+    spf.nav.response.process = spf.tracing.instrument(
+        spf.nav.response.process, 'spf.nav.response.process');
+    spf.nav.response.preprocess = spf.tracing.instrument(
+        spf.nav.response.preprocess, 'spf.nav.response.preprocess');
+
+    spf.nav.response.parseScripts_ = spf.tracing.instrument(
+        spf.nav.response.parseScripts_, 'spf.nav.response.parseScripts_');
+    spf.nav.response.installScripts_ = spf.tracing.instrument(
+        spf.nav.response.installScripts_,
+        'spf.nav.response.installScripts_');
+    spf.nav.response.preinstallScripts_ = spf.tracing.instrument(
+        spf.nav.response.preinstallScripts_,
+        'spf.nav.response.preinstallScripts_');
+
+    spf.nav.response.parseStyles_ = spf.tracing.instrument(
+        spf.nav.response.parseStyles_, 'spf.nav.response.parseStyles_');
+    spf.nav.response.installStyles_ = spf.tracing.instrument(
+        spf.nav.response.installStyles_, 'spf.nav.response.installStyles_');
+    spf.nav.response.preinstallStyles_ = spf.tracing.instrument(
+        spf.nav.response.preinstallStyles_,
+        'spf.nav.response.preinstallStyles_');
+  })();
+}

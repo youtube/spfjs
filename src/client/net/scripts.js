@@ -23,6 +23,7 @@ goog.provide('spf.net.scripts');
 goog.require('spf.debug');
 goog.require('spf.net.resources');
 goog.require('spf.string');
+goog.require('spf.tracing');
 
 
 /**
@@ -140,3 +141,19 @@ spf.net.scripts.ignore = function(url, callback) {
 spf.net.scripts.prefetch = function(url) {
   spf.net.resources.prefetch(spf.net.resources.Type.JS, url);
 };
+
+
+if (spf.tracing.ENABLED) {
+  (function() {
+    spf.net.scripts.eval = spf.tracing.instrument(
+        spf.net.scripts.eval, 'spf.net.scripts.eval');
+    spf.net.scripts.load = spf.tracing.instrument(
+        spf.net.scripts.load, 'spf.net.scripts.load');
+    spf.net.scripts.unload = spf.tracing.instrument(
+        spf.net.scripts.unload, 'spf.net.scripts.unload');
+    spf.net.scripts.ignore = spf.tracing.instrument(
+        spf.net.scripts.ignore, 'spf.net.scripts.ignore');
+    spf.net.scripts.prefetch = spf.tracing.instrument(
+        spf.net.scripts.prefetch, 'spf.net.scripts.prefetch');
+  })();
+}
