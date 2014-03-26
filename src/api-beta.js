@@ -69,6 +69,13 @@ spf.SingleResponse.prototype.cacheType;
 spf.SingleResponse.prototype.timing;
 
 /**
+ * String of the correct URL for the current request. This will replace the
+ * current URL in history.
+ * @type {string|undefined}
+ */
+spf.SingleResponse.prototype.url;
+
+/**
  * String of a URL to request instead.
  * @type {string|undefined}
  */

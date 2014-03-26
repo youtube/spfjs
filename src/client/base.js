@@ -130,6 +130,8 @@ spf.now = function() {
  * - title: String of the new Document title.
  * - cacheType: String of the type of caching to use for this response.
  * - timing: Map of timing attributes to timestamp numbers.
+ * - url: String of the correct URL for the current request. This will replace
+ *      the current URL in history.
  * - redirect: String of a URL to request instead.
  *
  * @typedef {{
@@ -140,6 +142,7 @@ spf.now = function() {
  *   title: (string|undefined),
  *   cacheType: (string|undefined),
  *   timing: (Object.<string, number>|undefined),
+ *   url: (string|undefined),
  *   redirect: (string|undefined)
  * }}
  */

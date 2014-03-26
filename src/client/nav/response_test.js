@@ -3,6 +3,7 @@
  */
 
 goog.require('spf');
+goog.require('spf.history');
 goog.require('spf.nav.response');
 goog.require('spf.string');
 
@@ -387,6 +388,38 @@ describe('spf.nav.response', function() {
       expect(parseAsSingle).not.toThrow();  // The chunk is valid JSON.
     });
 
+  });
+
+  describe('process', function() {
+
+    var currentUrl = 'http://www.youtube.com/watch?v=1';
+
+    beforeEach(function() {
+      spyOn(spf.nav.response, 'getCurrentUrl_').andReturn(currentUrl);
+      spyOn(spf.history, 'replace');
+    });
+
+    it('navigate: with redirect url', function() {
+      var response = { 'url': 'http://www.youtube.com/watch?v=3' };
+
+      spf.nav.response.process('/watch?v=2', response, null, true);
+      expect(spf.history.replace).toHaveBeenCalledWith(
+          response['url'], null, false, true);
+    });
+
+    it('navigate: with no redirect url', function() {
+      var response = {};
+
+      spf.nav.response.process('/watch?v=2', response, null, true);
+      expect(spf.history.replace).not.toHaveBeenCalled();
+    });
+
+    it('load: with redirect url', function() {
+      var response = { 'url': 'http://www.youtube.com/watch?v=3' };
+
+      spf.nav.response.process('/watch?v=2', response, null, false);
+      expect(spf.history.replace).not.toHaveBeenCalled();
+    });
   });
 
 });

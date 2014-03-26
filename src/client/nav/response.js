@@ -12,6 +12,7 @@ goog.require('spf.config');
 goog.require('spf.debug');
 goog.require('spf.dom');
 goog.require('spf.dom.classlist');
+goog.require('spf.history');
 goog.require('spf.net.scriptbeta');
 goog.require('spf.net.scripts');
 goog.require('spf.net.stylebeta');
@@ -110,11 +111,14 @@ spf.nav.response.parse = function(text, opt_multipart, opt_lastDitch) {
  * @param {function(string, spf.SingleResponse)=} opt_callback Function to
  *     execute when processing is done; the first argument is {@code url},
  *     the second argument is {@code response}.
+ * @param {boolean=} opt_navigate Whether this is a navigation request. Only
+ *     navigation requests will process history changes.
  * @param {boolean=} opt_reverse Whether this is "backwards" navigation. True
  *     when the "back" button is clicked and a request is in response to a
  *     popState event.
  */
-spf.nav.response.process = function(url, response, opt_callback, opt_reverse) {
+spf.nav.response.process = function(url, response, opt_callback, opt_navigate,
+                                    opt_reverse) {
   spf.debug.info('nav.response.process ', response, opt_reverse);
 
   // Convert the URL to absolute, to be used for finding the task queue.
@@ -133,6 +137,17 @@ spf.nav.response.process = function(url, response, opt_callback, opt_reverse) {
   // Update title (immediate).
   if (response['title']) {
     document.title = response['title'];
+  }
+
+  // Add the new history state (immediate), if needed.
+  if (opt_navigate && response['url']) {
+    var fullUrl = spf.url.absolute(response['url']);
+    // Update the history state if the url doesn't match.
+    if (fullUrl != spf.nav.response.getCurrentUrl_()) {
+      spf.debug.debug('  update history with response url');
+      // Add the URL to the history stack.
+      spf.history.replace(response['url'], null, false, true);
+    }
   }
 
   // Install page styles (single task), if needed.
@@ -602,6 +617,15 @@ spf.nav.response.preinstallStyles_ = function(result) {
   }
 };
 
+
+/**
+ * Provides the current URL from the window.
+ * @return {string} Get the current window's URL.
+ * @private
+ */
+spf.nav.response.getCurrentUrl_ = function() {
+  return window.location.href;
+};
 
 
 /**

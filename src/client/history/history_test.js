@@ -19,10 +19,14 @@ describe('spf.history', function() {
     // Mock history modification.
     stack = [];
     spf.history.__getCurrentUrl_ = spf.history.getCurrentUrl_;
+    spf.history.__getCurrentState_ = spf.history.getCurrentState_;
     spf.history.__doPushState_ = spf.history.doPushState_;
     spf.history.__doReplaceState_ = spf.history.doReplaceState_;
     spf.history.getCurrentUrl_ = function() {
       return (stack.length) ? stack[stack.length - 1].url : '/start';
+    };
+    spf.history.getCurrentState_ = function() {
+      return (stack.length) ? stack[stack.length - 1].state : null;
     };
     spf.history.doPushState_ = function(data, title, opt_url) {
       stack.push({ state: data, title: title, url: opt_url });
@@ -55,6 +59,7 @@ describe('spf.history', function() {
     callbacks = null;
     spf.now = spf.__now;
     spf.history.getCurrentUrl_ = spf.history.__getCurrentUrl_;
+    spf.history.getCurrentState_ = spf.history.__getCurrentState_;
     spf.history.doPushState_ = spf.history.__doPushState_;
     spf.history.doReplaceState_ = spf.history.__doReplaceState_;
     stack = null;
@@ -122,6 +127,28 @@ describe('spf.history', function() {
     expect(callbacks.one).toHaveBeenCalled();
     expect(getEntry(1).state['spf-timestamp']).toBeGreaterThan(0);
     expect(getEntry(1).url).toEqual('/foo');
+    // Replace the top entry's url without maintaining state.
+    time.advance = 300;
+    spf.history.replace('/foo', {'test': 'state'});
+    time.advance = 400;
+    spf.history.replace('/bar', null, false, false);
+    expect(stack.length).toBe(1);
+    expect(spf.history.doPushState_.calls.length).toEqual(0);
+    expect(spf.history.doReplaceState_.calls.length).toEqual(5);
+    expect(getEntry(1).state['test']).toBeUndefined();
+    expect(getEntry(1).state['spf-timestamp']).toBeGreaterThan(0);
+    expect(getEntry(1).url).toEqual('/bar');
+    // Replace the top entry's url and maintain state.
+    time.advance = 500;
+    spf.history.replace('/foo', {'test': 'state'});
+    time.advance = 600;
+    spf.history.replace('/bar', null, false, true);
+    expect(stack.length).toBe(1);
+    expect(spf.history.doPushState_.calls.length).toEqual(0);
+    expect(spf.history.doReplaceState_.calls.length).toEqual(7);
+    expect(getEntry(1).state['test']).toEqual('state');
+    expect(getEntry(1).state['spf-timestamp']).toBeGreaterThan(0);
+    expect(getEntry(1).url).toEqual('/bar');
   });
 
   it('pop_', function() {

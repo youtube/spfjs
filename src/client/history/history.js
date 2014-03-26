@@ -96,13 +96,20 @@ spf.history.add = function(opt_url, opt_state, opt_doCallback) {
  *     entry.  When the user returns to this entry, the "state" property of the
  *     event will contain a copy of this object.
  * @param {boolean=} opt_doCallback Whether to do the history event callback.
+ * @param {boolean=} opt_retainState Whether to retain existing state if no new
+ *     state is provided. Defaults to false.
  * @throws {Error} If the state object is too large. For example, Firefox will
  *     pass the object to JSON.stringify and impose a 640k character limit.
  * @throws {Error} If the URL is not in the same domain, a SECURITY_ERR
  *     (code == 18) is thrown.
  * @throws {Error} If window.history.replaceState is not a function.
  */
-spf.history.replace = function(opt_url, opt_state, opt_doCallback) {
+spf.history.replace = function(opt_url, opt_state, opt_doCallback,
+                               opt_retainState) {
+  var currentState = spf.history.getCurrentState_();
+  if (opt_retainState && currentState) {
+    opt_state = opt_state || currentState;
+  }
   spf.debug.info('history.replace ', opt_url);
   spf.history.push_(true, opt_url, opt_state, opt_doCallback);
 };
@@ -186,6 +193,15 @@ spf.history.pop_ = function(evt) {
  */
 spf.history.getCurrentUrl_ = function() {
   return window.location.href;
+};
+
+
+/**
+ * @return {Object} The current history state object.
+ * @private
+ */
+spf.history.getCurrentState_ = function() {
+  return /** @type {Object} */ (window.history.state);
 };
 
 

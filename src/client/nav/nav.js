@@ -590,7 +590,7 @@ spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
       spf.nav.redirect(url);
       return;
     }
-  }, reverse);
+  }, true, reverse);
 };
 
 
@@ -682,7 +682,7 @@ spf.nav.handleNavigateSuccess_ = function(options, referer, reverse, original,
     } else {
       spf.nav.callback('navigate-processed-callback', url, response);
     }
-  }, reverse);
+  }, true, reverse);
 };
 
 
