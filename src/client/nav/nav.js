@@ -565,32 +565,40 @@ spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
     spf.nav.redirect(url);
     return;
   }
-  spf.nav.response.process(url, partial, function() {
-    // Execute the "onPart" and "navigation part processed" callbacks.  If
-    // either explicitly cancels (by returning false), cancel this navigation
-    // and redirect.
-    if (SPF_BETA) {
-      var canceled = !spf.nav.callback(options['onPart'],
-                                       {'url': url, 'part': partial});
-    } else {
-      var canceled = !spf.nav.callback(options['onPart'], url, partial);
-    }
-    if (canceled) {
-      spf.nav.redirect(url);
-      return;
-    }
-    if (SPF_BETA) {
-      canceled = !spf.dispatch(spf.nav.Events.PART_PROCESSED,
-                               {'url': url, 'part': partial});
-    } else {
-      canceled = !spf.nav.callback('navigate-part-processed-callback',
-                                   url, partial);
-    }
-    if (canceled) {
-      spf.nav.redirect(url);
-      return;
-    }
-  }, true, reverse);
+  try {
+    spf.nav.response.process(url, partial, function() {
+      // Execute the "onPart" and "navigation part processed" callbacks.  If
+      // either explicitly cancels (by returning false), cancel this navigation
+      // and redirect.
+      if (SPF_BETA) {
+        var canceled = !spf.nav.callback(options['onPart'],
+                                         {'url': url, 'part': partial});
+      } else {
+        var canceled = !spf.nav.callback(options['onPart'], url, partial);
+      }
+      if (canceled) {
+        spf.nav.redirect(url);
+        return;
+      }
+      if (SPF_BETA) {
+        canceled = !spf.dispatch(spf.nav.Events.PART_PROCESSED,
+                                 {'url': url, 'part': partial});
+      } else {
+        canceled = !spf.nav.callback('navigate-part-processed-callback',
+                                     url, partial);
+      }
+      if (canceled) {
+        spf.nav.redirect(url);
+        return;
+      }
+    }, true, reverse);
+  } catch (err) {
+    // If an exception is caught during processing, log, execute the error
+    // handler, and bail.
+    spf.debug.debug('    failed to process part', partial);
+    spf.nav.handleNavigateError_(options, url, err);
+    return;
+  }
 };
 
 
@@ -662,27 +670,35 @@ spf.nav.handleNavigateSuccess_ = function(options, referer, reverse, original,
   // object to ensure the callback is properly queued.
   var r = /** @type {spf.SingleResponse} */ (
       (response['type'] == 'multipart') ? {} : response);
-  spf.nav.response.process(url, r, function() {
-    // Execute the "onSuccess" and "navigation processed" callbacks.
-    // NOTE: If either explicitly cancels (by returning false), nothing
-    // happens, because there is no longer an opportunity to stop navigation.
-    if (SPF_BETA) {
-      var canceled = !spf.nav.callback(options['onSuccess'],
-                                       {'url': url, 'response': response});
-    } else {
-      var canceled = !spf.nav.callback(options['onSuccess'], url, response);
-    }
-    if (canceled) {
-      return;
-    }
+  try {
+    spf.nav.response.process(url, r, function() {
+      // Execute the "onSuccess" and "navigation processed" callbacks.
+      // NOTE: If either explicitly cancels (by returning false), nothing
+      // happens, because there is no longer an opportunity to stop navigation.
+      if (SPF_BETA) {
+        var canceled = !spf.nav.callback(options['onSuccess'],
+                                         {'url': url, 'response': response});
+      } else {
+        var canceled = !spf.nav.callback(options['onSuccess'], url, response);
+      }
+      if (canceled) {
+        return;
+      }
 
-    if (SPF_BETA) {
-      spf.dispatch(spf.nav.Events.PROCESSED,
-                   {'url': url, 'response': response});
-    } else {
-      spf.nav.callback('navigate-processed-callback', url, response);
-    }
-  }, true, reverse);
+      if (SPF_BETA) {
+        spf.dispatch(spf.nav.Events.PROCESSED,
+                     {'url': url, 'response': response});
+      } else {
+        spf.nav.callback('navigate-processed-callback', url, response);
+      }
+    }, true, reverse);
+  } catch (err) {
+    // If an exception is caught during processing, log, execute the error
+    // handler and bail.
+    spf.debug.debug('    failed to process response', response);
+    spf.nav.handleNavigateError_(options, url, err);
+    return;
+  }
 };
 
 
