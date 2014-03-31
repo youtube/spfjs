@@ -90,7 +90,9 @@ spf.net.scriptbeta.load = function(urls, opt_nameOrFn, opt_fn) {
       var previous = spf.net.resourcebeta.urls.get(type, name);
       // If loading new scripts for a name, handle unloading previous ones.
       if (!loaded && previous) {
-        spf.dispatch('jsbeforeunload', {'name': name, 'urls': previous});
+        if (!spf.config.get('beta-use-callbacks')) {
+          spf.dispatch('jsbeforeunload', {'name': name, 'urls': previous});
+        }
         spf.net.resourcebeta.urls.clear(type, name);
         done = function() {
           spf.net.scriptbeta.unload_(name, previous);
@@ -113,6 +115,10 @@ spf.net.scriptbeta.load = function(urls, opt_nameOrFn, opt_fn) {
     if (spf.net.scriptbeta.exists_(url)) {
       setTimeout(spf.net.scriptbeta.check, 0);
     } else {
+      if (spf.config.get('beta-use-callbacks')) {
+        spf.execute(/** @type {Function} */ (
+            spf.config.get('script-loading-callback')), url, pseudonym);
+      }
       var el = spf.net.scriptbeta.get(url, spf.net.scriptbeta.check);
       if (name) {
         el.setAttribute('name', name);
@@ -151,7 +157,9 @@ spf.net.scriptbeta.unload_ = function(name, urls) {
   var type = spf.net.resourcebeta.Type.JS;
   if (urls.length) {
     spf.debug.warn('  > script.unload', urls);
-    spf.dispatch('jsunload', {'name': name, 'urls': urls});
+    if (!spf.config.get('beta-use-callbacks')) {
+      spf.dispatch('jsunload', {'name': name, 'urls': urls});
+    }
     spf.array.each(urls, function(url) {
       spf.net.resourcebeta.destroy(type, url);
     });
