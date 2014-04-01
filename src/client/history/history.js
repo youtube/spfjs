@@ -11,6 +11,7 @@
 goog.provide('spf.history');
 
 goog.require('spf');
+goog.require('spf.config');
 goog.require('spf.debug');
 goog.require('spf.state');
 
@@ -25,6 +26,10 @@ goog.require('spf.state');
  */
 spf.history.init = function(callback) {
   if (!spf.state.get('history-init') && window.addEventListener) {
+    // Secure the history functions to prevent overwriting of pushState.
+    if (spf.config.get('history-secure-functions')) {
+      spf.history.secureHistoryFunctions_();
+    }
     var url = spf.history.getCurrentUrl_();
     window.addEventListener('popstate', spf.history.pop_, false);
     // Whether history is initialized.
@@ -61,6 +66,44 @@ spf.history.dispose = function() {
     spf.state.set('history-url', null);
     spf.state.set('history-timestamp', 0);
   }
+};
+
+
+/**
+ * Make it impossible to set the value of window.history.pushState and
+ * window.history.replaceState.
+ *
+ * @private
+ */
+spf.history.secureHistoryFunctions_ = function() {
+  try {
+    var errorCallback = /** @type {Function} */ (
+        spf.config.get('navigate-error-callback'));
+    var historyCopy = {pushState: window.history.pushState,
+                   replaceState: window.history.replaceState};
+    Object.defineProperty(window.history, 'pushState', {
+      get: function() {
+        return historyCopy.pushState;
+      },
+      set: function(val) {
+        if (errorCallback) {
+          errorCallback(new Error('history.pushState cannot be set to ' +
+              val));
+        }
+      }
+    });
+    Object.defineProperty(window.history, 'replaceState', {
+      get: function() {
+        return historyCopy.replaceState;
+      },
+      set: function(val) {
+        if (errorCallback) {
+          errorCallback(new Error('history.replaceState cannot be set to ' +
+              val));
+        }
+      }
+    });
+  } catch (err) {}
 };
 
 

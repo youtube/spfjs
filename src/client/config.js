@@ -20,6 +20,7 @@ spf.config.defaults = {
   'cache-lifetime': 10 * 60 * 1000,  // 10 minute cache lifetime (ms).
   'cache-max': 50,  // 50 items.
   'cache-unified': false,
+  'history-secure-functions': false,
   'link-class': 'spf-link',
   'nolink-class': 'spf-nolink',
   'navigate-limit': 20,  // 20 navigations per session.
