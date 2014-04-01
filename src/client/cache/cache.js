@@ -26,14 +26,6 @@ spf.cache.get = function(key) {
   var unit = storage[key];
   // If the data is valid, return it.
   if (spf.cache.valid_(unit)) {
-    // For sessionstorage experiment, if data is null, we check to see if it is
-    // in sessionStorage.
-    if (unit['data'] === null && window.sessionStorage) {
-      var data = window.sessionStorage.getItem(key);
-      if (data) {
-        return JSON.parse(data);
-      }
-    }
     return unit['data'];
   }
   // Otherwise, the data should be removed from the cache.
@@ -74,9 +66,6 @@ spf.cache.remove = function(key) {
   var storage = spf.cache.storage_();
   if (key in storage) {
     delete storage[key];
-    if (window.sessionStorage) {
-      window.sessionStorage.removeItem(key);
-    }
   }
 };
 
@@ -85,14 +74,6 @@ spf.cache.remove = function(key) {
  * Removes all data from the cache.
  */
 spf.cache.clear = function() {
-  if (window.sessionStorage && spf.config.get('cache-session-storage')) {
-    var storage = spf.cache.storage_();
-    for (var key in storage) {
-      var unit = storage[key];
-      delete storage[key];
-      window.sessionStorage.removeItem(key);
-    }
-  }
   spf.cache.storage_({});
 };
 
@@ -108,9 +89,6 @@ spf.cache.collect = function() {
     // If invalid data exists, remove.
     if (!spf.cache.valid_(unit)) {
       delete storage[key];
-      if (window.sessionStorage) {
-        window.sessionStorage.removeItem(key);
-      }
     }
   }
 };
@@ -174,35 +152,7 @@ spf.cache.create_ = function(key, data, lifetime) {
   var count = (parseInt(spf.state.get('cache-counter'), 10) || 0) + 1;
   spf.state.set('cache-counter', count);
 
-  // Place the data in sessionstorage if available.
-  if (spf.config.get('cache-session-storage') &&
-      spf.cache.setSessionStorage_(key, data)) {
-    data = null;
-  }
   return {'data': data, 'life': lifetime, 'time': spf.now(), 'count': count};
-};
-
-
-/**
- * Store given data in sessionStorage with key.
- * @param {string} key Key for the data object.
- * @param {*} data The data.
- * @return {boolean} true if stored succesfully.
- * @private
- */
-spf.cache.setSessionStorage_ = function(key, data) {
-  if (!window.sessionStorage) {
-    return false;
-  }
-
-  try {
-    window.sessionStorage.setItem(key, JSON.stringify(data));
-  } catch (e) {
-    // If session storage is full, we will ignore this.
-    // TODO(zhaoz): It may be better to eject LRU.
-    return false;
-  }
-  return true;
 };
 
 

@@ -216,10 +216,6 @@ spf.nav.handleClick_ = function(evt) {
   }
   // Ignore clicks if the URL is not eligible for navigation.
   if (!spf.nav.isNavigateEligible_(url)) {
-    if (spf.config.get('cache-session-storage')) {
-      // Clearing the cache to prevent session cache entries with no pointers.
-      spf.cache.clear();
-    }
     return;
   }
   // Navigate to the URL.
@@ -263,10 +259,6 @@ spf.nav.handleHistory_ = function(url, opt_state) {
   spf.debug.debug('nav.handleHistory ', '(url=', url, 'state=', opt_state, ')');
   // Redirect if the URL is not eligible for navigation.
   if (!spf.nav.isNavigateEligible_(url)) {
-    if (spf.config.get('cache-session-storage')) {
-      // Clearing the cache to prevent session cache entries with no pointers.
-      spf.cache.clear();
-    }
     spf.nav.redirect(url);
     return;
   }
@@ -297,10 +289,6 @@ spf.nav.navigate = function(url, opt_options) {
   }
   // Redirect if the URL is not eligible for navigation.
   if (!spf.nav.isNavigateEligible_(url)) {
-    if (spf.config.get('cache-session-storage')) {
-      // Clearing the cache to prevent session cache entries with no pointers.
-      spf.cache.clear();
-    }
     spf.nav.redirect(url);
     return;
   }
