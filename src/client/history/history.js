@@ -261,22 +261,7 @@ spf.history.doPushState_ = function(data, title, opt_url) {
   if (typeof window.history.pushState == 'function') {
     window.history.pushState(data, title, opt_url);
   } else {
-    // TODO(awbraunstein): Remove this once we gather information on
-    // the state of window.history at the time of the error.
-    var historyString = '';
-
-    for (var key in window.history) {
-      var value = window.history[key];
-      var valueString;
-      try {
-        valueString = JSON.stringify(value) || typeof value;
-      } catch (e) {
-        valueString = e.message;
-      }
-      historyString += (key + ': ' + valueString + '\n');
-    }
-    throw new Error('history.pushState is not a function. window.history: ' +
-        historyString);
+    throw new Error('history.pushState is not a function.');
   }
 };
 
