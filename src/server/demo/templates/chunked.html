@@ -17,9 +17,6 @@ $def _attributes():
 
 $def _javascript():
   <script src="/static/app-chunked.js"></script>
-  <script>
-    app.chunked.check();
-  </script>
 
 
 $var title: Chunked Test
@@ -29,11 +26,6 @@ $var attributes: $:_attributes()
 
 <div id="chunked" class="pane">
   <h1>Chunked Transfer Tests</h1>
-
-  <p id="chunked-message" style="display: none">
-    This page needs to be running dev (uncompiled) mode.  Please
-    <a href="?dev=true">load it with the correct parameters</a>.
-  </p>
 
   <div id="chunked-actions">
 

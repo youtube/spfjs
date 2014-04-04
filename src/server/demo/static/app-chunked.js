@@ -18,21 +18,6 @@ app.chunked = app.chunked || {};
 
 
 /**
- * Check if the page is running in Dev (uncompiled) mode, so that all necessary
- * functions are available.
- */
-app.chunked.check = function() {
-  if (spf && spf.nav && spf.nav.request && spf.nav.request.send) {
-    return;
-  }
-  var actions = document.getElementById('chunked-actions');
-  actions.style.display = 'none';
-  var message = document.getElementById('chunked-message');
-  message.style.display = 'block';
-};
-
-
-/**
  * Logs to the onscreen page log.
  *
  * @param {...*} var_args Arguments to log onscreen; they will be converted to
