@@ -101,7 +101,7 @@ describe('spf.nav.request', function() {
   describe('send', function() {
 
 
-    it('cache: single', function() {
+    it('cached: single', function() {
       var url = '/page';
       var res = {'foo': 'FOO', 'bar': 'BAR'};
 
@@ -123,7 +123,7 @@ describe('spf.nav.request', function() {
     });
 
 
-    it('cache: multipart', function() {
+    it('cached: multipart', function() {
       var url = '/page';
       var res = {
         parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
@@ -222,6 +222,26 @@ describe('spf.nav.request', function() {
     });
 
 
+    it('regular: single truncated (error)', function() {
+      var url = '/page';
+      var res = {'foo': 'FOO', 'bar': 'BAR'};
+      var text = '{"foo": "FOO", "bar":';
+      var fake = createFakeRegularXHR(text);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick(MOCK_DELAY + 1);
+
+      expect(options.onPart.calls.length).toEqual(0);
+      expect(options.onSuccess.calls.length).toEqual(0);
+      expect(options.onError.calls.length).toEqual(1);
+      var onErrorArgs = options.onError.mostRecentCall.args;
+      expect(onErrorArgs[0]).toEqual(url);
+    });
+
+
     it('regular: single sent as multipart', function() {
       var url = '/page';
       var res = {'foo': 'FOO', 'bar': 'BAR'};
@@ -240,6 +260,26 @@ describe('spf.nav.request', function() {
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
       expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+    });
+
+
+    it('regular: single sent as multipart truncated (error)', function() {
+      var url = '/page';
+      var res = {'foo': 'FOO', 'bar': 'BAR'};
+      var text = '{"foo": "FOO", "bar":';
+      var fake = createFakeRegularXHR(text, true);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick(MOCK_DELAY + 1);
+
+      expect(options.onPart.calls.length).toEqual(0);
+      expect(options.onSuccess.calls.length).toEqual(0);
+      expect(options.onError.calls.length).toEqual(1);
+      var onErrorArgs = options.onError.mostRecentCall.args;
+      expect(onErrorArgs[0]).toEqual(url);
     });
 
 
@@ -267,6 +307,52 @@ describe('spf.nav.request', function() {
     });
 
 
+    it('regular: multipart truncated (error)', function() {
+      var url = '/page';
+      var res = {
+        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        type: 'multipart'
+      };
+      var text = '[\r\n{"foo": "FOO"},\r\n{"bar":';
+      var fake = createFakeRegularXHR(text, true);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick(MOCK_DELAY + 1);
+
+      expect(options.onPart.calls.length).toEqual(0);
+      expect(options.onSuccess.calls.length).toEqual(0);
+      expect(options.onError.calls.length).toEqual(1);
+      var onErrorArgs = options.onError.mostRecentCall.args;
+      expect(onErrorArgs[0]).toEqual(url);
+    });
+
+
+    it('regular: multipart truncated at token (error)', function() {
+      var url = '/page';
+      var res = {
+        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        type: 'multipart'
+      };
+      var text = '[\r\n{"foo": "FOO"},\r\n';
+      var fake = createFakeRegularXHR(text, true);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick(MOCK_DELAY + 1);
+
+      expect(options.onPart.calls.length).toEqual(0);
+      expect(options.onSuccess.calls.length).toEqual(0);
+      expect(options.onError.calls.length).toEqual(1);
+      var onErrorArgs = options.onError.mostRecentCall.args;
+      expect(onErrorArgs[0]).toEqual(url);
+    });
+
+
     it('regular: multipart sent as single', function() {
       var url = '/page';
       var res = {
@@ -291,7 +377,54 @@ describe('spf.nav.request', function() {
     });
 
 
-    it('regular: multipart missing delimiters', function() {
+    it('regular: multipart sent as single truncated (error)', function() {
+      var url = '/page';
+      var res = {
+        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        type: 'multipart'
+      };
+      var text = '[\r\n{"foo": "FOO"},\r\n{"bar":';
+      var fake = createFakeRegularXHR(text);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick(MOCK_DELAY + 1);
+
+      expect(options.onPart.calls.length).toEqual(0);
+      expect(options.onSuccess.calls.length).toEqual(0);
+      expect(options.onError.calls.length).toEqual(1);
+      var onErrorArgs = options.onError.mostRecentCall.args;
+      expect(onErrorArgs[0]).toEqual(url);
+    });
+
+
+    it('regular: multipart sent as single truncated at token (error)',
+       function() {
+      var url = '/page';
+      var res = {
+        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        type: 'multipart'
+      };
+      var text = '[\r\n{"foo": "FOO"},\r\n';
+      var fake = createFakeRegularXHR(text);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick(MOCK_DELAY + 1);
+
+      expect(options.onPart.calls.length).toEqual(0);
+      expect(options.onSuccess.calls.length).toEqual(0);
+      expect(options.onError.calls.length).toEqual(1);
+      var onErrorArgs = options.onError.mostRecentCall.args;
+      expect(onErrorArgs[0]).toEqual(url);
+    });
+
+
+    it('regular: multipart missing tokens', function() {
       var url = '/page';
       var res = {
         parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
@@ -315,7 +448,30 @@ describe('spf.nav.request', function() {
     });
 
 
-    it('regular: multipart missing delimiters sent as single', function() {
+    it('regular: multipart missing tokens truncated (error)', function() {
+      var url = '/page';
+      var res = {
+        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        type: 'multipart'
+      };
+      var text = '[{"foo": "FOO"}, {"bar":';
+      var fake = createFakeRegularXHR(text, true);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick(MOCK_DELAY + 1);
+
+      expect(options.onPart.calls.length).toEqual(0);
+      expect(options.onSuccess.calls.length).toEqual(0);
+      expect(options.onError.calls.length).toEqual(1);
+      var onErrorArgs = options.onError.mostRecentCall.args;
+      expect(onErrorArgs[0]).toEqual(url);
+    });
+
+
+    it('regular: multipart missing tokens sent as single', function() {
       var url = '/page';
       var res = {
         parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
@@ -336,6 +492,30 @@ describe('spf.nav.request', function() {
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
       expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+    });
+
+
+    it('regular: multipart missing tokens sent as single truncated (error)',
+       function() {
+      var url = '/page';
+      var res = {
+        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        type: 'multipart'
+      };
+     var text = '[{"foo": "FOO"}, {"bar":';
+      var fake = createFakeRegularXHR(text);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick(MOCK_DELAY + 1);
+
+      expect(options.onPart.calls.length).toEqual(0);
+      expect(options.onSuccess.calls.length).toEqual(0);
+      expect(options.onError.calls.length).toEqual(1);
+      var onErrorArgs = options.onError.mostRecentCall.args;
+      expect(onErrorArgs[0]).toEqual(url);
     });
 
 
@@ -360,6 +540,26 @@ describe('spf.nav.request', function() {
     });
 
 
+    it('chunked: single truncated (error)', function() {
+      var url = '/page';
+      var res = {'foo': 'FOO', 'bar': 'BAR'};
+      var text = '{"foo": "FOO", "bar":';
+      var fake = createFakeChunkedXHR(text, 3);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick((MOCK_DELAY * 4) + 1);
+
+      expect(options.onPart.calls.length).toEqual(0);
+      expect(options.onSuccess.calls.length).toEqual(0);
+      expect(options.onError.calls.length).toEqual(1);
+      var onErrorArgs = options.onError.mostRecentCall.args;
+      expect(onErrorArgs[0]).toEqual(url);
+    });
+
+
     it('chunked: single sent as multipart', function() {
       var url = '/page';
       var res = {'foo': 'FOO', 'bar': 'BAR'};
@@ -378,6 +578,26 @@ describe('spf.nav.request', function() {
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
       expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+    });
+
+
+    it('chunked: single sent as multipart truncated (error)', function() {
+      var url = '/page';
+      var res = {'foo': 'FOO', 'bar': 'BAR'};
+      var text = '{"foo": "FOO", "bar":';
+      var fake = createFakeChunkedXHR(text, 3, true);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick((MOCK_DELAY * 4) + 1);
+
+      expect(options.onPart.calls.length).toEqual(0);
+      expect(options.onSuccess.calls.length).toEqual(0);
+      expect(options.onError.calls.length).toEqual(1);
+      var onErrorArgs = options.onError.mostRecentCall.args;
+      expect(onErrorArgs[0]).toEqual(url);
     });
 
 
@@ -405,6 +625,52 @@ describe('spf.nav.request', function() {
     });
 
 
+    it('chunked: multipart truncated (error)', function() {
+      var url = '/page';
+      var res = {
+        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        type: 'multipart'
+      };
+      var text = '[\r\n{"foo": "FOO"},\r\n{"bar":';
+      var fake = createFakeChunkedXHR(text, 3, true);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick((MOCK_DELAY * 4) + 1);
+
+      expect(options.onPart.calls.length).toEqual(1);
+      expect(options.onSuccess.calls.length).toEqual(0);
+      expect(options.onError.calls.length).toEqual(1);
+      var onErrorArgs = options.onError.mostRecentCall.args;
+      expect(onErrorArgs[0]).toEqual(url);
+    });
+
+
+    it('chunked: multipart truncated at token (error)', function() {
+      var url = '/page';
+      var res = {
+        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        type: 'multipart'
+      };
+      var text = '[\r\n{"foo": "FOO"},\r\n';
+      var fake = createFakeChunkedXHR(text, 3, true);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick((MOCK_DELAY * 4) + 1);
+
+      expect(options.onPart.calls.length).toEqual(1);
+      expect(options.onSuccess.calls.length).toEqual(0);
+      expect(options.onError.calls.length).toEqual(1);
+      var onErrorArgs = options.onError.mostRecentCall.args;
+      expect(onErrorArgs[0]).toEqual(url);
+    });
+
+
     it('chunked: multipart sent as single', function() {
       var url = '/page';
       var res = {
@@ -429,7 +695,102 @@ describe('spf.nav.request', function() {
     });
 
 
-    it('chunked: multipart missing delimiters', function() {
+    it('chunked: multipart sent as single truncated (error)', function() {
+      var url = '/page';
+      var res = {
+        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        type: 'multipart'
+      };
+      var text = '[\r\n{"foo": "FOO"},\r\n{"bar":';
+      var fake = createFakeChunkedXHR(text, 3);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick((MOCK_DELAY * 4) + 1);
+
+      expect(options.onPart.calls.length).toEqual(0);
+      expect(options.onSuccess.calls.length).toEqual(0);
+      expect(options.onError.calls.length).toEqual(1);
+      var onErrorArgs = options.onError.mostRecentCall.args;
+      expect(onErrorArgs[0]).toEqual(url);
+    });
+
+
+    it('chunked: multipart sent as single truncated at token (error)',
+       function() {
+      var url = '/page';
+      var res = {
+        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        type: 'multipart'
+      };
+      var text = '[\r\n{"foo": "FOO"},\r\n';
+      var fake = createFakeChunkedXHR(text, 3);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick((MOCK_DELAY * 4) + 1);
+
+      expect(options.onPart.calls.length).toEqual(0);
+      expect(options.onSuccess.calls.length).toEqual(0);
+      expect(options.onError.calls.length).toEqual(1);
+      var onErrorArgs = options.onError.mostRecentCall.args;
+      expect(onErrorArgs[0]).toEqual(url);
+    });
+
+
+    it('chunked: multipart missing begin token', function() {
+      var url = '/page';
+      var res = {
+        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        type: 'multipart'
+      };
+      var text = '[{"foo": "FOO"},\r\n{"bar": "BAR"}]\r\n';
+      var fake = createFakeChunkedXHR(text, 3, true);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick((MOCK_DELAY * 4) + 1);
+
+      expect(options.onPart.calls.length).toEqual(2);
+      expect(options.onSuccess.calls.length).toEqual(1);
+      expect(options.onError.calls.length).toEqual(0);
+      var onSuccessArgs = options.onSuccess.mostRecentCall.args;
+      expect(onSuccessArgs[0]).toEqual(url);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+    });
+
+
+    it('chunked: multipart missing end token', function() {
+      var url = '/page';
+      var res = {
+        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        type: 'multipart'
+      };
+      var text = '[\r\n{"foo": "FOO"},\r\n{"bar": "BAR"}]';
+      var fake = createFakeChunkedXHR(text, 3, true);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick((MOCK_DELAY * 4) + 1);
+
+      expect(options.onPart.calls.length).toEqual(2);
+      expect(options.onSuccess.calls.length).toEqual(1);
+      expect(options.onError.calls.length).toEqual(0);
+      var onSuccessArgs = options.onSuccess.mostRecentCall.args;
+      expect(onSuccessArgs[0]).toEqual(url);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+    });
+
+
+    it('chunked: multipart missing tokens', function() {
       var url = '/page';
       var res = {
         parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
@@ -453,7 +814,30 @@ describe('spf.nav.request', function() {
     });
 
 
-    it('chunked: multipart missing delimiters sent as single', function() {
+    it('chunked: multipart missing tokens truncated (error)', function() {
+      var url = '/page';
+      var res = {
+        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        type: 'multipart'
+      };
+      var text = '[{"foo": "FOO"}, {"bar":';
+      var fake = createFakeChunkedXHR(text, 3, true);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick((MOCK_DELAY * 4) + 1);
+
+      expect(options.onPart.calls.length).toEqual(0);
+      expect(options.onSuccess.calls.length).toEqual(0);
+      expect(options.onError.calls.length).toEqual(1);
+      var onErrorArgs = options.onError.mostRecentCall.args;
+      expect(onErrorArgs[0]).toEqual(url);
+    });
+
+
+    it('chunked: multipart missing tokens sent as single', function() {
       var url = '/page';
       var res = {
         parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
@@ -474,6 +858,30 @@ describe('spf.nav.request', function() {
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
       expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+    });
+
+
+    it('chunked: multipart missing tokens sent as single truncated (error)',
+       function() {
+      var url = '/page';
+      var res = {
+        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        type: 'multipart'
+      };
+      var text = '[{"foo": "FOO"}, {"bar":';
+      var fake = createFakeChunkedXHR(text, 3);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick((MOCK_DELAY * 4) + 1);
+
+      expect(options.onPart.calls.length).toEqual(0);
+      expect(options.onSuccess.calls.length).toEqual(0);
+      expect(options.onError.calls.length).toEqual(1);
+      var onErrorArgs = options.onError.mostRecentCall.args;
+      expect(onErrorArgs[0]).toEqual(url);
     });
 
 

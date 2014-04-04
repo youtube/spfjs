@@ -274,50 +274,42 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
   if (options.type == 'navigate') {
     timing['navigationStart'] = timing['startTime'];
   }
-  var parts;
   if (chunking.complete.length) {
     // If a multipart response was parsed on-the-fly via chunking, it should be
     // done.  However, check to see if there is any extra content, which could
     // occur if the server failed to end a reponse with a token.
     chunking.extra = spf.string.trim(chunking.extra);
-    if (!chunking.extra) {
-      // If the extra content was just whitespace, indicate parsing is done.
-      parts = chunking.complete;
-    } else {
-      // Otherwise, parse the extra content as a last-ditch effort.
-      var lengthBeforeLastDitch = chunking.complete.length;
+    if (chunking.extra) {
+      // If extra content exists, parse it as a last-ditch effort.
       spf.nav.request.handleChunkFromXHR_(url, options, chunking,
                                           xhr, '', true);
-      // If the last-ditch effort parsed additional sections successfully,
-      // indicate parsing is done.  If not, then the extra content means
-      // the response is invalid JSON; defer to attempt a full parse with
-      // error handling below.
-      if (chunking.complete.length > lengthBeforeLastDitch) {
-        parts = chunking.complete;
-      }
     }
   }
-  if (!parts) {
-    try {
-      var parsed = spf.nav.response.parse(xhr.responseText);
-      parts = parsed.parts;
-    } catch (err) {
-      spf.debug.debug('    JSON parse failed');
-      if (options.onError) {
-        options.onError(url, err);
-      }
-      return;
+  // Always attempt a full parse with error handling.
+  // A multipart response parsed on-the-fly via chunking may be invalid JSON if
+  // the response is truncated early.  (If truncated just after a token,
+  // the chunking.extra value will be empty and no additional chunk parsing
+  // will be done, but the overall response will stil be invalid.)
+  var parts;
+  try {
+    var parsed = spf.nav.response.parse(xhr.responseText);
+    parts = parsed.parts;
+  } catch (err) {
+    spf.debug.debug('    JSON parse failed');
+    if (options.onError) {
+      options.onError(url, err);
     }
-    if (options.onPart && parts.length > 1) {
-      // Only execute callbacks for parts that have not already been processed.
-      // In case there is an edge case where some parts were parsed on-the-fly
-      // but the entire response needed a full parse here, start iteration where
-      // the chunk processing left off.  This is mostly a safety measure and
-      // the number of chunks processed here should be 0.
-      for (var i = chunking.complete.length; i < parts.length; i++) {
-        spf.debug.debug('    parsed part', parts[i]);
-        options.onPart(url, parts[i]);
-      }
+    return;
+  }
+  if (options.onPart && parts.length > 1) {
+    // Only execute callbacks for parts that have not already been processed.
+    // In case there is an edge case where some parts were parsed on-the-fly
+    // but the entire response needed a full parse here, start iteration where
+    // the chunk processing left off.  This is mostly a safety measure and
+    // the number of chunks processed here should be 0.
+    for (var i = chunking.complete.length; i < parts.length; i++) {
+      spf.debug.debug('    parsed part', parts[i]);
+      options.onPart(url, parts[i]);
     }
   }
   var response;
@@ -329,12 +321,10 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
         cacheType = part['cacheType'];
       }
     }
-
     response = /** @type {spf.MultipartResponse} */ ({
       'parts': parts,
       'type': 'multipart'
     });
-
     if (cacheType) {
       response['cacheType'] = cacheType;
     }

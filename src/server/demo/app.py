@@ -45,16 +45,18 @@ templates = web.template.render('templates/',
 
 urls = (
     '/', 'Index',
-    '/index_ajax', 'IndexAjax',
-    '/spec', 'Spec',
-    '/demo', 'Demo',
-    '/demo/(.*)', 'Demo',
-    '/missing', 'Missing',
-    '/other', 'Other',
-    '/other/(.*)', 'Other',
     '/chunked', 'Chunked',
     '/chunked_sample_multipart', 'ChunkedSampleMultipart',
     '/chunked_sample_single', 'ChunkedSampleSingle',
+    '/demo', 'Demo',
+    '/demo/(.*)', 'Demo',
+    '/index', 'Index',
+    '/index_ajax', 'IndexAjax',
+    '/missing', 'Missing',
+    '/other', 'Other',
+    '/other/(.*)', 'Other',
+    '/spec', 'Spec',
+    '/truncated', 'Truncated',
 )
 app = web.application(urls, globals())
 
@@ -155,7 +157,7 @@ class Servlet(object):
     resp = self.CreateSPFResponse(content, fragments=fragments)
     return self.EncodeJSON(resp)
 
-  def ChunkedRenderSPF(self, content, fragments=None):
+  def ChunkedRenderSPF(self, content, fragments=None, truncate=False):
     """Returns a 2-part multipart SPF response across multiple chunks.
 
     This demonstrates support for chunked responses but this simplistic usage
@@ -167,6 +169,8 @@ class Servlet(object):
       content: The content template instanace to render.
       fragments: Optional map of HTML Element IDs to template attributes
         to include instead of returning the entire content template.
+      truncate: Whether to end the response early to simulate chunking/multipart
+        serving errors.
 
     Yields:
       The partial SPF response(s).
@@ -191,9 +195,10 @@ class Servlet(object):
     yield multipart_delim
     # Simulate real work being done.
     time.sleep(0.25)
-    # Send part 2.
-    yield self.EncodeJSON(resp)
-    yield multipart_end
+    if not truncate:
+      # Send part 2.
+      yield self.EncodeJSON(resp)
+      yield multipart_end
 
   def RenderHtml(self, content):
     """Returns a rendered HTML response.
@@ -234,17 +239,19 @@ class Servlet(object):
     else:
       return self.RenderHtml(content)
 
-  def ChunkedRender(self, content):
+  def ChunkedRender(self, content, truncate=False):
     """Returns a rendered HTML or SPF response for chunking as needed.
 
     Args:
       content: The content template instanace to render.
+      truncate: Whether to end the response early to simulate chunking/multipart
+        serving errors.
 
     Yields:
       The rendered HTML or SPF response.
     """
     if self.IsSPFRequest():
-      for chunk in self.ChunkedRenderSPF(content):
+      for chunk in self.ChunkedRenderSPF(content, truncate=truncate):
         yield chunk
     else:
       for chunk in self.ChunkedRenderHTML(content):
@@ -300,6 +307,14 @@ class Missing(Servlet):
   def GET(self):  # pylint: disable=invalid-name,missing-docstring
     web.ctx.status = '404 Not Found'
     return self.Render(templates.missing())
+
+
+class Truncated(Servlet):
+  def GET(self):  # pylint: disable=invalid-name,missing-docstring
+    content = templates.truncated()
+    # yield instead of return to support chunked responses
+    for chunk in self.ChunkedRender(content, truncate=True):
+      yield chunk
 
 
 class Chunked(Servlet):
