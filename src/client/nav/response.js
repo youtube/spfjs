@@ -412,13 +412,27 @@ spf.nav.response.preprocess = function(url, response, opt_callback) {
  * Parses scripts from an HTML string.
  * See {@link #installScripts_}.
  *
- * @param {string} html The HTML content to parse.
+ * @param {string|Object} html The HTML content to parse or the
+ *     preparsed js object.
  * @return {!spf.nav.response.ParseScriptsResult_}
  * @private
  */
 spf.nav.response.parseScripts_ = function(html) {
   var result = new spf.nav.response.ParseScriptsResult_();
   if (!html) {
+    return result;
+  }
+  // If the html isn't a string, it is a preparsed object.
+  if (!spf.string.isString(html)) {
+    // Add the parsed scripts to the result object.
+    if (html['scripts']) {
+      spf.array.each(html['scripts'], function(script) {
+        result.scripts.push({url: script['url'] || '',
+                             text: script['text'] || '',
+                             name: script['name'] || ''});
+      });
+    }
+    result.html = html['html'] || '';
     return result;
   }
   html = html.replace(spf.nav.response.SCRIPT_TAG_REGEXP,
@@ -520,13 +534,27 @@ spf.nav.response.preinstallScripts_ = function(result) {
 /**
  * Parses styles from an HTML string.
  *
- * @param {string} html The HTML content to parse.
+ * @param {string|Object} html The HTML content to parse or the
+ *     preparsed css object.
  * @return {!spf.nav.response.ParseStylesResult_}
  * @private
  */
 spf.nav.response.parseStyles_ = function(html) {
   var result = new spf.nav.response.ParseStylesResult_();
   if (!html) {
+    return result;
+  }
+  // If the html isn't a string, it is a preparsed object.
+  if (!spf.string.isString(html)) {
+    // Add the parsed styles to the result object.
+    if (html['styles']) {
+      spf.array.each(html['styles'], function(style) {
+        result.styles.push({url: style['url'] || '',
+                            text: style['text'] || '',
+                            name: style['name'] || ''});
+      });
+    }
+    result.html = html['html'] || '';
     return result;
   }
   html = html.replace(spf.nav.response.LINK_TAG_REGEXP,
