@@ -58,8 +58,36 @@ spf.pubsub.unsubscribe = function(topic, fn) {
  * @param {string} topic Topic to publish.
  */
 spf.pubsub.publish = function(topic) {
+  spf.pubsub.publish_(topic);
+};
+
+
+/**
+ * Simulaneously publishes and clears a topic.  Calls functions subscribed to
+ * topic in the order in which they were added, unsubscribing each beforehand.
+ * If any of the functions throws an uncaught error, publishing is aborted.
+ * See {#publish} and {#clear}.
+ *
+ * @param {string} topic Topic to publish.
+ */
+spf.pubsub.flush = function(topic) {
+  spf.pubsub.publish_(topic, true);
+};
+
+
+/**
+ * See {@link #publish} or {@link #flush}.
+ *
+ * @param {string} topic Topic to publish.
+ * @param {boolean=} opt_unsub Whether to unsubscribe functions beforehand.
+ * @private
+ */
+spf.pubsub.publish_ = function(topic, opt_unsub) {
   if (topic in spf.pubsub.subscriptions) {
-    spf.array.each(spf.pubsub.subscriptions[topic], function(subFn) {
+    spf.array.each(spf.pubsub.subscriptions[topic], function(subFn, i, arr) {
+      if (opt_unsub) {
+        arr[i] = null;
+      }
       if (subFn) {
         subFn();
       }

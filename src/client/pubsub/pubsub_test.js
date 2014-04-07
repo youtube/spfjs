@@ -93,6 +93,22 @@ describe('spf.pubsub', function() {
     expect(callbacks.two.calls.length).toEqual(2);
   });
 
+  it('flush', function() {
+    spf.pubsub.subscribe('foo', callbacks.one);
+    spf.pubsub.subscribe('foo', callbacks.two);
+    // Two subscriptions.
+    spf.pubsub.flush('foo');
+    expect(callbacks.one.calls.length).toEqual(1);
+    expect(callbacks.two.calls.length).toEqual(1);
+    expect(subs['foo'] || []).not.toContain(callbacks.one);
+    expect(subs['foo'] || []).not.toContain(callbacks.two);
+    // No subscriptions.
+    spf.pubsub.flush('foo');
+    spf.pubsub.flush('bar');
+    expect(callbacks.one.calls.length).toEqual(1);
+    expect(callbacks.two.calls.length).toEqual(1);
+  });
+
   it('clear', function() {
     spf.pubsub.subscribe('bar', callbacks.three);
     spf.pubsub.subscribe('bar', callbacks.four);

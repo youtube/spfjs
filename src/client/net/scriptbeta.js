@@ -102,7 +102,7 @@ spf.net.scriptbeta.load = function(urls, opt_nameOrFn, opt_fn) {
     }
   }
 
-  var pseudonym = name || '^' + urls.join('^');
+  var pseudonym = name || '^' + urls.sort().join('^');
   // Associate the scripts with the name (or pseudonym) to allow unloading.
   spf.net.resourcebeta.urls.set(type, pseudonym, urls);
   // Subscribe the callback to execute when all urls are loaded.
@@ -113,7 +113,7 @@ spf.net.scriptbeta.load = function(urls, opt_nameOrFn, opt_fn) {
   spf.array.each(urls, function(url) {
     // If a status exists, the script is already loading or loaded.
     if (spf.net.scriptbeta.exists_(url)) {
-      setTimeout(spf.net.scriptbeta.check, 0);
+      spf.net.scriptbeta.check();
     } else {
       if (spf.config.get('beta-use-callbacks')) {
         spf.execute(/** @type {Function} */ (
@@ -382,8 +382,15 @@ spf.net.scriptbeta.check = function() {
       spf.debug.debug(' ', topic, '->', names, '=', ready);
       if (ready) {
         spf.debug.debug('  publishing', topic);
-        spf.pubsub.publish(topic);
-        spf.pubsub.clear(topic);
+        // Because check evaluates the pubsub.subscriptions array to determine
+        // if urls for names are loaded, there is a potential subscribe/publish
+        // infinite loop:
+        //     require_ -> load (subscribe) -> check (publish) ->
+        //     load (subscribe) -> <loop forever> ...
+        // To avoid this, use flush instead of publish + clear to ensure that
+        // previously subscribed functions are removed before execution:
+        //     require_ -> load (subscribe) -> check (flush) -> <no loop>
+        spf.pubsub.flush(topic);
       }
     }
   }
