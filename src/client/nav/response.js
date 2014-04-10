@@ -721,7 +721,7 @@ spf.nav.response.SCRIPT_TAG_REGEXP =
  * @const
  */
 spf.nav.response.STYLE_TAG_REGEXP =
-    /\x3cstyle([\s\S]*?)\x3e([\s\S]*?)\x3c\/style/ig;
+    /\x3cstyle([\s\S]*?)\x3e([\s\S]*?)\x3c\/style\x3e/ig;
 
 
 /**
