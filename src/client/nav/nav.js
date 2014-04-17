@@ -866,6 +866,10 @@ spf.nav.handleLoadError_ = function(isPrefetch, options, original, url, err) {
   }
   if (isPrefetch) {
     spf.nav.removePrefetch(url);
+
+    if (spf.state.get('nav-promote') == original) {
+      spf.nav.handleNavigateError_(options, url, err);
+    }
   }
 };
 
