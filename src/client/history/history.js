@@ -23,8 +23,11 @@ goog.require('spf.state');
  *     a history event. The first parameter will be the URL
  *     the user is browsing to.  The second parameter will be an optional
  *     state object associated with that URL.
+ * @param {function(string, Error)} errorCallback The function to handle
+ *     a errors. The first parameter will be the URL with the error.  The
+ *     second parameter will be the error object.
  */
-spf.history.init = function(callback) {
+spf.history.init = function(callback, errorCallback) {
   if (!spf.state.get('history-init') && window.addEventListener) {
     // Secure the history functions to prevent overwriting of pushState.
     if (spf.config.get('history-secure-functions')) {
@@ -36,6 +39,8 @@ spf.history.init = function(callback) {
     spf.state.set('history-init', true);
     // A callback to handle history events.
     spf.state.set('history-callback', callback);
+    // A callback to handle errors.
+    spf.state.set('history-error-callback', errorCallback);
     // The event listener.
     spf.state.set('history-listener', spf.history.pop_);
     // The URL of the current history entry, used to detect returning to the
@@ -62,6 +67,7 @@ spf.history.dispose = function() {
     }
     spf.state.set('history-init', false);
     spf.state.set('history-callback', null);
+    spf.state.set('history-error-callback', null);
     spf.state.set('history-listener', null);
     spf.state.set('history-url', null);
     spf.state.set('history-timestamp', 0);
@@ -76,19 +82,22 @@ spf.history.dispose = function() {
  * @private
  */
 spf.history.secureHistoryFunctions_ = function() {
+  var errorCallback = /** @type {Function} */ (
+      spf.state.get('history-error-callback'));
+  var historyCopy = {
+    pushState: window.history.pushState,
+    replaceState: window.history.replaceState
+  };
   try {
-    var errorCallback = /** @type {Function} */ (
-        spf.config.get('navigate-error-callback'));
-    var historyCopy = {pushState: window.history.pushState,
-                   replaceState: window.history.replaceState};
     Object.defineProperty(window.history, 'pushState', {
       get: function() {
         return historyCopy.pushState;
       },
       set: function(val) {
         if (errorCallback) {
-          errorCallback(new Error('history.pushState cannot be set to ' +
-              val));
+          errorCallback(
+              window.location.href,
+              new Error('history.pushState cannot be set to ' + val));
         }
       }
     });
@@ -98,8 +107,9 @@ spf.history.secureHistoryFunctions_ = function() {
       },
       set: function(val) {
         if (errorCallback) {
-          errorCallback(new Error('history.replaceState cannot be set to ' +
-              val));
+          errorCallback(
+              window.location.href,
+              new Error('history.replaceState cannot be set to ' + val));
         }
       }
     });

@@ -26,7 +26,7 @@ goog.require('spf.url');
  * Initializes (enables) pushState navigation.
  */
 spf.nav.init = function() {
-  spf.history.init(spf.nav.handleHistory_);
+  spf.history.init(spf.nav.handleHistory_, spf.nav.triggerErrorCallback_);
   if (!spf.state.get('nav-init') && document.addEventListener) {
     document.addEventListener('click', spf.nav.handleClick_, false);
     if (spf.config.get('prefetch-on-mousedown') &&
@@ -514,15 +514,27 @@ spf.nav.handleNavigateError_ = function(options, url, err) {
   if (canceled) {
     return;
   }
-  if (SPF_BETA && !spf.config.get('beta-use-callbacks')) {
-    canceled = !spf.dispatch(spf.nav.Events.ERROR, {'url': url, 'err': err});
-  } else {
-    canceled = !spf.nav.callback('navigate-error-callback', url, err);
-  }
+  canceled = spf.nav.triggerErrorCallback_(url, err);
   if (canceled) {
     return;
   }
   spf.nav.redirect(url);
+};
+
+
+/**
+ * Handles navigation errors.
+ *
+ * @param {string} url The history URL.
+ * @param {Error} err The Error object.
+ * @return {boolean} True if the callback explicitly cancels.
+ * @private
+ */
+spf.nav.triggerErrorCallback_ = function(url, err) {
+  if (SPF_BETA && !spf.config.get('beta-use-callbacks')) {
+    return spf.dispatch(spf.nav.Events.ERROR, {'url': url, 'err': err});
+  }
+  return spf.nav.callback('navigate-error-callback', url, err);
 };
 
 
