@@ -33,7 +33,7 @@ describe('spf.nav', function() {
     };
     return evt;
   };
-  var createFakeRequest = function(response1, response2) {
+  var createFakeRequest = function(response1, response2, opt_shouldFail) {
     var counter = 0;
     var xhr = {
       abort: function() { },
@@ -50,8 +50,18 @@ describe('spf.nav', function() {
         xhr.readyState = 4;
       }, MOCK_DELAY);
     };
+    var callOnErrorDelayed = function(url, opts) {
+      setTimeout(function() {
+        opts.onError(url, new Error());
+        xhr.readyState = 4;
+      }, MOCK_DELAY);
+    };
     return function(url, options) {
-      callOnSuccessDelayed(url, options);
+      if (opt_shouldFail) {
+        callOnErrorDelayed(url, options);
+      } else {
+        callOnSuccessDelayed(url, options);
+      }
       return xhr;
     };
   };
@@ -148,6 +158,22 @@ describe('spf.nav', function() {
     });
 
 
+    it('handles promoted prefetch errors', function() {
+      spyOn(spf.nav, 'handleNavigateError_');
+
+      var url = '/page';
+      var fake = createFakeRequest({'foobar': true}, null, true);
+      spyOn(spf.nav.request, 'send').andCallFake(fake);
+
+
+      var absoluteUrl = spf.url.absolute(url);
+      spf.nav.prefetch(url);
+      spf.nav.navigate(url);
+      expect(spf.state.get('nav-promote')).toEqual(url);
+
+      jasmine.Clock.tick(MOCK_DELAY + 1);
+      expect(spf.nav.handleNavigateError_).toHaveBeenCalled();
+    });
   });
 
 
