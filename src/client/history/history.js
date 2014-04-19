@@ -29,10 +29,6 @@ goog.require('spf.state');
  */
 spf.history.init = function(callback, errorCallback) {
   if (!spf.state.get('history-init') && window.addEventListener) {
-    // Secure the history functions to prevent overwriting of pushState.
-    if (spf.config.get('history-secure-functions')) {
-      spf.history.secureHistoryFunctions_();
-    }
     var url = spf.history.getCurrentUrl_();
     window.addEventListener('popstate', spf.history.pop_, false);
     // Whether history is initialized.
@@ -49,6 +45,10 @@ spf.history.init = function(callback, errorCallback) {
     // The timestap of the current history entry, used to distinguish
     // between backward and forward state changes.
     spf.state.set('history-timestamp', spf.now());
+    // Secure the history functions to prevent overwriting of pushState.
+    if (spf.config.get('history-secure-functions')) {
+      spf.history.secureHistoryFunctions_();
+    }
     // Set the initial referer to properly send referer on back button.
     var historyState = { 'spf-referer': document.referrer };
     spf.history.replace(url, historyState);
