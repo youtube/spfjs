@@ -505,16 +505,17 @@ spf.nav.handleNavigateError_ = function(options, url, err) {
   // Execute the "onError" and "navigation error" callbacks.  If either
   // explicitly cancels (by returning false), ignore the error.
   // Otherwise, redirect.
+  var canceled;
   if (SPF_BETA) {
-    var canceled = !spf.nav.callback(options['onError'],
-                                     {'url': url, 'err': err});
+    canceled = !spf.nav.callback(options['onError'],
+                                 {'url': url, 'err': err});
   } else {
-    var canceled = !spf.nav.callback(options['onError'], url, err);
+    canceled = !spf.nav.callback(options['onError'], url, err);
   }
   if (canceled) {
     return;
   }
-  canceled = spf.nav.triggerErrorCallback_(url, err);
+  canceled = !spf.nav.triggerErrorCallback_(url, err);
   if (canceled) {
     return;
   }
