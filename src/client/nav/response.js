@@ -145,8 +145,9 @@ spf.nav.response.process = function(url, response, opt_callback, opt_navigate,
     // Update the history state if the url doesn't match.
     if (fullUrl != spf.nav.response.getCurrentUrl_()) {
       spf.debug.debug('  update history with response url');
-      // Add the URL to the history stack.
-      spf.history.replace(response['url'], null, false, true);
+      // Add the URL to the history stack, including hash.
+      spf.history.replace(response['url'] + window.location.hash,
+          null, false, true);
     }
   }
 
@@ -647,12 +648,12 @@ spf.nav.response.preinstallStyles_ = function(result) {
 
 
 /**
- * Provides the current URL from the window.
+ * Provides the current (absolute) URL from the window.
  * @return {string} Get the current window's URL.
  * @private
  */
 spf.nav.response.getCurrentUrl_ = function() {
-  return window.location.href;
+  return spf.url.absolute(window.location.href);
 };
 
 
