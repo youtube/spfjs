@@ -33,7 +33,7 @@ describe('spf.nav', function() {
     };
     return evt;
   };
-  var createFakeRequest = function(response1, response2, opt_shouldFail) {
+  var createFakeRequest = function(response1, opt_response2, opt_shouldFail) {
     var counter = 0;
     var xhr = {
       abort: function() { },
@@ -42,10 +42,19 @@ describe('spf.nav', function() {
     var callOnSuccessDelayed = function(url, opts) {
       setTimeout(function() {
         if (counter == 0) {
-          opts.onSuccess(url, response1);
+          if (opt_response2) {
+            opts.onPart(url, response1);
+          } else {
+            opts.onSuccess(url, response1);
+          }
           counter++;
         } else {
-          opts.onSuccess(url, response2);
+          opts.onPart(url, opt_response2);
+          var fullResponse = {
+            'type': 'multipart',
+            'parts': [response1, opt_response2]
+          };
+          opts.onSuccess(url, fullResponse);
         }
         xhr.readyState = 4;
       }, MOCK_DELAY);
@@ -65,11 +74,19 @@ describe('spf.nav', function() {
       return xhr;
     };
   };
+  var fakeHistoryReplace = function(url, state, doCallback) {
+    if (doCallback) {
+      var callback = spf.state.get('history-callback');
+      if (callback) {
+        callback(url, state);
+      }
+    }
+  };
 
 
   beforeEach(function() {
     spyOn(spf.history, 'add');
-    spyOn(spf.history, 'replace');
+    spyOn(spf.history, 'replace').andCallFake(fakeHistoryReplace);
     if (!document.addEventListener) {
       document.addEventListener = jasmine.createSpy('addEventListener');
     }
@@ -122,7 +139,24 @@ describe('spf.nav', function() {
     });
 
 
-    it('prefetch with redirects', function() {
+    it('prefetch singlepart response with redirects', function() {
+      spyOn(spf.nav, 'prefetch_').andCallThrough();
+
+      var url = '/page';
+      var url2 = '/page2';
+      var fake = createFakeRequest({'redirect': url2});
+      spyOn(spf.nav.request, 'send').andCallFake(fake);
+
+      var absoluteUrl = spf.url.absolute(url);
+      spf.nav.prefetch(url);
+
+      jasmine.Clock.tick(MOCK_DELAY + 1);
+      expect(spf.nav.prefetch_.calls[1].args[0]).toEqual(url2);
+      expect(spf.nav.prefetch_.calls.length).toEqual(2);
+    });
+
+
+    it('prefetch multipart response with redirects', function() {
       spyOn(spf.nav, 'prefetch_').andCallThrough();
 
       var url = '/page';
@@ -310,6 +344,58 @@ describe('spf.nav', function() {
       spf.config.set('navigate-lifetime', null);
       spf.state.set('nav-time', spf.now() - (10 * 24 * 60 * 60 * 1000));
       expect(spf.nav.isNavigateEligible_(url)).toBe(true);
+    });
+
+
+  });
+
+
+  describe('navigate', function() {
+
+
+    it('handles singlepart redirect response', function() {
+      // Skip history tests for browsers which don't support the history apis.
+      // TODO(dcphillips): Figure out a way to control this in the BUILD files.
+      if (!window.history.pushState || !window.history.replaceState) {
+        return;
+      }
+
+      spyOn(spf.nav, 'navigate_').andCallThrough();
+
+      var url = '/page';
+      var url2 = '/page2';
+      var fake = createFakeRequest({'redirect': url2});
+      spyOn(spf.nav.request, 'send').andCallFake(fake);
+
+      var absoluteUrl = spf.url.absolute(url);
+      spf.nav.navigate(url);
+
+      jasmine.Clock.tick(MOCK_DELAY + 1);
+      expect(spf.nav.navigate_.calls[1].args[0]).toEqual(url2);
+      expect(spf.nav.navigate_.calls.length).toEqual(2);
+    });
+
+
+    it('handles multipart redirect response', function() {
+      // Skip history tests for browsers which don't support the history apis.
+      // TODO(dcphillips): Figure out a way to control this in the BUILD files.
+      if (!window.history.pushState || !window.history.replaceState) {
+        return;
+      }
+
+      spyOn(spf.nav, 'navigate_').andCallThrough();
+
+      var url = '/page';
+      var url2 = '/page2';
+      var fake = createFakeRequest({'redirect': url2}, {'foobar': true});
+      spyOn(spf.nav.request, 'send').andCallFake(fake);
+
+      var absoluteUrl = spf.url.absolute(url);
+      spf.nav.navigate(url);
+
+      jasmine.Clock.tick(2 * MOCK_DELAY + 1);
+      expect(spf.nav.navigate_.calls[1].args[0]).toEqual(url2);
+      expect(spf.nav.navigate_.calls.length).toEqual(2);
     });
 
 

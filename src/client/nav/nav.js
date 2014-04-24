@@ -442,7 +442,7 @@ spf.nav.navigateSendRequest_ = function(url, options, current, referer,
   var handlePart = spf.bind(spf.nav.handleNavigatePart_, null,
                             options, reverse);
   var handleSuccess = spf.bind(spf.nav.handleNavigateSuccess_, null,
-                               options, referer, reverse, '');
+                               options, reverse, '');
 
   var xhr = spf.nav.request.send(url, {
     method: options['method'],
@@ -566,6 +566,13 @@ spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
     spf.nav.redirect(url);
     return;
   }
+
+  // Check for redirect responses.
+  if (partial['redirect']) {
+    spf.nav.handleNavigateRedirect_(options, partial['redirect']);
+    return;
+  }
+
   try {
     spf.nav.response.process(url, partial, function() {
       // Execute the "onPart" and "navigation part processed" callbacks.  If
@@ -608,7 +615,6 @@ spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
  * See {@link navigate}.
  *
  * @param {spf.RequestOptions} options Request options object.
- * @param {string} referer The Referrer URL, without the SPF identifier.
  * @param {boolean} reverse Whether this is "backwards" navigation. True
  *     when the "back" button is clicked and navigation is in response to a
  *     popState event.
@@ -619,7 +625,7 @@ spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
  *     object, either a complete single or multipart response object.
  * @private
  */
-spf.nav.handleNavigateSuccess_ = function(options, referer, reverse, original,
+spf.nav.handleNavigateSuccess_ = function(options, reverse, original,
                                           url, response) {
   spf.state.set('nav-request', null);
 
@@ -647,21 +653,7 @@ spf.nav.handleNavigateSuccess_ = function(options, referer, reverse, original,
 
   // Check for redirect responses.
   if (response['redirect']) {
-    var redirectUrl = response['redirect'];
-    //
-    // TODO(nicksay): Figure out navigate callbacks + redirects.
-    //
-    // Replace the current history entry with the redirect,
-    // executing the callback to trigger the next navigation.
-    var state = {'spf-referer': referer};
-    try {
-      spf.history.replace(redirectUrl, state, true);
-    } catch (err) {
-      spf.nav.cancel();
-      spf.debug.error('error caught, redirecting ',
-                      '(url=', redirectUrl, 'err=', err, ')');
-      spf.nav.handleNavigateError_(options, redirectUrl, err);
-    }
+    spf.nav.handleNavigateRedirect_(options, response['redirect']);
     return;
   }
 
@@ -699,6 +691,32 @@ spf.nav.handleNavigateSuccess_ = function(options, referer, reverse, original,
     spf.debug.debug('    failed to process response', response);
     spf.nav.handleNavigateError_(options, url, err);
     return;
+  }
+};
+
+
+/**
+ * Handles a redirect responses on navigation requests.
+ *
+ * @param {spf.RequestOptions} options Request options object.
+ * @param {string} redirectUrl The new URL to be redirected to.
+ * @private
+ */
+spf.nav.handleNavigateRedirect_ = function(options, redirectUrl) {
+  //
+  // TODO(nicksay): Figure out navigate callbacks + redirects.
+  //
+  // Replace the current history entry with the redirect,
+  // executing the callback to trigger the next navigation.
+  try {
+    // Persist the url hash to mirror browser redirects.
+    redirectUrl = redirectUrl + window.location.hash;
+    spf.history.replace(redirectUrl, null, true, true);
+  } catch (err) {
+    spf.nav.cancel();
+    spf.debug.error('error caught, redirecting ',
+                    '(url=', redirectUrl, 'err=', err, ')');
+    spf.nav.handleNavigateError_(options, redirectUrl, err);
   }
 };
 
@@ -900,6 +918,13 @@ spf.nav.handleLoadError_ = function(isPrefetch, options, original, url, err) {
  */
 spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
                                    partial) {
+  // Check for redirects.
+  if (partial['redirect']) {
+    spf.nav.handleLoadRedirect_(isPrefetch, options, original,
+                                partial['redirect']);
+    return;
+  }
+
   if (isPrefetch) {
     // Add the navigate part function as a task to be invoked on
     // prefetch promotion.
@@ -944,14 +969,8 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
                                       response) {
   // Check for redirects.
   if (response['redirect']) {
-    var redirectFn = isPrefetch ? spf.nav.prefetch_ : spf.nav.load_;
-    // Note that POST is not propagated with redirects.
-    var redirectOpts = /** @type {spf.RequestOptions} */ ({
-      'onSuccess': options['onSuccess'],
-      'onPart': options['onPart'],
-      'onError': options['onError']
-    });
-    redirectFn(response['redirect'], redirectOpts, original);
+    spf.nav.handleLoadRedirect_(isPrefetch, options, original,
+                                response['redirect']);
     return;
   }
   var promoteKey = spf.nav.promoteKey(original);
@@ -964,13 +983,8 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
     // been promoted, remove the task queues becuase a subsequent
     // request will hit the cache.
     if (spf.state.get('nav-promote') == original) {
-      // Add the navigate success function as a task.
-      var referer = window.location.href;
-      if (spf.state.get('nav-promote') == original) {
-        referer = spf.state.get('nav-referer');
-      }
       var fn = spf.bind(spf.nav.handleNavigateSuccess_, null,
-                        options, referer, false, original, url, response);
+                        options, false, original, url, response);
       spf.tasks.add(promoteKey, fn);
       spf.tasks.run(promoteKey, true);
       return;
@@ -994,6 +1008,28 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
       spf.nav.callback(options['onSuccess'], url, response);
     }
   });
+};
+
+
+/**
+ * Handles a redirect response on load requests.
+ *
+ * @param {boolean} isPrefetch True for prefetch; false for load.
+ * @param {spf.RequestOptions} options Request options object.
+ * @param {string} original The original request URL.
+ * @param {string} redirectUrl The new URL to be redirected to.
+ * @private
+ */
+spf.nav.handleLoadRedirect_ = function(isPrefetch, options, original,
+                                       redirectUrl) {
+  var redirectFn = isPrefetch ? spf.nav.prefetch_ : spf.nav.load_;
+  // Note that POST is not propagated with redirects.
+  var redirectOpts = /** @type {spf.RequestOptions} */ ({
+    'onSuccess': options['onSuccess'],
+    'onPart': options['onPart'],
+    'onError': options['onError']
+  });
+  redirectFn(redirectUrl, redirectOpts, original);
 };
 
 
