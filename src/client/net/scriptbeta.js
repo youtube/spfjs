@@ -48,7 +48,7 @@ goog.require('spf.tracing');
  *   reload a script, unload it first with {@link #unload}.
  *
  * - A callback can be specified to execute once the script has loaded.  The
- *   callback will be execute each time, even if the script is not reloaded.
+ *   callback will be executed each time, even if the script is not reloaded.
  *
  * - A name can be specified to identify the same script at different URLs.
  *   (For example, "main-A.js" and "main-B.js" are both "main".)  If a name

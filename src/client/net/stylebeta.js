@@ -23,25 +23,36 @@ goog.require('spf.tracing');
  * - Subsequent calls to load the same URL will not reload the style.  To
  *   reload a style, unload it first with {@link #unload}.
  *
+ * - A callback can be specified to execute once the style has loaded.  The
+ *   callback will be executed each time, even if the style is not reloaded.
+ *   NOTE: Unlike scripts, this callback is best effort and is supported
+ *   in the following browser versions: IE 6, Chrome 19, Firefox 9, Safari 6.
+ *
  * - A name can be specified to identify the same style at different URLs.
  *   (For example, "main-A.css" and "main-B.css" are both "main".)  If a name
  *   is specified, all other styles with the same name will be unloaded.
  *   This allows switching between versions of the same style at different URLs.
  *
  * @param {string|Array.<string>} urls One or more URLs of styles to load.
- * @param {string=} opt_name Name to identify the style(s).
+ * @param {(string|Function)=} opt_nameOrFn Name to identify the style(s)
+ *     or callback function to execute when the style is loaded.
+ * @param {Function=} opt_fn Callback function to execute when the style is
+ *     loaded.
  */
-spf.net.stylebeta.load = function(urls, opt_name) {
+spf.net.stylebeta.load = function(urls, opt_nameOrFn, opt_fn) {
   var type = spf.net.resourcebeta.Type.CSS;
 
   // Convert to an array if needed.
   urls = spf.array.toArray(urls);
 
-  var name = opt_name || '';
+  // Determine if a name was provided with 2 or 3 arguments.
+  var withName = spf.string.isString(opt_nameOrFn);
+  var name = /** @type {string} */ (withName ? opt_nameOrFn : '');
+  var callback = /** @type {Function} */ (withName ? opt_fn : opt_nameOrFn);
   spf.debug.debug('style.load', urls, name);
 
-  // After the styles are loaded, do nothing by default.
-  var done = null;
+  // After the styles are loaded, execute the callback by default.
+  var done = callback;
 
   // If a name is provided with different URLs, then also unload the previous
   // versions after the styles are loaded.
@@ -59,6 +70,7 @@ spf.net.stylebeta.load = function(urls, opt_name) {
       spf.net.resourcebeta.urls.clear(type, name);
       done = function() {
         spf.net.stylebeta.unload_(name, previous);
+        callback && callback();
       };
     }
   }

@@ -259,7 +259,7 @@ spf.script = {};
  *   reload a script, unload it first with {@link #unload}.
  *
  * - A callback can be specified to execute once the script has loaded.  The
- *   callback will be execute each time, even if the script is not reloaded.
+ *   callback will be executed each time, even if the script is not reloaded.
  *
  * - A name can be specified to identify the same script at different URLs.
  *   (For example, "main-A.js" and "main-B.js" are both "main".)  If a name
@@ -400,15 +400,23 @@ spf.style = {};
  * - Subsequent calls to load the same URL will not reload the style.  To
  *   reload a style, unload it first with {@link #unload}.
  *
+ * - A callback can be specified to execute once the style has loaded.  The
+ *   callback will be executed each time, even if the style is not reloaded.
+ *   NOTE: Unlike scripts, this callback is best effort and is supported
+ *   in the following browser versions: IE 6, Chrome 19, Firefox 9, Safari 6.
+ *
  * - A name can be specified to identify the same style at different URLs.
  *   (For example, "main-A.css" and "main-B.css" are both "main".)  If a name
  *   is specified, all other styles with the same name will be unloaded.
  *   This allows switching between versions of the same style at different URLs.
  *
  * @param {string|Array.<string>} urls One or more URLs of styles to load.
- * @param {string=} opt_name Name to identify the style(s).
+ * @param {(string|Function)=} opt_nameOrFn Name to identify the style(s)
+ *     or callback function to execute when the style is loaded.
+ * @param {Function=} opt_fn Callback function to execute when the style is
+ *     loaded.
  */
-spf.style.load = function(urls, opt_name) {};
+spf.style.load = function(urls, opt_nameOrFn, opt_fn) {};
 
 
 /**
