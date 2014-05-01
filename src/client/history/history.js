@@ -268,10 +268,14 @@ spf.history.doPushState_ = function(data, title, opt_url) {
   // It is common for third party code to interfere with pushState.
   // This check makes sure that pushState is a function when called to
   // avoid js errors and a state where the back arrow stops working.
-  if (typeof window.history.pushState == 'function') {
-    window.history.pushState(data, title, opt_url);
+  if (spf.config.get('history-secure-functions')) {
+    if (typeof window.history.pushState == 'function') {
+      window.history.pushState(data, title, opt_url);
+    } else {
+      throw new Error('history.pushState is not a function.');
+    }
   } else {
-    throw new Error('history.pushState is not a function.');
+    spf.history.pushState_.call(window.history, data, title, opt_url);
   }
 };
 
@@ -283,9 +287,27 @@ spf.history.doPushState_ = function(data, title, opt_url) {
  * @private
  */
 spf.history.doReplaceState_ = function(data, title, opt_url) {
-  if (typeof window.history.replaceState == 'function') {
-    window.history.replaceState(data, title, opt_url);
+  if (spf.config.get('history-secure-functions')) {
+    if (typeof window.history.replaceState == 'function') {
+      window.history.replaceState(data, title, opt_url);
+    } else {
+      throw new Error('history.replaceState is not a function');
+    }
   } else {
-    throw new Error('history.replaceState is not a function');
+    spf.history.replaceState_.call(window.history, data, title, opt_url);
   }
 };
+
+
+/**
+ * A reference to the history.pushState function.
+ * @private
+ */
+spf.history.pushState_ = History.prototype.pushState;
+
+
+/**
+ * A reference to the history.replaceState function.
+ * @private
+ */
+spf.history.replaceState_ = History.prototype.replaceState;
