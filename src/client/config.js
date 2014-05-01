@@ -16,7 +16,6 @@ goog.require('spf.state');
 spf.config.defaults = {
   'animation-class': 'spf-animate',
   'animation-duration': 425,
-  'beta-use-callbacks': false,
   'cache-lifetime': 10 * 60 * 1000,  // 10 minute cache lifetime (ms).
   'cache-max': 50,  // 50 items.
   'cache-unified': false,

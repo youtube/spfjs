@@ -64,9 +64,7 @@ spf.net.stylebeta.load = function(urls, opt_nameOrFn, opt_fn) {
     var previous = spf.net.resourcebeta.urls.get(type, name);
     // If loading new styles for a name, handle unloading previous ones.
     if (!loaded && previous) {
-      if (!spf.config.get('beta-use-callbacks')) {
-        spf.dispatch('cssbeforeunload', {'name': name, 'urls': previous});
-      }
+      spf.dispatch('cssbeforeunload', {'name': name, 'urls': previous});
       spf.net.resourcebeta.urls.clear(type, name);
       done = function() {
         spf.net.stylebeta.unload_(name, previous);
@@ -88,10 +86,6 @@ spf.net.stylebeta.load = function(urls, opt_nameOrFn, opt_fn) {
     if (spf.net.stylebeta.exists_(url)) {
       spf.net.stylebeta.check();
     } else {
-      if (spf.config.get('beta-use-callbacks')) {
-        spf.execute(/** @type {Function} */ (
-            spf.config.get('style-loading-callback')), url, pseudonym);
-      }
       var el = spf.net.stylebeta.get(url, spf.net.stylebeta.check);
       if (name) {
         el.setAttribute('name', name);
@@ -127,9 +121,7 @@ spf.net.stylebeta.unload_ = function(name, urls) {
   var type = spf.net.resourcebeta.Type.CSS;
   if (urls.length) {
     spf.debug.debug('  > style.unload', urls);
-    if (!spf.config.get('beta-use-callbacks')) {
-      spf.dispatch('cssunload', {'name': name, 'urls': urls});
-    }
+    spf.dispatch('cssunload', {'name': name, 'urls': urls});
     spf.array.each(urls, function(url) {
       spf.net.resourcebeta.destroy(type, url);
     });

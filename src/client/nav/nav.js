@@ -374,7 +374,7 @@ spf.nav.navigate_ = function(url, opt_options, opt_current, opt_referer,
   }
   // Execute the "navigation requested" callback.  If the callback explicitly
   // cancels (by returning false), cancel this navigation and redirect.
-  if (SPF_BETA && !spf.config.get('beta-use-callbacks')) {
+  if (SPF_BETA) {
     var canceled = !spf.dispatch(spf.nav.Events.REQUESTED, {'url': url});
   } else {
     var canceled = !spf.nav.callback('navigate-requested-callback', url);
@@ -532,7 +532,7 @@ spf.nav.handleNavigateError_ = function(options, url, err) {
  * @private
  */
 spf.nav.triggerErrorCallback_ = function(url, err) {
-  if (SPF_BETA && !spf.config.get('beta-use-callbacks')) {
+  if (SPF_BETA) {
     return spf.dispatch(spf.nav.Events.ERROR, {'url': url, 'err': err});
   }
   return spf.nav.callback('navigate-error-callback', url, err);
@@ -555,7 +555,7 @@ spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
   // Execute the "navigation part received" callback.  If the callback
   // explicitly cancels (by returning false), cancel this navigation and
   // redirect.
-  if (SPF_BETA && !spf.config.get('beta-use-callbacks')) {
+  if (SPF_BETA) {
     var canceled = !spf.dispatch(spf.nav.Events.PART_RECEIVED,
                                  {'url': url, 'part': partial});
   } else {
@@ -588,7 +588,7 @@ spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
         spf.nav.redirect(url);
         return;
       }
-      if (SPF_BETA && !spf.config.get('beta-use-callbacks')) {
+      if (SPF_BETA) {
         canceled = !spf.dispatch(spf.nav.Events.PART_PROCESSED,
                                  {'url': url, 'part': partial});
       } else {
@@ -639,7 +639,7 @@ spf.nav.handleNavigateSuccess_ = function(options, reverse, original,
   // Execute the "navigation received" callback.  If the callback
   // explicitly cancels (by returning false), cancel this navigation and
   // redirect.
-  if (SPF_BETA && !spf.config.get('beta-use-callbacks')) {
+  if (SPF_BETA) {
     var canceled = !spf.dispatch(spf.nav.Events.RECEIVED,
                                  {'url': url, 'response': response});
   } else {
@@ -678,7 +678,7 @@ spf.nav.handleNavigateSuccess_ = function(options, reverse, original,
         return;
       }
 
-      if (SPF_BETA && !spf.config.get('beta-use-callbacks')) {
+      if (SPF_BETA) {
         spf.dispatch(spf.nav.Events.PROCESSED,
                      {'url': url, 'response': response});
       } else {
