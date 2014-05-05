@@ -12,7 +12,7 @@
 goog.provide('spf.bootloader');
 
 goog.require('spf');
-goog.require('spf.net.scriptbeta');
+goog.require('spf.net.script');
 
 
 // Create the bootloader API by exporting aliased functions.
@@ -21,22 +21,18 @@ spf.bootloader.api_ = {
   'script': {
     // The bootloader API.
     // * Load scripts.
-    'load': spf.net.scriptbeta.load,
-    'get': spf.net.scriptbeta.get,
+    'load': spf.net.script.load,
+    'get': spf.net.script.get,
     // * Wait until ready.
-    'ready': spf.net.scriptbeta.ready,
-    'done': spf.net.scriptbeta.done,
+    'ready': spf.net.script.ready,
+    'done': spf.net.script.done,
     // * Load in depedency order.
-    'require': spf.net.scriptbeta.require,
+    'require': spf.net.script.require,
     // * Set dependencies and paths.
-    'declare': spf.net.scriptbeta.declare,
-    'path': spf.net.scriptbeta.path
+    'declare': spf.net.script.declare,
+    'path': spf.net.script.path
   }
 };
-// For beta builds, add an identifying flag.
-if (SPF_BETA) {
-  spf.bootloader.api_['beta'] = true;
-}
 if (!SPF_COMPILED) {
   // When not compiled, mixin the API to the existing namespace for development.
   for (var key in spf.bootloader.api_) {

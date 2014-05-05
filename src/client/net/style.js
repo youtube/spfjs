@@ -4,12 +4,12 @@
  * @author nicksay@google.com (Alex Nicksay)
  */
 
-goog.provide('spf.net.stylebeta');
+goog.provide('spf.net.style');
 
 goog.require('spf.array');
 goog.require('spf.debug');
-goog.require('spf.net.resourcebeta');
-goog.require('spf.net.resourcebeta.urls');
+goog.require('spf.net.resource');
+goog.require('spf.net.resource.urls');
 goog.require('spf.pubsub');
 goog.require('spf.string');
 goog.require('spf.tracing');
@@ -39,8 +39,8 @@ goog.require('spf.tracing');
  * @param {Function=} opt_fn Callback function to execute when the style is
  *     loaded.
  */
-spf.net.stylebeta.load = function(urls, opt_nameOrFn, opt_fn) {
-  var type = spf.net.resourcebeta.Type.CSS;
+spf.net.style.load = function(urls, opt_nameOrFn, opt_fn) {
+  var type = spf.net.resource.Type.CSS;
 
   // Convert to an array if needed.
   urls = spf.array.toArray(urls);
@@ -60,14 +60,14 @@ spf.net.stylebeta.load = function(urls, opt_nameOrFn, opt_fn) {
   // NOTE: Unloading styles depends on onload support and is best effort.
   // Chrome 19, Safari 6, Firefox 9, Opera and IE 5.5 support stylesheet onload.
   if (name) {
-    var loaded = spf.array.every(urls, spf.net.stylebeta.loaded_);
-    var previous = spf.net.resourcebeta.urls.get(type, name);
+    var loaded = spf.array.every(urls, spf.net.style.loaded_);
+    var previous = spf.net.resource.urls.get(type, name);
     // If loading new styles for a name, handle unloading previous ones.
     if (!loaded && previous) {
       spf.dispatch('cssbeforeunload', {'name': name, 'urls': previous});
-      spf.net.resourcebeta.urls.clear(type, name);
+      spf.net.resource.urls.clear(type, name);
       done = function() {
-        spf.net.stylebeta.unload_(name, previous);
+        spf.net.style.unload_(name, previous);
         callback && callback();
       };
     }
@@ -75,18 +75,18 @@ spf.net.stylebeta.load = function(urls, opt_nameOrFn, opt_fn) {
 
   var pseudonym = name || '^' + urls.sort().join('^');
   // Associate the styles with the name (or pseudonym) to allow unloading.
-  spf.net.resourcebeta.urls.set(type, pseudonym, urls);
+  spf.net.resource.urls.set(type, pseudonym, urls);
   // Subscribe the callback to execute when all urls are loaded.
-  var topic = spf.net.stylebeta.prefix_(pseudonym);
+  var topic = spf.net.style.prefix_(pseudonym);
   spf.debug.debug('  subscribing', topic, done);
   spf.pubsub.subscribe(topic, done);
   // Start asynchronously loading all the styles.
   spf.array.each(urls, function(url) {
     // If a status exists, the style is already loading or loaded.
-    if (spf.net.stylebeta.exists_(url)) {
-      spf.net.stylebeta.check();
+    if (spf.net.style.exists_(url)) {
+      spf.net.style.check();
     } else {
-      var el = spf.net.stylebeta.get(url, spf.net.stylebeta.check);
+      var el = spf.net.style.get(url, spf.net.style.check);
       if (name) {
         el.setAttribute('name', name);
       }
@@ -100,13 +100,13 @@ spf.net.stylebeta.load = function(urls, opt_nameOrFn, opt_fn) {
  *
  * @param {string} name The dependency name.
  */
-spf.net.stylebeta.unload = function(name) {
+spf.net.style.unload = function(name) {
   spf.debug.warn('style.unload', name);
-  var type = spf.net.resourcebeta.Type.CSS;
+  var type = spf.net.resource.Type.CSS;
   // Convert to an array if needed.
-  var urls = spf.net.resourcebeta.urls.get(type, name) || [];
-  spf.net.resourcebeta.urls.clear(type, name);
-  spf.net.stylebeta.unload_(name, urls);
+  var urls = spf.net.resource.urls.get(type, name) || [];
+  spf.net.resource.urls.clear(type, name);
+  spf.net.style.unload_(name, urls);
 };
 
 
@@ -117,13 +117,13 @@ spf.net.stylebeta.unload = function(name) {
  * @param {Array.<string>} urls The URLs.
  * @private
  */
-spf.net.stylebeta.unload_ = function(name, urls) {
-  var type = spf.net.resourcebeta.Type.CSS;
+spf.net.style.unload_ = function(name, urls) {
+  var type = spf.net.resource.Type.CSS;
   if (urls.length) {
     spf.debug.debug('  > style.unload', urls);
     spf.dispatch('cssunload', {'name': name, 'urls': urls});
     spf.array.each(urls, function(url) {
-      spf.net.resourcebeta.destroy(type, url);
+      spf.net.resource.destroy(type, url);
     });
   }
 };
@@ -131,14 +131,14 @@ spf.net.stylebeta.unload_ = function(name, urls) {
 /**
  * Discovers existing styles in the document and registers them as loaded.
  */
-spf.net.stylebeta.discover = function() {
+spf.net.style.discover = function() {
   spf.debug.debug('style.discover');
-  var type = spf.net.resourcebeta.Type.CSS;
-  var els = spf.net.resourcebeta.discover(type);
+  var type = spf.net.resource.Type.CSS;
+  var els = spf.net.resource.discover(type);
   spf.array.each(els, function(el) {
     var name = el.getAttribute('name');
     if (name) {
-      spf.net.resourcebeta.urls.set(type, name, [el.href]);
+      spf.net.resource.urls.set(type, name, [el.href]);
     }
     spf.debug.debug('  found', el.href, name);
   });
@@ -155,11 +155,11 @@ spf.net.stylebeta.discover = function() {
  * @param {Function=} opt_fn Function to execute when loaded.
  * @return {Element} The newly created element.
  */
-spf.net.stylebeta.get = function(url, opt_fn) {
-  var type = spf.net.resourcebeta.Type.CSS;
+spf.net.style.get = function(url, opt_fn) {
+  var type = spf.net.resource.Type.CSS;
   // NOTE: Callback execution depends on onload support and is best effort.
   // Chrome 19, Safari 6, Firefox 9, Opera and IE 5.5 support stylesheet onload.
-  return spf.net.resourcebeta.create(type, url, opt_fn);
+  return spf.net.resource.create(type, url, opt_fn);
 };
 
 
@@ -167,13 +167,13 @@ spf.net.stylebeta.get = function(url, opt_fn) {
  * Executes any pending callbacks possible by checking if all pending
  * urls for a name have loaded.
  */
-spf.net.stylebeta.check = function() {
+spf.net.style.check = function() {
   spf.debug.debug('style.check');
-  var prefix = spf.net.stylebeta.prefix_('');
+  var prefix = spf.net.style.prefix_('');
   for (var topic in spf.pubsub.subscriptions) {
     if (topic.indexOf(prefix) == 0) {
       var names = topic.substring(prefix.length).split('|');
-      var ready = spf.array.every(names, spf.net.stylebeta.allLoaded_);
+      var ready = spf.array.every(names, spf.net.style.allLoaded_);
       spf.debug.debug(' ', topic, '->', names, '=', ready);
       if (ready) {
         spf.debug.debug('  publishing', topic);
@@ -199,12 +199,12 @@ spf.net.stylebeta.check = function() {
  *
  * @param {string|Array.<string>} urls One or more URLs of styles to prefetch.
  */
-spf.net.stylebeta.prefetch = function(urls) {
-  var type = spf.net.resourcebeta.Type.CSS;
+spf.net.style.prefetch = function(urls) {
+  var type = spf.net.resource.Type.CSS;
   // Convert to an array if needed.
   urls = spf.array.toArray(urls);
   spf.array.each(urls, function(url) {
-    spf.net.resourcebeta.prefetch(type, url);
+    spf.net.resource.prefetch(type, url);
   });
 };
 
@@ -217,7 +217,7 @@ spf.net.stylebeta.prefetch = function(urls) {
  * @param {string} text The text of the style.
  * @return {undefined}
  */
-spf.net.stylebeta.eval = function(text) {
+spf.net.style.eval = function(text) {
   text = spf.string.trim(text);
   if (text) {
     var styleEl = document.createElement('style');
@@ -241,9 +241,9 @@ spf.net.stylebeta.eval = function(text) {
  *
  * @param {string|Object.<string>} paths The paths.
  */
-spf.net.stylebeta.path = function(paths) {
-  var type = spf.net.resourcebeta.Type.CSS;
-  spf.net.resourcebeta.path(type, paths);
+spf.net.style.path = function(paths) {
+  var type = spf.net.resource.Type.CSS;
+  spf.net.resource.path(type, paths);
 };
 
 
@@ -254,9 +254,9 @@ spf.net.stylebeta.path = function(paths) {
  * @return {string} The prefixed name.
  * @private
  */
-spf.net.stylebeta.prefix_ = function(name) {
-  var type = spf.net.resourcebeta.Type.CSS;
-  return spf.net.resourcebeta.prefix(type, name);
+spf.net.style.prefix_ = function(name) {
+  var type = spf.net.resource.Type.CSS;
+  return spf.net.resource.prefix(type, name);
 };
 
 
@@ -268,9 +268,9 @@ spf.net.stylebeta.prefix_ = function(name) {
  * @return {boolean} Whether the URL is loaded.
  * @private
  */
-spf.net.stylebeta.exists_ = function(url) {
-  var type = spf.net.resourcebeta.Type.CSS;
-  return spf.net.resourcebeta.exists(type, url);
+spf.net.style.exists_ = function(url) {
+  var type = spf.net.resource.Type.CSS;
+  return spf.net.resource.exists(type, url);
 };
 
 
@@ -282,9 +282,9 @@ spf.net.stylebeta.exists_ = function(url) {
  * @return {boolean} Whether the URL is loaded.
  * @private
  */
-spf.net.stylebeta.loaded_ = function(url) {
-  var type = spf.net.resourcebeta.Type.CSS;
-  return spf.net.resourcebeta.loaded(type, url);
+spf.net.style.loaded_ = function(url) {
+  var type = spf.net.resource.Type.CSS;
+  return spf.net.resource.loaded(type, url);
 };
 
 
@@ -296,40 +296,40 @@ spf.net.stylebeta.loaded_ = function(url) {
  * @return {boolean}
  * @private
  */
-spf.net.stylebeta.allLoaded_ = function(name) {
-  var type = spf.net.resourcebeta.Type.CSS;
-  var urls = spf.net.resourcebeta.urls.get(type, name);
-  return !name || (!!urls && spf.array.every(urls, spf.net.stylebeta.loaded_));
+spf.net.style.allLoaded_ = function(name) {
+  var type = spf.net.resource.Type.CSS;
+  var urls = spf.net.resource.urls.get(type, name);
+  return !name || (!!urls && spf.array.every(urls, spf.net.style.loaded_));
 };
 
 
 if (spf.tracing.ENABLED) {
   (function() {
-    spf.net.stylebeta.load = spf.tracing.instrument(
-        spf.net.stylebeta.load, 'spf.net.stylebeta.load');
-    spf.net.stylebeta.unload = spf.tracing.instrument(
-        spf.net.stylebeta.unload, 'spf.net.stylebeta.unload');
-    spf.net.stylebeta.unload_ = spf.tracing.instrument(
-        spf.net.stylebeta.unload_, 'spf.net.stylebeta.unload_');
-    spf.net.stylebeta.discover = spf.tracing.instrument(
-        spf.net.stylebeta.discover, 'spf.net.stylebeta.discover');
-    spf.net.stylebeta.get = spf.tracing.instrument(
-        spf.net.stylebeta.get, 'spf.net.stylebeta.get');
-    spf.net.stylebeta.check = spf.tracing.instrument(
-        spf.net.stylebeta.check, 'spf.net.stylebeta.check');
-    spf.net.stylebeta.prefetch = spf.tracing.instrument(
-        spf.net.stylebeta.prefetch, 'spf.net.stylebeta.prefetch');
-    spf.net.stylebeta.eval = spf.tracing.instrument(
-        spf.net.stylebeta.eval, 'spf.net.stylebeta.eval');
-    spf.net.stylebeta.path = spf.tracing.instrument(
-        spf.net.stylebeta.path, 'spf.net.stylebeta.path');
-    spf.net.stylebeta.prefix_ = spf.tracing.instrument(
-        spf.net.stylebeta.prefix_, 'spf.net.stylebeta.prefix_');
-    spf.net.stylebeta.exists_ = spf.tracing.instrument(
-        spf.net.stylebeta.exists_, 'spf.net.stylebeta.exists_');
-    spf.net.stylebeta.loaded_ = spf.tracing.instrument(
-        spf.net.stylebeta.loaded_, 'spf.net.stylebeta.loaded_');
-    spf.net.stylebeta.allLoaded_ = spf.tracing.instrument(
-        spf.net.stylebeta.allLoaded_, 'spf.net.stylebeta.allLoaded_');
+    spf.net.style.load = spf.tracing.instrument(
+        spf.net.style.load, 'spf.net.style.load');
+    spf.net.style.unload = spf.tracing.instrument(
+        spf.net.style.unload, 'spf.net.style.unload');
+    spf.net.style.unload_ = spf.tracing.instrument(
+        spf.net.style.unload_, 'spf.net.style.unload_');
+    spf.net.style.discover = spf.tracing.instrument(
+        spf.net.style.discover, 'spf.net.style.discover');
+    spf.net.style.get = spf.tracing.instrument(
+        spf.net.style.get, 'spf.net.style.get');
+    spf.net.style.check = spf.tracing.instrument(
+        spf.net.style.check, 'spf.net.style.check');
+    spf.net.style.prefetch = spf.tracing.instrument(
+        spf.net.style.prefetch, 'spf.net.style.prefetch');
+    spf.net.style.eval = spf.tracing.instrument(
+        spf.net.style.eval, 'spf.net.style.eval');
+    spf.net.style.path = spf.tracing.instrument(
+        spf.net.style.path, 'spf.net.style.path');
+    spf.net.style.prefix_ = spf.tracing.instrument(
+        spf.net.style.prefix_, 'spf.net.style.prefix_');
+    spf.net.style.exists_ = spf.tracing.instrument(
+        spf.net.style.exists_, 'spf.net.style.exists_');
+    spf.net.style.loaded_ = spf.tracing.instrument(
+        spf.net.style.loaded_, 'spf.net.style.loaded_');
+    spf.net.style.allLoaded_ = spf.tracing.instrument(
+        spf.net.style.allLoaded_, 'spf.net.style.allLoaded_');
   })();
 }

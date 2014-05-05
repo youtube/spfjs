@@ -14,13 +14,6 @@ var spf = {};
 
 
 /**
- * Flag to identify the beta API.  Always true.
- * @type {boolean}
- */
-spf.beta;
-
-
-/**
  * Definition for a single SPF response object.
  * @interface
  */

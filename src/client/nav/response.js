@@ -13,10 +13,8 @@ goog.require('spf.debug');
 goog.require('spf.dom');
 goog.require('spf.dom.classlist');
 goog.require('spf.history');
-goog.require('spf.net.scriptbeta');
-goog.require('spf.net.scripts');
-goog.require('spf.net.stylebeta');
-goog.require('spf.net.styles');
+goog.require('spf.net.script');
+goog.require('spf.net.style');
 goog.require('spf.string');
 goog.require('spf.tasks');
 goog.require('spf.tracing');
@@ -440,13 +438,8 @@ spf.nav.response.parseScripts_ = function(html) {
       function(fullMatch, attr, text) {
         var url = attr.match(spf.nav.response.SRC_ATTR_REGEXP);
         url = url ? url[1] : '';
-        if (SPF_BETA) {
-          var name = attr.match(spf.nav.response.NAME_ATTR_REGEXP);
-          name = name ? name[1] : '';
-        } else {
-          var name = attr.match(spf.nav.response.CLASS_ATTR_REGEXP);
-          name = name ? name[1] : '';
-        }
+        var name = attr.match(spf.nav.response.NAME_ATTR_REGEXP);
+        name = name ? name[1] : '';
         result.scripts.push({url: url, text: text, name: name});
         return '';
       });
@@ -457,7 +450,7 @@ spf.nav.response.parseScripts_ = function(html) {
 
 /**
  * Installs scripts that have been parsed from an HTML string.
- * See {@link spf.net.scripts.load}, {@link spf.net.scripts.eval}, and
+ * See {@link spf.net.script.load}, {@link spf.net.script.eval}, and
  * {@link #parseScripts_}.
  *
  * @param {!spf.nav.response.ParseScriptsResult_} result The parsed HTML result.
@@ -480,17 +473,9 @@ spf.nav.response.installScripts_ = function(result, opt_callback) {
     if (index < result.scripts.length) {
       var item = result.scripts[index];
       if (item.url) {
-        if (SPF_BETA) {
-          spf.net.scriptbeta.load(item.url, item.name, getNextScript);
-        } else {
-          spf.net.scripts.load(item.url, getNextScript, item.name);
-        }
+        spf.net.script.load(item.url, item.name, getNextScript);
       } else if (item.text) {
-        if (SPF_BETA) {
-          spf.net.scriptbeta.eval(item.text, getNextScript);
-        } else {
-          spf.net.scripts.eval(item.text, getNextScript);
-        }
+        spf.net.script.eval(item.text, getNextScript);
       } else {
         getNextScript();
       }
@@ -506,7 +491,7 @@ spf.nav.response.installScripts_ = function(result, opt_callback) {
 
 /**
  * Prefetches scripts that have been parsed from an HTML string.
- * See {@link spf.net.scripts.prefetch} and {@link #parseScripts_}.
+ * See {@link spf.net.script.prefetch} and {@link #parseScripts_}.
  *
  * @param {!spf.nav.response.ParseScriptsResult_} result The parsed HTML result.
  * @private
@@ -516,19 +501,10 @@ spf.nav.response.preinstallScripts_ = function(result) {
     return;
   }
   // Prefetch the scripts.
-  if (SPF_BETA) {
-    var urls = spf.array.map(result.scripts, function(item) {
-      return item.url;
-    });
-    spf.net.scriptbeta.prefetch(urls);
-  } else {
-    for (var i = 0, l = result.scripts.length; i < l; i++) {
-      var item = result.scripts[i];
-      if (item.url) {
-        spf.net.scripts.prefetch(item.url);
-      }
-    }
-  }
+  var urls = spf.array.map(result.scripts, function(item) {
+    return item.url;
+  });
+  spf.net.script.prefetch(urls);
 };
 
 
@@ -564,13 +540,8 @@ spf.nav.response.parseStyles_ = function(html) {
         if (isStyleSheet) {
           var url = attr.match(spf.nav.response.HREF_ATTR_REGEXP);
           url = url ? url[1] : '';
-          if (SPF_BETA) {
-            var name = attr.match(spf.nav.response.NAME_ATTR_REGEXP);
-            name = name ? name[1] : '';
-          } else {
-            var name = attr.match(spf.nav.response.CLASS_ATTR_REGEXP);
-            name = name ? name[1] : '';
-          }
+          var name = attr.match(spf.nav.response.NAME_ATTR_REGEXP);
+          name = name ? name[1] : '';
           result.styles.push({url: url, text: '', name: name});
           return '';
         } else {
@@ -589,7 +560,7 @@ spf.nav.response.parseStyles_ = function(html) {
 
 /**
  * Installs styles that have been parsed from an HTML string.
- * See {@link spf.net.styles.load}, {@link spf.net.styles.eval}, and
+ * See {@link spf.net.style.load}, {@link spf.net.style.eval}, and
  * {@link #parseStyles_}.
  *
  * @param {!spf.nav.response.ParseStylesResult_} result The parsed HTML result.
@@ -603,17 +574,9 @@ spf.nav.response.installStyles_ = function(result) {
   for (var i = 0, l = result.styles.length; i < l; i++) {
     var item = result.styles[i];
     if (item.url) {
-      if (SPF_BETA) {
-        spf.net.stylebeta.load(item.url, item.name);
-      } else {
-        spf.net.styles.load(item.url, null, item.name);
-      }
+      spf.net.style.load(item.url, item.name);
     } else if (item.text) {
-      if (SPF_BETA) {
-        spf.net.stylebeta.eval(item.text);
-      } else {
-        spf.net.styles.eval(item.text);
-      }
+      spf.net.style.eval(item.text);
     }
   }
 };
@@ -621,7 +584,7 @@ spf.nav.response.installStyles_ = function(result) {
 
 /**
  * Prefetches styles that have been parsed from an HTML string.
- * See {@link spf.net.styles.prefetch} and {@link #parseStyles_}.
+ * See {@link spf.net.style.prefetch} and {@link #parseStyles_}.
  *
  * @param {!spf.nav.response.ParseStylesResult_} result The parsed HTML result.
  * @private
@@ -631,19 +594,10 @@ spf.nav.response.preinstallStyles_ = function(result) {
     return;
   }
   // Prefetch the styles.
-  if (SPF_BETA) {
-    var urls = spf.array.map(result.styles, function(item) {
-      return item.url;
-    });
-    spf.net.stylebeta.prefetch(urls);
-  } else {
-    for (var i = 0, l = result.styles.length; i < l; i++) {
-      var item = result.styles[i];
-      if (item.url) {
-        spf.net.styles.prefetch(item.url);
-      }
-    }
-  }
+  var urls = spf.array.map(result.styles, function(item) {
+    return item.url;
+  });
+  spf.net.style.prefetch(urls);
 };
 
 

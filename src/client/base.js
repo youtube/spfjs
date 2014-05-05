@@ -25,10 +25,6 @@
 goog.provide('spf');
 
 
-/** @define {boolean} Compiler flag to include beta code. */
-var SPF_BETA = true;
-
-
 /** @define {boolean} Compiler flag to build the bootstrap script loader. */
 var SPF_BOOTLOADER = false;
 

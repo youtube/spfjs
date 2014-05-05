@@ -372,13 +372,9 @@ spf.nav.navigate_ = function(url, opt_options, opt_current, opt_referer,
     spf.nav.navigateSendRequest_(url, options, current, referer,
                                  !!opt_history, !!opt_reverse);
   }
-  // Execute the "navigation requested" callback.  If the callback explicitly
-  // cancels (by returning false), cancel this navigation and redirect.
-  if (SPF_BETA) {
-    var canceled = !spf.dispatch(spf.nav.Events.REQUESTED, {'url': url});
-  } else {
-    var canceled = !spf.nav.callback('navigate-requested-callback', url);
-  }
+  // Dispatch the "navigation requested" event.  If the event is explicitly
+  // canceled, cancel this navigation and redirect.
+  var canceled = !spf.dispatch(spf.nav.Events.REQUESTED, {'url': url});
   if (canceled) {
     spf.nav.redirect(url);
   }
@@ -502,16 +498,10 @@ spf.nav.navigateAddHistory_ = function(url, referer, handleError) {
 spf.nav.handleNavigateError_ = function(options, url, err) {
   spf.debug.warn('navigate error', '(url=', url, ')');
   spf.state.set('nav-request', null);
-  // Execute the "onError" and "navigation error" callbacks.  If either
-  // explicitly cancels (by returning false), ignore the error.
-  // Otherwise, redirect.
-  var canceled;
-  if (SPF_BETA) {
-    canceled = !spf.nav.callback(options['onError'],
-                                 {'url': url, 'err': err});
-  } else {
-    canceled = !spf.nav.callback(options['onError'], url, err);
-  }
+  // Execute the "onError" callback and dispatch the "navigation error" event.
+  // If either is explicitly canceled, ignore the error.  Otherwise, redirect.
+  var canceled = !spf.nav.callback(options['onError'],
+                                   {'url': url, 'err': err});
   if (canceled) {
     return;
   }
@@ -528,14 +518,11 @@ spf.nav.handleNavigateError_ = function(options, url, err) {
  *
  * @param {string} url The history URL.
  * @param {Error} err The Error object.
- * @return {boolean} True if the callback explicitly cancels.
+ * @return {boolean} True if the event is explicitly canceled.
  * @private
  */
 spf.nav.triggerErrorCallback_ = function(url, err) {
-  if (SPF_BETA) {
-    return spf.dispatch(spf.nav.Events.ERROR, {'url': url, 'err': err});
-  }
-  return spf.nav.callback('navigate-error-callback', url, err);
+  return spf.dispatch(spf.nav.Events.ERROR, {'url': url, 'err': err});
 };
 
 
@@ -552,16 +539,10 @@ spf.nav.triggerErrorCallback_ = function(url, err) {
  * @private
  */
 spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
-  // Execute the "navigation part received" callback.  If the callback
-  // explicitly cancels (by returning false), cancel this navigation and
-  // redirect.
-  if (SPF_BETA) {
-    var canceled = !spf.dispatch(spf.nav.Events.PART_RECEIVED,
-                                 {'url': url, 'part': partial});
-  } else {
-    var canceled = !spf.nav.callback('navigate-part-received-callback',
-                                     url, partial);
-  }
+  // Dispatch the "navigation part received" event.  If the event is
+  // explicitly canceled, cancel this navigation and redirect.
+  var canceled = !spf.dispatch(spf.nav.Events.PART_RECEIVED,
+                               {'url': url, 'part': partial});
   if (canceled) {
     spf.nav.redirect(url);
     return;
@@ -575,26 +556,17 @@ spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
 
   try {
     spf.nav.response.process(url, partial, function() {
-      // Execute the "onPart" and "navigation part processed" callbacks.  If
-      // either explicitly cancels (by returning false), cancel this navigation
-      // and redirect.
-      if (SPF_BETA) {
-        var canceled = !spf.nav.callback(options['onPart'],
-                                         {'url': url, 'part': partial});
-      } else {
-        var canceled = !spf.nav.callback(options['onPart'], url, partial);
-      }
+      // Execute the "onPart" callback and dispatch the
+      // "navigation part processed" event.  If either is explicitly canceled,
+      // cancel this navigation and redirect.
+      var canceled = !spf.nav.callback(options['onPart'],
+                                       {'url': url, 'part': partial});
       if (canceled) {
         spf.nav.redirect(url);
         return;
       }
-      if (SPF_BETA) {
-        canceled = !spf.dispatch(spf.nav.Events.PART_PROCESSED,
-                                 {'url': url, 'part': partial});
-      } else {
-        canceled = !spf.nav.callback('navigate-part-processed-callback',
-                                     url, partial);
-      }
+      canceled = !spf.dispatch(spf.nav.Events.PART_PROCESSED,
+                               {'url': url, 'part': partial});
       if (canceled) {
         spf.nav.redirect(url);
         return;
@@ -636,16 +608,10 @@ spf.nav.handleNavigateSuccess_ = function(options, reverse, original,
     timing['navigationStart'] = spf.state.get('nav-promote-time');
   }
 
-  // Execute the "navigation received" callback.  If the callback
-  // explicitly cancels (by returning false), cancel this navigation and
-  // redirect.
-  if (SPF_BETA) {
-    var canceled = !spf.dispatch(spf.nav.Events.RECEIVED,
-                                 {'url': url, 'response': response});
-  } else {
-    var canceled = !spf.nav.callback('navigate-received-callback',
-                                     url, response);
-  }
+  // Dispatch the "navigation received" event.  If the event is explicitly
+  // canceled, cancel this navigation and redirect.
+  var canceled = !spf.dispatch(spf.nav.Events.RECEIVED,
+                               {'url': url, 'response': response});
   if (canceled) {
     spf.nav.redirect(url);
     return;
@@ -665,25 +631,17 @@ spf.nav.handleNavigateSuccess_ = function(options, reverse, original,
       (response['type'] == 'multipart') ? {} : response);
   try {
     spf.nav.response.process(url, r, function() {
-      // Execute the "onSuccess" and "navigation processed" callbacks.
-      // NOTE: If either explicitly cancels (by returning false), nothing
-      // happens, because there is no longer an opportunity to stop navigation.
-      if (SPF_BETA) {
-        var canceled = !spf.nav.callback(options['onSuccess'],
-                                         {'url': url, 'response': response});
-      } else {
-        var canceled = !spf.nav.callback(options['onSuccess'], url, response);
-      }
+      // Execute the "onSuccess" callback and dispatch the
+      // "navigation processed" event.
+      // NOTE: If either is explicitly canceled, nothing happens, because
+      // there is no longer an opportunity to stop navigation.
+      var canceled = !spf.nav.callback(options['onSuccess'],
+                                       {'url': url, 'response': response});
       if (canceled) {
         return;
       }
-
-      if (SPF_BETA) {
-        spf.dispatch(spf.nav.Events.PROCESSED,
-                     {'url': url, 'response': response});
-      } else {
-        spf.nav.callback('navigate-processed-callback', url, response);
-      }
+      spf.dispatch(spf.nav.Events.PROCESSED,
+                   {'url': url, 'response': response});
     }, true, reverse);
   } catch (err) {
     // If an exception is caught during processing, log, execute the error
@@ -890,11 +848,9 @@ spf.nav.prefetch_ = function(url, opt_options, opt_original) {
  */
 spf.nav.handleLoadError_ = function(isPrefetch, options, original, url, err) {
   spf.debug.warn(isPrefetch ? 'prefetch' : 'load', 'error', '(url=', url, ')');
-  if (SPF_BETA) {
-    spf.nav.callback(options['onError'], {'url': url, 'err': err});
-  } else {
-    spf.nav.callback(options['onError'], url, err);
-  }
+
+  spf.nav.callback(options['onError'], {'url': url, 'err': err});
+
   if (isPrefetch) {
     spf.nav.removePrefetch(url);
 
@@ -944,11 +900,7 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
       spf.nav.response.preprocess :
       spf.nav.response.process;
   processFn(url, partial, function() {
-    if (SPF_BETA) {
-      spf.nav.callback(options['onPart'], {'url': url, 'part': partial});
-    } else {
-      spf.nav.callback(options['onPart'], url, partial);
-    }
+    spf.nav.callback(options['onPart'], {'url': url, 'part': partial});
   });
 };
 
@@ -1001,12 +953,7 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
       spf.nav.response.process;
   var r = (response['type'] == 'multipart') ? {} : response;
   processFn(url, r, function() {
-    if (SPF_BETA) {
-      spf.nav.callback(options['onSuccess'],
-                       {'url': url, 'response': response});
-    } else {
-      spf.nav.callback(options['onSuccess'], url, response);
-    }
+    spf.nav.callback(options['onSuccess'], {'url': url, 'response': response});
   });
 };
 

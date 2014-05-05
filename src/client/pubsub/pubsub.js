@@ -126,17 +126,9 @@ spf.pubsub.SUBS_KEY = 'ps-s';
 if (SPF_BOOTLOADER) {
   spf.state.set(spf.pubsub.SUBS_KEY, spf.pubsub.subscriptions);
 } else {
-  if (SPF_BETA) {
-    if (!spf.state.has(spf.pubsub.SUBS_KEY)) {
-      spf.state.set(spf.pubsub.SUBS_KEY, {});
-    }
-    spf.pubsub.subscriptions = /** @type {!Object.<Array>} */ (
-        spf.state.get(spf.pubsub.SUBS_KEY));
-  } else {
-    if (!spf.state.has('pubsub-subs')) {
-      spf.state.set('pubsub-subs', {});
-    }
-    spf.pubsub.subscriptions = /** @type {!Object.<Array>} */ (
-        spf.state.get('pubsub-subs'));
+  if (!spf.state.has(spf.pubsub.SUBS_KEY)) {
+    spf.state.set(spf.pubsub.SUBS_KEY, {});
   }
+  spf.pubsub.subscriptions = /** @type {!Object.<Array>} */ (
+      spf.state.get(spf.pubsub.SUBS_KEY));
 }

@@ -14,43 +14,23 @@ var app = app || {};
 
 /**
  * Initialize the demo app.
- * @param {boolean} isBeta Whether to use the beta API.
  */
-app.init = function(isBeta) {
+app.init = function() {
   app.start_ = +new Date();
   app.timer_ = window.setInterval(app.updateTime, 500);
-  if (isBeta) {
-    app.log('using beta api');
-    var config = {
-      'process-async': true
-    };
-    if (window.addEventListener) {
-      window.addEventListener('spfrequested', app.onRequested);
-      window.addEventListener('spfpartreceived', app.onPartReceived);
-      window.addEventListener('spfpartprocessed', app.onPartProcessed);
-      window.addEventListener('spfreceived', app.onReceived);
-      window.addEventListener('spfprocessed', app.onProcessed);
-      window.addEventListener('spferror', app.onError);
-      window.addEventListener('spfjsbeforeunload', app.onScriptBeforeUnload);
-      window.addEventListener('spfjsunload', app.onScriptUnload);
-      window.addEventListener('spfcssbeforeunload', app.onStyleBeforeUnload);
-      window.addEventListener('spfcssunload', app.onStyleUnload);
-    }
-  } else {
-    var config = {
-      'process-async': true,
-      'navigate-requested-callback': app.handleNavigateRequested,
-      'navigate-part-received-callback': app.handleNavigatePartReceived,
-      'navigate-part-processed-callback': app.handleNavigatePartProcessed,
-      'navigate-received-callback': app.handleNavigateReceived,
-      'navigate-processed-callback': app.handleNavigateProcessed,
-      'navigate-error-callback': app.handleNavigateError,
-      'script-loading-callback': app.handleScriptLoading,
-      'style-loading-callback': app.handleStyleLoading
-    };
-    app.enabled = spf.init(config);
+  if (window.addEventListener) {
+    window.addEventListener('spfrequested', app.onRequested);
+    window.addEventListener('spfpartreceived', app.onPartReceived);
+    window.addEventListener('spfpartprocessed', app.onPartProcessed);
+    window.addEventListener('spfreceived', app.onReceived);
+    window.addEventListener('spfprocessed', app.onProcessed);
+    window.addEventListener('spferror', app.onError);
+    window.addEventListener('spfjsbeforeunload', app.onScriptBeforeUnload);
+    window.addEventListener('spfjsunload', app.onScriptUnload);
+    window.addEventListener('spfcssbeforeunload', app.onStyleBeforeUnload);
+    window.addEventListener('spfcssunload', app.onStyleUnload);
   }
-  app.enabled = spf.init(config);
+  app.enabled = spf.init();
   app.updateStatus();
 };
 
@@ -124,77 +104,38 @@ app.updateTime = function() {
 
 
 /**
- * Event handler for when navigate requests are sent (beta API).
+ * Event handler for when navigate requests are sent.
  * @param {CustomEvent} evt The event.
  */
 app.onRequested = function(evt) {
-  app.handleNavigateRequested(evt.detail.url);
+  app.log('navigate requested ' + evt.detail.url);
 };
 
 
 /**
- * Callback for when navigate requests are sent.
- * @param {string} url The new URL.
- */
-app.handleNavigateRequested = function(url) {
-  app.log('navigate requested ' + url);
-};
-
-
-/**
- * Event handler for when parts of navigate requests are received (beta API).
+ * Event handler for when parts of navigate requests are received.
  * @param {CustomEvent} evt The event.
  */
 app.onPartReceived = function(evt) {
-  app.handleNavigatePartReceived(evt.detail.url, evt.detail.part);
+  app.log('navigate received part ' + evt.detail.url);
 };
 
 
 /**
- * Callback for when parts of navigate requests are received.
- * @param {string} url The requested URL, without the SPF identifier.
- * @param {Object} part The part of the requested SPF response object.
- */
-app.handleNavigatePartReceived = function(url, part) {
-  app.log('navigate received part ' + url);
-};
-
-
-/**
- * Event handler for when parts of navigate requests are processed (beta API).
+ * Event handler for when parts of navigate requests are processed.
  * @param {CustomEvent} evt The event.
  */
 app.onPartProcessed = function(evt) {
-  app.handleNavigatePartProcessed(evt.detail.url, evt.detail.part);
+  app.log('navigate processed part ' + evt.detail.url);
 };
 
 
 /**
- * Callback for when parts of navigate responses are processed.
- * @param {string} url The requested URL, without the SPF identifier.
- * @param {Object} part The part of the requested SPF response object.
- */
-app.handleNavigatePartProcessed = function(url, part) {
-  app.log('navigate procssed part ' + url);
-};
-
-
-/**
- * Event handler for when navigate responses are received (beta API).
+ * Event handler for when navigate responses are received.
  * @param {CustomEvent} evt The event.
  */
 app.onReceived = function(evt) {
-  app.handleNavigateReceived(evt.detail.url, evt.detail.response);
-};
-
-
-/**
- * Callback for when navigate responses are received.
- * @param {string} url The requested URL, without the SPF identifier.
- * @param {Object} response The requested SPF response object.
- */
-app.handleNavigateReceived = function(url, response) {
-  app.log('navigate received ' + url);
+  app.log('navigate received ' + evt.detail.url);
   // If debug logging is enabled, reset the relative times when each new
   // request is received.
   if (spf.debug) {
@@ -204,46 +145,25 @@ app.handleNavigateReceived = function(url, response) {
 
 
 /**
- * Event handler for when navigate responses are processed (beta API).
+ * Event handler for when navigate responses are processed.
  * @param {CustomEvent} evt The event.
  */
 app.onProcessed = function(evt) {
-  app.handleNavigateProcessed(evt.detail.url, evt.detail.response);
-};
-
-
-
-/**
- * Callback for when navigate responses are processed.
- * @param {string} url The requested URL, without the SPF identifier.
- * @param {Object} response The processed SPF response object.
- */
-app.handleNavigateProcessed = function(url, response) {
-  app.log('navigate processed ' + url);
+  app.log('navigate processed ' + evt.detail.url);
 };
 
 
 /**
- * Event handler for navigate errors (beta API).
+ * Event handler for navigate errors.
  * @param {CustomEvent} evt The event.
  */
 app.onError = function(evt) {
-  app.handleNavigateError(evt.detail.url, evt.detail.err);
+  app.log('navigate error ' + evt.detail.url);
 };
 
 
 /**
- * Callback for navigate errors.
- * @param {string} url The requested URL, without the SPF identifier.
- * @param {Error} err The Error object.
- */
-app.handleNavigateError = function(url, err) {
-  app.log('navigate error ' + url);
-};
-
-
-/**
- * Event handler for script before unload (beta API).
+ * Event handler for script before unload.
  * @param {CustomEvent} evt The event.
  */
 app.onScriptBeforeUnload = function(evt) {
@@ -253,7 +173,7 @@ app.onScriptBeforeUnload = function(evt) {
 
 
 /**
- * Event handler for script unload (beta API).
+ * Event handler for script unload.
  * @param {CustomEvent} evt The event.
  */
 app.onScriptUnload = function(evt) {
@@ -263,19 +183,9 @@ app.onScriptUnload = function(evt) {
 };
 
 
-/**
- * Callback for script loading.
- * @param {string} url The new script URL.
- * @param {string} name The new script name (to identify it independently of
- *     the URL).
- */
-app.handleScriptLoading = function(url, name) {
-  app.log('script loading ' + url + ' ' + name);
-};
-
 
 /**
- * Event handler for style before unload (beta API).
+ * Event handler for style before unload.
  * @param {CustomEvent} evt The event.
  */
 app.onStyleBeforeUnload = function(evt) {
@@ -285,24 +195,13 @@ app.onStyleBeforeUnload = function(evt) {
 
 
 /**
- * Event handler for style unload (beta API).
+ * Event handler for style unload.
  * @param {CustomEvent} evt The event.
  */
 app.onStyleUnload = function(evt) {
   var name = evt.detail.name;
   var urls = evt.detail.urls;
   app.log('style unload ' + name + ' ' + urls);
-};
-
-
-/**
- * Callback for style loading.
- * @param {string} url The new style URL.
- * @param {string} name The new style name (to identify it independently of
- *     the URL).
- */
-app.handleStyleLoading = function(url, name) {
-  app.log('style loading ' + url + ' ' + name);
 };
 
 

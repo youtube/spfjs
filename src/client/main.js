@@ -10,10 +10,8 @@ goog.require('spf');
 goog.require('spf.config');
 goog.require('spf.debug');
 goog.require('spf.nav');
-goog.require('spf.net.scriptbeta');
-goog.require('spf.net.scripts');
-goog.require('spf.net.stylebeta');
-goog.require('spf.net.styles');
+goog.require('spf.net.script');
+goog.require('spf.net.style');
 goog.require('spf.pubsub');
 
 
@@ -58,17 +56,12 @@ spf.main.dispose = function() {
  * @private
  */
 spf.main.discover_ = function() {
-  if (SPF_BETA) {
-    spf.net.scriptbeta.discover();
-    spf.net.stylebeta.discover();
-  } else {
-    spf.net.scripts.mark();
-    spf.net.styles.mark();
-  }
+  spf.net.script.discover();
+  spf.net.style.discover();
   if (document.readyState == 'complete') {
     // Since IE 8+ is supported for common library functions such as script
-    // and style loading, use both standard and legacy event handlers to mark
-    // existing resources.
+    // and style loading, use both standard and legacy event handlers to
+    // discover existing resources.
     if (document.removeEventListener) {
       document.removeEventListener(
           'DOMContentLoaded', spf.main.discover_, false);
@@ -100,66 +93,44 @@ spf.main.api_ = {
   'process': spf.nav.response.process,  // TODO: Remove after deprecation.
   'prefetch': spf.nav.prefetch
 };
-// For beta builds, add an identifying flag.
-if (SPF_BETA) {
-  spf.main.api_['beta'] = true;
-}
 /** @private {Object} */
-spf.main.extra_ = {};
-if (SPF_BETA) {
-  spf.main.extra_ = {
-    'script': {
-      // The bootloader API.
-      // * Load scripts.
-      'load': spf.net.scriptbeta.load,
-      'get': spf.net.scriptbeta.get,
-      // * Wait until ready.
-      'ready': spf.net.scriptbeta.ready,
-      'done': spf.net.scriptbeta.done,
-      // * Load in depedency order.
-      'require': spf.net.scriptbeta.require,
-      // * Set dependencies and paths.
-      'declare': spf.net.scriptbeta.declare,
-      'path': spf.net.scriptbeta.path,
-      // Extended script loading API.
-      // * Unload scripts.
-      'unload': spf.net.scriptbeta.unload,
-      // * Ignore ready.
-      'ignore': spf.net.scriptbeta.ignore,
-      // * Unload in depedency order.
-      'unrequire': spf.net.scriptbeta.unrequire,
-      // * Prefetch.
-      'prefetch': spf.net.scriptbeta.prefetch
-    },
-    'style': {
-      // Style loading API.
-      // * Load styles.
-      'load': spf.net.stylebeta.load,
-      'get': spf.net.stylebeta.get,
-      // * Unload styles.
-      'unload': spf.net.stylebeta.unload,
-      // * Set paths.
-      'path': spf.net.stylebeta.path,
-      // * Prefetch.
-      'prefetch': spf.net.stylebeta.prefetch
-    }
-  };
-} else {
-  spf.main.extra_ = {
-    'scripts': {
-      'load': spf.net.scripts.load,
-      'unload': spf.net.scripts.unload,
-      'ignore': spf.net.scripts.ignore,
-      'prefetch': spf.net.scripts.prefetch
-    },
-    'styles': {
-      'load': spf.net.styles.load,
-      'unload': spf.net.styles.unload,
-      'ignore': spf.net.styles.ignore,
-      'prefetch': spf.net.styles.prefetch
-    }
-  };
-}
+spf.main.extra_ = {
+  'script': {
+    // The bootloader API.
+    // * Load scripts.
+    'load': spf.net.script.load,
+    'get': spf.net.script.get,
+    // * Wait until ready.
+    'ready': spf.net.script.ready,
+    'done': spf.net.script.done,
+    // * Load in depedency order.
+    'require': spf.net.script.require,
+    // * Set dependencies and paths.
+    'declare': spf.net.script.declare,
+    'path': spf.net.script.path,
+    // Extended script loading API.
+    // * Unload scripts.
+    'unload': spf.net.script.unload,
+    // * Ignore ready.
+    'ignore': spf.net.script.ignore,
+    // * Unload in depedency order.
+    'unrequire': spf.net.script.unrequire,
+    // * Prefetch.
+    'prefetch': spf.net.script.prefetch
+  },
+  'style': {
+    // Style loading API.
+    // * Load styles.
+    'load': spf.net.style.load,
+    'get': spf.net.style.get,
+    // * Unload styles.
+    'unload': spf.net.style.unload,
+    // * Set paths.
+    'path': spf.net.style.path,
+    // * Prefetch.
+    'prefetch': spf.net.style.prefetch
+  }
+};
 if (!SPF_COMPILED) {
   // When not compiled, mixin the API to the existing namespace for development.
   // Use eval to work around the "incomplete alias" warning.
@@ -179,7 +150,7 @@ if (!SPF_COMPILED) {
     for (var fn1 in spf.main.api_) {
       window['spf'][fn1] = spf.main.api_[fn1];
     }
-    // Use two-stage exporting to allow aliasing intermediate namespaces
+    // Use two-stage exporting to allow aliasing the intermediate namespaces
     // created by the bootloader (e.g. s = spf.script; s.load(...)).
     for (var ns in spf.main.extra_) {
       for (var fn2 in spf.main.extra_[ns]) {

@@ -9,30 +9,30 @@
  * the bootstrap code for seamless script loading.
  *
  * Single script:
- * spf.net.scriptbeta.load(url, function() {
+ * spf.net.script.load(url, function() {
  *   // url is loaded
  * });
  *
  * Multiple scripts:
- * spf.net.scriptbeta.load([url1, url2], function() {
+ * spf.net.script.load([url1, url2], function() {
  *   // url1 and url2 are loaded
  * });
  *
  * Named script(s) and readiness:
- * spf.net.scriptbeta.load(url, 'name');
- * spf.net.scriptbeta.ready('name', function() {
+ * spf.net.script.load(url, 'name');
+ * spf.net.script.ready('name', function() {
  *   // url is loaded
  * });
  *
  * @author nicksay@google.com (Alex Nicksay)
  */
 
-goog.provide('spf.net.scriptbeta');
+goog.provide('spf.net.script');
 
 goog.require('spf.array');
 goog.require('spf.debug');
-goog.require('spf.net.resourcebeta');
-goog.require('spf.net.resourcebeta.urls');
+goog.require('spf.net.resource');
+goog.require('spf.net.resource.urls');
 goog.require('spf.pubsub');
 goog.require('spf.string');
 goog.require('spf.tracing');
@@ -62,8 +62,8 @@ goog.require('spf.tracing');
  * @param {Function=} opt_fn Callback function to execute when the script is
  *     loaded.
  */
-spf.net.scriptbeta.load = function(urls, opt_nameOrFn, opt_fn) {
-  var type = spf.net.resourcebeta.Type.JS;
+spf.net.script.load = function(urls, opt_nameOrFn, opt_fn) {
+  var type = spf.net.resource.Type.JS;
 
   // Convert to an array if needed.
   urls = spf.array.toArray(urls);
@@ -86,14 +86,14 @@ spf.net.scriptbeta.load = function(urls, opt_nameOrFn, opt_fn) {
   // unloading of scripts is primarily intended for navigation between versions.
   if (!SPF_BOOTLOADER) {
     if (name) {
-      var loaded = spf.array.every(urls, spf.net.scriptbeta.loaded_);
-      var previous = spf.net.resourcebeta.urls.get(type, name);
+      var loaded = spf.array.every(urls, spf.net.script.loaded_);
+      var previous = spf.net.resource.urls.get(type, name);
       // If loading new scripts for a name, handle unloading previous ones.
       if (!loaded && previous) {
         spf.dispatch('jsbeforeunload', {'name': name, 'urls': previous});
-        spf.net.resourcebeta.urls.clear(type, name);
+        spf.net.resource.urls.clear(type, name);
         done = function() {
-          spf.net.scriptbeta.unload_(name, previous);
+          spf.net.script.unload_(name, previous);
           callback && callback();
         };
       }
@@ -102,18 +102,18 @@ spf.net.scriptbeta.load = function(urls, opt_nameOrFn, opt_fn) {
 
   var pseudonym = name || '^' + urls.sort().join('^');
   // Associate the scripts with the name (or pseudonym) to allow unloading.
-  spf.net.resourcebeta.urls.set(type, pseudonym, urls);
+  spf.net.resource.urls.set(type, pseudonym, urls);
   // Subscribe the callback to execute when all urls are loaded.
-  var topic = spf.net.scriptbeta.prefix_(pseudonym);
+  var topic = spf.net.script.prefix_(pseudonym);
   spf.debug.debug('  subscribing', topic, done);
   spf.pubsub.subscribe(topic, done);
   // Start asynchronously loading all the scripts.
   spf.array.each(urls, function(url) {
     // If a status exists, the script is already loading or loaded.
-    if (spf.net.scriptbeta.exists_(url)) {
-      spf.net.scriptbeta.check();
+    if (spf.net.script.exists_(url)) {
+      spf.net.script.check();
     } else {
-      var el = spf.net.scriptbeta.get(url, spf.net.scriptbeta.check);
+      var el = spf.net.script.get(url, spf.net.script.check);
       if (name) {
         el.setAttribute('name', name);
       }
@@ -130,13 +130,13 @@ spf.net.scriptbeta.load = function(urls, opt_nameOrFn, opt_fn) {
  *
  * @param {string} name The name.
  */
-spf.net.scriptbeta.unload = function(name) {
+spf.net.script.unload = function(name) {
   spf.debug.warn('script.unload', name);
-  var type = spf.net.resourcebeta.Type.JS;
+  var type = spf.net.resource.Type.JS;
   // Convert to an array if needed.
-  var urls = spf.net.resourcebeta.urls.get(type, name) || [];
-  spf.net.resourcebeta.urls.clear(type, name);
-  spf.net.scriptbeta.unload_(name, urls);
+  var urls = spf.net.resource.urls.get(type, name) || [];
+  spf.net.resource.urls.clear(type, name);
+  spf.net.script.unload_(name, urls);
 };
 
 
@@ -147,13 +147,13 @@ spf.net.scriptbeta.unload = function(name) {
  * @param {Array.<string>} urls The URLs.
  * @private
 */
-spf.net.scriptbeta.unload_ = function(name, urls) {
-  var type = spf.net.resourcebeta.Type.JS;
+spf.net.script.unload_ = function(name, urls) {
+  var type = spf.net.resource.Type.JS;
   if (urls.length) {
     spf.debug.warn('  > script.unload', urls);
     spf.dispatch('jsunload', {'name': name, 'urls': urls});
     spf.array.each(urls, function(url) {
-      spf.net.resourcebeta.destroy(type, url);
+      spf.net.resource.destroy(type, url);
     });
   }
 };
@@ -162,14 +162,14 @@ spf.net.scriptbeta.unload_ = function(name, urls) {
 /**
  * Discovers existing scripts in the document and registers them as loaded.
  */
-spf.net.scriptbeta.discover = function() {
+spf.net.script.discover = function() {
   spf.debug.debug('script.discover');
-  var type = spf.net.resourcebeta.Type.JS;
-  var els = spf.net.resourcebeta.discover(type);
+  var type = spf.net.resource.Type.JS;
+  var els = spf.net.resource.discover(type);
   spf.array.each(els, function(el) {
     var name = el.getAttribute('name');
     if (name) {
-      spf.net.resourcebeta.urls.set(type, name, [el.src]);
+      spf.net.resource.urls.set(type, name, [el.src]);
     }
     spf.debug.debug('  found', el.src, name);
   });
@@ -186,9 +186,9 @@ spf.net.scriptbeta.discover = function() {
  * @param {Function=} opt_fn Function to execute when loaded.
  * @return {Element} The newly created element.
  */
-spf.net.scriptbeta.get = function(url, opt_fn) {
-  var type = spf.net.resourcebeta.Type.JS;
-  return spf.net.resourcebeta.create(type, url, opt_fn);
+spf.net.script.get = function(url, opt_fn) {
+  var type = spf.net.resource.Type.JS;
+  return spf.net.resource.create(type, url, opt_fn);
 };
 
 
@@ -202,16 +202,16 @@ spf.net.scriptbeta.get = function(url, opt_fn) {
  * @param {Function=} opt_require Callback function to execute if names
  *     are specified that have not yet been defined/loaded.
  */
-spf.net.scriptbeta.ready = function(names, opt_fn, opt_require) {
+spf.net.script.ready = function(names, opt_fn, opt_require) {
   // Convert to an array if needed.
   names = spf.array.toArray(names);
   spf.debug.debug('script.ready', names);
-  var type = spf.net.resourcebeta.Type.JS;
+  var type = spf.net.resource.Type.JS;
 
   // Find unknown names.
   var unknown = [];
   spf.array.each(names, function(name) {
-    if (name && !spf.net.resourcebeta.urls.get(type, name)) {
+    if (name && !spf.net.resource.urls.get(type, name)) {
       unknown.push(name);
     }
   });
@@ -219,13 +219,13 @@ spf.net.scriptbeta.ready = function(names, opt_fn, opt_require) {
   // Check if all urls for the names are loaded.
   var known = !unknown.length;
   if (opt_fn) {
-    var ready = spf.array.every(names, spf.net.scriptbeta.allLoaded_);
+    var ready = spf.array.every(names, spf.net.script.allLoaded_);
     if (known && ready) {
       // If ready, execute the callback.
       opt_fn();
     } else {
       // Otherwise, wait for them to be loaded.
-      var topic = spf.net.scriptbeta.prefix_(names.sort().join('|'));
+      var topic = spf.net.script.prefix_(names.sort().join('|'));
       spf.debug.debug('  subscribing', topic);
       spf.pubsub.subscribe(topic, opt_fn);
     }
@@ -243,10 +243,10 @@ spf.net.scriptbeta.ready = function(names, opt_fn, opt_require) {
  *
  * @param {string} name The ready name.
  */
-spf.net.scriptbeta.done = function(name) {
-  var type = spf.net.resourcebeta.Type.JS;
-  spf.net.resourcebeta.urls.set(type, name, []);  // No associated URLs.
-  spf.net.scriptbeta.check();
+spf.net.script.done = function(name) {
+  var type = spf.net.resource.Type.JS;
+  spf.net.resource.urls.set(type, name, []);  // No associated URLs.
+  spf.net.script.check();
 };
 
 
@@ -262,11 +262,11 @@ spf.net.scriptbeta.done = function(name) {
  * @param {string|Array.<string>} names One or more names.
  * @param {Function} fn Callback function to cancel.
  */
-spf.net.scriptbeta.ignore = function(names, fn) {
+spf.net.script.ignore = function(names, fn) {
   // Convert to an array if needed.
   names = spf.array.toArray(names);
   spf.debug.debug('script.ignore', names);
-  var topic = spf.net.scriptbeta.prefix_(names.sort().join('|'));
+  var topic = spf.net.script.prefix_(names.sort().join('|'));
   spf.debug.debug('  unsubscribing', topic);
   spf.pubsub.unsubscribe(topic, fn);
 };
@@ -280,9 +280,9 @@ spf.net.scriptbeta.ignore = function(names, fn) {
  * @param {Function=} opt_fn Callback function to execute when the
  *     scripts have loaded.
  */
-spf.net.scriptbeta.require = function(names, opt_fn) {
+spf.net.script.require = function(names, opt_fn) {
   spf.debug.debug('script.require', names);
-  var type = spf.net.resourcebeta.Type.JS;
+  var type = spf.net.resource.Type.JS;
 
   // When built for the bootloader, automatic unloading of scripts is not
   // supported.  If someone is attempting to load a new version of a script
@@ -293,16 +293,16 @@ spf.net.scriptbeta.require = function(names, opt_fn) {
     names = spf.array.toArray(names);
     spf.array.each(names, function(name) {
       if (name) {
-        var current = spf.net.scriptbeta.urls_[name] || name;
-        var different = spf.net.scriptbeta.anyDifferent_(name, current);
+        var current = spf.net.script.urls_[name] || name;
+        var different = spf.net.script.anyDifferent_(name, current);
         if (different) {
-          spf.net.scriptbeta.unrequire(name);
+          spf.net.script.unrequire(name);
         }
       }
     });
   }
 
-  spf.net.scriptbeta.ready(names, opt_fn, spf.net.scriptbeta.require_);
+  spf.net.script.ready(names, opt_fn, spf.net.script.require_);
 };
 
 
@@ -312,18 +312,18 @@ spf.net.scriptbeta.require = function(names, opt_fn) {
  * @param {Array.<string>} names The names.
  * @private
  */
-spf.net.scriptbeta.require_ = function(names) {
+spf.net.script.require_ = function(names) {
   // Iterate and check if there are declared dependencies.
   // If so, check if the deps are ready and if not recurse.
   // If not, load the scripts for that name.
   spf.array.each(names, function(name) {
-    var deps = spf.net.scriptbeta.deps_[name];
-    var urls = spf.net.scriptbeta.urls_[name] || name;
+    var deps = spf.net.script.deps_[name];
+    var urls = spf.net.script.urls_[name] || name;
     var next = function() {
-      spf.net.scriptbeta.load(urls, name);
+      spf.net.script.load(urls, name);
     };
     if (deps) {
-      spf.net.scriptbeta.require(deps, next);
+      spf.net.script.require(deps, next);
     } else {
       next();
     }
@@ -337,14 +337,14 @@ spf.net.scriptbeta.require_ = function(names) {
  *
  * @param {string|Array.<string>} names One or more names.
  */
-spf.net.scriptbeta.unrequire = function(names) {
+spf.net.script.unrequire = function(names) {
   spf.debug.debug('script.unrequire', names);
   // Convert to an array if needed.
   names = spf.array.toArray(names);
   spf.array.each(names, function(name) {
     var descendants = [];
-    for (var dep in spf.net.scriptbeta.deps_) {
-      var list = spf.net.scriptbeta.deps_[dep];
+    for (var dep in spf.net.script.deps_) {
+      var list = spf.net.script.deps_[dep];
       list = spf.array.toArray(list);
       spf.array.each(list, function(l) {
         if (l == name) {
@@ -353,9 +353,9 @@ spf.net.scriptbeta.unrequire = function(names) {
       });
     }
     spf.array.each(descendants, function(descend) {
-      spf.net.scriptbeta.unrequire(descend);
+      spf.net.script.unrequire(descend);
     });
-    spf.net.scriptbeta.unload(name);
+    spf.net.script.unload(name);
   });
 };
 
@@ -364,13 +364,13 @@ spf.net.scriptbeta.unrequire = function(names) {
  * Executes any pending callbacks possible by checking if all pending
  * urls for a name have loaded.
  */
-spf.net.scriptbeta.check = function() {
+spf.net.script.check = function() {
   spf.debug.debug('script.check');
-  var prefix = spf.net.scriptbeta.prefix_('');
+  var prefix = spf.net.script.prefix_('');
   for (var topic in spf.pubsub.subscriptions) {
     if (topic.indexOf(prefix) == 0) {
       var names = topic.substring(prefix.length).split('|');
-      var ready = spf.array.every(names, spf.net.scriptbeta.allLoaded_);
+      var ready = spf.array.every(names, spf.net.script.allLoaded_);
       spf.debug.debug(' ', topic, '->', names, '=', ready);
       if (ready) {
         spf.debug.debug('  publishing', topic);
@@ -396,12 +396,12 @@ spf.net.scriptbeta.check = function() {
  *
  * @param {string|Array.<string>} urls One or more URLs of scripts to prefetch.
  */
-spf.net.scriptbeta.prefetch = function(urls) {
-  var type = spf.net.resourcebeta.Type.JS;
+spf.net.script.prefetch = function(urls) {
+  var type = spf.net.resource.Type.JS;
   // Convert to an array if needed.
   urls = spf.array.toArray(urls);
   spf.array.each(urls, function(url) {
-    spf.net.resourcebeta.prefetch(type, url);
+    spf.net.resource.prefetch(type, url);
   });
 };
 
@@ -415,7 +415,7 @@ spf.net.scriptbeta.prefetch = function(urls) {
  *     script is loaded.
  * @return {undefined}
  */
-spf.net.scriptbeta.eval = function(text, opt_callback) {
+spf.net.script.eval = function(text, opt_callback) {
   text = spf.string.trim(text);
   if (text) {
     if (window.execScript) {
@@ -450,14 +450,14 @@ spf.net.scriptbeta.eval = function(text, opt_callback) {
  * @param {Object.<(string|Array.<string>)>} deps The dependency map.
  * @param {Object.<(string|Array.<string>)>=} opt_urls The optional URL map.
  */
-spf.net.scriptbeta.declare = function(deps, opt_urls) {
+spf.net.script.declare = function(deps, opt_urls) {
   if (deps) {
     for (var name in deps) {
-      spf.net.scriptbeta.deps_[name] = deps[name];
+      spf.net.script.deps_[name] = deps[name];
     }
     if (opt_urls) {
       for (var name in opt_urls) {
-        spf.net.scriptbeta.urls_[name] = opt_urls[name];
+        spf.net.script.urls_[name] = opt_urls[name];
       }
     }
   }
@@ -471,9 +471,9 @@ spf.net.scriptbeta.declare = function(deps, opt_urls) {
  *
  * @param {string|Object.<string>} paths The paths.
  */
-spf.net.scriptbeta.path = function(paths) {
-  var type = spf.net.resourcebeta.Type.JS;
-  spf.net.resourcebeta.path(type, paths);
+spf.net.script.path = function(paths) {
+  var type = spf.net.resource.Type.JS;
+  spf.net.resource.path(type, paths);
 };
 
 
@@ -484,9 +484,9 @@ spf.net.scriptbeta.path = function(paths) {
  * @return {string} The prefixed name.
  * @private
  */
-spf.net.scriptbeta.prefix_ = function(name) {
-  var type = spf.net.resourcebeta.Type.JS;
-  return spf.net.resourcebeta.prefix(type, name);
+spf.net.script.prefix_ = function(name) {
+  var type = spf.net.resource.Type.JS;
+  return spf.net.resource.prefix(type, name);
 };
 
 
@@ -498,9 +498,9 @@ spf.net.scriptbeta.prefix_ = function(name) {
  * @return {boolean} Whether the URL is loaded.
  * @private
  */
-spf.net.scriptbeta.exists_ = function(url) {
-  var type = spf.net.resourcebeta.Type.JS;
-  return spf.net.resourcebeta.exists(type, url);
+spf.net.script.exists_ = function(url) {
+  var type = spf.net.resource.Type.JS;
+  return spf.net.resource.exists(type, url);
 };
 
 
@@ -512,9 +512,9 @@ spf.net.scriptbeta.exists_ = function(url) {
  * @return {boolean} Whether the URL is loaded.
  * @private
  */
-spf.net.scriptbeta.loaded_ = function(url) {
-  var type = spf.net.resourcebeta.Type.JS;
-  return spf.net.resourcebeta.loaded(type, url);
+spf.net.script.loaded_ = function(url) {
+  var type = spf.net.resource.Type.JS;
+  return spf.net.resource.loaded(type, url);
 };
 
 
@@ -526,10 +526,10 @@ spf.net.scriptbeta.loaded_ = function(url) {
  * @return {boolean}
  * @private
  */
-spf.net.scriptbeta.allLoaded_ = function(name) {
-  var type = spf.net.resourcebeta.Type.JS;
-  var urls = spf.net.resourcebeta.urls.get(type, name);
-  return !name || (!!urls && spf.array.every(urls, spf.net.scriptbeta.loaded_));
+spf.net.script.allLoaded_ = function(name) {
+  var type = spf.net.resource.Type.JS;
+  var urls = spf.net.resource.urls.get(type, name);
+  return !name || (!!urls && spf.array.every(urls, spf.net.script.loaded_));
 };
 
 
@@ -542,13 +542,13 @@ spf.net.scriptbeta.allLoaded_ = function(name) {
  * @return {boolean}
  * @private
  */
-spf.net.scriptbeta.anyDifferent_ = function(name, updated) {
-  var type = spf.net.resourcebeta.Type.JS;
-  var urls = spf.net.resourcebeta.urls.get(type, name);
+spf.net.script.anyDifferent_ = function(name, updated) {
+  var type = spf.net.resource.Type.JS;
+  var urls = spf.net.resource.urls.get(type, name);
   if (urls) {
     updated = spf.array.toArray(updated);
     return !spf.array.every(urls, function(url, i) {
-      return urls[i] == spf.net.resourcebeta.canonicalize(type, updated[i]);
+      return urls[i] == spf.net.resource.canonicalize(type, updated[i]);
     });
   } else {
     return false;
@@ -561,16 +561,16 @@ spf.net.scriptbeta.anyDifferent_ = function(name, updated) {
  * @type {!Object.<(string|Array.<string>)>}
  * @private
  */
-spf.net.scriptbeta.deps_ = {};
+spf.net.script.deps_ = {};
 // When built for the bootloader, unconditionally set the map in state.
 if (SPF_BOOTLOADER) {
-  spf.state.set(spf.net.scriptbeta.DEPS_KEY, spf.net.scriptbeta.deps_);
-} else if (SPF_BETA) {
-  if (!spf.state.has(spf.net.scriptbeta.DEPS_KEY)) {
-    spf.state.set(spf.net.scriptbeta.DEPS_KEY, {});
+  spf.state.set(spf.net.script.DEPS_KEY, spf.net.script.deps_);
+} else {
+  if (!spf.state.has(spf.net.script.DEPS_KEY)) {
+    spf.state.set(spf.net.script.DEPS_KEY, {});
   }
-  spf.net.scriptbeta.deps_ = /** @type {!Object.<(string|Array.<string>)>} */ (
-      spf.state.get(spf.net.scriptbeta.DEPS_KEY));
+  spf.net.script.deps_ = /** @type {!Object.<(string|Array.<string>)>} */ (
+      spf.state.get(spf.net.script.DEPS_KEY));
 }
 
 
@@ -579,16 +579,16 @@ if (SPF_BOOTLOADER) {
  * @type {!Object.<(string|Array.<string>)>}
  * @private
  */
-spf.net.scriptbeta.urls_ = {};
+spf.net.script.urls_ = {};
 // When built for the bootloader, unconditionally set the map in state.
 if (SPF_BOOTLOADER) {
-  spf.state.set(spf.net.scriptbeta.URLS_KEY, spf.net.scriptbeta.urls_);
-} else if (SPF_BETA) {
-  if (!spf.state.has(spf.net.scriptbeta.URLS_KEY)) {
-    spf.state.set(spf.net.scriptbeta.URLS_KEY, {});
+  spf.state.set(spf.net.script.URLS_KEY, spf.net.script.urls_);
+} else {
+  if (!spf.state.has(spf.net.script.URLS_KEY)) {
+    spf.state.set(spf.net.script.URLS_KEY, {});
   }
-  spf.net.scriptbeta.urls_ = /** @type {!Object.<(string|Array.<string>)>} */ (
-      spf.state.get(spf.net.scriptbeta.URLS_KEY));
+  spf.net.script.urls_ = /** @type {!Object.<(string|Array.<string>)>} */ (
+      spf.state.get(spf.net.script.URLS_KEY));
 }
 
 
@@ -597,7 +597,7 @@ if (SPF_BOOTLOADER) {
  * @type {string}
  * @const
  */
-spf.net.scriptbeta.DEPS_KEY = 'js-d';
+spf.net.script.DEPS_KEY = 'js-d';
 
 
 /**
@@ -605,52 +605,52 @@ spf.net.scriptbeta.DEPS_KEY = 'js-d';
  * @type {string}
  * @const
  */
-spf.net.scriptbeta.URLS_KEY = 'js-u';
+spf.net.script.URLS_KEY = 'js-u';
 
 
 if (spf.tracing.ENABLED) {
   (function() {
-    spf.net.scriptbeta.load = spf.tracing.instrument(
-        spf.net.scriptbeta.load, 'spf.net.scriptbeta.load');
-    spf.net.scriptbeta.unload = spf.tracing.instrument(
-        spf.net.scriptbeta.unload, 'spf.net.scriptbeta.unload');
-    spf.net.scriptbeta.unload_ = spf.tracing.instrument(
-        spf.net.scriptbeta.unload_, 'spf.net.scriptbeta.unload_');
-    spf.net.scriptbeta.discover = spf.tracing.instrument(
-        spf.net.scriptbeta.discover, 'spf.net.scriptbeta.discover');
-    spf.net.scriptbeta.get = spf.tracing.instrument(
-        spf.net.scriptbeta.get, 'spf.net.scriptbeta.get');
-    spf.net.scriptbeta.ready = spf.tracing.instrument(
-        spf.net.scriptbeta.ready, 'spf.net.scriptbeta.ready');
-    spf.net.scriptbeta.done = spf.tracing.instrument(
-        spf.net.scriptbeta.done, 'spf.net.scriptbeta.done');
-    spf.net.scriptbeta.ignore = spf.tracing.instrument(
-        spf.net.scriptbeta.ignore, 'spf.net.scriptbeta.ignore');
-    spf.net.scriptbeta.require = spf.tracing.instrument(
-        spf.net.scriptbeta.require, 'spf.net.scriptbeta.require');
-    spf.net.scriptbeta.require_ = spf.tracing.instrument(
-        spf.net.scriptbeta.require_, 'spf.net.scriptbeta.require_');
-    spf.net.scriptbeta.unrequire = spf.tracing.instrument(
-        spf.net.scriptbeta.unrequire, 'spf.net.scriptbeta.unrequire');
-    spf.net.scriptbeta.check = spf.tracing.instrument(
-        spf.net.scriptbeta.check, 'spf.net.scriptbeta.check');
-    spf.net.scriptbeta.prefetch = spf.tracing.instrument(
-        spf.net.scriptbeta.prefetch, 'spf.net.scriptbeta.prefetch');
-    spf.net.scriptbeta.eval = spf.tracing.instrument(
-        spf.net.scriptbeta.eval, 'spf.net.scriptbeta.eval');
-    spf.net.scriptbeta.declare = spf.tracing.instrument(
-        spf.net.scriptbeta.declare, 'spf.net.scriptbeta.declare');
-    spf.net.scriptbeta.path = spf.tracing.instrument(
-        spf.net.scriptbeta.path, 'spf.net.scriptbeta.path');
-    spf.net.scriptbeta.prefix_ = spf.tracing.instrument(
-        spf.net.scriptbeta.prefix_, 'spf.net.scriptbeta.prefix_');
-    spf.net.scriptbeta.exists_ = spf.tracing.instrument(
-        spf.net.scriptbeta.exists_, 'spf.net.scriptbeta.exists_');
-    spf.net.scriptbeta.loaded_ = spf.tracing.instrument(
-        spf.net.scriptbeta.loaded_, 'spf.net.scriptbeta.loaded_');
-    spf.net.scriptbeta.allLoaded_ = spf.tracing.instrument(
-        spf.net.scriptbeta.allLoaded_, 'spf.net.scriptbeta.allLoaded_');
-    spf.net.scriptbeta.anyDifferent_ = spf.tracing.instrument(
-        spf.net.scriptbeta.anyDifferent_, 'spf.net.scriptbeta.anyDifferent_');
+    spf.net.script.load = spf.tracing.instrument(
+        spf.net.script.load, 'spf.net.script.load');
+    spf.net.script.unload = spf.tracing.instrument(
+        spf.net.script.unload, 'spf.net.script.unload');
+    spf.net.script.unload_ = spf.tracing.instrument(
+        spf.net.script.unload_, 'spf.net.script.unload_');
+    spf.net.script.discover = spf.tracing.instrument(
+        spf.net.script.discover, 'spf.net.script.discover');
+    spf.net.script.get = spf.tracing.instrument(
+        spf.net.script.get, 'spf.net.script.get');
+    spf.net.script.ready = spf.tracing.instrument(
+        spf.net.script.ready, 'spf.net.script.ready');
+    spf.net.script.done = spf.tracing.instrument(
+        spf.net.script.done, 'spf.net.script.done');
+    spf.net.script.ignore = spf.tracing.instrument(
+        spf.net.script.ignore, 'spf.net.script.ignore');
+    spf.net.script.require = spf.tracing.instrument(
+        spf.net.script.require, 'spf.net.script.require');
+    spf.net.script.require_ = spf.tracing.instrument(
+        spf.net.script.require_, 'spf.net.script.require_');
+    spf.net.script.unrequire = spf.tracing.instrument(
+        spf.net.script.unrequire, 'spf.net.script.unrequire');
+    spf.net.script.check = spf.tracing.instrument(
+        spf.net.script.check, 'spf.net.script.check');
+    spf.net.script.prefetch = spf.tracing.instrument(
+        spf.net.script.prefetch, 'spf.net.script.prefetch');
+    spf.net.script.eval = spf.tracing.instrument(
+        spf.net.script.eval, 'spf.net.script.eval');
+    spf.net.script.declare = spf.tracing.instrument(
+        spf.net.script.declare, 'spf.net.script.declare');
+    spf.net.script.path = spf.tracing.instrument(
+        spf.net.script.path, 'spf.net.script.path');
+    spf.net.script.prefix_ = spf.tracing.instrument(
+        spf.net.script.prefix_, 'spf.net.script.prefix_');
+    spf.net.script.exists_ = spf.tracing.instrument(
+        spf.net.script.exists_, 'spf.net.script.exists_');
+    spf.net.script.loaded_ = spf.tracing.instrument(
+        spf.net.script.loaded_, 'spf.net.script.loaded_');
+    spf.net.script.allLoaded_ = spf.tracing.instrument(
+        spf.net.script.allLoaded_, 'spf.net.script.allLoaded_');
+    spf.net.script.anyDifferent_ = spf.tracing.instrument(
+        spf.net.script.anyDifferent_, 'spf.net.script.anyDifferent_');
   })();
 }
