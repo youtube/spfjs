@@ -49,6 +49,9 @@ spf.history.init = function(callback, errorCallback) {
     if (spf.config.get('history-secure-functions')) {
       spf.history.secureHistoryFunctions_();
     }
+    // Set the history references
+    spf.history.pushState_ = History.prototype.pushState;
+    spf.history.replaceState_ = History.prototype.replaceState;
     // Set the initial referer to properly send referer on back button.
     var historyState = { 'spf-referer': document.referrer };
     spf.history.replace(url, historyState);
@@ -303,11 +306,11 @@ spf.history.doReplaceState_ = function(data, title, opt_url) {
  * A reference to the history.pushState function.
  * @private
  */
-spf.history.pushState_ = History.prototype.pushState;
+spf.history.pushState_ = null;
 
 
 /**
  * A reference to the history.replaceState function.
  * @private
  */
-spf.history.replaceState_ = History.prototype.replaceState;
+spf.history.replaceState_ = null;
