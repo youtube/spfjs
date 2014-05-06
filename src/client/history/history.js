@@ -49,9 +49,6 @@ spf.history.init = function(callback, errorCallback) {
     if (spf.config.get('history-secure-functions')) {
       spf.history.secureHistoryFunctions_();
     }
-    // Set the history references
-    spf.history.pushState_ = History.prototype.pushState;
-    spf.history.replaceState_ = History.prototype.replaceState;
     // Set the initial referer to properly send referer on back button.
     var historyState = { 'spf-referer': document.referrer };
     spf.history.replace(url, historyState);
@@ -88,11 +85,11 @@ spf.history.secureHistoryFunctions_ = function() {
   var errorCallback = /** @type {Function} */ (
       spf.state.get('history-error-callback'));
   var historyCopy = {
-    pushState: window.history.pushState,
-    replaceState: window.history.replaceState
+    pushState: History.prototype.pushState,
+    replaceState: History.prototype.replaceState
   };
   try {
-    Object.defineProperty(window.history, 'pushState', {
+    Object.defineProperty(History.prototype, 'pushState', {
       get: function() {
         return historyCopy.pushState;
       },
@@ -104,7 +101,7 @@ spf.history.secureHistoryFunctions_ = function() {
         }
       }
     });
-    Object.defineProperty(window.history, 'replaceState', {
+    Object.defineProperty(History.prototype, 'replaceState', {
       get: function() {
         return historyCopy.replaceState;
       },
@@ -271,14 +268,10 @@ spf.history.doPushState_ = function(data, title, opt_url) {
   // It is common for third party code to interfere with pushState.
   // This check makes sure that pushState is a function when called to
   // avoid js errors and a state where the back arrow stops working.
-  if (spf.config.get('history-secure-functions')) {
-    if (typeof window.history.pushState == 'function') {
-      window.history.pushState(data, title, opt_url);
-    } else {
-      throw new Error('history.pushState is not a function.');
-    }
-  } else {
+  if (typeof spf.history.pushState_ == 'function') {
     spf.history.pushState_.call(window.history, data, title, opt_url);
+  } else {
+    throw new Error('history.pushState is not a function.');
   }
 };
 
@@ -290,14 +283,10 @@ spf.history.doPushState_ = function(data, title, opt_url) {
  * @private
  */
 spf.history.doReplaceState_ = function(data, title, opt_url) {
-  if (spf.config.get('history-secure-functions')) {
-    if (typeof window.history.replaceState == 'function') {
-      window.history.replaceState(data, title, opt_url);
-    } else {
-      throw new Error('history.replaceState is not a function');
-    }
-  } else {
+  if (typeof spf.history.replaceState_ == 'function') {
     spf.history.replaceState_.call(window.history, data, title, opt_url);
+  } else {
+    throw new Error('history.replaceState is not a function');
   }
 };
 
@@ -306,11 +295,12 @@ spf.history.doReplaceState_ = function(data, title, opt_url) {
  * A reference to the history.pushState function.
  * @private
  */
-spf.history.pushState_ = null;
+spf.history.pushState_ = window['History'] ? History.prototype.pushState : null;
 
 
 /**
  * A reference to the history.replaceState function.
  * @private
  */
-spf.history.replaceState_ = null;
+spf.history.replaceState_ = window['History'] ?
+    History.prototype.replaceState : null;
