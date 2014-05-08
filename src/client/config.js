@@ -24,17 +24,9 @@ spf.config.defaults = {
   'nolink-class': 'spf-nolink',
   'navigate-limit': 20,  // 20 navigations per session.
   'navigate-lifetime': 24 * 60 * 60 * 1000,  // 1 day session lifetime (ms).
-  'navigate-requested-callback': null,
-  'navigate-part-received-callback': null,
-  'navigate-part-processed-callback': null,
-  'navigate-received-callback': null,
-  'navigate-processed-callback': null,
-  'navigate-error-callback': null,
   'prefetch-on-mousedown': false,
   'process-async': false,
   'request-timeout': 0,  // No request timeout.
-  'script-loading-callback': null,
-  'style-loading-callback': null,
   'url-identifier': '?spf=__type__'
 };
 
