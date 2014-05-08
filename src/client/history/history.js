@@ -51,7 +51,14 @@ spf.history.init = function(callback, errorCallback) {
     }
     // Set the initial referer to properly send referer on back button.
     var historyState = { 'spf-referer': document.referrer };
-    spf.history.replace(url, historyState);
+    try {
+      spf.history.replace(url, historyState);
+    } catch (err) {
+      // If history.replaceState was null an error will be thrown.
+      if (errorCallback) {
+        errorCallback(url, err);
+      }
+    }
   }
 };
 
@@ -96,7 +103,7 @@ spf.history.secureHistoryFunctions_ = function() {
       set: function(val) {
         if (errorCallback) {
           errorCallback(
-              window.location.href,
+              spf.history.getCurrentUrl_(),
               new Error('history.pushState cannot be set to ' + val));
         }
       }
@@ -108,7 +115,7 @@ spf.history.secureHistoryFunctions_ = function() {
       set: function(val) {
         if (errorCallback) {
           errorCallback(
-              window.location.href,
+              spf.history.getCurrentUrl_(),
               new Error('history.replaceState cannot be set to ' + val));
         }
       }
