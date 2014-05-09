@@ -302,12 +302,13 @@ spf.history.doReplaceState_ = function(data, title, opt_url) {
  * A reference to the history.pushState function.
  * @private
  */
-spf.history.pushState_ = window['History'] ? History.prototype.pushState : null;
+spf.history.pushState_ = typeof History != 'undefined' ?
+    History.prototype.pushState : null;
 
 
 /**
  * A reference to the history.replaceState function.
  * @private
  */
-spf.history.replaceState_ = window['History'] ?
+spf.history.replaceState_ = typeof History != 'undefined' ?
     History.prototype.replaceState : null;

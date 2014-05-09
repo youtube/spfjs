@@ -23,9 +23,7 @@ goog.require('spf.pubsub');
  *     history modification API is not supported, returns false.
  */
 spf.main.init = function(opt_config) {
-  // This check is extra paranoid pending further investigation.
-  var enable = !!(window.History && History.prototype.pushState &&
-      window.history.pushState);
+  var enable = !!(typeof History != 'undefined' && History.prototype.pushState);
   spf.debug.info('main.init ', 'enable=', enable);
   var config = opt_config || {};
   for (var key in spf.config.defaults) {
@@ -43,7 +41,7 @@ spf.main.init = function(opt_config) {
  * Disposes SPF.
  */
 spf.main.dispose = function() {
-  var enable = !!(window.history.pushState);
+  var enable = !!(typeof History != 'undefined' && History.prototype.pushState);
   if (enable) {
     spf.nav.dispose();
   }
