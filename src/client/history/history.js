@@ -45,10 +45,6 @@ spf.history.init = function(callback, errorCallback) {
     // The timestap of the current history entry, used to distinguish
     // between backward and forward state changes.
     spf.state.set('history-timestamp', spf.now());
-    // Secure the history functions to prevent overwriting of pushState.
-    if (spf.config.get('history-secure-functions')) {
-      spf.history.secureHistoryFunctions_();
-    }
     // Set the initial referer to properly send referer on back button.
     var historyState = { 'spf-referer': document.referrer };
     try {
@@ -79,48 +75,6 @@ spf.history.dispose = function() {
     spf.state.set('history-url', null);
     spf.state.set('history-timestamp', 0);
   }
-};
-
-
-/**
- * Make it impossible to set the value of window.history.pushState and
- * window.history.replaceState.
- *
- * @private
- */
-spf.history.secureHistoryFunctions_ = function() {
-  var errorCallback = /** @type {Function} */ (
-      spf.state.get('history-error-callback'));
-  var historyCopy = {
-    pushState: History.prototype.pushState,
-    replaceState: History.prototype.replaceState
-  };
-  try {
-    Object.defineProperty(History.prototype, 'pushState', {
-      get: function() {
-        return historyCopy.pushState;
-      },
-      set: function(val) {
-        if (errorCallback) {
-          errorCallback(
-              spf.history.getCurrentUrl_(),
-              new Error('history.pushState cannot be set to ' + val));
-        }
-      }
-    });
-    Object.defineProperty(History.prototype, 'replaceState', {
-      get: function() {
-        return historyCopy.replaceState;
-      },
-      set: function(val) {
-        if (errorCallback) {
-          errorCallback(
-              spf.history.getCurrentUrl_(),
-              new Error('history.replaceState cannot be set to ' + val));
-        }
-      }
-    });
-  } catch (err) {}
 };
 
 

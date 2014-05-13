@@ -184,18 +184,4 @@ describe('spf.history', function() {
     expect(callbacks.one.calls.length).toEqual(2);
   });
 
-  describe('secureHistoryFunctions_', function() {
-    it('should call error callback if history is changed', function() {
-      // History tests are not run unless the events are supported.
-      if (!window.addEventListener) {
-        return;
-      }
-      spf.history.secureHistoryFunctions_();
-      expect(callbacks.err).not.toHaveBeenCalled();
-      window.history.pushState = function() {};
-      expect(callbacks.err).toHaveBeenCalledWith(
-          jasmine.any(String),
-          jasmine.any(Error));
-    });
-  });
 });
