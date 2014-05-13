@@ -11,7 +11,7 @@
 // goog.provide and goog.require statements for automatic dependency management
 // by the compiler, but these primitives are processed and removed during
 // compilation.  For testing and development, these functions are stubbed in
-// testing/stub.js.
+// stub.js.
 //
 // A general note on browser compatibility.
 //

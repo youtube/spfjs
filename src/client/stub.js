@@ -5,6 +5,7 @@
  */
 
 
+/** @define {boolean} Compiler flag to remove development code. */
 var COMPILED = false;
 
 
