@@ -1,0 +1,6 @@
+# Build output
+/build
+
+# Unmanaged external libraries
+/vendor/closure-compiler
+/vendor/jasmine

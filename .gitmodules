@@ -1,0 +1,6 @@
+[submodule "vendor/ninja"]
+	path = vendor/ninja
+	url = https://github.com/martine/ninja.git
+[submodule "vendor/webpy"]
+	path = vendor/webpy
+	url = https://github.com/webpy/webpy.git
