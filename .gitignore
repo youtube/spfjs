@@ -1,6 +1,9 @@
 # Build output
 /build
 
+# Build files
+/build.ninja
+
 # Unmanaged external libraries
 /vendor/closure-compiler
 /vendor/jasmine
