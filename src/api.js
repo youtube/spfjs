@@ -134,9 +134,10 @@ spf.RequestOptions.prototype.method;
 
 
 /**
- * Optional callback to execute if the request fails. The first argument is the
- * requested URL; the second argument is the Error that occurred.
- * @type {function(string, Error)|undefined}
+ * Optional callback to execute if the request fails. The argument to the
+ * callback will be an object that conforms to the {@code spf.EventDetail}
+ * interface for "spferror" events (see {@link spf.Event}).
+ * @type {function(spf.EventDetail)|undefined}
  */
 spf.RequestOptions.prototype.onError;
 
@@ -147,19 +148,21 @@ spf.RequestOptions.prototype.onError;
  * {@code onSuccess}, once per part of multipart responses; never called for
  * single responses. If valid "X-SPF-Response-Type: multipart" and
  * "Transfer-Encoding: chunked" headers are sent, then this callback will be
- * executed on-the-fly as chunks are received.  The first argument is the
- * requested URL; the second is the partial response object.
- * @type {function(string, spf.SingleResponse)|undefined}
+ * executed on-the-fly as chunks are received.  The argument to the
+ * callback will be an object that conforms to the {@code spf.EventDetail}
+ * interface for "spfpartreceived" and "spfpartprocessed" events
+ * (see {@link spf.Event}).
+ * @type {function(spf.EventDetail)|undefined}
  */
 spf.RequestOptions.prototype.onPart;
 
 
 /**
- * Optional callback to execute if the request succeeds.  The first argument is
- * the requested URL; the second is the response object.  The response object
- * will be either a complete single response object or a complete multipart
- * response object
- * @type {function(string,(spf.SingleResponse|spf.MultipartResponse))|undefined}
+ * Optional callback to execute if the request succeeds.  The argument to the
+ * callback will be an object that conforms to the {@code spf.EventDetail}
+ * interface for "spfreceived" and "spfprocessed" events
+ * (see {@link spf.Event}).
+ * @type {function(spf.EventDetail)|undefined}
  */
 spf.RequestOptions.prototype.onSuccess;
 
@@ -169,6 +172,79 @@ spf.RequestOptions.prototype.onSuccess;
  * @type {ArrayBuffer|Blob|Document|FormData|null|string|undefined}
  */
 spf.RequestOptions.prototype.postData;
+
+
+/**
+ * Definition of CustomEvents dispatched by SPF.
+ * @interface
+ * @extends {CustomEvent}
+ */
+spf.Event;
+
+
+/**
+ * Optional detail object of the custom event.
+ * @type {spf.EventDetail}
+ */
+spf.Event.prototype.detail;
+
+
+/**
+ * Definition of the CustomEvent "detail" attribute (see {@link spf.Event}),
+ * also used as an argument to callbacks in {@code spf.RequestOptions} objects.
+ * @interface
+ */
+spf.EventDetail;
+
+
+/**
+ * The Error that occurred; defined for "spferror" events,
+ * @type {Error|undefined}
+ */
+spf.EventDetail.prototype.err;
+
+
+/**
+ * The name of the scripts or styles that will be unloaded; defined for
+ * "spfjsbeforeunload", "spfjsunload", "spfcssbeforeunload", and
+ * "spfcssunload" events.
+ * @type {string|undefined}
+ */
+spf.EventDetail.prototype.name;
+
+
+/**
+ * One part of a multipart SPF response (see {@link spf.MultipartResponse});
+ * defined for "spfpartreceived" and "spfpartprocessed" events.
+ * @type {spf.SingleResponse|undefined}
+ */
+spf.EventDetail.prototype.part;
+
+
+/**
+ * A complete SPF response (see {@link spf.SingleResponse} and
+ * {@link spf.MultipartResponse}); defined for "spfreceived" and "spfprocessed"
+ * events.
+ * @type {spf.SingleResponse|spf.MultipartResponse|undefined}
+ */
+spf.EventDetail.prototype.response;
+
+
+/**
+ * The URL of the request; defined for "spfrequested", "spfpartreceived",
+ * "spfpartprocessed", "spfreceived", "spfprocessed", and "spferror" events.
+ * @type {string|undefined}
+ */
+spf.EventDetail.prototype.url;
+
+
+/**
+ * The list of URLs of the scripts or styles that will be unloaded; defined for
+ * "spfjsbeforeunload", "spfjsunload", "spfcssbeforeunload", and
+ * "spfcssunload" events.
+ * @type {Array.<string>|undefined}
+ */
+spf.EventDetail.prototype.urls;
 
 
 /**

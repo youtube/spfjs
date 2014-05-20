@@ -89,7 +89,7 @@ spf.execute = function(fn, var_args) {
  * Dispatches a custom event.
  *
  * @param {string} name The custom event name.
- * @param {?=} opt_detail The custom event detail (data).
+ * @param {!Object=} opt_detail The custom event detail (data).
  * @return {boolean} False if the event was canceled.
  */
 spf.dispatch = function(name, opt_detail) {
@@ -185,10 +185,37 @@ spf.MultipartResponse;
  * @typedef {{
  *   postData: (ArrayBuffer|Blob|Document|FormData|null|string|undefined),
  *   method: (string|undefined),
- *   onError: (function(string, Error)|undefined),
- *   onPart: (function(string, spf.SingleResponse)|undefined),
- *   onSuccess: (function(string,
- *                   (spf.SingleResponse|spf.MultipartResponse))|undefined)
+ *   onError: (function(spf.EventDetail)|undefined),
+ *   onPart: (function(spf.EventDetail)|undefined),
+ *   onSuccess: (function(spf.EventDetail)|undefined)
  * }}
  */
 spf.RequestOptions;
+
+
+/**
+ * Type definititon for custom event detail (data), also used for callbacks.
+ * - err: optional error that occurred; defined for "spferror" events
+ * - name: optional name of the scripts or styles that will be unloaded;
+ *       defined for "jsbeforeunload", "jsunload", "cssbeforeunload",
+ *       and "cssunload" events.
+ * - part: optional part of a multipart response; defined for "partreceived"
+ *       and "partprocessed" events.
+ * - response: optional complete response; defined for "received" and
+ *       "processed" events.
+ * - url: optional URL of the request; defined for "requested", "partreceived",
+ *       "partprocessed", "received", "processed", and "error" events.
+ * - urls: optional list or URLs of scripts/styles to be unloaded; defined for
+ *       "jsbeforeunload", "jsunload", "cssbeforeunload", and "cssunload"
+ *       events.
+ *
+ * @typedef {{
+ *   err: (Error|undefined),
+ *   name: (string|undefined),
+ *   part: (spf.SingleResponse|undefined),
+ *   response: (spf.SingleResponse|spf.MultipartResponse|undefined),
+ *   url: (string|undefined),
+ *   urls: (Array.<string>|undefined)
+ * }}
+ */
+spf.EventDetail;
