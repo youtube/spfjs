@@ -219,6 +219,17 @@ describe('spf.nav', function() {
     });
 
 
+    it('ignores click with defaultPrevented', function() {
+      var evt = createFakeBrowserEvent();
+
+      evt.preventDefault();
+      spf.nav.handleClick_(evt);
+
+      expect(evt.defaultPrevented).toEqual(true);
+      expect(spf.nav.navigate_).not.toHaveBeenCalled();
+    });
+
+
     it('ignores click with modifier keys', function() {
       var evt = createFakeBrowserEvent();
 

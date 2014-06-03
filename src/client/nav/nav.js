@@ -202,6 +202,10 @@ spf.nav.isNavigateEligible_ = function(url) {
  */
 spf.nav.handleClick_ = function(evt) {
   spf.debug.debug('nav.handleClick ', 'evt=', evt);
+  if (evt.defaultPrevented) {
+    // Allow other click handlers to cancel navigation.
+    return;
+  }
   var url = spf.nav.getEventURL_(evt);
   if (url === null) {
     // No relevant URL for event target.
