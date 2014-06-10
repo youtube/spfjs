@@ -166,6 +166,8 @@ spf.nav.request.handleResponseFromCache_ = function(url, options, timing,
   // W3C PerformanceTiming for page loads.
   if (options.type && spf.string.startsWith(options.type, 'navigate')) {
     timing['navigationStart'] = timing['startTime'];
+    // Record that this prefetched response is a cache hit.
+    timing['spfPrefetchType'] = 'cache';
     // If this cached response was a navigate and a unified cache is not being
     // used, then it was from prefetch-based caching and is only eligible to
     // be used once.

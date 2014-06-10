@@ -610,6 +610,7 @@ spf.nav.handleNavigateSuccess_ = function(options, reverse, original,
   if (spf.state.get('nav-promote') == original) {
     var timing = response['timing'] || {};
     timing['navigationStart'] = spf.state.get('nav-promote-time');
+    timing['spfPrefetchType'] = 'promote';
   }
 
   // Dispatch the "navigation received" event.  If the event is explicitly
