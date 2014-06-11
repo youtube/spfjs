@@ -428,7 +428,8 @@ spf.nav.response.parseScripts_ = function(html) {
       spf.array.each(html['scripts'], function(script) {
         result.scripts.push({url: script['url'] || '',
                              text: script['text'] || '',
-                             name: script['name'] || ''});
+                             name: script['name'] || '',
+                             async: script['async'] || false});
       });
     }
     result.html = html['html'] || '';
@@ -440,7 +441,8 @@ spf.nav.response.parseScripts_ = function(html) {
         url = url ? url[1] : '';
         var name = attr.match(spf.nav.response.NAME_ATTR_REGEXP);
         name = name ? name[1] : '';
-        result.scripts.push({url: url, text: text, name: name});
+        var async = spf.nav.response.ASYNC_ATTR_REGEXP.test(attr);
+        result.scripts.push({url: url, text: text, name: name, async: async});
         return '';
       });
   result.html = html;
@@ -465,15 +467,19 @@ spf.nav.response.installScripts_ = function(result, opt_callback) {
     }
     return;
   }
-  // Load or evaluate the scripts in order.
-  // TODO(nicksay): Support async as well as ordered loading.
+  // Load or evaluate the scripts in order or asynchronously.
   var index = -1;
   var getNextScript = function() {
     index++;
     if (index < result.scripts.length) {
       var item = result.scripts[index];
       if (item.url) {
-        spf.net.script.load(item.url, item.name, getNextScript);
+        if (item.async) {
+          spf.net.script.load(item.url, item.name);
+          getNextScript();
+        } else {
+          spf.net.script.load(item.url, item.name, getNextScript);
+        }
       } else if (item.text) {
         spf.net.script.eval(item.text, getNextScript);
       } else {
@@ -633,7 +639,7 @@ spf.nav.response.ParseStylesResult_ = function() {
 spf.nav.response.ParseScriptsResult_ = function() {
   /** @type {string} */
   this.html = '';
-  /** @type {Array.<{url:string, text:string, name:string}>} */
+  /** @type {Array.<{url:string, text:string, name:string, async:boolean}>} */
   this.scripts = [];
 };
 
@@ -727,6 +733,19 @@ spf.nav.response.SRC_ATTR_REGEXP = /src="([\S]+)"/;
  * @const
  */
 spf.nav.response.NAME_ATTR_REGEXP = /name="([\S]+)"/;
+
+
+/**
+ * Regular expression used to locate async attributes in a string. The presence
+ * of async attribute represents true regardless the assigned value. To
+ * represent false the async attribute has to be omitted altogether.
+ * Reference: http://www.w3.org/TR/html5/infrastructure.html#boolean-attribute
+ * See {@link #parseScripts_}.
+ *
+ * @type {RegExp}
+ * @const
+ */
+spf.nav.response.ASYNC_ATTR_REGEXP = /(?:\s|^)async(?:\s|=|$)/i;
 
 
 /**

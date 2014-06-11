@@ -388,6 +388,41 @@ describe('spf.nav.response', function() {
       expect(parseAsSingle).not.toThrow();  // The chunk is valid JSON.
     });
 
+    it('script strings', function() {
+      var htmlScriptsString = '<head>' +
+        '<script src="foo.js" name="foo"></script>' +
+        '<script src="bar.js" name="bar" async></script>' +
+        '<script src="baz.js" name="baz"></script>' +
+        '<script src="qux.js" name="qux" async="async"></script>' +
+        '</head>';
+      var expectedResult = {
+        scripts: [
+          {url: 'foo.js', text: '', name: 'foo', async: false},
+          {url: 'bar.js', text: '', name: 'bar', async: true},
+          {url: 'baz.js', text: '', name: 'baz', async: false},
+          {url: 'qux.js', text: '', name: 'qux', async: true}
+        ]
+      };
+
+      var result = spf.nav.response.parseScripts_(htmlScriptsString);
+      expect(result.scripts).toEqual(expectedResult.scripts);
+      expect(result.html).toBe('<head></head>');
+    });
+
+    it('inline script strings', function() {
+      var htmlScriptsString = '<head>' +
+        '<script name="quatre">window.foo = 4</script>' +
+        '<script name="vingt">window.foo *= 20</script>' +
+        '<script name="dix">window.foo += 10</script>' +
+        '</head>';
+
+      var result = spf.nav.response.parseScripts_(htmlScriptsString);
+      spf.nav.response.installScripts_(result, function() {
+        var ninety = window.foo;
+        expect(ninety).toBe(90);
+      });
+    });
+
   });
 
   describe('process', function() {
