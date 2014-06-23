@@ -21,20 +21,6 @@ spf.SingleResponse;
 
 
 /**
- * HTML string containing <link> and <style> tags of CSS to install.
- * @type {string|undefined}
- */
-spf.SingleResponse.prototype.css;
-
-
-/**
- * Map of Element IDs to HTML strings containing content of the Elements.
- * @type {Object.<string, string>|undefined}
- */
-spf.SingleResponse.prototype.html;
-
-
-/**
  * Map of Element IDs to maps of attibute names to values for the Elements.
  * @type {Object.<string, Object.<string, string>>|undefined}
  */
@@ -42,17 +28,11 @@ spf.SingleResponse.prototype.attr;
 
 
 /**
- * HTML string containing <script> tags of JS to execute.
- * @type {string|undefined}
+ * Map of Element IDs to HTML strings containing content of the Elements.  The
+ * content may contain script and/or style tags to be executed or installed.
+ * @type {Object.<string, string>|undefined}
  */
-spf.SingleResponse.prototype.js;
-
-
-/**
- * String of the new Document title.
- * @type {string|undefined}
- */
-spf.SingleResponse.prototype.title;
+spf.SingleResponse.prototype.body;
 
 
 /**
@@ -63,10 +43,69 @@ spf.SingleResponse.prototype.cacheType;
 
 
 /**
+ * HTML string containing <link> and <style> tags of CSS to install.
+ * @deprecated Use {@code head} instead.
+ * @type {string|undefined}
+ */
+spf.SingleResponse.prototype.css;
+
+
+/**
+ * Reserved for client data of any type.
+ * @type {*|undefined}
+ */
+spf.SingleResponse.prototype.data;
+
+
+/**
+ * HTML string containing CSS and/or JS tags to execute or install.
+ * @type {string|undefined}
+ */
+spf.SingleResponse.prototype.head;
+
+
+/**
+ * Map of Element IDs to HTML strings containing content of the Elements.
+ * @deprecated Use {@code body} instead.
+ * @type {Object.<string, string>|undefined}
+ */
+spf.SingleResponse.prototype.html;
+
+
+/**
+ * HTML string containing JS and/or CSS tags to execute or install.
+ * @type {string|undefined}
+ */
+spf.SingleResponse.prototype.foot;
+
+
+/**
+ * HTML string containing <script> tags of JS to execute.
+ * @deprecated Use {@code foot} instead.
+ * @type {string|undefined}
+ */
+spf.SingleResponse.prototype.js;
+
+
+/**
+ * String of a URL to request instead.
+ * @type {string|undefined}
+ */
+spf.SingleResponse.prototype.redirect;
+
+
+/**
  * Map of timing attributes to timestamp numbers.
  * @type {Object.<string, number>|undefined}
  */
 spf.SingleResponse.prototype.timing;
+
+
+/**
+ * String of the new Document title.
+ * @type {string|undefined}
+ */
+spf.SingleResponse.prototype.title;
 
 
 /**
@@ -78,13 +117,6 @@ spf.SingleResponse.prototype.url;
 
 
 /**
- * String of a URL to request instead.
- * @type {string|undefined}
- */
-spf.SingleResponse.prototype.redirect;
-
-
-/**
  * Definition for a multipart SPF response object.
  * @interface
  */
@@ -92,17 +124,17 @@ spf.MultipartResponse;
 
 
 /**
- * List of response objects.
- * @type {Array.<spf.SingleResponse>|undefined}
- */
-spf.MultipartResponse.prototype.parts;
-
-
-/**
  * String of the type of caching to use for this response.
  * @type {string|undefined}
  */
 spf.MultipartResponse.prototype.cacheType;
+
+
+/**
+ * List of response objects.
+ * @type {Array.<spf.SingleResponse>|undefined}
+ */
+spf.MultipartResponse.prototype.parts;
 
 
 /**

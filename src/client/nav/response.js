@@ -150,12 +150,13 @@ spf.nav.response.process = function(url, response, opt_callback, opt_navigate,
   }
 
   // Install page styles (single task), if needed.
-  if (response['css']) {
+  // TODO(nicksay): Remove "css" key.
+  if (response['head'] || response['css']) {
     fn = spf.bind(function(css, timing) {
       spf.nav.response.installStyles_(spf.nav.response.parseStyles_(css));
       timing['spfProcessCss'] = spf.now();
       spf.debug.debug('  process task done: css');
-    }, null, response['css'], response['timing']);
+    }, null, (response['head'] || response['css']), response['timing']);
     num = spf.tasks.add(key, fn);
     spf.debug.debug('  process task queued: css', num);
   }
@@ -296,7 +297,7 @@ spf.nav.response.process = function(url, response, opt_callback, opt_navigate,
   var numFragments = numAfterFragments - numBeforeFragments;
 
   // Install page scripts (single task), if needed.
-  if (response['js']) {
+  if (response['foot'] || response['js']) {
     fn = spf.bind(function(js, timing, numFragments) {
       // Use the page scripts task as a signal that the content is updated,
       // only recording the content completion time if fragments were processed.
@@ -311,7 +312,8 @@ spf.nav.response.process = function(url, response, opt_callback, opt_navigate,
             spf.debug.debug('  process task done: js');
             spf.tasks.resume(key, sync);  // Resume main queue after JS.
           });
-    }, null, response['js'], response['timing'], numFragments);
+    }, null, (response['foot'] || response['js']), response['timing'],
+        numFragments);
     num = spf.tasks.add(key, fn);
     spf.debug.debug('  process task queued: js', num);
   } else if (numFragments) {
@@ -358,17 +360,18 @@ spf.nav.response.preprocess = function(url, response, opt_callback) {
   var fn;
 
   // Preinstall page styles (single task), if needed.
-  if (response['css']) {
+  if (response['head'] || response['css']) {
     fn = spf.bind(function(css) {
       spf.nav.response.preinstallStyles_(spf.nav.response.parseStyles_(css));
       spf.debug.debug('  preprocess task done: css');
-    }, null, response['css']);
+    }, null, (response['head'] || response['css']));
     spf.tasks.add(key, fn);
     spf.debug.debug('  preprocess task queued: css');
   }
 
   // Preinstall fragment scripts (one task per fragment).
-  var fragments = response['html'] || {};
+  // TODO(nicksay): Remove "html" key.
+  var fragments = response['body'] || response['html'] || {};
   for (var id in fragments) {
     if (fragments[id]) {
       fn = spf.bind(function(id, html) {
@@ -385,13 +388,13 @@ spf.nav.response.preprocess = function(url, response, opt_callback) {
   }
 
   // Preinstall page scripts (single task).
-  if (response['js']) {
+  if (response['foot'] || response['js']) {
     fn = spf.bind(function(js) {
       // NOTE: Suspending the queue is not needed since the JS is not
       // actually executed and other tasks don't have to wait.
       spf.nav.response.preinstallScripts_(spf.nav.response.parseScripts_(js));
       spf.debug.debug('  preprocess task done: js');
-    }, null, response['js']);
+    }, null, (response['foot'] || response['js']));
     spf.tasks.add(key, fn);
     spf.debug.debug('  preprocess task queued: js');
   }
