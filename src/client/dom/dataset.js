@@ -1,3 +1,8 @@
+// Copyright 2014 Google Inc. All rights reserved.
+//
+// Use of this source code is governed by The MIT License.
+// See the LICENSE file for details.
+
 /**
  * @fileoverview Element dataset manipulation functions.
  * See {@link http://www.w3.org/TR/html5/Overview.html#dom-dataset}.

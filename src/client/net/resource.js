@@ -1,3 +1,8 @@
+// Copyright 2014 Google Inc. All rights reserved.
+//
+// Use of this source code is governed by The MIT License.
+// See the LICENSE file for details.
+
 /**
  * @fileoverview Functions for loading and unloading external resources such
  * as scripts and styles.
