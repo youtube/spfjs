@@ -74,7 +74,10 @@ $ make
 $ cp build/spf.js YOUR_JS_DIR/
 ```
 
-Add the script to your page, initialize SPF:
+Running `make` will downloaded needed packages.  You will need Python and Java
+installed to build and compile.
+
+Then, add the script to your page and initialize SPF:
 
 ```html
 <script src="spf.js"></script>
@@ -83,13 +86,52 @@ Add the script to your page, initialize SPF:
 </script>
 ```
 
-Then, when a SPF request is received, return only the fragments that change,
-using JSON as a transport.  In the following example, a common layout of upper
-masthead, middle content, and lower footer is used.  In static navigation, the
-entire response is sent, but in dynamic navigation, only the fragment for the
-middle content is sent, since the masthead and footer don't change.
+
+## Client-Side Implementation
+
+SPF does not change your site's navigation automatically and instead uses
+progressive enhancement to enable dynamic navigation for certain links.  Just
+add a `spf-link` class to `<a>` tags or their containers to activate SPF:
 
 Static Navigation:
+
+```html
+<a href="/destination">Go!</a>
+
+<ul>
+  <li><a href="/option/one">Menu item 1</a></li>
+  <li><a href="/option/two">Menu item 2</a></li>
+</ul>
+```
+
+
+Dynamic Navigation:
+
+```html
+<a class="spf-link" href="/destination">Go!</a>
+
+<ul class="spf-link">
+  <li><a href="/option/one">Menu item 1</a></li>
+  <li><a href="/option/two">Menu item 2</a></li>
+</ul>
+```
+
+When an enabled link is clicked, SPF will handle the history and request the
+fragments for the destination link.
+
+
+## Server-Side Implementation
+
+In static navigation, an entire HTML page is sent.  In dynamic navigation, only
+fragments are sent, using JSON as transport.  When SPF sends a request to the
+server, it appends an identifier `?spf=navigate` so that you can properly
+handle the request.
+
+In the following example, a common layout of upper masthead, middle content, and
+lower footer is used.  In dynamic navigation, only the fragment for the middle
+content is sent, since the masthead and footer don't change.
+
+Static Navigation:  `GET /destination`
 
 ```html
 <html>
@@ -107,7 +149,7 @@ Static Navigation:
 </html>
 ```
 
-Dynamic Navigation:
+Dynamic Navigation:  `GET /destination?spf=navigate`
 
 ```json
 {
@@ -120,6 +162,7 @@ Dynamic Navigation:
 }
 ```
 
+
 ## Get Help
 
 **We're actively working on our documentation!**  More information, examples,
@@ -127,8 +170,8 @@ and a website is coming soon.  Don't hesitate to reach out to us via our
 [mailing list](https://groups.google.com/forum/#!forum/spfjs) and follow
 [@spfjs](https://twitter.com/spfjs) on Twitter for updates.
 
+
 ## License
 
-Unless otherwise noted, all code is distributed under The MIT License.  See the
-[LICENSE](https://github.com/youtube/spfjs/blob/master/LICENSE) file for
-details.
+MIT  
+Copyright 2012-2014 Google, Inc.
