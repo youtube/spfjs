@@ -86,6 +86,15 @@ Then, add the script to your page and initialize SPF:
 </script>
 ```
 
+You can build the included demo application to see examples of both
+client-side and server-side implementation and test out the framework:
+
+```shell
+$ make demo
+```
+
+Then, open `http://0.0.0.0:8080/` in your browser.
+
 
 ## Client-Side Implementation
 
