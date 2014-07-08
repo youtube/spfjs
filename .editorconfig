@@ -1,0 +1,18 @@
+# editorconfig.org
+# Consistent coding style across different editors.
+
+# Top-most file
+root = true
+
+# Global styles
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 2
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Trailing whitespace is significant in Markdown
+[*.md]
+trim_trailing_whitespace = false
