@@ -6,10 +6,17 @@
 MAKEFLAGS = -j 1
 NINJA = $(shell command -v ninja || echo vendor/ninja/ninja)
 
+
 # Always execute targets.
 .PHONY: default all tests demo clean reset
 .PHONY: spf debug-spf tracing-spf
 .PHONY: bootloader debug-bootloader tracing-bootloader
+
+
+# Require Ninja.
+default all tests demo clean: $(NINJA)
+spf debug-spf tracing-spf: $(NINJA)
+bootloader debug-bootloader tracing-bootloader: $(NINJA)
 
 
 # Pass off builds to Ninja.
@@ -42,27 +49,14 @@ demo:
 
 # Get back to a newly-cloned state.
 reset:
-	@git submodule deinit .
 	@rm -rf build build.ninja
-	@rm -rf vendor/closure-compiler vendor/jasmine
+	@rm -rf vendor/closure-compiler vendor/jasmine vendor/ninja vendor/webpy
 
-
-# Builds require Ninja.
-default clean all tests demo: $(NINJA)
-spf debug-spf tracing-spf: $(NINJA)
-bootloader debug-bootloader tracing-bootloader: $(NINJA)
 
 # Ensure a build file exists before actually running Ninja.
-$(NINJA): build.ninja
+$(NINJA) vendor/ninja/ninja: build.ninja
 
-# Generate the build file from the configure script.
-build.ninja: vendor/ninja/misc/ninja_syntax.py
+
+# The configure script generates the build file and handles dependencies.
+build.ninja:
 	@python ./configure.py
-
-# Build Ninja with itself, if needed.
-vendor/ninja/ninja: vendor/ninja/bootstrap.py
-	@python vendor/ninja/bootstrap.py
-
-# Use a git submodule to manage Ninja dependencies.
-vendor/ninja/bootstrap.py vendor/ninja/misc/ninja_syntax.py:
-	@git submodule update --init --force
