@@ -16,3 +16,7 @@ trim_trailing_whitespace = true
 # Trailing whitespace is significant in Markdown
 [*.md]
 trim_trailing_whitespace = false
+
+# Makefiles require tabs
+[Makefile]
+indent_style = tab
