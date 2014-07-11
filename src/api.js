@@ -101,7 +101,7 @@ spf.SingleResponse.prototype.redirect;
 
 /**
  * Map of timing attributes to timestamp numbers.
- * @type {Object.<string, number>|undefined}
+ * @type {Object.<(number|string|boolean)>|undefined}
  */
 spf.SingleResponse.prototype.timing;
 

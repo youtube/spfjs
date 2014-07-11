@@ -87,6 +87,8 @@ spf.nav.request.send = function(url, opt_options) {
   // Record a the time before sending the request or loading from cache.
   // The startTime is consistent with W3C PerformanceResourceTiming for XHRs.
   var timing = {};
+  // Keep actual absolute SPF request url info.
+  timing['spfUrl'] = requestUrl;
   timing['startTime'] = spf.now();
   // Try to find a cached response for the request before sending a new XHR.
   // Record fetchStart time before loading from cache. If no cached response
@@ -97,6 +99,7 @@ spf.nav.request.send = function(url, opt_options) {
   // Use the absolute URL without identifier to allow cached responses
   // from prefetching to apply to navigation.
   var cached = spf.nav.request.getCacheObject_(cacheKey, options.current);
+  timing['spfCached'] = !!cached;
   if (cached) {
     var response = /** @type {spf.SingleResponse|spf.MultipartResponse} */ (
         cached.response);
@@ -276,11 +279,44 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
       timing[t] = xhr['timing'][t];
     }
   }
-  // Also record navigationStart for navigate requests, consistent with
+
+  // Record timings from Resource Timing API.
+  if (xhr['resourceTiming']) {
+    if (options.type == 'load') {
+      // Record relative timings.
+      for (var key in xhr['resourceTiming']) {
+        timing[key] = xhr['resourceTiming'][key];
+      }
+    } else {
+      // Normalize startTime as base timing, accounting for the 2 clocks:
+      // one from JS main thread when startTime was first set as spf.now()
+      // with absolute time then another one from Resource Timing API which is
+      // relative to the time resource was put in the fetch queue. E.g.:
+      // 1. timing.startTime = now() // e.g.: 12340000
+      // 2. xhr is requested (put in browser fetch queue)
+      // 3. 50ms later resource is actually requested, i.e: res.startTime = 50
+      // 4. normalize startTime as timing.startTime + res.startTime // 12340050
+      // 5. then timing.navigationStart = timing.startTime // 12340050
+      var startTime = timing['startTime'] = timing['startTime'] +
+          Math.round(xhr['resourceTiming']['startTime'] || 0);
+      // Normalize relative Resource Timing values as
+      // Navigation Timing absolute values.
+      for (var metric in xhr['resourceTiming']) {
+        var value = xhr['resourceTiming'][metric];
+        if (value !== undefined && (spf.string.endsWith(metric, 'Start') ||
+            spf.string.endsWith(metric, 'End'))) {
+          timing[metric] = startTime + Math.round(value);
+        }
+      }
+    }
+  }
+
+  // Also record navigationStart for all requests but load type, consistent with
   // W3C PerformanceTiming for page loads.
-  if (options.type == 'navigate') {
+  if (options.type != 'load') {
     timing['navigationStart'] = timing['startTime'];
   }
+
   if (chunking.complete.length) {
     // If a multipart response was parsed on-the-fly via chunking, it should be
     // done.  However, check to see if there is any extra content, which could
@@ -467,7 +503,6 @@ spf.nav.request.setCacheObject_ = function(cacheKey, response) {
   spf.cache.set(cacheKey, response,  /** @type {number} */ (
       spf.config.get('cache-lifetime')));
 };
-
 
 
 if (spf.tracing.ENABLED) {
