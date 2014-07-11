@@ -9,15 +9,15 @@
 
 __author__ = 'nicksay@google.com (Alex Nicksay)'
 
+import errno
 import distutils.version
 import glob
 import os
+import shutil
 import subprocess
 import sys
-
-
-BUILD_FILENAME = 'build.ninja'
-BUILD_DIR = 'build'
+import urllib
+import zipfile
 
 
 def check_requirements():
@@ -43,21 +43,79 @@ def check_requirements():
           (installed_java, required_java))
     print('Please upgrade java and try again.')
     sys.exit(1)
-  # Ensure required git submodules have been initialized.
-  submodule_ninja_file = 'vendor/ninja/misc/ninja_syntax.py'
-  submodule_webpy_file = 'vendor/webpy/web/webapi.py'
-  if not (os.path.isfile(submodule_ninja_file) and
-          os.path.isfile(submodule_webpy_file)):
+
+
+def fetch_dependencies():
+  # Ninja v1.5.1
+  ninja_dir = 'vendor/ninja'
+  ninja_syntax = 'vendor/ninja/misc/ninja_syntax.py'
+  ninja_syntax_url = 'https://github.com/martine/ninja/archive/v1.5.1.zip'
+  ninja_syntax_zip = 'vendor/ninja/v1.5.1.zip'
+  ninja_binary = 'vendor/ninja/ninja'
+  if 'darwin' in sys.platform:
+    ninja_binary_url = 'https://github.com/martine/ninja/releases/download/v1.5.1/ninja-mac.zip'
+    ninja_binary_zip = 'vendor/ninja/ninja-mac.zip'
+  elif 'win' in sys.platform:
+    ninja_binary_url = 'https://github.com/martine/ninja/releases/download/v1.5.1/ninja-win.zip'
+    ninja_binary_zip = 'vendor/ninja/ninja-win.zip'
+  else:
+    ninja_binary_url = 'https://github.com/martine/ninja/releases/download/v1.5.1/ninja-linux.zip'
+    ninja_binary_zip = 'vendor/ninja/ninja-linux.zip'
+  if not os.path.exists(ninja_dir):
     try:
-      ret = subprocess.call(['git', 'submodule', 'update', '--init', '--force'])
+      os.makedirs(ninja_dir)
     except OSError:
-      print('ERROR: Unable to find git.')
-      print('Please install git and try again.')
+      print('ERROR: Could not create the Ninja directory.')
+      print('Please run "mkdir %s" manually and try again.' % ninja_dir)
       sys.exit(1)
-    if ret > 0:
-      print('ERROR: Unable to update git submodules.')
-      print('Please run "git submodule update --init --force" manually.')
+  if not os.path.exists(ninja_syntax_zip):
+    print('Downloading Ninja syntax...')
+    try:
+      urllib.urlretrieve(ninja_syntax_url, ninja_syntax_zip)
+    except (IOError, urllib.ContentTooShortError):
+      print('ERROR: Unable to download Ninja syntax zip file.')
+      print('Please download "%s" to "%s" and try again.' %
+            (ninja_syntax_url, ninja_syntax_zip))
       sys.exit(1)
+  if not os.path.exists(ninja_binary_zip):
+    print('Downloading Ninja binary...')
+    try:
+      urllib.urlretrieve(ninja_binary_url, ninja_binary_zip)
+    except (IOError, urllib.ContentTooShortError):
+      print('ERROR: Unable to download Ninja binary zip file.')
+      print('Please download "%s" to "%s" and try again.' %
+            (ninja_binary_url, ninja_binary_zip))
+      sys.exit(1)
+  if not os.path.exists(ninja_syntax):
+    try:
+      if not os.path.exists(os.path.dirname(ninja_syntax)):
+        os.makedirs(os.path.dirname(ninja_syntax))
+      with zipfile.ZipFile(ninja_syntax_zip) as zf:
+        # ZipFile.extract is simpler, but manually opening and copying
+        # the file objects enables removing the version prefix.
+        with zf.open('ninja-1.5.1/misc/ninja_syntax.py') as src:
+          with open(ninja_syntax, 'w') as out:
+            shutil.copyfileobj(src, out)
+        with zf.open('ninja-1.5.1/README') as src:
+          with open(os.path.join(ninja_dir, 'README'), 'w') as out:
+            shutil.copyfileobj(src, out)
+        with zf.open('ninja-1.5.1/COPYING') as src:
+          with open(os.path.join(ninja_dir, 'COPYING'), 'w') as out:
+            shutil.copyfileobj(src, out)
+    except (OSError, IOError, RuntimeError, zipfile.BadZipfile,
+            zipfile.LargeZipFile):
+      print('ERROR: Unable to unzip Ninja syntax zip file.')
+      print('Please delete "%s" and try again.' % ninja_syntax_zip)
+  if not os.path.exists(ninja_binary):
+    try:
+      with zipfile.ZipFile(ninja_binary_zip) as zf:
+        zf.extract('ninja', ninja_dir)
+        os.chmod(ninja_binary, 0755)
+    except (OSError, IOError, RuntimeError, zipfile.BadZipfile,
+            zipfile.LargeZipFile):
+      print('ERROR: Unable to unzip Ninja syntax zip file.')
+      print('Please delete "%s" and try again.' % ninja_syntax_zip)
+
 
 def find_js_sources():
   sources = ['src/client/stub.js']
@@ -91,12 +149,12 @@ def find_demo_sources():
 
 
 def create_ninja_file():
-  # Do this during execution to allow checking for presence.
+  # Do this during execution to allow downloading the syntax file first.
   sys.path.insert(0, 'vendor/ninja/misc')
   import ninja_syntax
 
   os.chdir(os.path.dirname(os.path.abspath(__file__)))
-  buildfile = open(BUILD_FILENAME, 'w')
+  buildfile = open('build.ninja', 'w')
   return ninja_syntax.Writer(buildfile)
 
 
@@ -107,12 +165,12 @@ def write_header(ninja):
   ninja.comment('See the LICENSE file for details.')
   ninja.newline()
   ninja.comment('This generated file is used to build SPF.')
-  ninja.comment('To update, run ' + os.path.basename(__file__) + '.')
+  ninja.comment('To update, run %s.' % os.path.basename(__file__))
   ninja.newline()
 
 
 def write_variables(ninja):
-  ninja.variable('builddir', BUILD_DIR)
+  ninja.variable('builddir', 'build')
   ninja.variable('jscompiler_jar', 'vendor/closure-compiler/compiler.jar')
   ninja.variable('license_js', 'src/license.js')
   ninja.variable('license', 'cat $license_js')
@@ -182,7 +240,7 @@ def write_rules(ninja):
              description='download $url -> $out')
   # Unpack files.
   ninja.rule('unzip',
-             command='unzip -u $flags $in $paths -d $dest',
+             command='unzip -u $flags $in $paths -x $exclude -d $dest',
              restat=True,
              description='unzip $in -> $dest')
   # Generate test manifest.
@@ -200,7 +258,7 @@ def write_targets(ninja):
   license_js = '$license_js'
 
   ninja.comment('Libraries.')
-  # Closure Compiler is unpacked from a zip download.
+  # Closure Compiler v20131014
   jscompiler_jar = '$jscompiler_jar' # Globally defined to allow use in rules.
   jscompiler_url = 'http://dl.google.com/closure-compiler/compiler-20131014.zip'
   jscompiler_zip = 'vendor/closure-compiler/compiler-20131014.zip'
@@ -215,8 +273,74 @@ def write_targets(ninja):
   ninja.build(jscompiler_zip_outs, 'unzip', jscompiler_zip,
               variables=[('dest', jscompiler_zip_dest)])
 
-  # Jasmine is unpacked from a zip download.
-  jasmine_url = 'https://github.com/pivotal/jasmine/raw/master/dist/jasmine-standalone-1.3.1.zip'
+  # WebPy 73f1119649
+  webpy_url = 'https://github.com/webpy/webpy/archive/73f1119649ffe54ba26ddaf6a612aaf1dab79b7f.zip'
+  webpy_zip = 'vendor/webpy/webpy-73f1119649ffe54ba26ddaf6a612aaf1dab79b7f.zip'
+  webpy_zip_root_dest = 'vendor/webpy'
+  webpy_zip_root_outs = [
+      'vendor/webpy/LICENSE.txt',
+      'vendor/webpy/README.md',
+  ]
+  webpy_zip_web_dest = 'vendor/webpy/web'
+  webpy_zip_web_outs = [
+      'vendor/webpy/web/',
+      'vendor/webpy/web/__init__.py',
+      'vendor/webpy/web/application.py',
+      'vendor/webpy/web/browser.py',
+      'vendor/webpy/web/db.py',
+      'vendor/webpy/web/debugerror.py',
+      'vendor/webpy/web/form.py',
+      'vendor/webpy/web/http.py',
+      'vendor/webpy/web/httpserver.py',
+      'vendor/webpy/web/net.py',
+      'vendor/webpy/web/python23.py',
+      'vendor/webpy/web/session.py',
+      'vendor/webpy/web/template.py',
+      'vendor/webpy/web/test.py',
+      'vendor/webpy/web/utils.py',
+      'vendor/webpy/web/webapi.py',
+      'vendor/webpy/web/webopenid.py',
+      'vendor/webpy/web/wsgi.py',
+  ]
+  webpy_zip_web_contrib_dest = 'vendor/webpy/web/contrib'
+  webpy_zip_web_contrib_outs = [
+      'vendor/webpy/web/contrib/',
+      'vendor/webpy/web/contrib/__init__.py',
+      'vendor/webpy/web/contrib/template.py',
+  ]
+  webpy_zip_web_wsgiserver_dest = 'vendor/webpy/web/wsgiserver'
+  webpy_zip_web_wsgiserver_outs = [
+      'vendor/webpy/web/wsgiserver/',
+      'vendor/webpy/web/wsgiserver/LICENSE.txt',
+      'vendor/webpy/web/wsgiserver/__init__.py',
+      'vendor/webpy/web/wsgiserver/ssl_builtin.py',
+      'vendor/webpy/web/wsgiserver/ssl_pyopenssl.py',
+  ]
+  webpy_zip_outs = (webpy_zip_root_outs + webpy_zip_web_outs +
+                    webpy_zip_web_contrib_outs + webpy_zip_web_wsgiserver_outs)
+  ninja.build(webpy_zip, 'download',
+              variables=[('url', webpy_url)])
+  # Extracting each level individually enables removing the version prefix.
+  ninja.build(webpy_zip_root_outs, 'unzip', webpy_zip,
+              variables=[('flags', '-j'),
+                         ('paths', '"*LICENSE.txt" "*README.md"'),
+                         ('dest', webpy_zip_root_dest)])
+  ninja.build(webpy_zip_web_outs, 'unzip', webpy_zip,
+              variables=[('flags', '-j'),
+                         ('paths', '"*/web/*"'),
+                         ('exclude', '"*/web/contrib/*" "*/web/wsgiserver/*"'),
+                         ('dest', webpy_zip_web_dest)])
+  ninja.build(webpy_zip_web_contrib_outs, 'unzip', webpy_zip,
+              variables=[('flags', '-j'),
+                         ('paths', '"*/web/contrib/*"'),
+                         ('dest', webpy_zip_web_contrib_dest)])
+  ninja.build(webpy_zip_web_wsgiserver_outs, 'unzip', webpy_zip,
+              variables=[('flags', '-j'),
+                         ('paths', '"*/web/wsgiserver/*"'),
+                         ('dest', webpy_zip_web_wsgiserver_dest)])
+
+  # Jasmine v1.3.1
+  jasmine_url = 'https://github.com/pivotal/jasmine/raw/ea76a30d85218954625d4685b246218d9ca2dfe1/dist/jasmine-standalone-1.3.1.zip'
   jasmine_zip = 'vendor/jasmine/jasmine-standalone-1.3.1.zip'
   jasmine_zip_dest = 'vendor/jasmine'
   jasmine_zip_outs = [
@@ -302,8 +426,13 @@ def write_targets(ninja):
   demo_srcs.append(dev_out)
   demo_outs.append(dev_out.replace('$builddir/', '$builddir/demo/static/'))
   for demo_src, demo_out in zip(demo_srcs, demo_outs):
+    if demo_src == 'vendor/webpy/web':
+      implicit_deps = webpy_zip_outs
+    else:
+      implicit_deps = None
     ninja.build(demo_out, 'symlink', demo_src,
-                variables=[('prefix', '../' * demo_out.count('/'))])
+                variables=[('prefix', '../' * demo_out.count('/'))],
+                implicit=implicit_deps)
   ninja.build(demo_app_out, 'symlink', demo_app_src,
               variables=[('prefix', '../' * demo_app_out.count('/'))],
               implicit=demo_outs)
@@ -312,10 +441,7 @@ def write_targets(ninja):
   ninja.comment('Generate build file.')
   # Update the build file if this script or the build syntax changes.
   ninja.build('build.ninja', 'configure',
-              implicit=[
-                  './configure.py',
-                  'vendor/ninja/misc/ninja_syntax.py',
-              ])
+              implicit=['./configure.py'])
   ninja.newline()
 
 
@@ -348,6 +474,7 @@ def write_aliases(ninja):
 
 def main():
   check_requirements()
+  fetch_dependencies()
   ninja = create_ninja_file()
   write_header(ninja)
   write_variables(ninja)
