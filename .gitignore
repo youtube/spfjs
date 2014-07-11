@@ -7,3 +7,6 @@
 # Unmanaged external libraries
 /vendor/closure-compiler
 /vendor/jasmine
+
+# Packaged external libraries
+/node_modules
