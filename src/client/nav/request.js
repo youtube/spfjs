@@ -12,6 +12,7 @@
 goog.provide('spf.nav.request');
 
 goog.require('spf');
+goog.require('spf.array');
 goog.require('spf.cache');
 goog.require('spf.config');
 goog.require('spf.debug');
@@ -87,6 +88,8 @@ spf.nav.request.send = function(url, opt_options) {
   // Record a the time before sending the request or loading from cache.
   // The startTime is consistent with W3C PerformanceResourceTiming for XHRs.
   var timing = {};
+  // Keep actual absolute SPF request url info.
+  timing['spfUrl'] = requestUrl;
   timing['startTime'] = spf.now();
   // Try to find a cached response for the request before sending a new XHR.
   // Record fetchStart time before loading from cache. If no cached response
@@ -97,6 +100,7 @@ spf.nav.request.send = function(url, opt_options) {
   // Use the absolute URL without identifier to allow cached responses
   // from prefetching to apply to navigation.
   var cached = spf.nav.request.getCacheObject_(cacheKey, options.current);
+  timing['spfCached'] = !!cached;
   if (cached) {
     var response = /** @type {spf.SingleResponse|spf.MultipartResponse} */ (
         cached.response);
@@ -276,11 +280,27 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
       timing[t] = xhr['timing'][t];
     }
   }
+
+  // Normalize Resource Timing values as Navigation Timing relative values.
+  if (xhr['resourceTiming']) {
+    // Normalize startTime as base timing.
+    var startTime = timing['startTime'] = timing['startTime'] +
+        Math.round(xhr['resourceTiming']['startTime'] || 0);
+    spf.array.each(spf.nav.request.RESOURCE_TIMING_METRICS_, function(metric) {
+      var value = xhr['resourceTiming'][metric];
+      if (value !== undefined) {
+        timing[metric] = startTime + Math.round(value);
+      }
+    });
+    delete xhr['resourceTiming'];
+  }
+
   // Also record navigationStart for navigate requests, consistent with
   // W3C PerformanceTiming for page loads.
   if (options.type == 'navigate') {
     timing['navigationStart'] = timing['startTime'];
   }
+
   if (chunking.complete.length) {
     // If a multipart response was parsed on-the-fly via chunking, it should be
     // done.  However, check to see if there is any extra content, which could
@@ -468,6 +488,26 @@ spf.nav.request.setCacheObject_ = function(cacheKey, response) {
       spf.config.get('cache-lifetime')));
 };
 
+
+/**
+ * List of Resource Timing metrics to be converted as Navigation Timing.
+ * @private {Array.<string>}
+ * @const
+ */
+spf.nav.request.RESOURCE_TIMING_METRICS_ = [
+  'redirectStart',
+  'redirectEnd',
+  'domainLookupStart',
+  'domainLookupEnd',
+  'connectStart',
+  'connectEnd',
+  'secureConnectionStart',
+  'responseStart',
+  'requestStart',
+  'responseStart',
+  'responseEnd',
+  'fetchStart'
+];
 
 
 if (spf.tracing.ENABLED) {
