@@ -54,9 +54,10 @@ reset:
 	@rm -rf vendor/closure-compiler vendor/jasmine vendor/ninja vendor/webpy
 
 
-# Ensure a build file exists before actually running Ninja.
+# Ensure a build file exists before running Ninja.
+# Output a status message when Ninja is run.
 $(NINJA) vendor/ninja/ninja: build.ninja
-
+	@echo "Running Ninja..."
 
 # The configure script generates the build file and handles dependencies.
 build.ninja: $(PYTHON)
