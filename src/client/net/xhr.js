@@ -135,8 +135,8 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
     } else if (xhr.readyState == spf.net.xhr.State.DONE) {
       // Record responseEnd time when full response is received.
       timing['responseEnd'] = timing['responseEnd'] || spf.now();
-      // Record Resource Timing data (where available) to later be converted
-      // into Navigation Timing relative times.
+      // Record Resource Timing relative timings (where available) to later be
+      // converted into Navigation Timing absolute timings.
       if (window.performance && window.performance.getEntriesByName) {
         xhr['resourceTiming'] = window.performance.getEntriesByName(url)[0];
       }

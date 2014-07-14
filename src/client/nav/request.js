@@ -12,7 +12,6 @@
 goog.provide('spf.nav.request');
 
 goog.require('spf');
-goog.require('spf.array');
 goog.require('spf.cache');
 goog.require('spf.config');
 goog.require('spf.debug');
@@ -281,18 +280,19 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
     }
   }
 
-  // Normalize Resource Timing values as Navigation Timing relative values.
+  // Normalize relative Resource Timing values as
+  // Navigation Timing absolute values.
   if (xhr['resourceTiming']) {
     // Normalize startTime as base timing.
     var startTime = timing['startTime'] = timing['startTime'] +
         Math.round(xhr['resourceTiming']['startTime'] || 0);
-    spf.array.each(spf.nav.request.RESOURCE_TIMING_METRICS_, function(metric) {
-      var value = xhr['resourceTiming'][metric];
-      if (value !== undefined) {
-        timing[metric] = startTime + Math.round(value);
+    for (var key in xhr['resourceTiming']) {
+      var value = xhr['resourceTiming'][key];
+      if (value !== undefined && (spf.string.endsWith(key, 'Start') ||
+          spf.string.endsWith(key, 'End'))) {
+        timing[key] = startTime + Math.round(value);
       }
-    });
-    delete xhr['resourceTiming'];
+    }
   }
 
   // Also record navigationStart for navigate requests, consistent with
@@ -487,27 +487,6 @@ spf.nav.request.setCacheObject_ = function(cacheKey, response) {
   spf.cache.set(cacheKey, response,  /** @type {number} */ (
       spf.config.get('cache-lifetime')));
 };
-
-
-/**
- * List of Resource Timing metrics to be converted as Navigation Timing.
- * @private {Array.<string>}
- * @const
- */
-spf.nav.request.RESOURCE_TIMING_METRICS_ = [
-  'redirectStart',
-  'redirectEnd',
-  'domainLookupStart',
-  'domainLookupEnd',
-  'connectStart',
-  'connectEnd',
-  'secureConnectionStart',
-  'responseStart',
-  'requestStart',
-  'responseStart',
-  'responseEnd',
-  'fetchStart'
-];
 
 
 if (spf.tracing.ENABLED) {
