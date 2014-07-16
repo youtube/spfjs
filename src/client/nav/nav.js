@@ -13,6 +13,7 @@
 goog.provide('spf.nav');
 
 goog.require('spf');
+goog.require('spf.array');
 goog.require('spf.cache');
 goog.require('spf.config');
 goog.require('spf.debug');
@@ -31,7 +32,7 @@ goog.require('spf.url');
  * Initializes (enables) pushState navigation.
  */
 spf.nav.init = function() {
-  spf.history.init(spf.nav.handleHistory_, spf.nav.triggerErrorCallback_);
+  spf.history.init(spf.nav.handleHistory_, spf.nav.dispatchError_);
   if (!spf.state.get('nav-init') && document.addEventListener) {
     document.addEventListener('click', spf.nav.handleClick_, false);
     if (spf.config.get('prefetch-on-mousedown') &&
@@ -219,7 +220,7 @@ spf.nav.handleClick_ = function(evt) {
   // Ignore clicks to the same page or to empty URLs.
   if (!url || url == window.location.href) {
     spf.debug.debug('    ignoring click to same page');
-    // Prevent the default browser navigation to avoid hard refreshes.
+    // Prevent the default browser navigation to avoid reloads.
     evt.preventDefault();
     return;
   }
@@ -227,9 +228,14 @@ spf.nav.handleClick_ = function(evt) {
   if (!spf.nav.isNavigateEligible_(url)) {
     return;
   }
+  // Ignore clicks if the "click" event is canceled.
+  if (!spf.nav.dispatchClick_(url, evt.target)) {
+    return;
+  }
+
   // Navigate to the URL.
   spf.nav.navigate_(url);
-  // Prevent the default browser navigation to avoid hard refreshes.
+  // Prevent the default browser navigation to avoid reloads.
   evt.preventDefault();
 };
 
@@ -269,6 +275,10 @@ spf.nav.handleHistory_ = function(url, opt_state) {
   // Redirect if the URL is not eligible for navigation.
   if (!spf.nav.isNavigateEligible_(url)) {
     spf.nav.redirect(url);
+    return;
+  }
+  // Ignore the change if the "history" event is canceled.
+  if (!spf.nav.dispatchHistory_(url, referer, current)) {
     return;
   }
   // Navigate to the URL.
@@ -348,6 +358,12 @@ spf.nav.navigate_ = function(url, opt_options, opt_current, opt_referer,
   // visible page is undetermined and should not be relied upon.
   var current = opt_history ? opt_current : window.location.href;
 
+  // Redirect if the "request" event is canceled.
+  if (!spf.nav.dispatchRequest_(url, referer, current, options)) {
+    spf.nav.redirect(url);
+    return;
+  }
+
   // Abort previous navigation, if needed.
   spf.nav.cancel();
   // Abort all ongoing prefetch requests, except for the navigation one if it
@@ -381,9 +397,12 @@ spf.nav.navigate_ = function(url, opt_options, opt_current, opt_referer,
     spf.nav.navigateSendRequest_(url, options, current, referer,
                                  !!opt_history, !!opt_reverse);
   }
+  // TODO(nicksay): Remove deprecated "requested" event after next release.
+  //
   // Dispatch the "navigation requested" event.  If the event is explicitly
   // canceled, cancel this navigation and redirect.
-  var canceled = !spf.dispatch(spf.nav.Events.REQUESTED, {'url': url});
+  var canceled = !spf.dispatch(spf.nav.DeprecatedEvents.REQUESTED,
+                               {'url': url});
   if (canceled) {
     spf.nav.redirect(url);
   }
@@ -429,7 +448,7 @@ spf.nav.navigatePromotePrefetch_ = function(url, options, referer, history,
  * See {@link navigate}.
  *
  * @param {string} url The URL to navigate to, without the SPF identifier.
- * @param {spf.RequestOptions} options Request options object.
+ * @param {spf.RequestOptions} options The request options object.
  * @param {string|undefined} current The current page URL, without the SPF
  *     identifier.
  * @param {string} referer The Referrer URL, without the SPF identifier.
@@ -507,31 +526,12 @@ spf.nav.navigateAddHistory_ = function(url, referer, handleError) {
 spf.nav.handleNavigateError_ = function(options, url, err) {
   spf.debug.warn('navigate error', '(url=', url, ')');
   spf.state.set('nav-request', null);
-  // Execute the "onError" callback and dispatch the "navigation error" event.
-  // If either is explicitly canceled, ignore the error.  Otherwise, redirect.
-  var canceled = !spf.nav.callback(options['onError'],
-                                   {'url': url, 'err': err});
-  if (canceled) {
-    return;
-  }
-  canceled = !spf.nav.triggerErrorCallback_(url, err);
-  if (canceled) {
+  // Ignore the error if the "error" event is canceled, but otherwise,
+  // reload the page.
+  if (!spf.nav.dispatchError_(url, err, options)) {
     return;
   }
   spf.nav.redirect(url);
-};
-
-
-/**
- * Handles navigation errors.
- *
- * @param {string} url The history URL.
- * @param {Error} err The Error object.
- * @return {boolean} True if the event is explicitly canceled.
- * @private
- */
-spf.nav.triggerErrorCallback_ = function(url, err) {
-  return spf.dispatch(spf.nav.Events.ERROR, {'url': url, 'err': err});
 };
 
 
@@ -548,9 +548,17 @@ spf.nav.triggerErrorCallback_ = function(url, err) {
  * @private
  */
 spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
+  // Redirect if the "part process" event is canceled.
+  if (!spf.nav.dispatchPartProcess_(url, partial, options)) {
+    spf.nav.redirect(url);
+    return;
+  }
+
+  // TODO(nicksay): Remove deprecated "part received" event after next release.
+  //
   // Dispatch the "navigation part received" event.  If the event is
   // explicitly canceled, cancel this navigation and redirect.
-  var canceled = !spf.dispatch(spf.nav.Events.PART_RECEIVED,
+  var canceled = !spf.dispatch(spf.nav.DeprecatedEvents.PART_RECEIVED,
                                {'url': url, 'part': partial});
   if (canceled) {
     spf.nav.redirect(url);
@@ -565,16 +573,22 @@ spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
 
   try {
     spf.nav.response.process(url, partial, function() {
+      spf.nav.dispatchPartDone_(url, partial, options);
+      // TODO(nicksay): Remove deprecated "onPart" callback after next release.
+      //
       // Execute the "onPart" callback and dispatch the
       // "navigation part processed" event.  If either is explicitly canceled,
       // cancel this navigation and redirect.
-      var canceled = !spf.nav.callback(options['onPart'],
-                                       {'url': url, 'part': partial});
+      var canceled = !spf.nav.callback(
+          options[spf.nav.DeprecatedCallbacks.PART],
+          {'url': url, 'part': partial});
       if (canceled) {
         spf.nav.redirect(url);
         return;
       }
-      canceled = !spf.dispatch(spf.nav.Events.PART_PROCESSED,
+      // TODO(nicksay): Remove deprecated "part processed" event after
+      // next release.
+      canceled = !spf.dispatch(spf.nav.DeprecatedEvents.PART_PROCESSED,
                                {'url': url, 'part': partial});
       if (canceled) {
         spf.nav.redirect(url);
@@ -618,39 +632,58 @@ spf.nav.handleNavigateSuccess_ = function(options, reverse, original,
     timing['spfPrefetchType'] = 'promote';
   }
 
+  // If a multipart response was received, all processing is already done,
+  // so don't fire the "process" event/callbacks.
+  var multipart = response['type'] == 'multipart';
+  if (!multipart) {
+    // Redirect if the "process" event is canceled.
+    if (!spf.nav.dispatchProcess_(url, response, options)) {
+      spf.nav.redirect(url);
+      return;
+    }
+
+    // Check for redirect responses.
+    if (response['redirect']) {
+      spf.nav.handleNavigateRedirect_(options, response['redirect']);
+      return;
+    }
+  }
+
+  // TODO(nicksay): Remove deprecated "requested" event after next release.
+  //
   // Dispatch the "navigation received" event.  If the event is explicitly
   // canceled, cancel this navigation and redirect.
-  var canceled = !spf.dispatch(spf.nav.Events.RECEIVED,
+  var canceled = !spf.dispatch(spf.nav.DeprecatedEvents.RECEIVED,
                                {'url': url, 'response': response});
   if (canceled) {
     spf.nav.redirect(url);
     return;
   }
 
-  // Check for redirect responses.
-  if (response['redirect']) {
-    spf.nav.handleNavigateRedirect_(options, response['redirect']);
-    return;
-  }
-
   // Process the requested response.
-  // If a multipart response was received, all processing is already done,
-  // so just execute the global notification.  Call process with an empty
-  // object to ensure the callback is properly queued.
-  var r = /** @type {spf.SingleResponse} */ (
-      (response['type'] == 'multipart') ? {} : response);
   try {
+    // If a multipart response was received, all processing is already done,
+    // so an empty object is used to ensure events/callbacks are properly
+    // queued after existing ones from any ongoing part prcoessing.
+    var r = /** @type {spf.SingleResponse} */ (multipart ? {} : response);
     spf.nav.response.process(url, r, function() {
+      spf.nav.dispatchDone_(url, response, options);
+
+      // TODO(nicksay): Remove deprecated "onSuccess" callback after
+      // next release.
+      //
       // Execute the "onSuccess" callback and dispatch the
       // "navigation processed" event.
       // NOTE: If either is explicitly canceled, nothing happens, because
       // there is no longer an opportunity to stop navigation.
-      var canceled = !spf.nav.callback(options['onSuccess'],
-                                       {'url': url, 'response': response});
+      var canceled = !spf.nav.callback(
+          options[spf.nav.DeprecatedCallbacks.SUCCESS],
+          {'url': url, 'response': response});
       if (canceled) {
         return;
       }
-      spf.dispatch(spf.nav.Events.PROCESSED,
+      // TODO(nicksay): Remove deprecated "processed" event after next release.
+      spf.dispatch(spf.nav.DeprecatedEvents.PROCESSED,
                    {'url': url, 'response': response});
     }, true, reverse);
   } catch (err) {
@@ -704,24 +737,24 @@ spf.nav.cancel = function() {
 
 
 /**
- * Executes an external callback and checks whether the callbacks was canceled
+ * Executes an external callback and checks whether the callback was canceled
  * with an explicit return value of {@code false}.
  *
- * @param {Function|string} fn Callback function to be executed.
+ * @param {Function|undefined} fn Callback function to be executed.
  * @param {...*} var_args Arguments to apply to the function.
- * @return {boolean} False if the callback explicitly returned false to cancel
- *     the operation; true otherwise.
+ * @return {boolean} False if the callback was canceled by explicitly returning
+ *     false to stop the operation; true otherwise.
  */
 spf.nav.callback = function(fn, var_args) {
-  if (typeof fn == 'string') {
-    fn = /** @type {Function} */ (spf.config.get(fn));
-  }
-  var args = Array.prototype.slice.call(arguments);
-  args[0] = fn;
-  var val = spf.execute.apply(null, args);
-  if (val instanceof Error) {
-    spf.debug.error('error in callback (url=', window.location.href,
-                    'err=', val, ')');
+  var val;
+  if (fn) {
+    var args = Array.prototype.slice.call(arguments);
+    args[0] = fn;
+    val = spf.execute.apply(null, args);
+    if (val instanceof Error) {
+      spf.debug.error('error in callback (url=', window.location.href,
+                      'err=', val, ')');
+    }
   }
   return (val !== false);
 };
@@ -771,6 +804,12 @@ spf.nav.load_ = function(url, opt_options, opt_original) {
   spf.debug.info('nav.load ', url, opt_options, opt_original);
   var options = opt_options || /** @type {spf.RequestOptions} */ ({});
   var original = opt_original || url;
+
+  // Abort the load if the "request" callback is canceled.
+  // Note: pass "true" to only execute callbacks and not dispatch events.
+  if (!spf.nav.dispatchRequest_(url, undefined, undefined, options, true)) {
+    return;
+  }
 
   var handleError = spf.bind(spf.nav.handleLoadError_, null,
                              false, options, original);
@@ -825,6 +864,12 @@ spf.nav.prefetch_ = function(url, opt_options, opt_original) {
   var original = opt_original || url;
   var current = window.location.href;
 
+  // Abort the prefetch if the "request" callback is canceled.
+  // Note: pass "true" to only execute callbacks and not dispatch events.
+  if (!spf.nav.dispatchRequest_(url, undefined, undefined, options, true)) {
+    return;
+  }
+
   var handleError = spf.bind(spf.nav.handleLoadError_, null,
                              true, options, original);
   var handlePart = spf.bind(spf.nav.handleLoadPart_, null,
@@ -859,14 +904,17 @@ spf.nav.prefetch_ = function(url, opt_options, opt_original) {
 spf.nav.handleLoadError_ = function(isPrefetch, options, original, url, err) {
   spf.debug.warn(isPrefetch ? 'prefetch' : 'load', 'error', '(url=', url, ')');
 
-  spf.nav.callback(options['onError'], {'url': url, 'err': err});
-
   if (isPrefetch) {
     spf.nav.removePrefetch(url);
+  }
 
-    if (spf.state.get('nav-promote') == original) {
-      spf.nav.handleNavigateError_(options, url, err);
-    }
+  // If a prefetch has been promoted to a navigate, use the navigate error
+  // handler.  Otherwise, execute the "error" callback.
+  if (isPrefetch && spf.state.get('nav-promote') == original) {
+    spf.nav.handleNavigateError_(options, url, err);
+  } else {
+    // Note: pass "true" to only execute callbacks and not dispatch events.
+    spf.nav.dispatchError_(url, err, options, true);
   }
 };
 
@@ -884,6 +932,12 @@ spf.nav.handleLoadError_ = function(isPrefetch, options, original, url, err) {
  */
 spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
                                    partial) {
+  // Abort the load/prefetch if the "part process" callback is canceled.
+  // Note: pass "true" to only execute callbacks and not dispatch events.
+  if (!spf.nav.dispatchPartProcess_(url, partial, options, true)) {
+    return;
+  }
+
   // Check for redirects.
   if (partial['redirect']) {
     spf.nav.handleLoadRedirect_(isPrefetch, options, original,
@@ -910,7 +964,12 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
       spf.nav.response.preprocess :
       spf.nav.response.process;
   processFn(url, partial, function() {
-    spf.nav.callback(options['onPart'], {'url': url, 'part': partial});
+    // Note: pass "true" to only execute callbacks and not dispatch events.
+    spf.nav.dispatchPartDone_(url, partial, options, true);
+
+    // TODO(nicksay): Remove deprecated "onPart" callback after next release.
+    spf.nav.callback(options[spf.nav.DeprecatedCallbacks.PART],
+                     {'url': url, 'part': partial});
   });
 };
 
@@ -929,12 +988,25 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
  */
 spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
                                       response) {
-  // Check for redirects.
-  if (response['redirect']) {
-    spf.nav.handleLoadRedirect_(isPrefetch, options, original,
-                                response['redirect']);
-    return;
+  // If a multipart response was received, all processing is already done,
+  // so don't execute the "process" callback.
+  var multipart = response['type'] == 'multipart';
+  if (!multipart) {
+    // Abort the load/prefetch if the "process" callback is canceled.
+    // Note: pass "true" to only execute callbacks and not dispatch events.
+    if (!spf.nav.dispatchProcess_(url, response, options, true)) {
+      spf.nav.redirect(url);
+      return;
+    }
+
+    // Check for redirect responses.
+    if (response['redirect']) {
+      spf.nav.handleLoadRedirect_(isPrefetch, options, original,
+                                  response['redirect']);
+      return;
+    }
   }
+
   var promoteKey = spf.nav.promoteKey(original);
   if (isPrefetch) {
     // Remove the prefetch xhr from the set of currently active
@@ -954,17 +1026,31 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
       spf.tasks.cancel(promoteKey);
     }
   }
+
   // Process the requested response.
-  // If a multipart response was received, all processing is already done,
-  // so just execute the callback.  Call process with an empty
-  // object to ensure the callback is properly queued.
   var processFn = isPrefetch ?
       spf.nav.response.preprocess :
       spf.nav.response.process;
-  var r = (response['type'] == 'multipart') ? {} : response;
-  processFn(url, r, function() {
-    spf.nav.callback(options['onSuccess'], {'url': url, 'response': response});
-  });
+  try {
+    // If a multipart response was received, all processing is already done,
+    // so an empty object is used to ensure the callback is properly
+    // queued after existing ones from any ongoing part prcoessing.
+    var r = /** @type {spf.SingleResponse} */ (multipart ? {} : response);
+    processFn(url, r, function() {
+      // Note: pass "true" to only execute callbacks and not dispatch events.
+      spf.nav.dispatchDone_(url, response, options, true);
+
+      // TODO(nicksay): Remove deprecated "processed" callback after next release.
+      spf.nav.callback(options[spf.nav.DeprecatedCallbacks.SUCCESS],
+                       {'url': url, 'response': response});
+    });
+  } catch (err) {
+    // If an exception is caught during processing, log, execute the error
+    // handler and bail.
+    spf.debug.debug('    failed to process response', response);
+    spf.nav.handleLoadError_(isPrefetch, options, original, url, err);
+    return;
+  }
 };
 
 
@@ -981,12 +1067,232 @@ spf.nav.handleLoadRedirect_ = function(isPrefetch, options, original,
                                        redirectUrl) {
   var redirectFn = isPrefetch ? spf.nav.prefetch_ : spf.nav.load_;
   // Note that POST is not propagated with redirects.
-  var redirectOpts = /** @type {spf.RequestOptions} */ ({
-    'onSuccess': options['onSuccess'],
-    'onPart': options['onPart'],
-    'onError': options['onError']
+  // Only copy callback keys to into a new object to enforce this.
+  var keys = [
+      spf.nav.Callbacks.ERROR,
+      spf.nav.Callbacks.REQUEST,
+      spf.nav.Callbacks.PART_PROCESS,
+      spf.nav.Callbacks.PART_DONE,
+      spf.nav.Callbacks.PROCESS,
+      spf.nav.Callbacks.DONE,
+      spf.nav.DeprecatedCallbacks.PART,
+      spf.nav.DeprecatedCallbacks.SUCCESS
+  ];
+  var redirectOpts = /** @type {spf.RequestOptions} */ ({});
+  spf.array.each(keys, function(key) {
+    redirectOpts[key] = options[key];
   });
   redirectFn(redirectUrl, redirectOpts, original);
+};
+
+
+/**
+ * Dispatches the "error" event with the following custom event detail:
+ *   url: The current URL.
+ *   err: The Error object.
+ *
+ * If a local "onError" callback is provided, it is executed first with the
+ * same detail object.  If the callback is canceled, the event is not fired.
+ *
+ * @param {string} url The history URL.
+ * @param {Error} err The Error object.
+ * @param {?spf.RequestOptions=} opt_options Optional request options object.
+ * @param {boolean=} opt_noEvents Whether to skip the event and only execute the
+ *     callback; for use with load and prefetch requests.
+ * @return {boolean} False if the event was canceled.
+ * @private
+ */
+spf.nav.dispatchError_ = function(url, err, opt_options, opt_noEvents) {
+  var detail = {'url': url, 'err': err};
+  var options = opt_options || /** @type {spf.RequestOptions} */ ({});
+  var fn = options[spf.nav.Callbacks.ERROR];
+  var proceed = spf.nav.callback(fn, detail);
+  if (proceed && !opt_noEvents) {
+    proceed = spf.dispatch(spf.nav.Events.ERROR, detail);
+  }
+  return proceed;
+};
+
+
+/**
+ * Dispatches the "click" event with the following custom event detail:
+ *   url: The click URL, without the SPF identifier.
+ *   target: The click target.
+ *
+ * @param {string} url The click URL, without the SPF identifier.
+ * @param {EventTarget} target The click target.
+ * @return {boolean} False if the event was canceled.
+ * @private
+ */
+spf.nav.dispatchClick_ = function(url, target) {
+  var detail = {'url': url, 'target': target};
+  return spf.dispatch(spf.nav.Events.CLICK, detail);
+};
+
+
+/**
+ * Dispatches the "history" event with the following custom event detail:
+ *   url: The click URL, without the SPF identifier.
+ *   referer: The referring page URL, without the SPF identifier.
+ *   previous: The previously visible page URL, without the SPF identifier.
+ *
+ * @param {string} url The click URL, without the SPF identifier.
+ * @param {string=} opt_referer The referer URL.
+ * @param {string=} opt_previous The previously visible URL.
+ * @return {boolean} False if the event was canceled.
+ * @private
+ */
+spf.nav.dispatchHistory_ = function(url, opt_referer, opt_previous) {
+  var detail = {'url': url, 'referer': opt_referer, 'previous': opt_previous};
+  return spf.dispatch(spf.nav.Events.HISTORY, detail);
+};
+
+
+/**
+ * Dispatches the "request" event with the follow custom event detail:
+ *   url: The URL to request, without the SPF identifier.
+ *   referer: The referring page URL, without the SPF identifier.
+ *   previous: The previously visible page URL, without the SPF identifier.
+ *
+ * If a local "onRequest" callback is provided, it is executed first with the
+ * same detail object.  If the callback is canceled, the event is not fired.
+ *
+ * @param {string} url The URL to request, without the SPF identifier.
+ * @param {string|undefined} referer The referer URL.
+ * @param {string|undefined} previous The previously visible URL.
+ * @param {?spf.RequestOptions=} opt_options Optional request options object.
+ * @param {boolean=} opt_noEvents Whether to skip the event and only execute the
+ *     callback; for use with load and prefetch requests.
+ * @return {boolean} False if the event was canceled.
+ * @private
+ */
+spf.nav.dispatchRequest_ = function(url, referer, previous, opt_options,
+                                    opt_noEvents) {
+  var detail = {'url': url, 'referer': referer, 'previous': previous};
+  var options = opt_options || /** @type {spf.RequestOptions} */ ({});
+  var fn = options[spf.nav.Callbacks.REQUEST];
+  var proceed = spf.nav.callback(fn, detail);
+  if (proceed && !opt_noEvents) {
+    proceed = spf.dispatch(spf.nav.Events.REQUEST, detail);
+  }
+  return proceed;
+};
+
+
+/**
+ * Dispatches the "part process" event with the follow custom event detail:
+ *   url: The requested URL, without the SPF identifier.
+ *   partial: The partial response object, a part of a multipart response.
+ *
+ * If a local "onPartProcess" callback is provided, it is executed first with
+ * the same detail object.  If the callback is canceled, the event is not fired.
+ *
+ * @param {string} url The requested URL, without the SPF identifier.
+ * @param {spf.SingleResponse} partial The partial response object,
+ *     part of a multipart response object.
+ * @param {?spf.RequestOptions=} opt_options Optional request options object.
+ * @param {boolean=} opt_noEvents Whether to skip the event and only execute the
+ *     callback; for use with load and prefetch requests.
+ * @return {boolean} False if the event was canceled.
+ * @private
+ */
+spf.nav.dispatchPartProcess_ = function(url, partial, opt_options,
+                                        opt_noEvents) {
+  var detail = {'url': url, 'partial': partial};
+  var options = opt_options || /** @type {spf.RequestOptions} */ ({});
+  var fn = options[spf.nav.Callbacks.PART_PROCESS];
+  var proceed = spf.nav.callback(fn, detail);
+  if (proceed && !opt_noEvents) {
+    proceed = spf.dispatch(spf.nav.Events.PART_PROCESS, detail);
+  }
+  return proceed;
+};
+
+
+/**
+ * Dispatches the "part done" event with the follow custom event detail:
+ *   url: The requested URL, without the SPF identifier.
+ *   partial: The partial response object, a part of a multipart response.
+ *
+ * If a local "onPartDone" callback is provided, it is executed first with the
+ * same detail object.  If the callback is canceled, the event is not fired.
+ *
+ * @param {string} url The requested URL, without the SPF identifier.
+ * @param {spf.SingleResponse} partial The partial response object,
+ *     part of a multipart response object.
+ * @param {?spf.RequestOptions=} opt_options Optional request options object.
+ * @param {boolean=} opt_noEvents Whether to skip the event and only execute the
+ *     callback; for use with load and prefetch requests.
+ * @return {boolean} False if the event was canceled.
+ * @private
+ */
+spf.nav.dispatchPartDone_ = function(url, partial, opt_options, opt_noEvents) {
+  var detail = {'url': url, 'partial': partial};
+  var options = opt_options || /** @type {spf.RequestOptions} */ ({});
+  var fn = options[spf.nav.Callbacks.PART_DONE];
+  var proceed = spf.nav.callback(fn, detail);
+  if (proceed && !opt_noEvents) {
+    proceed = spf.dispatch(spf.nav.Events.PART_DONE, detail);
+  }
+  return proceed;
+};
+
+
+/**
+ * Dispatches the "process" event with the follow custom event detail:
+ *   url: The requested URL, without the SPF identifier.
+ *   response: The response object, either a single or multipart response.
+ *
+ * If a local "onProcess" callback is provided, it is executed first with the
+ * same detail object.  If the callback is canceled, the event is not fired.
+ *
+ * @param {string} url The requested URL, without the SPF identifier.
+ * @param {spf.SingleResponse|spf.MultipartResponse} response The response
+ *     object, either a complete single or multipart response object.
+ * @param {?spf.RequestOptions=} opt_options Optional request options object.
+ * @param {boolean=} opt_noEvents Whether to skip the event and only execute the
+ *     callback; for use with load and prefetch requests.
+ * @return {boolean} False if the event was canceled.
+ * @private
+ */
+spf.nav.dispatchProcess_ = function(url, response, opt_options, opt_noEvents) {
+  var detail = {'url': url, 'response': response};
+  var options = opt_options || /** @type {spf.RequestOptions} */ ({});
+  var fn = options[spf.nav.Callbacks.PROCESS];
+  var proceed = spf.nav.callback(fn, detail);
+  if (proceed && !opt_noEvents) {
+    proceed = spf.dispatch(spf.nav.Events.PROCESS, detail);
+  }
+  return proceed;
+};
+
+
+/**
+ * Dispatches the "done" event with the follow custom event detail:
+ *   url: The requested URL, without the SPF identifier.
+ *   response: The response object, either a single or multipart response.
+ *
+ * If a local "onDone" callback is provided, it is executed first with the
+ * same detail object.  If the callback is canceled, the event is not fired.
+ *
+ * @param {string} url The requested URL, without the SPF identifier.
+ * @param {spf.SingleResponse|spf.MultipartResponse} response The response
+ *     object, either a complete single or multipart response object.
+ * @param {?spf.RequestOptions=} opt_options Optional request options object.
+ * @param {boolean=} opt_noEvents Whether to skip the event and only execute the
+ *     callback; for use with load and prefetch requests.
+ * @return {boolean} False if the event was canceled.
+ * @private
+ */
+spf.nav.dispatchDone_ = function(url, response, opt_options, opt_noEvents) {
+  var detail = {'url': url, 'response': response};
+  var options = opt_options || /** @type {spf.RequestOptions} */ ({});
+  var fn = options[spf.nav.Callbacks.DONE];
+  var proceed = spf.nav.callback(fn, detail);
+  if (proceed && !opt_noEvents) {
+    proceed = spf.dispatch(spf.nav.Events.DONE, detail);
+  }
+  return proceed;
 };
 
 
@@ -1093,8 +1399,44 @@ spf.nav.isTouchCapablePlatform_ = function() {
 /**
  * @enum {string}
  */
+spf.nav.Callbacks = {
+  ERROR: 'onError',
+  REQUEST: 'onRequest',
+  PART_PROCESS: 'onPartProcess',
+  PART_DONE: 'onPartDone',
+  PROCESS: 'onProcess',
+  DONE: 'onDone'
+};
+
+
+/**
+ * @enum {string}
+ */
 spf.nav.Events = {
   ERROR: 'error',
+  CLICK: 'click',
+  HISTORY: 'history',
+  REQUEST: 'request',
+  PART_PROCESS: 'partprocess',
+  PART_DONE: 'partdone',
+  PROCESS: 'process',
+  DONE: 'done'
+};
+
+
+/**
+ * @enum {string}
+ */
+spf.nav.DeprecatedCallbacks = {
+  PART: 'onPart',
+  SUCCESS: 'onSuccess'
+};
+
+
+/**
+ * @enum {string}
+ */
+spf.nav.DeprecatedEvents = {
   REQUESTED: 'requested',
   PART_RECEIVED: 'partreceived',
   PART_PROCESSED: 'partprocessed',
