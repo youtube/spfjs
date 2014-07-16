@@ -21,8 +21,8 @@ import zipfile
 
 
 def check_requirements():
-  # Closure Compiler v20131014 is the last release to support Java 6.
-  required_java = distutils.version.LooseVersion('1.6')
+  # Closure Compiler after v20131014 requires Java 7.
+  required_java = distutils.version.LooseVersion('1.7')
   try:
     cmd = subprocess.Popen(['java', '-version'],
                            stderr=subprocess.STDOUT,
@@ -258,14 +258,14 @@ def write_targets(ninja):
   license_js = '$license_js'
 
   ninja.comment('Libraries.')
-  # Closure Compiler v20131014
+  # Closure Compiler v20140625
   jscompiler_jar = '$jscompiler_jar' # Globally defined to allow use in rules.
-  jscompiler_url = 'http://dl.google.com/closure-compiler/compiler-20131014.zip'
-  jscompiler_zip = 'vendor/closure-compiler/compiler-20131014.zip'
+  jscompiler_url = 'http://dl.google.com/closure-compiler/compiler-20140625.zip'
+  jscompiler_zip = 'vendor/closure-compiler/compiler-20140625.zip'
   jscompiler_zip_dest = 'vendor/closure-compiler'
   jscompiler_zip_outs = [
       'vendor/closure-compiler/COPYING',
-      'vendor/closure-compiler/README',
+      'vendor/closure-compiler/README.md',
       jscompiler_jar,
   ]
   ninja.build(jscompiler_zip, 'download',
