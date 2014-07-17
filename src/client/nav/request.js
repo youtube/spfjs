@@ -280,24 +280,40 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
     }
   }
 
-  // Normalize relative Resource Timing values as
-  // Navigation Timing absolute values.
+  // Record timings from Resource Timing API.
   if (xhr['resourceTiming']) {
-    // Normalize startTime as base timing.
-    var startTime = timing['startTime'] = timing['startTime'] +
-        Math.round(xhr['resourceTiming']['startTime'] || 0);
-    for (var key in xhr['resourceTiming']) {
-      var value = xhr['resourceTiming'][key];
-      if (value !== undefined && (spf.string.endsWith(key, 'Start') ||
-          spf.string.endsWith(key, 'End'))) {
-        timing[key] = startTime + Math.round(value);
+    if (options.type === 'load') {
+      // Record relative timings.
+      for (var key in xhr['resourceTiming']) {
+        timing[key] =  xhr['resourceTiming'][key];
+      }
+    } else {
+      // Normalize startTime as base timing, accounting for the 2 clocks:
+      // one from JS main thread when startTime was first set as spf.now()
+      // with absolute time then another one from Resource Timing API which is
+      // relative to the time resource was put in the fetch queue. E.g.:
+      // 1. timing.startTime = now() // e.g.: 12340000
+      // 2. xhr is requested (put in browser fetch queue)
+      // 3. 50ms later resource is actually requested, i.e: res.startTime = 50
+      // 4. normalize startTime as timing.startTime + res.startTime // 12340050
+      // 5. then timing.navigationStart = timing.startTime // 12340050
+      var startTime = timing['startTime'] = timing['startTime'] +
+          Math.round(xhr['resourceTiming']['startTime'] || 0);
+      // Normalize relative Resource Timing values as
+      // Navigation Timing absolute values.
+      for (var metric in xhr['resourceTiming']) {
+        var value = xhr['resourceTiming'][metric];
+        if (value !== undefined && (spf.string.endsWith(metric, 'Start') ||
+            spf.string.endsWith(metric, 'End'))) {
+          timing[metric] = startTime + Math.round(value);
+        }
       }
     }
   }
 
-  // Also record navigationStart for navigate requests, consistent with
+  // Also record navigationStart for all requests but load type, consistent with
   // W3C PerformanceTiming for page loads.
-  if (options.type == 'navigate') {
+  if (options.type !== 'load') {
     timing['navigationStart'] = timing['startTime'];
   }
 
