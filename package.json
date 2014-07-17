@@ -1,6 +1,6 @@
 {
   "name": "spf",
-  "version": "2.0.0-alpha.1",
+  "version": "2.0.0-alpha.2",
   "description": "A framework for navigation and page updates from YouTube",
   "homepage": "https://github.com/youtube/spfjs",
   "repository": {
