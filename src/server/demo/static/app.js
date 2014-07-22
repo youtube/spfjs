@@ -24,12 +24,15 @@ app.init = function() {
   app.start_ = +new Date();
   app.timer_ = window.setInterval(app.updateTime, 500);
   if (window.addEventListener) {
-    window.addEventListener('spfrequested', app.onRequested);
-    window.addEventListener('spfpartreceived', app.onPartReceived);
-    window.addEventListener('spfpartprocessed', app.onPartProcessed);
-    window.addEventListener('spfreceived', app.onReceived);
-    window.addEventListener('spfprocessed', app.onProcessed);
+    window.addEventListener('spfclick', app.onClick);
+    window.addEventListener('spfhistory', app.onHistory);
+    window.addEventListener('spfrequest', app.onRequest);
+    window.addEventListener('spfpartprocess', app.onPartProcess);
+    window.addEventListener('spfpartdone', app.onPartDone);
+    window.addEventListener('spfprocess', app.onProcess);
+    window.addEventListener('spfdone', app.onDone);
     window.addEventListener('spferror', app.onError);
+
     window.addEventListener('spfjsbeforeunload', app.onScriptBeforeUnload);
     window.addEventListener('spfjsunload', app.onScriptUnload);
     window.addEventListener('spfcssbeforeunload', app.onStyleBeforeUnload);
@@ -50,12 +53,15 @@ app.dispose = function() {
   app.updateStatus();
   app.updateTime();
   if (window.removeEventListener) {
-    window.removeEventListener('spfrequested', app.onRequested);
-    window.removeEventListener('spfpartreceived', app.onPartReceived);
-    window.removeEventListener('spfpartprocessed', app.onPartProcessed);
-    window.removeEventListener('spfreceived', app.onReceived);
-    window.removeEventListener('spfprocessed', app.onProcessed);
+    window.removeEventListener('spfclick', app.onClick);
+    window.removeEventListener('spfhistory', app.onHistory);
+    window.removeEventListener('spfrequest', app.onRequest);
+    window.removeEventListener('spfpartprocess', app.onPartProcess);
+    window.removeEventListener('spfpartdone', app.onPartDone);
+    window.removeEventListener('spfprocess', app.onProcess);
+    window.removeEventListener('spfdone', app.onDone);
     window.removeEventListener('spferror', app.onError);
+
     window.removeEventListener('spfjsbeforeunload', app.onScriptBeforeUnload);
     window.removeEventListener('spfjsunload', app.onScriptUnload);
     window.removeEventListener('spfcssbeforeunload', app.onStyleBeforeUnload);
@@ -109,40 +115,31 @@ app.updateTime = function() {
 
 
 /**
- * Event handler for when navigate requests are sent.
+ * Event handler for when a navigate click occurs.
  * @param {CustomEvent} evt The event.
  */
-app.onRequested = function(evt) {
-  app.log('navigate requested ' + evt.detail.url);
+app.onClick = function(evt) {
+  app.log('navigate click ' + evt.detail.url);
 };
 
 
 /**
- * Event handler for when parts of navigate requests are received.
+ * Event handler for when a navigate history change occurs.
  * @param {CustomEvent} evt The event.
  */
-app.onPartReceived = function(evt) {
-  app.log('navigate received part ' + evt.detail.url);
+app.onHistory = function(evt) {
+  app.log('navigate history ' + evt.detail.url);
 };
 
 
 /**
- * Event handler for when parts of navigate requests are processed.
+ * Event handler for when navigate requests are going to be sent.
  * @param {CustomEvent} evt The event.
  */
-app.onPartProcessed = function(evt) {
-  app.log('navigate processed part ' + evt.detail.url);
-};
-
-
-/**
- * Event handler for when navigate responses are received.
- * @param {CustomEvent} evt The event.
- */
-app.onReceived = function(evt) {
-  app.log('navigate received ' + evt.detail.url);
+app.onRequest = function(evt) {
+  app.log('navigate request ' + evt.detail.url);
   // If debug logging is enabled, reset the relative times when each new
-  // request is received.
+  // request is sent.
   if (spf.debug) {
     spf.debug.reset();
   }
@@ -150,11 +147,38 @@ app.onReceived = function(evt) {
 
 
 /**
- * Event handler for when navigate responses are processed.
+ * Event handler for when parts of navigate responses are going to be processed.
  * @param {CustomEvent} evt The event.
  */
-app.onProcessed = function(evt) {
-  app.log('navigate processed ' + evt.detail.url);
+app.onPartProcess = function(evt) {
+  app.log('navigate part process ' + evt.detail.url);
+};
+
+
+/**
+ * Event handler for when parts of navigate responses are done being processed.
+ * @param {CustomEvent} evt The event.
+ */
+app.onPartDone = function(evt) {
+  app.log('navigate part done ' + evt.detail.url);
+};
+
+
+/**
+ * Event handler for when navigate responses are going to be processed.
+ * @param {CustomEvent} evt The event.
+ */
+app.onProcess = function(evt) {
+  app.log('navigate process ' + evt.detail.url);
+};
+
+
+/**
+ * Event handler for when navigate responses are done being processed.
+ * @param {CustomEvent} evt The event.
+ */
+app.onDone = function(evt) {
+  app.log('navigate done ' + evt.detail.url);
 };
 
 

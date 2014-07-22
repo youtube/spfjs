@@ -418,4 +418,532 @@ describe('spf.nav', function() {
   });
 
 
+  describe('dispatchError', function() {
+
+    var url = '/page';
+    var err = new Error();
+
+
+    it('dispatches an event', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var proceed = spf.nav.dispatchError_(url, err);
+      var evtName = spf.dispatch.calls[0].args[0];
+      expect(spf.dispatch).toHaveBeenCalled();
+      expect(evtName).toEqual('error');
+      expect(proceed).toBe(true);
+    });
+
+
+    it('dispatches an event and propagates cancellation', function() {
+      spyOn(spf, 'dispatch').andReturn(false);
+      var proceed = spf.nav.dispatchError_(url, err);
+      expect(spf.dispatch).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+    it('executes a callback', function() {
+      var fn = jasmine.createSpy('fn');
+      var proceed = spf.nav.dispatchError_(url, err,
+                                           {'onError': fn});
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(true);
+    });
+
+
+    it('executes a callback and propagates cancellation', function() {
+      var fn = jasmine.createSpy('fn').andReturn(false);
+      var proceed = spf.nav.dispatchError_(url, err,
+                                           {'onError': fn});
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+    it('does not dispatch an event if events are skipped', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var fn = jasmine.createSpy('fn');
+      var proceed = spf.nav.dispatchError_(url, err,
+                                           {'onError': fn}, true);
+      expect(spf.dispatch).not.toHaveBeenCalled();
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(true);
+    });
+
+
+    it('does not dispatch an event if a callback is canceled', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var fn = jasmine.createSpy('fn').andReturn(false);
+      var proceed = spf.nav.dispatchError_(url, err,
+                                           {'onError': fn});
+      expect(spf.dispatch).not.toHaveBeenCalled();
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+    it('passes the same data to both events and callbacks', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var fn = jasmine.createSpy('fn');
+      var proceed = spf.nav.dispatchError_(url, err,
+                                           {'onError': fn});
+      var evtData = spf.dispatch.calls[0].args[1];
+      var fnData = fn.calls[0].args[0];
+      expect(evtData).toEqual(fnData);
+      expect(proceed).toBe(true);
+    });
+
+
+  });
+
+
+  describe('dispatchClick', function() {
+
+    var url = '/page';
+    var target = document.createElement('a');
+
+
+    it('dispatches an event', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var proceed = spf.nav.dispatchClick_(url, target);
+      var evtName = spf.dispatch.calls[0].args[0];
+      expect(spf.dispatch).toHaveBeenCalled();
+      expect(evtName).toEqual('click');
+      expect(proceed).toBe(true);
+    });
+
+
+    it('dispatches an event and propagates cancellation', function() {
+      spyOn(spf, 'dispatch').andReturn(false);
+      var proceed = spf.nav.dispatchClick_(url, target);
+      expect(spf.dispatch).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+  });
+
+
+  describe('dispatchHistory', function() {
+
+    var url = '/page';
+
+
+    it('dispatches an event', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var proceed = spf.nav.dispatchHistory_(url);
+      var evtName = spf.dispatch.calls[0].args[0];
+      expect(spf.dispatch).toHaveBeenCalled();
+      expect(evtName).toEqual('history');
+      expect(proceed).toBe(true);
+    });
+
+
+    it('dispatches an event and propagates cancellation', function() {
+      spyOn(spf, 'dispatch').andReturn(false);
+      var proceed = spf.nav.dispatchHistory_(url);
+      expect(spf.dispatch).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+  });
+
+
+  describe('dispatchRequest', function() {
+
+    var url = '/page';
+    var referer = '/other';
+    var previous = '/previous';
+
+
+    it('dispatches an event', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var proceed = spf.nav.dispatchRequest_(url, referer, previous);
+      var evtName = spf.dispatch.calls[0].args[0];
+      expect(spf.dispatch).toHaveBeenCalled();
+      expect(evtName).toEqual('request');
+      expect(proceed).toBe(true);
+    });
+
+
+    it('dispatches an event and propagates cancellation', function() {
+      spyOn(spf, 'dispatch').andReturn(false);
+      var proceed = spf.nav.dispatchRequest_(url, referer, previous);
+      expect(spf.dispatch).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+    it('executes a callback', function() {
+      var fn = jasmine.createSpy('fn');
+      var proceed = spf.nav.dispatchRequest_(url, referer, previous,
+                                             {'onRequest': fn});
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(true);
+    });
+
+
+    it('executes a callback and propagates cancellation', function() {
+      var fn = jasmine.createSpy('fn').andReturn(false);
+      var proceed = spf.nav.dispatchRequest_(url, referer, previous,
+                                             {'onRequest': fn});
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+    it('does not dispatch an event if events are skipped', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var fn = jasmine.createSpy('fn');
+      var proceed = spf.nav.dispatchRequest_(url, referer, previous,
+                                             {'onRequest': fn}, true);
+      expect(spf.dispatch).not.toHaveBeenCalled();
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(true);
+    });
+
+
+    it('does not dispatch an event if a callback is canceled', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var fn = jasmine.createSpy('fn').andReturn(false);
+      var proceed = spf.nav.dispatchRequest_(url, referer, previous,
+                                             {'onRequest': fn});
+      expect(spf.dispatch).not.toHaveBeenCalled();
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+    it('passes the same data to both events and callbacks', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var fn = jasmine.createSpy('fn');
+      var proceed = spf.nav.dispatchRequest_(url, referer, previous,
+                                             {'onRequest': fn});
+      var evtData = spf.dispatch.calls[0].args[1];
+      var fnData = fn.calls[0].args[0];
+      expect(evtData).toEqual(fnData);
+      expect(proceed).toBe(true);
+    });
+
+
+  });
+
+
+  describe('dispatchPartProcess', function() {
+
+    var url = '/page';
+    var partial = {};
+
+
+    it('dispatches an event', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var proceed = spf.nav.dispatchPartProcess_(url, partial);
+      var evtName = spf.dispatch.calls[0].args[0];
+      expect(spf.dispatch).toHaveBeenCalled();
+      expect(evtName).toEqual('partprocess');
+      expect(proceed).toBe(true);
+    });
+
+
+    it('dispatches an event and propagates cancellation', function() {
+      spyOn(spf, 'dispatch').andReturn(false);
+      var proceed = spf.nav.dispatchPartProcess_(url, partial);
+      expect(spf.dispatch).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+    it('executes a callback', function() {
+      var fn = jasmine.createSpy('fn');
+      var proceed = spf.nav.dispatchPartProcess_(url, partial,
+                                                 {'onPartProcess': fn});
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(true);
+    });
+
+
+    it('executes a callback and propagates cancellation', function() {
+      var fn = jasmine.createSpy('fn').andReturn(false);
+      var proceed = spf.nav.dispatchPartProcess_(url, partial,
+                                                 {'onPartProcess': fn});
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+    it('does not dispatch an event if events are skipped', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var fn = jasmine.createSpy('fn');
+      var proceed = spf.nav.dispatchPartProcess_(url, partial,
+                                                 {'onPartProcess': fn}, true);
+      expect(spf.dispatch).not.toHaveBeenCalled();
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(true);
+    });
+
+
+    it('does not dispatch an event if a callback is canceled', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var fn = jasmine.createSpy('fn').andReturn(false);
+      var proceed = spf.nav.dispatchPartProcess_(url, partial,
+                                                 {'onPartProcess': fn});
+      expect(spf.dispatch).not.toHaveBeenCalled();
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+    it('passes the same data to both events and callbacks', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var fn = jasmine.createSpy('fn');
+      var proceed = spf.nav.dispatchPartProcess_(url, partial,
+                                                 {'onPartProcess': fn});
+      var evtData = spf.dispatch.calls[0].args[1];
+      var fnData = fn.calls[0].args[0];
+      expect(evtData).toEqual(fnData);
+      expect(proceed).toBe(true);
+    });
+
+
+  });
+
+
+  describe('dispatchPartDone', function() {
+
+    var url = '/page';
+    var partial = {};
+
+
+    it('dispatches an event', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var proceed = spf.nav.dispatchPartDone_(url, partial);
+      var evtName = spf.dispatch.calls[0].args[0];
+      expect(spf.dispatch).toHaveBeenCalled();
+      expect(evtName).toEqual('partdone');
+      expect(proceed).toBe(true);
+    });
+
+
+    it('dispatches an event and propagates cancellation', function() {
+      spyOn(spf, 'dispatch').andReturn(false);
+      var proceed = spf.nav.dispatchPartDone_(url, partial);
+      expect(spf.dispatch).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+    it('executes a callback', function() {
+      var fn = jasmine.createSpy('fn');
+      var proceed = spf.nav.dispatchPartDone_(url, partial,
+                                              {'onPartDone': fn});
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(true);
+    });
+
+
+    it('executes a callback and propagates cancellation', function() {
+      var fn = jasmine.createSpy('fn').andReturn(false);
+      var proceed = spf.nav.dispatchPartDone_(url, partial,
+                                              {'onPartDone': fn});
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+    it('does not dispatch an event if events are skipped', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var fn = jasmine.createSpy('fn');
+      var proceed = spf.nav.dispatchPartDone_(url, partial,
+                                              {'onPartDone': fn}, true);
+      expect(spf.dispatch).not.toHaveBeenCalled();
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(true);
+    });
+
+
+    it('does not dispatch an event if a callback is canceled', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var fn = jasmine.createSpy('fn').andReturn(false);
+      var proceed = spf.nav.dispatchPartDone_(url, partial,
+                                              {'onPartDone': fn});
+      expect(spf.dispatch).not.toHaveBeenCalled();
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+    it('passes the same data to both events and callbacks', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var fn = jasmine.createSpy('fn');
+      var proceed = spf.nav.dispatchPartDone_(url, partial,
+                                              {'onPartDone': fn});
+      var evtData = spf.dispatch.calls[0].args[1];
+      var fnData = fn.calls[0].args[0];
+      expect(evtData).toEqual(fnData);
+      expect(proceed).toBe(true);
+    });
+
+
+  });
+
+
+  describe('dispatchProcess', function() {
+
+    var url = '/page';
+    var response = {};
+
+
+    it('dispatches an event', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var proceed = spf.nav.dispatchProcess_(url, response);
+      var evtName = spf.dispatch.calls[0].args[0];
+      expect(spf.dispatch).toHaveBeenCalled();
+      expect(evtName).toEqual('process');
+      expect(proceed).toBe(true);
+    });
+
+
+    it('dispatches an event and propagates cancellation', function() {
+      spyOn(spf, 'dispatch').andReturn(false);
+      var proceed = spf.nav.dispatchProcess_(url, response);
+      expect(spf.dispatch).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+    it('executes a callback', function() {
+      var fn = jasmine.createSpy('fn');
+      var proceed = spf.nav.dispatchProcess_(url, response,
+                                             {'onProcess': fn});
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(true);
+    });
+
+
+    it('executes a callback and propagates cancellation', function() {
+      var fn = jasmine.createSpy('fn').andReturn(false);
+      var proceed = spf.nav.dispatchProcess_(url, response,
+                                             {'onProcess': fn});
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+    it('does not dispatch an event if events are skipped', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var fn = jasmine.createSpy('fn');
+      var proceed = spf.nav.dispatchProcess_(url, response,
+                                             {'onProcess': fn}, true);
+      expect(spf.dispatch).not.toHaveBeenCalled();
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(true);
+    });
+
+
+    it('does not dispatch an event if a callback is canceled', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var fn = jasmine.createSpy('fn').andReturn(false);
+      var proceed = spf.nav.dispatchProcess_(url, response,
+                                             {'onProcess': fn});
+      expect(spf.dispatch).not.toHaveBeenCalled();
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+    it('passes the same data to both events and callbacks', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var fn = jasmine.createSpy('fn');
+      var proceed = spf.nav.dispatchProcess_(url, response,
+                                             {'onProcess': fn});
+      var evtData = spf.dispatch.calls[0].args[1];
+      var fnData = fn.calls[0].args[0];
+      expect(evtData).toEqual(fnData);
+      expect(proceed).toBe(true);
+    });
+
+
+  });
+
+
+  describe('dispatchDone', function() {
+
+    var url = '/page';
+    var response = {};
+
+
+    it('dispatches an event', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var proceed = spf.nav.dispatchDone_(url, response);
+      var evtName = spf.dispatch.calls[0].args[0];
+      expect(spf.dispatch).toHaveBeenCalled();
+      expect(evtName).toEqual('done');
+      expect(proceed).toBe(true);
+    });
+
+
+    it('dispatches an event and propagates cancellation', function() {
+      spyOn(spf, 'dispatch').andReturn(false);
+      var proceed = spf.nav.dispatchDone_(url, response);
+      expect(spf.dispatch).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+    it('executes a callback', function() {
+      var fn = jasmine.createSpy('fn');
+      var proceed = spf.nav.dispatchDone_(url, response,
+                                          {'onDone': fn});
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(true);
+    });
+
+
+    it('executes a callback and propagates cancellation', function() {
+      var fn = jasmine.createSpy('fn').andReturn(false);
+      var proceed = spf.nav.dispatchDone_(url, response,
+                                          {'onDone': fn});
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+    it('does not dispatch an event if events are skipped', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var fn = jasmine.createSpy('fn');
+      var proceed = spf.nav.dispatchDone_(url, response,
+                                          {'onDone': fn}, true);
+      expect(spf.dispatch).not.toHaveBeenCalled();
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(true);
+    });
+
+
+    it('does not dispatch an event if a callback is canceled', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var fn = jasmine.createSpy('fn').andReturn(false);
+      var proceed = spf.nav.dispatchDone_(url, response,
+                                          {'onDone': fn});
+      expect(spf.dispatch).not.toHaveBeenCalled();
+      expect(fn).toHaveBeenCalled();
+      expect(proceed).toBe(false);
+    });
+
+
+    it('passes the same data to both events and callbacks', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      var fn = jasmine.createSpy('fn');
+      var proceed = spf.nav.dispatchDone_(url, response,
+                                          {'onDone': fn});
+      var evtData = spf.dispatch.calls[0].args[1];
+      var fnData = fn.calls[0].args[0];
+      expect(evtData).toEqual(fnData);
+      expect(proceed).toBe(true);
+    });
+
+
+  });
+
+
 });
