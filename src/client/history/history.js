@@ -18,6 +18,7 @@ goog.provide('spf.history');
 goog.require('spf');
 goog.require('spf.config');
 goog.require('spf.debug');
+goog.require('spf.dom');
 goog.require('spf.state');
 
 
@@ -234,8 +235,9 @@ spf.history.doPushState_ = function(data, title, opt_url) {
   // It is common for third party code to interfere with pushState.
   // This check makes sure that pushState is a function when called to
   // avoid js errors and a state where the back arrow stops working.
-  if (typeof spf.history.pushState_ == 'function') {
-    spf.history.pushState_.call(window.history, data, title, opt_url);
+  var iframe = spf.history.getIframe();
+  if (typeof iframe.history.pushState == 'function') {
+    iframe.history.pushState.call(window.history, data, title, opt_url);
   } else {
     throw new Error('history.pushState is not a function.');
   }
@@ -249,8 +251,9 @@ spf.history.doPushState_ = function(data, title, opt_url) {
  * @private
  */
 spf.history.doReplaceState_ = function(data, title, opt_url) {
-  if (typeof spf.history.replaceState_ == 'function') {
-    spf.history.replaceState_.call(window.history, data, title, opt_url);
+  var iframe = spf.history.getIframe();
+  if (typeof iframe.history.replaceState == 'function') {
+    iframe.history.replaceState.call(window.history, data, title, opt_url);
   } else {
     throw new Error('history.replaceState is not a function');
   }
@@ -258,16 +261,11 @@ spf.history.doReplaceState_ = function(data, title, opt_url) {
 
 
 /**
- * A reference to the history.pushState function.
- * @private
+ * @return {!Window} The first iframe on the page.
  */
-spf.history.pushState_ = typeof History != 'undefined' ?
-    History.prototype.pushState : null;
-
-
-/**
- * A reference to the history.replaceState function.
- * @private
- */
-spf.history.replaceState_ = typeof History != 'undefined' ?
-    History.prototype.replaceState : null;
+spf.history.getIframe = function() {
+  if (!window.frames.length) {
+    spf.dom.createIframe('history');
+  }
+  return /** @type {!Window} */ (window.frames[0]);
+};

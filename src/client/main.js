@@ -14,6 +14,7 @@ goog.provide('spf.main');
 goog.require('spf');
 goog.require('spf.config');
 goog.require('spf.debug');
+goog.require('spf.history');
 goog.require('spf.nav');
 goog.require('spf.net.script');
 goog.require('spf.net.style');
@@ -28,7 +29,7 @@ goog.require('spf.pubsub');
  *     history modification API is not supported, returns false.
  */
 spf.main.init = function(opt_config) {
-  var enable = !!(typeof History != 'undefined' && History.prototype.pushState);
+  var enable = spf.main.canInit_();
   spf.debug.info('main.init ', 'enable=', enable);
   var config = opt_config || {};
   for (var key in spf.config.defaults) {
@@ -39,6 +40,18 @@ spf.main.init = function(opt_config) {
     spf.nav.init();
   }
   return enable;
+};
+
+
+/**
+ * Checks to see if SPF can be initialized.
+ *
+ * @return {boolean}
+ * @private
+ */
+spf.main.canInit_ = function() {
+  return !!(typeof window.history.pushState == 'function' ||
+      spf.history.getIframe().history.pushState);
 };
 
 
