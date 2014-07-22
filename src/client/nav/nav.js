@@ -769,7 +769,18 @@ spf.nav.redirect = function(url) {
   spf.debug.warn('redirecting (', 'url=', url, ')');
   spf.nav.cancel();
   spf.nav.cancelAllPrefetchesExcept();
-  window.location.href = url;
+  // If the url has already changed, clear its entry to prevent browser
+  // inconsistency with history management for 301 responses on reloads. Chrome
+  // will identify that the starting url was the same, and replace the current
+  // history state, whereas Firefox will set a new state with the post 301
+  // value.
+  if (window.location.href == url) {
+    spf.history.removeCurrentEntry();
+  }
+  // Delay the redirect until after the history state has had time to clear.
+  setTimeout(function() {
+    window.location.href = url;
+  }, 0);
 };
 
 

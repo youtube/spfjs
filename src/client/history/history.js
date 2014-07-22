@@ -135,6 +135,17 @@ spf.history.replace = function(opt_url, opt_state, opt_doCallback,
 
 
 /**
+ * Remove the latest history state from the stack.
+ * NOTE: If this is called without a state having been pushed, it will result in
+ * a back action to the last page. Use with care.
+ */
+spf.history.removeCurrentEntry = function() {
+  spf.state.set('history-ignore-pop', true);
+  window.history.back();
+};
+
+
+/**
  * See {@link #add} or {@link #replace}.
  *
  * @param {boolean} replace Whether to replace the previous entry.
@@ -179,6 +190,11 @@ spf.history.push_ = function(replace, opt_url, opt_state, opt_doCallback) {
 spf.history.pop_ = function(evt) {
   var url = spf.history.getCurrentUrl_();
   spf.debug.info('history.pop ', 'url=', url, 'evt=', evt);
+  // Skip a pop event and reset flag if the ignore state is set.
+  if (spf.state.get('history-ignore-pop')) {
+    spf.state.set('history-ignore-pop', false);
+    return;
+  }
   // Avoid the initial event on first load for a state.
   if (evt.state) {
     var state = evt.state;
