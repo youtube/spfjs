@@ -890,6 +890,44 @@ describe('spf.nav.request', function() {
     });
 
 
+    it('regular: single, navigation timing', function() {
+      var url = '/page';
+      var text = '{}';
+      var startTime = new Date().getTime() - 1;
+      var fake = createFakeRegularXHR(text);
+      spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
+
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick(MOCK_DELAY + 1);
+
+      var timing = options.onSuccess.mostRecentCall.args[1].timing;
+      expect(timing.navigationStart).toBeGreaterThan(startTime);
+      expect(timing.spfCached).toBe(false);
+    });
+
+
+    it('cached: single, navigation timing', function() {
+      var url = '/page';
+      var res = {'foo': 'FOO', 'bar': 'BAR'};
+      var startTime = new Date().getTime() - 1;
+
+      var cacheKey = 'prefetch ' + spf.url.absolute(url);
+      spf.cache.set(cacheKey, res);
+
+      var requestUrl = spf.url.identify(url, options.type);
+      spf.nav.request.send(url, options);
+
+      // Simulate waiting for the response.
+      jasmine.Clock.tick(MOCK_DELAY + 1);
+
+      var timing = options.onSuccess.mostRecentCall.args[1].timing;
+      expect(timing.navigationStart).toBeGreaterThan(startTime);
+      expect(timing.spfCached).toBe(true);
+    });
+
+
   });
 
 
