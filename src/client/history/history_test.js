@@ -42,6 +42,10 @@ describe('spf.history', function() {
     };
     spyOn(spf.history, 'doPushState_').andCallThrough();
     spyOn(spf.history, 'doReplaceState_').andCallThrough();
+    spyOn(window.history, 'back').andCallFake(function() {
+      var evt = stack.pop();
+      spf.history.pop_(evt);
+    });
     // Mock timestamp generation.
     time = { advance: 0 };
     spf.__now = spf.now;
@@ -155,6 +159,39 @@ describe('spf.history', function() {
     expect(getEntry(1).state['test']).toEqual('state');
     expect(getEntry(1).state['spf-timestamp']).toBeGreaterThan(0);
     expect(getEntry(1).url).toEqual('/bar');
+  });
+
+  it('removeCurrentEntry', function() {
+    // History tests are not run unless the events are supported.
+    if (!window.addEventListener) {
+      return;
+    }
+    var getEntry = function(n) { return stack[stack.length - n]; };
+    // Start with the initial entry.
+    expect(stack.length).toBe(1);
+    expect(getEntry(1).state['spf-timestamp']).toBeGreaterThan(0);
+    expect(spf.history.doPushState_.calls.length).toEqual(0);
+    expect(spf.history.doReplaceState_.calls.length).toEqual(1);
+    // Add entries without executing the callback.
+    time.advance = 100;
+    spf.history.add('/foo');
+    time.advance = 200;
+    spf.history.add('/bar');
+    // Simulate a back button pop event.
+    time.advance = 300;
+    window.history.back()
+    expect(callbacks.one.calls.length).toEqual(1);
+    // Re-add Entry.
+    time.advance = 200;
+    spf.history.add('/bar');
+    // Call removeCurrentEntry instead.
+    time.advance = 300;
+    spf.history.removeCurrentEntry();
+    expect(callbacks.one.calls.length).toEqual(1);
+    // Test subsequent back.
+    time.advance = 300;
+    window.history.back()
+    expect(callbacks.one.calls.length).toEqual(2);
   });
 
   it('pop_', function() {
