@@ -172,6 +172,10 @@ def write_header(ninja):
 def write_variables(ninja):
   ninja.variable('builddir', 'build')
   ninja.variable('jscompiler_jar', 'vendor/closure-compiler/compiler.jar')
+  ninja.variable('jslinter_bin', 'vendor/closure-linter/bin/gjslint')
+  ninja.variable('jslinter_dir', 'vendor/closure-linter')
+  ninja.variable('jsfixer_bin', 'vendor/closure-linter/bin/fixjsstyle')
+  ninja.variable('jsfixer_dir', 'vendor/closure-linter')
   ninja.variable('license_js', 'src/license.js')
   ninja.variable('license', 'cat $license_js')
   ninja.variable('preamble', 'true')
@@ -218,32 +222,59 @@ def write_variables(ninja):
 
 
 def write_rules(ninja):
-  # Build JS files.
-  ninja.rule('jscompiler',
+  ninja.newline()
+  ninja.comment('Build JS files.');
+  ninja.rule('jscompile',
              command='$license > $out '
                      '&& $preamble >> $out '
                      '&& java -jar $jscompiler_jar $flags $in >> $out '
                      '|| rm $out',
-             description='jscompiler $out')
-  # Build build file.
+             description='jscompile $out')
+
+  ninja.newline()
+  ninja.comment('Lint and fix JS files.')
+  ninja.rule('jslint',
+             command='export PYTHONUSERBASE="$jslinter_dir" '
+                     '&& python $jslinter_bin '
+                     '    $flags $in',
+             description='jslint $in')
+  ninja.rule('jsfix',
+             command='export PYTHONUSERBASE="$jsfixer_dir" '
+                     '&& python $jsfixer_bin '
+                     '    $flags $in',
+             description='jsfix $in')
+
+  ninja.newline()
+  ninja.comment('Build the build file.')
   ninja.rule('configure',
              command='python ./configure.py',
              generator=True)
-  # Symlink.
+
+  ninja.newline()
+  ninja.comment('Symlink.')
   ninja.rule('symlink',
              command='ln -sf $prefix$in $out',
              description='symlink $prefix$in -> $out')
-  # Download files.
+
+  ninja.newline()
+  ninja.comment('Download files.')
   ninja.rule('download',
              command='curl -L $url -o $out',
              generator=True,
              description='download $url -> $out')
-  # Unpack files.
+
+  ninja.newline()
+  ninja.comment('Unpack files.')
   ninja.rule('unzip',
              command='unzip -u $flags $in $paths -x $exclude -d $dest',
              restat=True,
              description='unzip $in -> $dest')
-  # Generate test manifest.
+  ninja.rule('untgz',
+             command='tar -xmz -f $in $flags -C $dest --exclude $exclude',
+             description='untgz $in -> $dest')
+
+  ninja.newline()
+  ninja.comment('Generate test manifest.')
   ninja.rule('gen_test_manifest',
              command=('echo $in '
                       '| tr " " "\\n" '
@@ -251,12 +282,22 @@ def write_rules(ninja):
                       '| sed "s,$$,\\"></script>\');,g" '
                       '> $out'),
              description='generate $out')
+
   ninja.newline()
+  ninja.comment('Setup python packages.')
+  ninja.rule('setup',
+             command=('cd $dir '
+                      '&& export PYTHONUSERBASE="$$PWD" '
+                      '&& python setup.py -q install --user '
+                      '&& python setup.py -q clean --all'),
+             generator=True,
+             description='setup $dir')
 
 
 def write_targets(ninja):
   license_js = '$license_js'
 
+  ninja.newline()
   ninja.comment('Libraries.')
   # Closure Compiler v20140625
   jscompiler_jar = '$jscompiler_jar' # Globally defined to allow use in rules.
@@ -266,14 +307,87 @@ def write_targets(ninja):
   jscompiler_zip_outs = [
       'vendor/closure-compiler/COPYING',
       'vendor/closure-compiler/README.md',
-      jscompiler_jar,
+      'vendor/closure-compiler/compiler.jar',
   ]
   ninja.build(jscompiler_zip, 'download',
               variables=[('url', jscompiler_url)])
   ninja.build(jscompiler_zip_outs, 'unzip', jscompiler_zip,
               variables=[('dest', jscompiler_zip_dest)])
 
-  # WebPy 73f1119649
+  # Closure Linter v2.3.13
+  jslinter_bin = '$jslinter_bin' # Globally defined to allow use in rules.
+  jslinter_url = 'https://closure-linter.googlecode.com/files/closure_linter-2.3.13.tar.gz'
+  jslinter_tgz = 'vendor/closure-linter/closure_linter-2.3.13.tar.gz'
+  jslinter_tgz_dest = 'vendor/closure-linter'
+  jslinter_tgz_outs = [
+      'vendor/closure-linter/PKG-INFO',
+      'vendor/closure-linter/setup.py',
+      'vendor/closure-linter/closure_linter/',
+      'vendor/closure-linter/closure_linter/requireprovidesorter.py',
+      'vendor/closure-linter/closure_linter/scopeutil.py',
+      'vendor/closure-linter/closure_linter/ecmalintrules.py',
+      'vendor/closure-linter/closure_linter/error_fixer.py',
+      'vendor/closure-linter/closure_linter/javascripttokenizer.py',
+      'vendor/closure-linter/closure_linter/runner.py',
+      'vendor/closure-linter/closure_linter/checkerbase.py',
+      'vendor/closure-linter/closure_linter/common/',
+      'vendor/closure-linter/closure_linter/common/simplefileflags.py',
+      'vendor/closure-linter/closure_linter/common/tokenizer.py',
+      'vendor/closure-linter/closure_linter/common/error.py',
+      'vendor/closure-linter/closure_linter/common/erroraccumulator.py',
+      'vendor/closure-linter/closure_linter/common/htmlutil.py',
+      'vendor/closure-linter/closure_linter/common/tokens.py',
+      'vendor/closure-linter/closure_linter/common/lintrunner.py',
+      'vendor/closure-linter/closure_linter/common/position.py',
+      'vendor/closure-linter/closure_linter/common/matcher.py',
+      'vendor/closure-linter/closure_linter/common/__init__.py',
+      'vendor/closure-linter/closure_linter/common/erroroutput.py',
+      'vendor/closure-linter/closure_linter/common/errorhandler.py',
+      'vendor/closure-linter/closure_linter/common/filetestcase.py',
+      'vendor/closure-linter/closure_linter/javascriptstatetracker.py',
+      'vendor/closure-linter/closure_linter/__init__.py',
+      'vendor/closure-linter/closure_linter/statetracker.py',
+      'vendor/closure-linter/closure_linter/error_check.py',
+      'vendor/closure-linter/closure_linter/fixjsstyle.py',
+      'vendor/closure-linter/closure_linter/errorrules.py',
+      'vendor/closure-linter/closure_linter/errorrecord.py',
+      'vendor/closure-linter/closure_linter/gjslint.py',
+      'vendor/closure-linter/closure_linter/checker.py',
+      'vendor/closure-linter/closure_linter/closurizednamespacesinfo.py',
+      'vendor/closure-linter/closure_linter/aliaspass.py',
+      'vendor/closure-linter/closure_linter/ecmametadatapass.py',
+      'vendor/closure-linter/closure_linter/testutil.py',
+      'vendor/closure-linter/closure_linter/errors.py',
+      'vendor/closure-linter/closure_linter/javascripttokens.py',
+      'vendor/closure-linter/closure_linter/indentation.py',
+      'vendor/closure-linter/closure_linter/javascriptlintrules.py',
+      'vendor/closure-linter/closure_linter/tokenutil.py',
+      'vendor/closure-linter/README',
+  ]
+  jslinter_setup_outs = [
+      'vendor/closure-linter/bin/fixjsstyle',
+      'vendor/closure-linter/bin/gjslint',
+      'vendor/closure-linter/closure_linter.egg-info/dependency_links.txt',
+      'vendor/closure-linter/closure_linter.egg-info/entry_points.txt',
+      'vendor/closure-linter/closure_linter.egg-info/PKG-INFO',
+      'vendor/closure-linter/closure_linter.egg-info/requires.txt',
+      'vendor/closure-linter/closure_linter.egg-info/SOURCES.txt',
+      'vendor/closure-linter/closure_linter.egg-info/top_level.txt',
+      'vendor/closure-linter/dist/closure_linter-2.3.13-py2.7.egg',
+      'vendor/closure-linter/lib/python/site-packages/closure_linter-2.3.13-py2.7.egg',
+      'vendor/closure-linter/lib/python/site-packages/easy-install.pth',
+      'vendor/closure-linter/lib/python/site-packages/python_gflags-2.0-py2.7.egg',
+  ]
+  ninja.build(jslinter_tgz, 'download',
+              variables=[('url', jslinter_url)])
+  ninja.build(jslinter_tgz_outs, 'untgz', jslinter_tgz,
+              variables=[('flags', '--strip-components 1'),
+                         ('exclude', '"*_test*"'),
+                         ('dest', jslinter_tgz_dest)])
+  ninja.build(jslinter_setup_outs, 'setup', jslinter_tgz_outs,
+              variables=[('dir', 'vendor/closure-linter')])
+
+  # WebPy @73f1119649
   webpy_url = 'https://github.com/webpy/webpy/archive/73f1119649ffe54ba26ddaf6a612aaf1dab79b7f.zip'
   webpy_zip = 'vendor/webpy/webpy-73f1119649ffe54ba26ddaf6a612aaf1dab79b7f.zip'
   webpy_zip_root_dest = 'vendor/webpy'
@@ -359,39 +473,40 @@ def write_targets(ninja):
   wtf_shim = 'vendor/tracing-framework/shims/wtf-trace-closure.js'
   js_srcs = find_js_sources() + [wtf_shim]
 
+  ninja.newline()
   ninja.comment('Main.')
-  ninja.build('$builddir/spf.js', 'jscompiler', js_srcs,
+  ninja.build('$builddir/spf.js', 'jscompile', js_srcs,
               variables=[('flags', '$prod_jsflags $main_jsflags')],
               implicit=[jscompiler_jar, license_js])
-  ninja.build('$builddir/debug-spf.js', 'jscompiler', js_srcs,
+  ninja.build('$builddir/debug-spf.js', 'jscompile', js_srcs,
               variables=[('flags', '$debug_jsflags $main_jsflags')],
               implicit=[jscompiler_jar, license_js])
-  ninja.build('$builddir/tracing-spf.js', 'jscompiler', js_srcs,
+  ninja.build('$builddir/tracing-spf.js', 'jscompile', js_srcs,
               variables=[('flags', '$trace_jsflags $main_jsflags'),
                          ('preamble', 'head -n 6 ' + wtf_shim)],
               implicit=[jscompiler_jar, license_js])
-  ninja.newline()
 
+  ninja.newline()
   ninja.comment('Bootloader.')
-  ninja.build('$builddir/bootloader.js', 'jscompiler', js_srcs,
+  ninja.build('$builddir/bootloader.js', 'jscompile', js_srcs,
               variables=[('flags', '$prod_jsflags $bootloader_jsflags')],
               implicit=[jscompiler_jar, license_js])
-  ninja.build('$builddir/debug-bootloader.js', 'jscompiler', js_srcs,
+  ninja.build('$builddir/debug-bootloader.js', 'jscompile', js_srcs,
               variables=[('flags', '$debug_jsflags $bootloader_jsflags')],
               implicit=[jscompiler_jar, license_js])
-  ninja.build('$builddir/tracing-bootloader.js', 'jscompiler', js_srcs,
+  ninja.build('$builddir/tracing-bootloader.js', 'jscompile', js_srcs,
               variables=[('flags', '$trace_jsflags $bootloader_jsflags'),
                          ('preamble', 'head -n 6 ' + wtf_shim)],
               implicit=[jscompiler_jar, license_js])
-  ninja.newline()
 
+  ninja.newline()
   ninja.comment('Development.')
   dev_out = '$builddir/dev-spf-bundle.js'
-  ninja.build(dev_out, 'jscompiler', js_srcs,
+  ninja.build(dev_out, 'jscompile', js_srcs,
               variables=[('flags', '$dev_jsflags $main_jsflags')],
               implicit=[jscompiler_jar, license_js])
-  ninja.newline()
 
+  ninja.newline()
   ninja.comment('Tests.')
   js_tests = find_js_tests()
   jasmine_test_srcs = jasmine_zip_outs[1:]
@@ -413,8 +528,8 @@ def write_targets(ninja):
   ninja.build(runner_out, 'symlink', runner_src,
               variables=[('prefix', '../' * runner_out.count('/'))],
               implicit=test_outs)
-  ninja.newline()
 
+  ninja.newline()
   ninja.comment('Demo.')
   demo_srcs = find_demo_sources()
   demo_app_src = 'src/server/demo/app.py'
@@ -436,16 +551,25 @@ def write_targets(ninja):
   ninja.build(demo_app_out, 'symlink', demo_app_src,
               variables=[('prefix', '../' * demo_app_out.count('/'))],
               implicit=demo_outs)
-  ninja.newline()
 
+  ninja.newline()
   ninja.comment('Generate build file.')
   # Update the build file if this script or the build syntax changes.
   ninja.build('build.ninja', 'configure',
               implicit=['./configure.py'])
-  ninja.newline()
 
 
 def write_aliases(ninja):
+  ninja.newline()
+  ninja.comment('Tools.')
+  ninja.build('lint', 'jslint', 'src/client',
+              variables=[('flags', '--recurse')],
+              implicit=['$jslinter_bin'])
+  ninja.build('fix', 'jsfix', 'src/client',
+              variables=[('flags', '--recurse')],
+              implicit=['$jsfixer_bin'])
+
+  ninja.newline()
   ninja.comment('Aliases.')
   aliases = [
       ninja.build('spf', 'phony',
@@ -466,10 +590,11 @@ def write_aliases(ninja):
                   '$builddir/demo/app.py'),
   ]
   aliases = [a for outs in aliases for a in outs]  # Reduce to a single list.
-  ninja.newline()
-  ninja.default('spf')
   ninja.build('all', 'phony', aliases)
+
   ninja.newline()
+  ninja.comment('Default.')
+  ninja.default('spf')
 
 
 def main():
