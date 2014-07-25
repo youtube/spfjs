@@ -1051,7 +1051,8 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
       // Note: pass "true" to only execute callbacks and not dispatch events.
       spf.nav.dispatchDone_(url, response, options, true);
 
-      // TODO(nicksay): Remove deprecated "processed" callback after next release.
+      // TODO(nicksay): Remove deprecated "processed" callback after next
+      // release.
       spf.nav.callback(options[spf.nav.DeprecatedCallbacks.SUCCESS],
                        {'url': url, 'response': response});
     });
