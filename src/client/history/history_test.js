@@ -179,7 +179,7 @@ describe('spf.history', function() {
     spf.history.add('/bar');
     // Simulate a back button pop event.
     time.advance = 300;
-    window.history.back()
+    window.history.back();
     expect(callbacks.one.calls.length).toEqual(1);
     // Re-add Entry.
     time.advance = 200;
@@ -190,7 +190,7 @@ describe('spf.history', function() {
     expect(callbacks.one.calls.length).toEqual(1);
     // Test subsequent back.
     time.advance = 300;
-    window.history.back()
+    window.history.back();
     expect(callbacks.one.calls.length).toEqual(2);
   });
 
