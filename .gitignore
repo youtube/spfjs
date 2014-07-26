@@ -6,6 +6,7 @@
 
 # Unmanaged external libraries
 /vendor/closure-compiler
+/vendor/closure-linter
 /vendor/jasmine
 /vendor/ninja
 /vendor/webpy

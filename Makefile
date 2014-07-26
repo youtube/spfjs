@@ -9,13 +9,13 @@ PYTHON = $(shell command -v python || echo _missing_python_)
 
 
 # Always execute targets.
-.PHONY: default all tests demo clean reset
+.PHONY: default all tests demo lint fix clean reset
 .PHONY: spf debug-spf tracing-spf
 .PHONY: bootloader debug-bootloader tracing-bootloader
 
 
 # Require Ninja.
-default all tests demo clean: $(NINJA)
+default all tests demo lint fix: $(NINJA)
 spf debug-spf tracing-spf: $(NINJA)
 bootloader debug-bootloader tracing-bootloader: $(NINJA)
 
@@ -23,8 +23,6 @@ bootloader debug-bootloader tracing-bootloader: $(NINJA)
 # Pass off builds to Ninja.
 default:
 	@$(NINJA)
-clean:
-	@$(NINJA) -t clean
 all:
 	@$(NINJA) all
 spf:
@@ -46,12 +44,19 @@ demo:
 	@$(NINJA) demo
 	@echo "Running demo..."
 	@cd build/demo && $(PYTHON) -m app
+lint:
+	@$(NINJA) lint
+fix:
+	@$(NINJA) fix
 
-
+# Remove build output
+clean:
+	@rm -rf build
 # Get back to a newly-cloned state.
-reset:
-	@rm -rf build build.ninja
-	@rm -rf vendor/closure-compiler vendor/jasmine vendor/ninja vendor/webpy
+reset: clean
+	@rm -rf build.ninja
+	@rm -rf vendor/closure-compiler vendor/closure-linter
+	@rm -rf vendor/jasmine vendor/ninja vendor/webpy
 
 
 # Ensure a build file exists before running Ninja.
