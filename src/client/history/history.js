@@ -252,8 +252,9 @@ spf.history.doPushState_ = function(data, title, opt_url) {
   // This check makes sure that pushState is a function when called to
   // avoid js errors and a state where the back arrow stops working.
   var iframe = spf.history.getIframe();
-  if (typeof iframe.history.pushState == 'function') {
-    iframe.history.pushState.call(window.history, data, title, opt_url);
+  var pushState = iframe.contentWindow.history.pushState;
+  if (typeof pushState == 'function') {
+    pushState.call(window.history, data, title, opt_url);
   } else {
     throw new Error('history.pushState is not a function.');
   }
@@ -268,8 +269,9 @@ spf.history.doPushState_ = function(data, title, opt_url) {
  */
 spf.history.doReplaceState_ = function(data, title, opt_url) {
   var iframe = spf.history.getIframe();
-  if (typeof iframe.history.replaceState == 'function') {
-    iframe.history.replaceState.call(window.history, data, title, opt_url);
+  var replaceState = iframe.contentWindow.history.replaceState;
+  if (typeof replaceState == 'function') {
+    replaceState.call(window.history, data, title, opt_url);
   } else {
     throw new Error('history.replaceState is not a function');
   }
@@ -277,11 +279,12 @@ spf.history.doReplaceState_ = function(data, title, opt_url) {
 
 
 /**
- * @return {!Window} The first iframe on the page.
+ * @return {!HTMLIFrameElement} The history iframe.
  */
 spf.history.getIframe = function() {
-  if (!window.frames.length) {
-    spf.dom.createIframe('history');
+  var frame = document.getElementById('history-iframe');
+  if (!frame) {
+    frame = spf.dom.createIframe('history-iframe');
   }
-  return /** @type {!Window} */ (window.frames[0]);
+  return /** @type {!HTMLIFrameElement} */ (frame);
 };
