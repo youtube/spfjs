@@ -774,7 +774,8 @@ spf.nav.redirect = function(url) {
   // will identify that the starting url was the same, and replace the current
   // history state, whereas Firefox will set a new state with the post 301
   // value.
-  if (window.location.href == url) {
+  if (spf.config.get('experimental-remove-history') &&
+      window.location.href == url) {
     spf.history.removeCurrentEntry();
   }
   // Delay the redirect until after the history state has had time to clear.
