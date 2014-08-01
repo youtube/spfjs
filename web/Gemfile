@@ -1,0 +1,11 @@
+# Copyright 2014 Google Inc. All rights reserved.
+#
+# Use of this source code is governed by The MIT License.
+# See the LICENSE file for details.
+
+source 'https://rubygems.org'
+
+gem 'autoprefixer-rails'
+gem 'jekyll'
+gem 'rake'
+gem 'sass'

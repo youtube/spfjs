@@ -1,0 +1,33 @@
+---
+layout: base
+---
+
+<main class="clear">
+
+  <header class="page-header container">
+    <h2 class="xxlarge text-divider">{{ page.title }}</h2>
+    {% if page.description %}
+      <p class="page-header__excerpt g-wide--push-1 g-wide--pull-1">
+        {{ page.description }}
+      </p>
+    {% endif %}
+  </header>
+
+  <section class="download-promo">
+    <div class="container">
+      <ul class="list-centered list--reset clear">
+        <li class="g-medium--half g-wide--2">
+          <a class="button--primary" href="https://github.com/youtube/spfjs/">View on GitHub</a>
+        </li>
+        <li class="g-medium--half g-medium--last g-wide--2 g-wide--last">
+          <a class="button--primary" href="https://github.com/youtube/spfjs/archive/master.zip">Download Latest</a>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="container">
+    {{ content}}
+  </div>
+
+</main>
