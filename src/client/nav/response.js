@@ -184,7 +184,8 @@ spf.nav.response.process = function(url, response, opt_callback, opt_navigate,
   }
 
   // Update content (one task per fragment or three tasks if animated).
-  var fragments = response['html'] || {};
+  // TODO(nicksay): Remove "html" key.
+  var fragments = response['body'] || response['html'] || {};
   var numBeforeFragments = num;
   for (var id in fragments) {
     fn = spf.bind(function(id, html, timing) {

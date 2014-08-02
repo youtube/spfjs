@@ -8,6 +8,7 @@
  */
 
 goog.require('spf');
+goog.require('spf.dom');
 goog.require('spf.history');
 goog.require('spf.nav.response');
 goog.require('spf.string');
@@ -430,16 +431,96 @@ describe('spf.nav.response', function() {
 
   });
 
+
   describe('process', function() {
 
     var currentUrl = 'http://www.youtube.com/watch?v=1';
+    var elements = {};
+
+    var FakeElement = function(initialHTML, initialAttributes) {
+      this.attributes = {};
+      this.className = '';
+      this.innerHTML = initialHTML || '';
+      if (initialAttributes) {
+        spf.dom.setAttributes(this, initialAttributes);
+      }
+    };
+    FakeElement.prototype.getAttribute = function(name) {
+      return this.attributes[name];
+    };
+    FakeElement.prototype.setAttribute = function(name, value) {
+      this.attributes[name] = value;
+    };
 
     beforeEach(function() {
       spyOn(spf.nav.response, 'getCurrentUrl_').andReturn(currentUrl);
       spyOn(spf.history, 'replace');
+      spyOn(document, 'getElementById').andCallFake(function(id) {
+        return elements[id];
+      });
     });
 
-    it('navigate: with redirect url', function() {
+    afterEach(function() {
+      elements = {};
+    })
+
+    it('sets attributes from "attr" field', function() {
+      elements = {
+        'foo': new FakeElement({'class': 'first'}),
+        'bar': new FakeElement({'dir': 'ltr'})
+      };
+
+      var response = {
+        'attr': {
+          'foo': { 'dir': 'rtl', 'class': 'last' },
+          'bar': { 'dir': 'rtl', 'class': 'last' },
+        }
+      };
+
+      spf.nav.response.process('/page', response, null, true);
+      expect(elements['foo'].className).toEqual('last');
+      expect(elements['foo'].attributes['dir']).toEqual('rtl');
+      expect(elements['bar'].className).toEqual('last');
+      expect(elements['bar'].attributes['dir']).toEqual('rtl');
+    });
+
+    it('sets html from "body" field', function() {
+      elements = {
+        'foo': new FakeElement('one'),
+        'bar': new FakeElement()
+      };
+
+      var response = {
+        'body': {
+          'foo': 'two',
+          'bar': 'two'
+        }
+      };
+
+      spf.nav.response.process('/page', response, null, true);
+      expect(elements['foo'].innerHTML).toEqual('two');
+      expect(elements['foo'].innerHTML).toEqual('two');
+    });
+
+    it('sets html from deprecated "html" field', function() {
+      elements = {
+        'foo': new FakeElement('one'),
+        'bar': new FakeElement()
+      };
+
+      var response = {
+        'html': {
+          'foo': 'two',
+          'bar': 'two'
+        }
+      };
+
+      spf.nav.response.process('/page', response, null, true);
+      expect(elements['foo'].innerHTML).toEqual('two');
+      expect(elements['foo'].innerHTML).toEqual('two');
+    });
+
+    it('updates history for navigate with redirect url', function() {
       var response = { 'url': 'http://www.youtube.com/watch?v=3' };
 
       spf.nav.response.process('/watch?v=2', response, null, true);
@@ -447,19 +528,21 @@ describe('spf.nav.response', function() {
           response['url'], null, false, true);
     });
 
-    it('navigate: with no redirect url', function() {
+    it('does not update history for navigate without redirect url', function() {
       var response = {};
 
       spf.nav.response.process('/watch?v=2', response, null, true);
       expect(spf.history.replace).not.toHaveBeenCalled();
     });
 
-    it('load: with redirect url', function() {
+    it('does not update history for load with redirect url', function() {
       var response = { 'url': 'http://www.youtube.com/watch?v=3' };
 
       spf.nav.response.process('/watch?v=2', response, null, false);
       expect(spf.history.replace).not.toHaveBeenCalled();
     });
+
   });
+
 
 });
