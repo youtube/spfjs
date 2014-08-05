@@ -132,7 +132,7 @@ if (SPF_BOOTLOADER) {
   spf.state.set(spf.pubsub.SUBS_KEY, spf.pubsub.subscriptions);
 } else {
   if (!spf.state.has(spf.pubsub.SUBS_KEY)) {
-    spf.state.set(spf.pubsub.SUBS_KEY, {});
+    spf.state.set(spf.pubsub.SUBS_KEY, spf.pubsub.subscriptions);
   }
   spf.pubsub.subscriptions = /** @type {!Object.<Array>} */ (
       spf.state.get(spf.pubsub.SUBS_KEY));
