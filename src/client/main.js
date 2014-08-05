@@ -31,11 +31,7 @@ goog.require('spf.pubsub');
 spf.main.init = function(opt_config) {
   var enable = spf.main.canInit_();
   spf.debug.info('main.init ', 'enable=', enable);
-  var config = opt_config || {};
-  for (var key in spf.config.defaults) {
-    var value = (key in config) ? config[key] : spf.config.defaults[key];
-    spf.config.set(key, value);
-  }
+  spf.config.init(opt_config);
   if (enable) {
     spf.nav.init();
   }

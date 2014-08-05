@@ -15,8 +15,16 @@ goog.require('spf.state');
 
 
 /**
+ * Type definition for a SPF config value.
+ *
+ * @typedef {string|number|boolean|null}
+ */
+spf.config.Value;
+
+
+/**
  * Default configuration values.
- * @type {Object.<string, string|number|Function>}
+ * @type {!Object.<spf.config.Value>}
  */
 spf.config.defaults = {
   'animation-class': 'spf-animate',
@@ -36,14 +44,35 @@ spf.config.defaults = {
 
 
 /**
+ * Initialize the configuration with an optional object.  If values are not
+ * provided, the defaults are used if they exist.
+ *
+ * @param {Object.<spf.config.Value>=} opt_config Optional configuration object.
+ */
+spf.config.init = function(opt_config) {
+  var config = opt_config || {};
+  // Set primary configs; each has a default.
+  for (var key in spf.config.defaults) {
+    var value = (key in config) ? config[key] : spf.config.defaults[key];
+    spf.config.set(key, value);
+  }
+  // Set advanced and experimental configs; none have defaults.
+  for (var key in config) {
+    if (!(key in spf.config.defaults)) {
+      spf.config.set(key, config[key]);
+    }
+  }
+};
+
+
+/**
  * Checks whether a current configuration value exists.
  *
  * @param {string} name The configuration name.
  * @return {boolean} Whether the configuration value exists.
  */
 spf.config.has = function(name) {
-  var config = spf.config.config_();
-  return name in config;
+  return name in spf.config.values;
 };
 
 
@@ -51,11 +80,10 @@ spf.config.has = function(name) {
  * Gets a current configuration value.
  *
  * @param {string} name The configuration name.
- * @return {*} The configuration value.
+ * @return {spf.config.Value|undefined} The configuration value.
  */
 spf.config.get = function(name) {
-  var config = spf.config.config_();
-  return config[name];
+  return spf.config.values[name];
 };
 
 
@@ -63,12 +91,11 @@ spf.config.get = function(name) {
  * Sets a current configuration value.
  *
  * @param {string} name The configuration name.
- * @param {*} value The configuration value.
- * @return {*} The configuration value.
+ * @param {spf.config.Value} value The configuration value.
+ * @return {spf.config.Value} The configuration value.
  */
 spf.config.set = function(name, value) {
-  var config = spf.config.config_();
-  config[name] = value;
+  spf.config.values[name] = value;
   return value;
 };
 
@@ -77,21 +104,30 @@ spf.config.set = function(name, value) {
  * Removes all data from the config.
  */
 spf.config.clear = function() {
-  spf.config.config_({});
+  for (var key in spf.config.values) {
+    delete spf.config.values[key];
+  }
 };
 
 
 /**
- * @param {!Object.<string, *>=} opt_config Optional config
- *     object to overwrite the current value.
- * @return {!Object.<string, *>} Current config object.
- * @private
+ * The config storage object.
+ * @type {!Object.<spf.config.Value>}
  */
-spf.config.config_ = function(opt_config) {
-  if (opt_config || !spf.state.has('config')) {
-    return /** @type {!Object.<string, *>} */ (
-        spf.state.set('config', (opt_config || {})));
-  }
-  return /** @type {!Object.<string, *>} */ (
-      spf.state.get('config'));
-};
+spf.config.values = {};
+
+
+/**
+ * Key used to store and retrieve the config storage in state.
+ * @type {string}
+ * @const
+ */
+spf.config.VALUES_KEY = 'config';
+
+
+// Automatic initialization for spf.config.values.
+if (!spf.state.has(spf.config.VALUES_KEY)) {
+  spf.state.set(spf.config.VALUES_KEY, spf.config.values);
+}
+spf.config.values = /** @type {!Object.<spf.config.Value>} */ (
+    spf.state.get(spf.config.VALUES_KEY));
