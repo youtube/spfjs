@@ -36,7 +36,6 @@ spf.config.defaults = {
   'nolink-class': 'spf-nolink',
   'navigate-limit': 20,  // 20 navigations per session.
   'navigate-lifetime': 24 * 60 * 60 * 1000,  // 1 day session lifetime (ms).
-  'process-async': false,
   'request-timeout': 0,  // No request timeout.
   'url-identifier': '?spf=__type__'
 };

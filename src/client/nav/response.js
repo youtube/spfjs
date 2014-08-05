@@ -126,7 +126,7 @@ spf.nav.response.process = function(url, response, opt_callback, opt_navigate,
 
   // Convert the URL to absolute, to be used for finding the task queue.
   var key = 'process ' + spf.url.absolute(url);
-  var sync = !spf.config.get('process-async');
+  var sync = !spf.config.get('experimental-process-async');
 
   // NOTE: when adding tasks to a queue, use bind to avoid name/scope errors.
   var fn;
