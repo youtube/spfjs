@@ -35,7 +35,7 @@ spf.nav.init = function() {
   spf.history.init(spf.nav.handleHistory_, spf.nav.dispatchError_);
   if (!spf.state.get('nav-init') && document.addEventListener) {
     document.addEventListener('click', spf.nav.handleClick_, false);
-    if (spf.config.get('prefetch-on-mousedown') &&
+    if (spf.config.get('experimental-prefetch-mousedown') &&
         !spf.nav.isTouchCapablePlatform_()) {
       document.addEventListener('mousedown', spf.nav.handleMouseDown_, false);
       spf.state.set('prefetch-listener', spf.nav.handleMouseDown_);
@@ -57,7 +57,7 @@ spf.nav.dispose = function() {
     if (document.removeEventListener) {
       document.removeEventListener('click', /** @type {function(Event)} */ (
           spf.state.get('nav-listener')), false);
-      if (spf.config.get('prefetch-on-mousedown')) {
+      if (spf.config.get('experimental-prefetch-mousedown')) {
         document.removeEventListener('mousedown',
             /** @type {function(Event)} */ (
                 spf.state.get('prefetch-listener')), false);
