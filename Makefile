@@ -39,7 +39,12 @@ tracing-bootloader:
 	@$(NINJA) tracing-bootloader
 tests:
 	@$(NINJA) tests
-	@echo "Open build/test/runner.html in your browser."
+	@if [[ $$(command -v open) ]]; then \
+			echo "Opening build/test/runner.html in your browser..."; \
+			open build/test/runner.html; \
+		else \
+			echo "Open build/test/runner.html in your browser."; \
+		fi
 demo:
 	@$(NINJA) demo
 	@echo "Running demo..."
