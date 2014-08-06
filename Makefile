@@ -39,7 +39,11 @@ tracing-bootloader:
 	@$(NINJA) tracing-bootloader
 tests:
 	@$(NINJA) tests
-	@if [[ $$(command -v open) ]]; then \
+	@if [[ $$(command -v phantomjs) ]]; then \
+			echo "Open build/test/runner.html in your browser for interactive testing."; \
+			echo "Running tests..."; \
+			phantomjs build/test/run-jasmine.js build/test/runner.html; \
+		elif [[ $$(command -v open) ]]; then \
 			echo "Opening build/test/runner.html in your browser..."; \
 			open build/test/runner.html; \
 		else \

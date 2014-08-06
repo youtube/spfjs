@@ -517,7 +517,9 @@ def write_targets(ninja):
   ]
   manifest_srcs = [dev_out] + js_tests
   manifest_out = '$builddir/test/manifest.js'
-  test_outs = jasmine_test_outs + [manifest_out]
+  phantomjs_run_jasmine_src = 'vendor/phantomjs/examples/run-jasmine.js'
+  phantomjs_run_jasmine_out = '$builddir/test/run-jasmine.js'
+  test_outs = jasmine_test_outs + [manifest_out, phantomjs_run_jasmine_out]
   runner_src = 'src/client/testing/runner.html'
   runner_out = '$builddir/test/runner.html'
   for test_src, test_out in zip(jasmine_test_srcs, jasmine_test_outs):
@@ -525,6 +527,9 @@ def write_targets(ninja):
                 variables=[('prefix', '../' * test_out.count('/'))])
   ninja.build(manifest_out, 'gen_test_manifest', manifest_srcs,
               variables=[('prefix', '../' * manifest_out.count('/'))])
+  ninja.build(phantomjs_run_jasmine_out, 'symlink', phantomjs_run_jasmine_src,
+              variables=[('prefix',
+                         '../' * phantomjs_run_jasmine_out.count('/'))])
   ninja.build(runner_out, 'symlink', runner_src,
               variables=[('prefix', '../' * runner_out.count('/'))],
               implicit=test_outs)
