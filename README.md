@@ -74,7 +74,7 @@ $ make
 $ cp build/spf.js YOUR_JS_DIR/
 ```
 
-Running `make` will downloaded needed packages.  You will need Python and Java
+Running `make` will download needed packages.  You will need Python and Java
 installed to build and compile.
 
 Then, add the script to your page and initialize SPF:
