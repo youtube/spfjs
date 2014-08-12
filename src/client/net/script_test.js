@@ -16,254 +16,208 @@ goog.require('spf.url');
 
 describe('spf.net.script', function() {
 
-  var callbacks;
-  var fakes;
-  var nodes;
   var js = spf.net.resource.Type.JS;
-  var loading = spf.net.resource.Status.LOADING;
-  var loaded = spf.net.resource.Status.LOADED;
+  var nodes;
+  var callbacks;
+  var fakes = {
+    url: {
+      absolute: function(relative) {
+        if (relative.indexOf('//') > -1) {
+          return relative;
+        } else if (relative.indexOf('/') == 0) {
+          return '//test' + relative;
+        } else {
+          return '//test/' + relative;
+        }
+      }
+    },
+    resource: {
+      create: function(type, url, opt_callback, opt_document) {
+        url = spf.net.resource.canonicalize(js, url);
+        var el = {
+          setAttribute: function(n, v) {
+            el[n] = v;
+          },
+          getAttribute: function(n) {
+            return el[n];
+          }
+        };
+        el.src = url;
+        el.className = type + '-' + url.replace(/[^\w]/g, '');
+        nodes.push(el);
+        spf.net.resource.stats_[url] = spf.net.resource.Status.LOADED;
+        opt_callback && opt_callback();
+        return el;
+      },
+      destroy: function(type, url) {
+        var idx = -1;
+        spf.array.every(nodes, function(n, i, arr) {
+          if (n.src == url) {
+            idx = i;
+            return false;
+          }
+          return true;
+        });
+        nodes.splice(idx, 1);
+        delete spf.net.resource.stats_[url];
+      }
+    }
+  };
+
 
   beforeEach(function() {
     jasmine.Clock.useMock();
-    callbacks = {
-      one: jasmine.createSpy('one'),
-      two: jasmine.createSpy('two'),
-      three: jasmine.createSpy('three'),
-      four: jasmine.createSpy('four')
-    };
-    fakes = {
-      // Replace DOM-based functions with fakes.
-      url: {
-        absolute: function(relative) {
-          if (relative.indexOf('//') > -1) {
-            return relative;
-          } else if (relative.indexOf('/') == 0) {
-            return '//test' + relative;
-          } else {
-            return '//test/' + relative;
-          }
-        }
-      },
-      resource: {
-        create: function(type, url, opt_callback, opt_document) {
-          url = spf.net.resource.canonicalize(js, url);
-          var el = {
-            setAttribute: function(n, v) {
-              el[n] = v;
-            },
-            getAttribute: function(n) {
-              return el[n];
-            }
-          };
-          el.src = url;
-          el.className = type + '-' + url.replace(/[^\w]/g, '');
-          nodes.push(el);
-          spf.net.resource.stats_[url] = loaded;
-          opt_callback && opt_callback();
-          return el;
-        },
-        destroy: function(type, url) {
-          var idx = -1;
-          spf.array.every(nodes, function(n, i, arr) {
-            if (n.src == url) {
-              idx = i;
-              return false;
-            }
-            return true;
-          });
-          nodes.splice(idx, 1);
-          delete spf.net.resource.stats_[url];
-        }
-      }
-    };
-    spyOn(spf.url, 'absolute').andCallFake(fakes.url.absolute);
-    spyOn(spf.net.resource, 'create').andCallFake(
-        fakes.resource.create);
-    spyOn(spf.net.resource, 'destroy').andCallFake(
-        fakes.resource.destroy);
+
+
     spf.state.values_ = {};
     spf.pubsub.subscriptions = {};
     spf.net.script.urls_ = {};
     spf.net.script.deps_ = {};
     spf.net.resource.urls_ = {};
     spf.net.resource.stats_ = {};
+
     nodes = [];
+    callbacks = {
+      one: jasmine.createSpy('one'),
+      two: jasmine.createSpy('two'),
+      three: jasmine.createSpy('three'),
+      four: jasmine.createSpy('four')
+    };
+
+    spyOn(spf.net.resource, 'load').andCallThrough();
+    spyOn(spf.net.resource, 'unload').andCallThrough();
+    spyOn(spf.net.resource, 'create').andCallFake(fakes.resource.create);
+    spyOn(spf.net.resource, 'destroy').andCallFake(fakes.resource.destroy);
+    spyOn(spf.net.resource, 'prefetch');
+
+    spyOn(spf.url, 'absolute').andCallFake(fakes.url.absolute);
+
     for (var i = 1; i < 9; i++) {
       window['_global_' + i + '_'] = undefined;
     }
   });
 
+
   describe('load', function() {
 
-    it('single url', function() {
-      spf.net.script.load('url-a.js');
-      jasmine.Clock.tick(1);
-      expect(nodes.length).toEqual(1);
-      spf.net.script.load('url-a.js', callbacks.one);
-      jasmine.Clock.tick(1);
-      spf.net.script.load('url-a.js', callbacks.one);
-      jasmine.Clock.tick(1);
-      expect(nodes.length).toEqual(1);
-      expect(callbacks.one.calls.length).toEqual(2);
-      spf.net.script.load('url-b.js', callbacks.two);
-      jasmine.Clock.tick(1);
-      expect(nodes.length).toEqual(2);
-      expect(callbacks.one.calls.length).toEqual(2);
-      expect(callbacks.two.calls.length).toEqual(1);
+    it('passes a single url', function() {
+      var url = 'url-a.js';
+      spf.net.script.load(url);
+      expect(spf.net.resource.load).toHaveBeenCalledWith(
+          js, url, undefined, undefined);
     });
 
-    it('single url with name', function() {
-      spf.net.script.load('url-a.js', 'a');
-      jasmine.Clock.tick(1);
-      expect(nodes.length).toEqual(1);
-      spf.net.script.load('url-a.js', 'a', callbacks.one);
-      jasmine.Clock.tick(1);
-      spf.net.script.load('url-a.js', 'a', callbacks.one);
-      jasmine.Clock.tick(1);
-      expect(nodes.length).toEqual(1);
-      expect(callbacks.one.calls.length).toEqual(2);
-      spf.net.script.load('url-b.js', 'b', callbacks.two);
-      jasmine.Clock.tick(1);
-      expect(nodes.length).toEqual(2);
-      expect(callbacks.one.calls.length).toEqual(2);
-      expect(callbacks.two.calls.length).toEqual(1);
+    it('passes a single url with name', function() {
+      var url = 'url-a.js';
+      var name = 'a';
+      spf.net.script.load(url, name);
+      expect(spf.net.resource.load).toHaveBeenCalledWith(
+          js, url, name, undefined);
     });
 
-    it('multiple urls', function() {
-      spf.net.script.load(['url-a-1.js', 'url-a-2.js']);
-      jasmine.Clock.tick(1);
-      expect(nodes.length).toEqual(2);
-      spf.net.script.load(['url-a-1.js', 'url-a-2.js'], callbacks.one);
-      jasmine.Clock.tick(1);
-      spf.net.script.load(['url-a-1.js', 'url-a-2.js'], callbacks.one);
-      jasmine.Clock.tick(1);
-      expect(nodes.length).toEqual(2);
-      expect(callbacks.one.calls.length).toEqual(2);
-      spf.net.script.load(['url-b-1.js', 'url-b-2.js'], callbacks.two);
-      jasmine.Clock.tick(1);
-      expect(nodes.length).toEqual(4);
-      expect(callbacks.one.calls.length).toEqual(2);
-      expect(callbacks.two.calls.length).toEqual(1);
+    it('passes a single url with function', function() {
+      var url = 'url-a.js';
+      var fn = function() {};
+      spf.net.script.load(url, fn);
+      expect(spf.net.resource.load).toHaveBeenCalledWith(
+          js, url, fn, undefined);
     });
 
-    it('multiple urls with name', function() {
-      spf.net.script.load(['url-a-1.js', 'url-a-2.js'], 'a');
-      jasmine.Clock.tick(1);
-      expect(nodes.length).toEqual(2);
-      spf.net.script.load(['url-a-1.js', 'url-a-2.js'], 'a', callbacks.one);
-      jasmine.Clock.tick(1);
-      spf.net.script.load(['url-a-1.js', 'url-a-2.js'], 'a', callbacks.one);
-      jasmine.Clock.tick(1);
-      expect(nodes.length).toEqual(2);
-      expect(callbacks.one.calls.length).toEqual(2);
-      spf.net.script.load(['url-b-1.js', 'url-b-2.js'], 'b', callbacks.two);
-      jasmine.Clock.tick(1);
-      expect(nodes.length).toEqual(4);
-      expect(callbacks.one.calls.length).toEqual(2);
-      expect(callbacks.two.calls.length).toEqual(1);
+    it('passes a single url with name function', function() {
+      var url = 'url-a.js';
+      var name = 'a';
+      var fn = function() {};
+      spf.net.script.load(url, name, fn);
+      expect(spf.net.resource.load).toHaveBeenCalledWith(
+          js, url, name, fn);
+    });
+
+    it('passes multiple urls', function() {
+      var urls = ['url-a-1.js', 'url-a-2.js'];
+      spf.net.script.load(urls);
+      expect(spf.net.resource.load).toHaveBeenCalledWith(
+          js, urls, undefined, undefined);
+    });
+
+    it('passes multiple urls with name', function() {
+      var urls = ['url-a-1.js', 'url-a-2.js'];
+      var name = 'a';
+      spf.net.script.load(urls, name);
+      expect(spf.net.resource.load).toHaveBeenCalledWith(
+          js, urls, name, undefined);
+    });
+
+    it('passes multiple urls with function', function() {
+      var urls = ['url-a-1.js', 'url-a-2.js'];
+      var fn = function() {};
+      spf.net.script.load(urls, fn);
+      expect(spf.net.resource.load).toHaveBeenCalledWith(
+          js, urls, fn, undefined);
+    });
+
+    it('passes multiple urls with name function', function() {
+      var urls = ['url-a-1.js', 'url-a-2.js'];
+      var name = 'a';
+      var fn = function() {};
+      spf.net.script.load(urls, name, fn);
+      expect(spf.net.resource.load).toHaveBeenCalledWith(
+          js, urls, name, fn);
     });
 
   });
+
 
   describe('unload', function() {
 
-    it('single url by name', function() {
-      // Load a URL (and check that it is "ready").
-      spf.net.script.load('url-a.js', 'a');
-      var result = spf.array.map(nodes, function(a) { return a.src; });
-      expect(result).toContain('//test/url-a.js');
-      spf.net.script.ready('a', callbacks.one);
-      jasmine.Clock.tick(1);
-      expect(callbacks.one.calls.length).toEqual(1);
-      // Unload it (and check that it is no longer "ready").
-      spf.net.script.unload('a');
-      result = spf.array.map(nodes, function(a) { return a.src; });
-      expect('//test/url-a.js' in spf.net.resource.stats_).toBe(false);
-      expect(result).not.toContain('//test/url-a.js');
-      spf.net.script.ready('a', callbacks.one);
-      jasmine.Clock.tick(1);
-      expect(callbacks.one.calls.length).toEqual(1);
-      // Repeated calls should be no-ops.
-      spf.net.script.unload('a');
-      spf.net.script.unload('a');
-      result = spf.array.map(nodes, function(a) { return a.src; });
-      expect('//test/url-a.js' in spf.net.resource.stats_).toBe(false);
-      expect(result).not.toContain('//test/url-a.js');
-      spf.net.script.ready('a', callbacks.one);
-      jasmine.Clock.tick(1);
-      expect(callbacks.one.calls.length).toEqual(1);
-    });
-
-    it('multiple urls by name', function() {
-      // Load some URLs (and check that they are "ready").
-      spf.net.script.load(['url-a-1.js', 'url-a-2.js'], 'a');
-      var result = spf.array.map(nodes, function(a) { return a.src; });
-      expect(result).toContain('//test/url-a-1.js');
-      expect(result).toContain('//test/url-a-2.js');
-      spf.net.script.ready('a', callbacks.one);
-      jasmine.Clock.tick(1);
-      expect(callbacks.one.calls.length).toEqual(1);
-      // Remove them (and check that they are no longer "ready").
-      spf.net.script.unload('a');
-      result = spf.array.map(nodes, function(a) { return a.src; });
-      expect('//test/url-a-1.js' in spf.net.resource.stats_).toBe(false);
-      expect('//test/url-a-2.js' in spf.net.resource.stats_).toBe(false);
-      expect(result).not.toContain('//test/url-a-1.js');
-      expect(result).not.toContain('//test/url-a-2.js');
-      spf.net.script.ready('a', callbacks.one);
-      jasmine.Clock.tick(1);
-      expect(callbacks.one.calls.length).toEqual(1);
-      // Repeated calls should be no-ops.
-      spf.net.script.unload('a');
-      spf.net.script.unload('a');
-      result = spf.array.map(nodes, function(a) { return a.src; });
-      expect('//test/url-a-1.js' in spf.net.resource.stats_).toBe(false);
-      expect('//test/url-a-2.js' in spf.net.resource.stats_).toBe(false);
-      expect(result).not.toContain('//test/url-a-1.js');
-      expect(result).not.toContain('//test/url-a-2.js');
-      expect(callbacks.one.calls.length).toEqual(1);
-      // Check multiple names.
-      spf.net.script.load(['url-a-1.js', 'url-a-2.js'], 'a');
-      spf.net.script.load(['url-b-1.js', 'url-b-2.js'], 'b');
-      var result = spf.array.map(nodes, function(a) { return a.src; });
-      expect(result).toContain('//test/url-a-1.js');
-      expect(result).toContain('//test/url-a-2.js');
-      expect(result).toContain('//test/url-b-1.js');
-      expect(result).toContain('//test/url-b-2.js');
-      jasmine.Clock.tick(1);
-      expect(callbacks.one.calls.length).toEqual(2);
-      spf.net.script.unload('b');
-      result = spf.array.map(nodes, function(a) { return a.src; });
-      expect(result).toContain('//test/url-a-1.js');
-      expect(result).toContain('//test/url-a-2.js');
-      expect(result).not.toContain('//test/url-b-1.js');
-      expect(result).not.toContain('//test/url-b-2.js');
-      spf.net.script.unload('a');
-      result = spf.array.map(nodes, function(a) { return a.src; });
-      expect(result).not.toContain('//test/url-a-1.js');
-      expect(result).not.toContain('//test/url-a-2.js');
-      expect(result).not.toContain('//test/url-b-1.js');
-      expect(result).not.toContain('//test/url-b-2.js');
-      expect(callbacks.one.calls.length).toEqual(2);
-    });
-
-    it('multiple urls by name with cross dependencies', function() {
-      spf.net.script.load(['url-a.js', 'url-b.js'], 'foo');
-      spf.net.script.load(['url-a.js', 'url-c.js'], 'bar');
-      jasmine.Clock.tick(1);
-      spf.net.script.ready('foo', callbacks.one);
-      spf.net.script.ready('bar', callbacks.two);
-      expect(callbacks.one.calls.length).toEqual(1);
-      expect(callbacks.two.calls.length).toEqual(1);
-      // Unloading bar makes foo no longer "ready" because both have url-a.js.
-      spf.net.script.unload('bar');
-      spf.net.script.ready('foo', callbacks.one);
-      spf.net.script.ready('bar', callbacks.two);
-      expect(callbacks.one.calls.length).toEqual(1);
-      expect(callbacks.two.calls.length).toEqual(1);
+    it('passes name', function() {
+      var name = 'a';
+      spf.net.script.unload(name);
+      expect(spf.net.resource.unload).toHaveBeenCalledWith(js, name);
     });
 
   });
+
+
+  describe('get', function() {
+
+    it('passes url', function() {
+      var url = 'url-a.js';
+      spf.net.script.get(url);
+      expect(spf.net.resource.create).toHaveBeenCalledWith(
+          js, url, undefined);
+    });
+
+    it('passes url with function', function() {
+      var url = 'url-a.js';
+      var fn = function() {};
+      spf.net.script.get(url, fn);
+      expect(spf.net.resource.create).toHaveBeenCalledWith(
+          js, url, fn);
+    });
+
+  });
+
+
+  describe('prefetch', function() {
+
+    it('calls for a single url', function() {
+      var url = 'url-a.js';
+      spf.net.script.prefetch(url);
+      expect(spf.net.resource.prefetch).toHaveBeenCalledWith(
+          js, url);
+    });
+
+    it('calls for multiples urls', function() {
+      var urls = ['url-a-1.js', 'url-a-2.js'];
+      spf.net.script.prefetch(urls);
+      spf.array.each(urls, function(url) {
+        expect(spf.net.resource.prefetch).toHaveBeenCalledWith(
+            js, url);
+      });
+    });
+
+  });
+
 
   describe('ready', function() {
 
@@ -273,6 +227,7 @@ describe('spf.net.script', function() {
       expect(callbacks.one.calls.length).toEqual(0);
       // Load.
       spf.net.script.load('foo.js', 'my:foo');
+      jasmine.Clock.tick(1);
       // Check post-ready.
       expect(callbacks.one.calls.length).toEqual(1);
       // Check again.
@@ -293,12 +248,14 @@ describe('spf.net.script', function() {
       expect(callbacks.three.calls.length).toEqual(0);
       // Load first.
       spf.net.script.load('foo.js', 'my:foo');
+      jasmine.Clock.tick(1);
       // Check.
       expect(callbacks.one.calls.length).toEqual(1);
       expect(callbacks.two.calls.length).toEqual(0);
       expect(callbacks.three.calls.length).toEqual(0);
       // Load second.
       spf.net.script.load('bar.js', 'bar');
+      jasmine.Clock.tick(1);
       // Check.
       expect(callbacks.one.calls.length).toEqual(1);
       expect(callbacks.two.calls.length).toEqual(1);
@@ -322,17 +279,20 @@ describe('spf.net.script', function() {
       // Load first.
       spf.net.script.load('foo.js', 'my:foo');
       spf.net.script.ready(['my:foo', 'bar'], null, callbacks.one);
+      jasmine.Clock.tick(1);
       expect(callbacks.one.calls.length).toEqual(2);
       expect(callbacks.one.mostRecentCall.args[0]).toEqual(['bar']);
       // Load second.
       spf.net.script.load('bar.js', 'bar');
       spf.net.script.ready(['a', 'my:foo', 'b', 'bar', 'c'],
                                null, callbacks.one);
+      jasmine.Clock.tick(1);
       expect(callbacks.one.calls.length).toEqual(3);
       expect(callbacks.one.mostRecentCall.args[0]).toEqual(['a', 'b', 'c']);
     });
 
   });
+
 
   describe('done', function() {
 
@@ -368,6 +328,7 @@ describe('spf.net.script', function() {
 
   });
 
+
   describe('ignore', function() {
 
     it('does not execute callbacks for a single dependency', function() {
@@ -388,6 +349,7 @@ describe('spf.net.script', function() {
     });
 
   });
+
 
   describe('require', function() {
 
@@ -490,64 +452,6 @@ describe('spf.net.script', function() {
 
   });
 
-  describe('check', function() {
-
-    it('executes pending callbacks', function() {
-      // No dependencies.
-      spf.pubsub.subscribe('js-foo', callbacks.one);
-      spf.pubsub.subscribe('js-bar', callbacks.two);
-      spf.pubsub.subscribe('js-foo|bar', callbacks.three);
-      spf.pubsub.subscribe('js-other', callbacks.four);
-      spf.net.script.check();
-      expect(callbacks.one.calls.length).toEqual(0);
-      expect(callbacks.two.calls.length).toEqual(0);
-      expect(callbacks.three.calls.length).toEqual(0);
-      expect(callbacks.four.calls.length).toEqual(0);
-      // Not loaded.
-      spf.net.resource.urls_['js-foo'] = ['//test/f1.js', '//test/f2.js'];
-      spf.net.resource.urls_['js-bar'] = ['//test/b.js'];
-      spf.net.script.check();
-      expect(callbacks.one.calls.length).toEqual(0);
-      expect(callbacks.two.calls.length).toEqual(0);
-      expect(callbacks.three.calls.length).toEqual(0);
-      expect(callbacks.four.calls.length).toEqual(0);
-      // Some loading.
-      spf.net.resource.stats_['//test/b.js'] = loading;
-      spf.net.script.check();
-      expect(callbacks.one.calls.length).toEqual(0);
-      expect(callbacks.two.calls.length).toEqual(0);
-      expect(callbacks.three.calls.length).toEqual(0);
-      expect(callbacks.four.calls.length).toEqual(0);
-      // All loading.
-      spf.net.resource.stats_['//test/b.js'] = loading;
-      spf.net.resource.stats_['//test/f1.js'] = loading;
-      spf.net.resource.stats_['//test/f2.js'] = loading;
-      spf.net.script.check();
-      expect(callbacks.one.calls.length).toEqual(0);
-      expect(callbacks.two.calls.length).toEqual(0);
-      expect(callbacks.three.calls.length).toEqual(0);
-      expect(callbacks.four.calls.length).toEqual(0);
-      // Some loaded, some loading.
-      spf.net.resource.stats_['//test/b.js'] = loaded;
-      spf.net.resource.stats_['//test/f1.js'] = loading;
-      spf.net.resource.stats_['//test/f2.js'] = loaded;
-      spf.net.script.check();
-      expect(callbacks.one.calls.length).toEqual(0);
-      expect(callbacks.two.calls.length).toEqual(1);
-      expect(callbacks.three.calls.length).toEqual(0);
-      expect(callbacks.four.calls.length).toEqual(0);
-      // All loaded.
-      spf.net.resource.stats_['//test/b.js'] = loaded;
-      spf.net.resource.stats_['//test/f1.js'] = loaded;
-      spf.net.resource.stats_['//test/f2.js'] = loaded;
-      spf.net.script.check();
-      expect(callbacks.one.calls.length).toEqual(1);
-      expect(callbacks.two.calls.length).toEqual(1);
-      expect(callbacks.three.calls.length).toEqual(1);
-      expect(callbacks.four.calls.length).toEqual(0);
-    });
-
-  });
 
   describe('eval', function() {
 
@@ -597,5 +501,6 @@ describe('spf.net.script', function() {
     });
 
   });
+
 
 });

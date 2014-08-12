@@ -21,11 +21,13 @@ goog.require('spf');
  * return an empty Array.
  *
  * @param {string} selector Selector to match.
+ * @param {Document=} opt_document Optional document to query.
  * @return {Array.<Node>|NodeList} nodes Matching nodes.
  */
-spf.dom.query = function(selector) {
-  if (document.querySelectorAll) {
-    return document.querySelectorAll(selector);
+spf.dom.query = function(selector, opt_document) {
+  var doc = opt_document || document;
+  if (doc.querySelectorAll) {
+    return doc.querySelectorAll(selector);
   }
   return [];
 };

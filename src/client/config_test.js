@@ -34,7 +34,7 @@ describe('spf.config', function() {
       spf.config.values['foo'] = 'foo';
       expect(spf.config.get('foo')).toBe('foo');
       expect(spf.config.get('bar')).toBe(undefined);
-    })
+    });
 
   });
 
@@ -44,8 +44,8 @@ describe('spf.config', function() {
       var v = spf.config.set('foo', 'foo');
       expect(spf.config.values['foo']).toBe('foo');
       expect(v).toBe('foo');
-      expect(spf.config.values['bar']).toBe(undefined)
-    })
+      expect(spf.config.values['bar']).toBe(undefined);
+    });
 
   });
 
@@ -56,7 +56,7 @@ describe('spf.config', function() {
       expect(spf.config.has('foo')).toBe(true);
       spf.config.clear();
       expect(spf.config.has('foo')).toBe(false);
-    })
+    });
 
   });
 
