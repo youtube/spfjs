@@ -30,7 +30,7 @@ goog.require('spf.state');
  *     the user is browsing to.  The second parameter will be an optional
  *     state object associated with that URL.
  * @param {function(string, Error)} errorCallback The function to handle
- *     a errors. The first parameter will be the URL with the error.  The
+ *     errors. The first parameter will be the URL with the error.  The
  *     second parameter will be the error object.
  */
 spf.history.init = function(callback, errorCallback) {
@@ -48,7 +48,7 @@ spf.history.init = function(callback, errorCallback) {
     // The URL of the current history entry, used to detect returning to the
     // the first state.
     spf.state.set('history-url', url);
-    // The timestap of the current history entry, used to distinguish
+    // The timestamp of the current history entry, used to distinguish
     // between backward and forward state changes.
     spf.state.set('history-timestamp', spf.now());
     // Set the initial referer to properly send referer on back button.
