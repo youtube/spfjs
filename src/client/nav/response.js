@@ -499,7 +499,7 @@ spf.nav.response.extract_ = function(html) {
   }
 
   // If the html isn't a string, it's a pre-parsed object.  Use the provided
-  // vaues to populate the result instead.
+  // values to populate the result instead.
   if (!spf.string.isString(html)) {
     // Add the parsed scripts to the result.
     if (html['scripts']) {
