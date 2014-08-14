@@ -179,12 +179,11 @@ def write_variables(ninja):
   ninja.variable('license_js', 'src/license.js')
   ninja.variable('license', 'cat $license_js')
   ninja.variable('preamble', 'true')
+  ninja.variable('wrapper_js', 'src/wrapper.js')
 
   common_jsflags = [
       '--compilation_level ADVANCED_OPTIMIZATIONS',
       '--define "COMPILED=true"',
-      '--define "SPF_COMPILED=true"',
-      '--output_wrapper "(function(){%output%})();"',
       '--manage_closure_dependencies true',
       '--process_closure_primitives true',
   ]
@@ -208,9 +207,11 @@ def write_variables(ninja):
   ]
   main_jsflags = [
       '--closure_entry_point spf.main',
+      '--output_wrapper_file $wrapper_js',
   ]
   bootloader_jsflags = [
       '--closure_entry_point spf.bootloader',
+      '--output_wrapper "(function(){%output%})();"',
   ]
   ninja.variable('prod_jsflags', ' '.join(prod_jsflags))
   ninja.variable('debug_jsflags', ' '.join(debug_jsflags))
@@ -296,6 +297,7 @@ def write_rules(ninja):
 
 def write_targets(ninja):
   license_js = '$license_js'
+  wrapper_js = '$wrapper_js'
 
   ninja.newline()
   ninja.comment('Libraries.')
@@ -477,14 +479,14 @@ def write_targets(ninja):
   ninja.comment('Main.')
   ninja.build('$builddir/spf.js', 'jscompile', js_srcs,
               variables=[('flags', '$prod_jsflags $main_jsflags')],
-              implicit=[jscompiler_jar, license_js])
+              implicit=[jscompiler_jar, license_js, wrapper_js])
   ninja.build('$builddir/debug-spf.js', 'jscompile', js_srcs,
               variables=[('flags', '$debug_jsflags $main_jsflags')],
-              implicit=[jscompiler_jar, license_js])
+              implicit=[jscompiler_jar, license_js, wrapper_js])
   ninja.build('$builddir/tracing-spf.js', 'jscompile', js_srcs,
               variables=[('flags', '$trace_jsflags $main_jsflags'),
                          ('preamble', 'head -n 6 ' + wtf_shim)],
-              implicit=[jscompiler_jar, license_js])
+              implicit=[jscompiler_jar, license_js, wrapper_js])
 
   ninja.newline()
   ninja.comment('Bootloader.')
