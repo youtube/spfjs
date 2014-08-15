@@ -34,10 +34,6 @@ goog.provide('spf');
 var SPF_BOOTLOADER = false;
 
 
-/** @define {boolean} Compiler flag to remove development code. */
-var SPF_COMPILED = false;
-
-
 /** @define {boolean} Compiler flag to include debugging code. */
 var SPF_DEBUG = true;
 

@@ -21,7 +21,7 @@ goog.require('spf.net.script');
 
 
 // Create the bootloader API by exporting aliased functions.
-/** @private {Object} */
+/** @private {!Object} */
 spf.bootloader.api_ = {
   'script': {
     // The bootloader API.
@@ -38,13 +38,11 @@ spf.bootloader.api_ = {
     'path': spf.net.script.path
   }
 };
-if (!SPF_COMPILED) {
-  // When not compiled, mixin the API to the existing namespace for development.
-  for (var key in spf.bootloader.api_) {
-    // Work around the "incomplete alias" warning.
-    eval('spf[key] = spf.bootloader.api_[key]');
-  }
-} else {
-  // When compiled for a production/debug build, isolate access to the API.
-  window['spf'] = spf.bootloader.api_;
+// For a production/debug build, isolate access to the API.
+// For a development build, mixin the API to the existing namespace.
+var global = this;
+global['spf'] = global['spf'] || {};
+var api = global['spf'];
+for (var fn in spf.bootloader.api_) {
+  api[fn] = spf.bootloader.api_[fn];
 }
