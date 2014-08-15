@@ -769,6 +769,8 @@ spf.nav.redirect = function(url) {
   spf.debug.warn('redirecting (', 'url=', url, ')');
   spf.nav.cancel();
   spf.nav.cancelAllPrefetchesExcept();
+  // Dispatch the reload event to notify the app that a reload is required.
+  spf.nav.dispatchReload_(url);
   // If the url has already changed, clear its entry to prevent browser
   // inconsistency with history management for 301 responses on reloads. Chrome
   // will identify that the starting url was the same, and replace the current
@@ -1128,6 +1130,19 @@ spf.nav.dispatchError_ = function(url, err, opt_options, opt_noEvents) {
 
 
 /**
+ * Dispatches the "reload" event with the following custom event detail:
+ *   url: The current URL.
+ *
+ * @param {string} url The target URL which is being reloaded.
+ * @private
+ */
+spf.nav.dispatchReload_ = function(url) {
+  var detail = {'url': url};
+  spf.dispatch(spf.nav.Events.RELOAD, detail);
+};
+
+
+/**
  * Dispatches the "click" event with the following custom event detail:
  *   url: The click URL, without the SPF identifier.
  *   target: The click target.
@@ -1427,6 +1442,7 @@ spf.nav.Callbacks = {
  */
 spf.nav.Events = {
   ERROR: 'error',
+  RELOAD: 'reload',
   CLICK: 'click',
   HISTORY: 'history',
   REQUEST: 'request',
