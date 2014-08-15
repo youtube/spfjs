@@ -22,9 +22,11 @@ goog.require('spf.state');
  * scope.  Subscribing the same function to the same topic multiple
  * times will result in multiple function invocations while publishing.
  *
- * @param {string} topic Topic to subscribe to.
- * @param {Function} fn Function to be invoked when a message is published
- *     to the given topic.
+ * @param {string} topic Topic to subscribe to. Passing an empty string does
+ *     nothing.
+ * @param {Function|undefined} fn Function to be invoked when a message is
+ *     published to the given topic. Passing {@code null} or {@code undefined}
+ *     does nothing.
  */
 spf.pubsub.subscribe = function(topic, fn) {
   if (topic && fn) {
@@ -37,10 +39,12 @@ spf.pubsub.subscribe = function(topic, fn) {
 
 
 /**
- * Unsubscribes a function from a topic.  Only deletes the first match found.
+ * Unsubscribes a function from a topic. Only deletes the first match found.
  *
- * @param {string} topic Topic to unsubscribe from.
- * @param {Function} fn Function to unsubscribe.
+ * @param {string} topic Topic to unsubscribe from. Passing an empty string does
+ *     nothing.
+ * @param {Function|undefined} fn Function to unsubscribe. Passing {@code null}
+ *     or {@code undefined} does nothing.
  */
 spf.pubsub.unsubscribe = function(topic, fn) {
   if (topic in spf.pubsub.subscriptions && fn) {
@@ -60,7 +64,8 @@ spf.pubsub.unsubscribe = function(topic, fn) {
  * the order in which they were added.  If any of the functions throws an
  * uncaught error, publishing is aborted.
  *
- * @param {string} topic Topic to publish.
+ * @param {string} topic Topic to publish. Passing an empty string does
+ *     nothing.
  */
 spf.pubsub.publish = function(topic) {
   spf.pubsub.publish_(topic);
@@ -73,7 +78,8 @@ spf.pubsub.publish = function(topic) {
  * If any of the functions throws an uncaught error, publishing is aborted.
  * See {#publish} and {#clear}.
  *
- * @param {string} topic Topic to publish.
+ * @param {string} topic Topic to publish. Passing an empty string does
+ *     nothing.
  */
 spf.pubsub.flush = function(topic) {
   spf.pubsub.publish_(topic, true);

@@ -17,7 +17,7 @@ goog.require('spf.url');
 
 describe('spf.net.script', function() {
 
-  var js = spf.net.resource.Type.JS;
+  var JS = spf.net.resource.Type.JS;
   var nodes;
   var callbacks;
   var fakes = {
@@ -34,7 +34,7 @@ describe('spf.net.script', function() {
     },
     resource: {
       create: function(type, url, opt_callback, opt_document) {
-        url = spf.net.resource.canonicalize(js, url);
+        url = spf.net.resource.canonicalize(JS, url);
         var el = {
           setAttribute: function(n, v) {
             el[n] = v;
@@ -46,7 +46,8 @@ describe('spf.net.script', function() {
         el.src = url;
         el.className = type + '-' + url.replace(/[^\w]/g, '');
         nodes.push(el);
-        spf.net.resource.stats_[url] = spf.net.resource.Status.LOADED;
+        var key = type + '-' + url;
+        spf.net.resource.status_[key] = spf.net.resource.State.LOADED;
         opt_callback && opt_callback();
         return el;
       },
@@ -60,7 +61,8 @@ describe('spf.net.script', function() {
           return true;
         });
         nodes.splice(idx, 1);
-        delete spf.net.resource.stats_[url];
+        var key = type + '-' + url;
+        delete spf.net.resource.status_[key];
       }
     }
   };
@@ -75,7 +77,7 @@ describe('spf.net.script', function() {
     spf.net.script.urls_ = {};
     spf.net.script.deps_ = {};
     spf.net.resource.urls_ = {};
-    spf.net.resource.stats_ = {};
+    spf.net.resource.status_ = {};
 
     nodes = [];
     callbacks = {
@@ -105,7 +107,7 @@ describe('spf.net.script', function() {
       var url = 'url-a.js';
       spf.net.script.load(url);
       expect(spf.net.resource.load).toHaveBeenCalledWith(
-          js, url, undefined, undefined);
+          JS, url, undefined, undefined);
     });
 
     it('passes a single url with name', function() {
@@ -113,31 +115,31 @@ describe('spf.net.script', function() {
       var name = 'a';
       spf.net.script.load(url, name);
       expect(spf.net.resource.load).toHaveBeenCalledWith(
-          js, url, name, undefined);
+          JS, url, name, undefined);
     });
 
-    it('passes a single url with function', function() {
+    it('passes a single url with callback', function() {
       var url = 'url-a.js';
       var fn = function() {};
       spf.net.script.load(url, fn);
       expect(spf.net.resource.load).toHaveBeenCalledWith(
-          js, url, fn, undefined);
+          JS, url, fn, undefined);
     });
 
-    it('passes a single url with name function', function() {
+    it('passes a single url with name and callback', function() {
       var url = 'url-a.js';
       var name = 'a';
       var fn = function() {};
       spf.net.script.load(url, name, fn);
       expect(spf.net.resource.load).toHaveBeenCalledWith(
-          js, url, name, fn);
+          JS, url, name, fn);
     });
 
     it('passes multiple urls', function() {
       var urls = ['url-a-1.js', 'url-a-2.js'];
       spf.net.script.load(urls);
       expect(spf.net.resource.load).toHaveBeenCalledWith(
-          js, urls, undefined, undefined);
+          JS, urls, undefined, undefined);
     });
 
     it('passes multiple urls with name', function() {
@@ -145,24 +147,24 @@ describe('spf.net.script', function() {
       var name = 'a';
       spf.net.script.load(urls, name);
       expect(spf.net.resource.load).toHaveBeenCalledWith(
-          js, urls, name, undefined);
+          JS, urls, name, undefined);
     });
 
-    it('passes multiple urls with function', function() {
+    it('passes multiple urls with callback', function() {
       var urls = ['url-a-1.js', 'url-a-2.js'];
       var fn = function() {};
       spf.net.script.load(urls, fn);
       expect(spf.net.resource.load).toHaveBeenCalledWith(
-          js, urls, fn, undefined);
+          JS, urls, fn, undefined);
     });
 
-    it('passes multiple urls with name function', function() {
+    it('passes multiple urls with name and callback', function() {
       var urls = ['url-a-1.js', 'url-a-2.js'];
       var name = 'a';
       var fn = function() {};
       spf.net.script.load(urls, name, fn);
       expect(spf.net.resource.load).toHaveBeenCalledWith(
-          js, urls, name, fn);
+          JS, urls, name, fn);
     });
 
   });
@@ -173,7 +175,7 @@ describe('spf.net.script', function() {
     it('passes name', function() {
       var name = 'a';
       spf.net.script.unload(name);
-      expect(spf.net.resource.unload).toHaveBeenCalledWith(js, name);
+      expect(spf.net.resource.unload).toHaveBeenCalledWith(JS, name);
     });
 
   });
@@ -185,7 +187,7 @@ describe('spf.net.script', function() {
       var url = 'url-a.js';
       spf.net.script.get(url);
       expect(spf.net.resource.create).toHaveBeenCalledWith(
-          js, url, undefined);
+          JS, url, undefined);
     });
 
     it('passes url with function', function() {
@@ -193,7 +195,7 @@ describe('spf.net.script', function() {
       var fn = function() {};
       spf.net.script.get(url, fn);
       expect(spf.net.resource.create).toHaveBeenCalledWith(
-          js, url, fn);
+          JS, url, fn);
     });
 
   });
@@ -205,7 +207,7 @@ describe('spf.net.script', function() {
       var url = 'url-a.js';
       spf.net.script.prefetch(url);
       expect(spf.net.resource.prefetch).toHaveBeenCalledWith(
-          js, url);
+          JS, url);
     });
 
     it('calls for multiples urls', function() {
@@ -213,7 +215,7 @@ describe('spf.net.script', function() {
       spf.net.script.prefetch(urls);
       spf.array.each(urls, function(url) {
         expect(spf.net.resource.prefetch).toHaveBeenCalledWith(
-            js, url);
+            JS, url);
       });
     });
 
@@ -454,37 +456,37 @@ describe('spf.net.script', function() {
   });
 
 
-  describe('eval', function() {
+  describe('exec', function() {
 
     it('standard', function() {
-      expect(function() { spf.net.script.eval(''); }).not.toThrow();
+      expect(function() { spf.net.script.exec(''); }).not.toThrow();
       var text = 'var _global_1_ = 1;';
-      spf.net.script.eval(text);
+      spf.net.script.exec(text);
       expect(window['_global_1_']).toEqual(1);
     });
 
     it('strict', function() {
       var text = '"use strict";' +
           'var _global_2_ = 2;';
-      spf.net.script.eval(text);
+      spf.net.script.exec(text);
       expect(window['_global_2_']).toEqual(2);
     });
 
     it('recursive standard', function() {
       text = 'var _global_3_ = 3;' +
-          'spf.net.script.eval("var _global_4_ = 4;");';
-      spf.net.script.eval(text);
+          'spf.net.script.exec("var _global_4_ = 4;");';
+      spf.net.script.exec(text);
       expect(window['_global_3_']).toEqual(3);
       expect(window['_global_4_']).toEqual(4);
     });
 
     it('recursive mixed', function() {
       text = 'var _global_5_ = 5;' +
-          'spf.net.script.eval("' +
+          'spf.net.script.exec("' +
           "'use strict';" +
           'var _global_6_ = 6;' +
           '");';
-      spf.net.script.eval(text);
+      spf.net.script.exec(text);
       expect(window['_global_5_']).toEqual(5);
       expect(window['_global_6_']).toEqual(6);
     });
@@ -492,11 +494,11 @@ describe('spf.net.script', function() {
     it('recursive strict', function() {
       text = '"use strict";' +
           'var _global_7_ = 7;' +
-          'spf.net.script.eval("' +
+          'spf.net.script.exec("' +
           "'use strict';" +
           'var _global_8_ = 8;' +
           '");';
-      spf.net.script.eval(text);
+      spf.net.script.exec(text);
       expect(window['_global_7_']).toEqual(7);
       expect(window['_global_8_']).toEqual(8);
     });

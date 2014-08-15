@@ -41,7 +41,7 @@ describe('spf.net.style', function() {
           css, url, name, undefined);
     });
 
-    it('passes a single url with function', function() {
+    it('passes a single url with callback', function() {
       var url = 'url-a.css';
       var fn = function() {};
       spf.net.style.load(url, fn);
@@ -49,7 +49,7 @@ describe('spf.net.style', function() {
           css, url, fn, undefined);
     });
 
-    it('passes a single url with name function', function() {
+    it('passes a single url with name and callback', function() {
       var url = 'url-a.css';
       var name = 'a';
       var fn = function() {};
@@ -73,7 +73,7 @@ describe('spf.net.style', function() {
           css, urls, name, undefined);
     });
 
-    it('passes multiple urls with function', function() {
+    it('passes multiple urls with callback', function() {
       var urls = ['url-a-1.css', 'url-a-2.css'];
       var fn = function() {};
       spf.net.style.load(urls, fn);
@@ -81,7 +81,7 @@ describe('spf.net.style', function() {
           css, urls, fn, undefined);
     });
 
-    it('passes multiple urls with name function', function() {
+    it('passes multiple urls with name and callback', function() {
       var urls = ['url-a-1.css', 'url-a-2.css'];
       var name = 'a';
       var fn = function() {};

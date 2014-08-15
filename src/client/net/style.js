@@ -23,23 +23,24 @@ goog.require('spf.tracing');
  * remove previously loaded styles.
  *
  * - Subsequent calls to load the same URL will not reload the style.  To
- *   reload a style, unload it first with {@link #unload}.
- *
- * - A callback can be specified to execute once the style has loaded.  The
- *   callback will be executed each time, even if the style is not reloaded.
- *   NOTE: Unlike scripts, this callback is best effort and is supported
- *   in the following browser versions: IE 6, Chrome 19, Firefox 9, Safari 6.
+ *   reload a style, unload it first with {@link #unload}.  To unconditionally
+ *   load a style, see {@link #get}.
  *
  * - A name can be specified to identify the same style at different URLs.
  *   (For example, "main-A.css" and "main-B.css" are both "main".)  If a name
  *   is specified, all other styles with the same name will be unloaded.
  *   This allows switching between versions of the same style at different URLs.
  *
+ * - A callback can be specified to execute once the style has loaded.  The
+ *   callback will be executed each time, even if the style is not reloaded.
+ *   NOTE: Unlike scripts, this callback is best effort and is supported
+ *   in the following browser versions: IE 6, Chrome 19, Firefox 9, Safari 6.
+ *
  * @param {string|Array.<string>} urls One or more URLs of styles to load.
- * @param {(string|Function)=} opt_nameOrFn Name to identify the style(s)
- *     or callback function to execute when the style is loaded.
- * @param {Function=} opt_fn Callback function to execute when the style is
- *     loaded.
+ * @param {(string|Function)=} opt_nameOrFn Name to identify the styles
+ *     or callback function to execute when the styles are loaded.
+ * @param {Function=} opt_fn Optional callback function to execute when the
+ *     styles are loaded.
  */
 spf.net.style.load = function(urls, opt_nameOrFn, opt_fn) {
   var type = spf.net.resource.Type.CSS;
@@ -75,13 +76,12 @@ spf.net.style.discover = function() {
  *
  * @param {string} url The URL of the style to load.
  * @param {Function=} opt_fn Function to execute when loaded.
- * @return {Element} The newly created element.
  */
 spf.net.style.get = function(url, opt_fn) {
   // NOTE: Callback execution depends on onload support and is best effort.
   // Chrome 19, Safari 6, Firefox 9, Opera and IE 5.5 support stylesheet onload.
   var type = spf.net.resource.Type.CSS;
-  return spf.net.resource.create(type, url, opt_fn);
+  spf.net.resource.create(type, url, opt_fn);
 };
 
 
@@ -103,27 +103,29 @@ spf.net.style.prefetch = function(urls) {
 
 
 /**
- * Evaluates a set of styles by dynamically creating an element and appending it
- * to the document.  A callback can be specified to execute once evaluation
- * is done.
+ * Evaluates style text and defines a name to use for management.
+ *
+ * - Subsequent calls to evaluate the same text will not re-evaluate the style.
+ *   To unconditionally evalute a style, see {@link #exec}.
  *
  * @param {string} text The text of the style.
+ * @param {string} name Name to identify the style.
  * @return {undefined}
  */
-spf.net.style.eval = function(text) {
-  text = spf.string.trim(text);
-  if (text) {
-    var styleEl = document.createElement('style');
-    var targetEl = document.getElementsByTagName('head')[0] || document.body;
-    // IE requires the Style element to be in the document before accessing
-    // the StyleSheet object.
-    targetEl.appendChild(styleEl);
-    if ('styleSheet' in styleEl) {
-      styleEl.styleSheet.cssText = text;
-    } else {
-      styleEl.appendChild(document.createTextNode(text));
-    }
-  }
+spf.net.style.eval = function(text, name) {
+  var type = spf.net.resource.Type.CSS;
+  spf.net.resource.eval(type, text, name);
+};
+
+
+/**
+ * Unconditionally evaluates style text.  See {@link #eval}.
+ *
+ * @param {string} text The text of the style.
+ */
+spf.net.style.exec = function(text) {
+  var type = spf.net.resource.Type.CSS;
+  spf.net.resource.exec(type, text);
 };
 
 

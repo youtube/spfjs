@@ -464,7 +464,6 @@ spf.script.unload = function(name) {};
  *
  * @param {string} url The URL of the script to load.
  * @param {Function=} opt_fn Function to execute when loaded.
- * @return {Element} The newly created element.
  */
 spf.script.get = function(url, opt_fn) {};
 
@@ -603,7 +602,6 @@ spf.style.unload = function(name) {};
  * Compare to {@link #load}.
  *
  * @param {string} url The URL of the style to load.
- * @return {Element} The newly created element.
  */
 spf.style.get = function(url) {};
 

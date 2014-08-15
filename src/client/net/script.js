@@ -51,10 +51,8 @@ goog.require('spf.tracing');
  * loaded scripts.
  *
  * - Subsequent calls to load the same URL will not reload the script.  To
- *   reload a script, unload it first with {@link #unload}.
- *
- * - A callback can be specified to execute once the script has loaded.  The
- *   callback will be executed each time, even if the script is not reloaded.
+ *   reload a script, unload it first with {@link #unload}.  To unconditionally
+ *   load a script, see {@link #get}.
  *
  * - A name can be specified to identify the same script at different URLs.
  *   (For example, "main-A.js" and "main-B.js" are both "main".)  If a name
@@ -62,11 +60,14 @@ goog.require('spf.tracing');
  *   before the callback is executed.  This allows switching between
  *   versions of the same script at different URLs.
  *
+ * - A callback can be specified to execute once the script has loaded.  The
+ *   callback will be executed each time, even if the script is not reloaded.
+ *
  * @param {string|Array.<string>} urls One or more URLs of scripts to load.
- * @param {(string|Function)=} opt_nameOrFn Name to identify the script(s)
- *     or callback function to execute when the script is loaded.
- * @param {Function=} opt_fn Callback function to execute when the script is
- *     loaded.
+ * @param {(string|Function)=} opt_nameOrFn Name to identify the scripts
+ *     or callback function to execute when the scripts are loaded.
+ * @param {Function=} opt_fn Optional callback function to execute when the
+ *     scripts are loaded.
  */
 spf.net.script.load = function(urls, opt_nameOrFn, opt_fn) {
   var type = spf.net.resource.Type.JS;
@@ -105,11 +106,10 @@ spf.net.script.discover = function() {
  *
  * @param {string} url The URL of the script to load.
  * @param {Function=} opt_fn Function to execute when loaded.
- * @return {Element} The newly created element.
  */
 spf.net.script.get = function(url, opt_fn) {
   var type = spf.net.resource.Type.JS;
-  return spf.net.resource.create(type, url, opt_fn);
+  spf.net.resource.create(type, url, opt_fn);
 };
 
 
@@ -302,39 +302,29 @@ spf.net.script.unrequire = function(names) {
 
 
 /**
- * Evaluates script text.  A callback can be specified to execute once
- * evaluation is done.
+ * Evaluates script text and defines a name to use for management.
+ *
+ * - Subsequent calls to evaluate the same text will not re-evaluate the script.
+ *   To unconditionally evalute a script, see {@link #exec}.
  *
  * @param {string} text The text of the script.
- * @param {Function=} opt_callback Callback function to execute when the
- *     script is loaded.
+ * @param {string} name Name to identify the script.
  * @return {undefined}
  */
-spf.net.script.eval = function(text, opt_callback) {
-  text = spf.string.trim(text);
-  if (text) {
-    if (window.execScript) {
-      // For IE, reach global scope using execScript to avoid a bug where
-      // indirect eval is treated as direct eval.
-      window.execScript(text);
-    } else if (spf.string.startsWith(text, 'use strict', 1)) {
-      // For strict mode, reach global scope using the slower script injection
-      // method.
-      var scriptEl = document.createElement('script');
-      scriptEl.text = text;
-      // Place the scripts in the head instead of the body to avoid errors when
-      // called from the head in the first place.
-      var targetEl = document.getElementsByTagName('head')[0] || document.body;
-      targetEl.appendChild(scriptEl);
-      targetEl.removeChild(scriptEl);
-    } else {
-      // Otherwise, use indirect eval to reach global scope.
-      (0, eval)(text);
-    }
-  }
-  if (opt_callback) {
-    opt_callback();
-  }
+spf.net.script.eval = function(text, name) {
+  var type = spf.net.resource.Type.JS;
+  var el = spf.net.resource.eval(type, text, name);
+};
+
+
+/**
+ * Unconditionally evaluates script text.  See {@link #eval}.
+ *
+ * @param {string} text The text of the script.
+ */
+spf.net.script.exec = function(text) {
+  var type = spf.net.resource.Type.JS;
+  var el = spf.net.resource.exec(type, text);
 };
 
 
@@ -369,20 +359,6 @@ spf.net.script.declare = function(deps, opt_urls) {
 spf.net.script.path = function(paths) {
   var type = spf.net.resource.Type.JS;
   spf.net.resource.path(type, paths);
-};
-
-
-/**
- * Checks to see if a script has been loaded.
- * (Falsey URL values (e.g. null or an empty string) are always "loaded".)
- *
- * @param {string} url The URL.
- * @return {boolean} Whether the URL is loaded.
- * @private
- */
-spf.net.script.loaded_ = function(url) {
-  var type = spf.net.resource.Type.JS;
-  return spf.net.resource.loaded(type, url);
 };
 
 
@@ -475,8 +451,6 @@ if (spf.tracing.ENABLED) {
         spf.net.script.declare, 'spf.net.script.declare');
     spf.net.script.path = spf.tracing.instrument(
         spf.net.script.path, 'spf.net.script.path');
-    spf.net.script.loaded_ = spf.tracing.instrument(
-        spf.net.script.loaded_, 'spf.net.script.loaded_');
     spf.net.script.anyDifferent_ = spf.tracing.instrument(
         spf.net.script.anyDifferent_, 'spf.net.script.anyDifferent_');
   })();

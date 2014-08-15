@@ -626,36 +626,48 @@ spf.nav.response.parseScripts_ = function(html) {
  */
 spf.nav.response.installScripts_ = function(result, opt_callback) {
   if (result.scripts.length <= 0) {
-    if (opt_callback) {
-      opt_callback();
-    }
+    opt_callback && opt_callback();
     return;
   }
   // Load or evaluate the scripts in order or asynchronously.
   var index = -1;
-  var getNextScript = function() {
+  var next = function() {
     index++;
     if (index < result.scripts.length) {
       var item = result.scripts[index];
+      var fn = function(){};
       if (item.url) {
-        if (item.async) {
-          spf.net.script.load(item.url, item.name);
-          getNextScript();
+        if (spf.config.get('experimental-execute-unified')) {
+          if (item.name) {
+            fn = spf.bind(spf.net.script.load, null, item.url, item.name);
+          } else {
+            fn = spf.bind(spf.net.script.get, null, item.url);
+          }
         } else {
-          spf.net.script.load(item.url, item.name, getNextScript);
+          fn = spf.bind(spf.net.script.load, null, item.url, item.name);
         }
       } else if (item.text) {
-        spf.net.script.eval(item.text, getNextScript);
+        if (spf.config.get('experimental-execute-unified')) {
+          if (item.name) {
+            fn = spf.bind(spf.net.script.eval, null, item.text, item.name);
+          } else {
+            fn = spf.bind(spf.net.script.exec, null, item.text);
+          }
+        } else {
+          fn = spf.bind(spf.net.script.exec, null, item.text);
+        }
+      }
+      if (item.url && !item.async) {
+        fn(next);
       } else {
-        getNextScript();
+        fn();
+        next();
       }
     } else {
-      if (opt_callback) {
-        opt_callback();
-      }
+      opt_callback && opt_callback();
     }
   };
-  getNextScript();
+  next();
 };
 
 
@@ -745,10 +757,27 @@ spf.nav.response.installStyles_ = function(result) {
   // Install the styles.
   for (var i = 0, l = result.styles.length; i < l; i++) {
     var item = result.styles[i];
+    var fn = function(){};
     if (item.url) {
-      spf.net.style.load(item.url, item.name);
+      if (spf.config.get('experimental-execute-unified')) {
+        if (item.name) {
+          spf.net.style.load(item.url, item.name);
+        } else {
+          spf.net.style.get(item.url);
+        }
+      } else {
+        spf.net.style.load(item.url, item.name);
+      }
     } else if (item.text) {
-      spf.net.style.eval(item.text);
+      if (spf.config.get('experimental-execute-unified')) {
+        if (item.name) {
+          spf.net.style.eval(item.text, item.name);
+        } else {
+          spf.net.style.exec(item.text);
+        }
+      } else {
+        spf.net.style.exec(item.text);
+      }
     }
   }
 };
