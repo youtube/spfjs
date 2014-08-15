@@ -497,6 +497,22 @@ describe('spf.nav', function() {
   });
 
 
+  describe('dispatchReload', function() {
+
+    var url = '/page';
+
+    it('dispatches an event', function() {
+      spyOn(spf, 'dispatch').andCallThrough();
+      spf.nav.dispatchReload_(url);
+      var evtName = spf.dispatch.calls[0].args[0];
+      expect(spf.dispatch).toHaveBeenCalled();
+      expect(evtName).toEqual('reload');
+    });
+
+
+  });
+
+
   describe('dispatchClick', function() {
 
     var url = '/page';
