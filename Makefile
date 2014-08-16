@@ -58,14 +58,12 @@ lint:
 fix:
 	@$(NINJA) fix
 
-# Remove build output
+# Remove build output and files
 clean:
-	@rm -rf build
+	@rm -rf build build.ninja
 # Get back to a newly-cloned state.
 reset: clean
-	@rm -rf build.ninja
-	@rm -rf vendor/closure-compiler vendor/closure-linter
-	@rm -rf vendor/jasmine vendor/ninja vendor/webpy
+	@rm -rf vendor
 
 
 # Ensure a build file exists before running Ninja.

@@ -1,16 +1,8 @@
-# Build output
+# Build output and files
 /build
-
-# Build files
 /build.ninja
 
-# Unmanaged external libraries
-/vendor/closure-compiler
-/vendor/closure-linter
-/vendor/jasmine
-/vendor/ninja
-/vendor/webpy
-
-# Packaged external libraries
+# External libraries
 /bower_components
 /node_modules
+/vendor
