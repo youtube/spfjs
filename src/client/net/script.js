@@ -409,6 +409,22 @@ spf.net.script.anyDifferent_ = function(name, updated) {
 
 
 /**
+ * Key used to store and retrieve script dependencies in state.
+ * @type {string}
+ * @const
+ */
+spf.net.script.DEPS_KEY = 'js-d';
+
+
+/**
+ * Key used to store and retrieve script urls in state.
+ * @type {string}
+ * @const
+ */
+spf.net.script.URLS_KEY = 'js-u';
+
+
+/**
  * Map of dependencies.
  * @type {!Object.<(string|Array.<string>)>}
  * @private
@@ -442,22 +458,6 @@ if (SPF_BOOTLOADER) {
   spf.net.script.urls_ = /** @type {!Object.<(string|Array.<string>)>} */ (
       spf.state.get(spf.net.script.URLS_KEY));
 }
-
-
-/**
- * Key used to store and retrieve script dependencies in state.
- * @type {string}
- * @const
- */
-spf.net.script.DEPS_KEY = 'js-d';
-
-
-/**
- * Key used to store and retrieve script urls in state.
- * @type {string}
- * @const
- */
-spf.net.script.URLS_KEY = 'js-u';
 
 
 if (spf.tracing.ENABLED) {
