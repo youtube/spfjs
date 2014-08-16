@@ -643,7 +643,7 @@ describe('spf.nav.response', function() {
 
     afterEach(function() {
       elements = {};
-    })
+    });
 
     it('sets attributes from "attr" field', function() {
       elements = {
@@ -654,7 +654,7 @@ describe('spf.nav.response', function() {
       var response = {
         'attr': {
           'foo': { 'dir': 'rtl', 'class': 'last' },
-          'bar': { 'dir': 'rtl', 'class': 'last' },
+          'bar': { 'dir': 'rtl', 'class': 'last' }
         }
       };
 
