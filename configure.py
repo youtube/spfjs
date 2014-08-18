@@ -480,23 +480,23 @@ def write_targets(ninja):
   ninja.build('$builddir/spf.js', 'jscompile', js_srcs,
               variables=[('flags', '$prod_jsflags $main_jsflags')],
               implicit=[jscompiler_jar, license_js, wrapper_js])
-  ninja.build('$builddir/debug-spf.js', 'jscompile', js_srcs,
+  ninja.build('$builddir/spf-debug.js', 'jscompile', js_srcs,
               variables=[('flags', '$debug_jsflags $main_jsflags')],
               implicit=[jscompiler_jar, license_js, wrapper_js])
-  ninja.build('$builddir/tracing-spf.js', 'jscompile', js_srcs,
+  ninja.build('$builddir/spf-trace.js', 'jscompile', js_srcs,
               variables=[('flags', '$trace_jsflags $main_jsflags'),
                          ('preamble', 'head -n 6 ' + wtf_shim)],
               implicit=[jscompiler_jar, license_js, wrapper_js])
 
   ninja.newline()
   ninja.comment('Bootloader.')
-  ninja.build('$builddir/bootloader.js', 'jscompile', js_srcs,
+  ninja.build('$builddir/boot.js', 'jscompile', js_srcs,
               variables=[('flags', '$prod_jsflags $bootloader_jsflags')],
               implicit=[jscompiler_jar, license_js])
-  ninja.build('$builddir/debug-bootloader.js', 'jscompile', js_srcs,
+  ninja.build('$builddir/boot-debug.js', 'jscompile', js_srcs,
               variables=[('flags', '$debug_jsflags $bootloader_jsflags')],
               implicit=[jscompiler_jar, license_js])
-  ninja.build('$builddir/tracing-bootloader.js', 'jscompile', js_srcs,
+  ninja.build('$builddir/boot-trace.js', 'jscompile', js_srcs,
               variables=[('flags', '$trace_jsflags $bootloader_jsflags'),
                          ('preamble', 'head -n 6 ' + wtf_shim)],
               implicit=[jscompiler_jar, license_js])
@@ -581,16 +581,16 @@ def write_aliases(ninja):
   aliases = [
       ninja.build('spf', 'phony',
                   '$builddir/spf.js'),
-      ninja.build('debug-spf', 'phony',
-                  '$builddir/debug-spf.js'),
-      ninja.build('tracing-spf', 'phony',
-                  '$builddir/tracing-spf.js'),
+      ninja.build('spf-debug', 'phony',
+                  '$builddir/spf-debug.js'),
+      ninja.build('spf-trace', 'phony',
+                  '$builddir/spf-trace.js'),
       ninja.build('bootloader', 'phony',
-                  '$builddir/bootloader.js'),
+                  '$builddir/boot.js'),
       ninja.build('debug-bootloader', 'phony',
-                  '$builddir/debug-bootloader.js'),
+                  '$builddir/boot-debug.js'),
       ninja.build('tracing-bootloader', 'phony',
-                  '$builddir/tracing-bootloader.js'),
+                  '$builddir/boot-trace.js'),
       ninja.build('tests', 'phony',
                   '$builddir/test/runner.html'),
       ninja.build('demo', 'phony',

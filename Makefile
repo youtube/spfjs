@@ -10,14 +10,14 @@ PYTHON = $(shell command -v python || echo _missing_python_)
 
 # Always execute targets.
 .PHONY: default all tests demo lint fix clean reset
-.PHONY: spf debug-spf tracing-spf
-.PHONY: bootloader debug-bootloader tracing-bootloader
+.PHONY: spf spf-debug spf-trace
+.PHONY: boot boot-debug boot-trace
 
 
 # Require Ninja.
 default all tests demo lint fix: $(NINJA)
-spf debug-spf tracing-spf: $(NINJA)
-bootloader debug-bootloader tracing-bootloader: $(NINJA)
+spf spf-debug spf-trace: $(NINJA)
+boot boot-debug boot-trace: $(NINJA)
 
 
 # Pass off builds to Ninja.
@@ -27,16 +27,16 @@ all:
 	@$(NINJA) all
 spf:
 	@$(NINJA) spf
-debug-spf:
-	@$(NINJA) debug-spf
-tracing-spf:
-	@$(NINJA) tracing-spf
-bootloader:
-	@$(NINJA) bootloader
-debug-bootloader:
-	@$(NINJA) debug-bootloader
-tracing-bootloader:
-	@$(NINJA) tracing-bootloader
+spf-debug:
+	@$(NINJA) spf-debug
+spf-trace:
+	@$(NINJA) spf-trace
+boot:
+	@$(NINJA) boot
+boot-debug:
+	@$(NINJA) boot-debug
+boot-trace:
+	@$(NINJA) boot-trace
 tests:
 	@$(NINJA) tests
 	@if [[ $$(command -v phantomjs) ]]; then \
