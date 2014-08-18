@@ -12,4 +12,5 @@
 /vendor/webpy
 
 # Packaged external libraries
+/bower_components
 /node_modules

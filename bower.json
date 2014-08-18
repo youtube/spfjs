@@ -8,7 +8,9 @@
     "type": "git",
     "url": "https://github.com/youtube/spfjs.git"
   },
-  "bugs": {
-    "url": "https://github.com/youtube/spfjs/issues"
-  }
+  "ignore": [
+    "**/.*",
+    "bower_components",
+    "node_modules"
+  ]
 }
