@@ -204,6 +204,7 @@ def write_variables(ninja):
       '--compilation_level WHITESPACE_ONLY',
       '--formatting PRETTY_PRINT',
       '--manage_closure_dependencies true',
+      '--closure_entry_point spf.main',
   ]
   main_jsflags = [
       '--closure_entry_point spf.main',
@@ -505,7 +506,7 @@ def write_targets(ninja):
   ninja.comment('Development.')
   dev_out = '$builddir/dev-spf-bundle.js'
   ninja.build(dev_out, 'jscompile', js_srcs,
-              variables=[('flags', '$dev_jsflags $main_jsflags')],
+              variables=[('flags', '$dev_jsflags')],
               implicit=[jscompiler_jar, license_js])
 
   ninja.newline()
