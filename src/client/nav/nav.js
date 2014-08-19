@@ -397,15 +397,6 @@ spf.nav.navigate_ = function(url, opt_options, opt_current, opt_referer,
     spf.nav.navigateSendRequest_(url, options, current, referer,
                                  !!opt_history, !!opt_reverse);
   }
-  // TODO(nicksay): Remove deprecated "requested" event after next release.
-  //
-  // Dispatch the "navigation requested" event.  If the event is explicitly
-  // canceled, cancel this navigation and redirect.
-  var canceled = !spf.dispatch(spf.nav.DeprecatedEvents.REQUESTED,
-                               {'url': url});
-  if (canceled) {
-    spf.nav.redirect(url);
-  }
 };
 
 
@@ -554,17 +545,6 @@ spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
     return;
   }
 
-  // TODO(nicksay): Remove deprecated "part received" event after next release.
-  //
-  // Dispatch the "navigation part received" event.  If the event is
-  // explicitly canceled, cancel this navigation and redirect.
-  var canceled = !spf.dispatch(spf.nav.DeprecatedEvents.PART_RECEIVED,
-                               {'url': url, 'part': partial});
-  if (canceled) {
-    spf.nav.redirect(url);
-    return;
-  }
-
   // Check for redirect responses.
   if (partial['redirect']) {
     spf.nav.handleNavigateRedirect_(options, partial['redirect']);
@@ -574,26 +554,6 @@ spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
   try {
     spf.nav.response.process(url, partial, function() {
       spf.nav.dispatchPartDone_(url, partial, options);
-      // TODO(nicksay): Remove deprecated "onPart" callback after next release.
-      //
-      // Execute the "onPart" callback and dispatch the
-      // "navigation part processed" event.  If either is explicitly canceled,
-      // cancel this navigation and redirect.
-      var canceled = !spf.nav.callback(
-          options[spf.nav.DeprecatedCallbacks.PART],
-          {'url': url, 'part': partial});
-      if (canceled) {
-        spf.nav.redirect(url);
-        return;
-      }
-      // TODO(nicksay): Remove deprecated "part processed" event after
-      // next release.
-      canceled = !spf.dispatch(spf.nav.DeprecatedEvents.PART_PROCESSED,
-                               {'url': url, 'part': partial});
-      if (canceled) {
-        spf.nav.redirect(url);
-        return;
-      }
     }, true, reverse);
   } catch (err) {
     // If an exception is caught during processing, log, execute the error
@@ -649,17 +609,6 @@ spf.nav.handleNavigateSuccess_ = function(options, reverse, original,
     }
   }
 
-  // TODO(nicksay): Remove deprecated "requested" event after next release.
-  //
-  // Dispatch the "navigation received" event.  If the event is explicitly
-  // canceled, cancel this navigation and redirect.
-  var canceled = !spf.dispatch(spf.nav.DeprecatedEvents.RECEIVED,
-                               {'url': url, 'response': response});
-  if (canceled) {
-    spf.nav.redirect(url);
-    return;
-  }
-
   // Process the requested response.
   try {
     // If a multipart response was received, all processing is already done,
@@ -668,23 +617,6 @@ spf.nav.handleNavigateSuccess_ = function(options, reverse, original,
     var r = /** @type {spf.SingleResponse} */ (multipart ? {} : response);
     spf.nav.response.process(url, r, function() {
       spf.nav.dispatchDone_(url, response, options);
-
-      // TODO(nicksay): Remove deprecated "onSuccess" callback after
-      // next release.
-      //
-      // Execute the "onSuccess" callback and dispatch the
-      // "navigation processed" event.
-      // NOTE: If either is explicitly canceled, nothing happens, because
-      // there is no longer an opportunity to stop navigation.
-      var canceled = !spf.nav.callback(
-          options[spf.nav.DeprecatedCallbacks.SUCCESS],
-          {'url': url, 'response': response});
-      if (canceled) {
-        return;
-      }
-      // TODO(nicksay): Remove deprecated "processed" event after next release.
-      spf.dispatch(spf.nav.DeprecatedEvents.PROCESSED,
-                   {'url': url, 'response': response});
     }, true, reverse);
   } catch (err) {
     // If an exception is caught during processing, log, execute the error
@@ -980,10 +912,6 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
   processFn(url, partial, function() {
     // Note: pass "true" to only execute callbacks and not dispatch events.
     spf.nav.dispatchPartDone_(url, partial, options, true);
-
-    // TODO(nicksay): Remove deprecated "onPart" callback after next release.
-    spf.nav.callback(options[spf.nav.DeprecatedCallbacks.PART],
-                     {'url': url, 'part': partial});
   });
 };
 
@@ -1053,11 +981,6 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
     processFn(url, r, function() {
       // Note: pass "true" to only execute callbacks and not dispatch events.
       spf.nav.dispatchDone_(url, response, options, true);
-
-      // TODO(nicksay): Remove deprecated "processed" callback after next
-      // release.
-      spf.nav.callback(options[spf.nav.DeprecatedCallbacks.SUCCESS],
-                       {'url': url, 'response': response});
     });
   } catch (err) {
     // If an exception is caught during processing, log, execute the error
@@ -1084,14 +1007,12 @@ spf.nav.handleLoadRedirect_ = function(isPrefetch, options, original,
   // Note that POST is not propagated with redirects.
   // Only copy callback keys to into a new object to enforce this.
   var keys = [
-      spf.nav.Callbacks.ERROR,
-      spf.nav.Callbacks.REQUEST,
-      spf.nav.Callbacks.PART_PROCESS,
-      spf.nav.Callbacks.PART_DONE,
-      spf.nav.Callbacks.PROCESS,
-      spf.nav.Callbacks.DONE,
-      spf.nav.DeprecatedCallbacks.PART,
-      spf.nav.DeprecatedCallbacks.SUCCESS
+      spf.nav.Callback.ERROR,
+      spf.nav.Callback.REQUEST,
+      spf.nav.Callback.PART_PROCESS,
+      spf.nav.Callback.PART_DONE,
+      spf.nav.Callback.PROCESS,
+      spf.nav.Callback.DONE
   ];
   var redirectOpts = /** @type {spf.RequestOptions} */ ({});
   spf.array.each(keys, function(key) {
@@ -1120,10 +1041,10 @@ spf.nav.handleLoadRedirect_ = function(isPrefetch, options, original,
 spf.nav.dispatchError_ = function(url, err, opt_options, opt_noEvents) {
   var detail = {'url': url, 'err': err};
   var options = opt_options || /** @type {spf.RequestOptions} */ ({});
-  var fn = options[spf.nav.Callbacks.ERROR];
+  var fn = options[spf.nav.Callback.ERROR];
   var proceed = spf.nav.callback(fn, detail);
   if (proceed && !opt_noEvents) {
-    proceed = spf.dispatch(spf.nav.Events.ERROR, detail);
+    proceed = spf.dispatch(spf.nav.Event.ERROR, detail);
   }
   return proceed;
 };
@@ -1138,7 +1059,7 @@ spf.nav.dispatchError_ = function(url, err, opt_options, opt_noEvents) {
  */
 spf.nav.dispatchReload_ = function(url) {
   var detail = {'url': url};
-  spf.dispatch(spf.nav.Events.RELOAD, detail);
+  spf.dispatch(spf.nav.Event.RELOAD, detail);
 };
 
 
@@ -1154,7 +1075,7 @@ spf.nav.dispatchReload_ = function(url) {
  */
 spf.nav.dispatchClick_ = function(url, target) {
   var detail = {'url': url, 'target': target};
-  return spf.dispatch(spf.nav.Events.CLICK, detail);
+  return spf.dispatch(spf.nav.Event.CLICK, detail);
 };
 
 
@@ -1172,7 +1093,7 @@ spf.nav.dispatchClick_ = function(url, target) {
  */
 spf.nav.dispatchHistory_ = function(url, opt_referer, opt_previous) {
   var detail = {'url': url, 'referer': opt_referer, 'previous': opt_previous};
-  return spf.dispatch(spf.nav.Events.HISTORY, detail);
+  return spf.dispatch(spf.nav.Event.HISTORY, detail);
 };
 
 
@@ -1198,10 +1119,10 @@ spf.nav.dispatchRequest_ = function(url, referer, previous, opt_options,
                                     opt_noEvents) {
   var detail = {'url': url, 'referer': referer, 'previous': previous};
   var options = opt_options || /** @type {spf.RequestOptions} */ ({});
-  var fn = options[spf.nav.Callbacks.REQUEST];
+  var fn = options[spf.nav.Callback.REQUEST];
   var proceed = spf.nav.callback(fn, detail);
   if (proceed && !opt_noEvents) {
-    proceed = spf.dispatch(spf.nav.Events.REQUEST, detail);
+    proceed = spf.dispatch(spf.nav.Event.REQUEST, detail);
   }
   return proceed;
 };
@@ -1210,7 +1131,7 @@ spf.nav.dispatchRequest_ = function(url, referer, previous, opt_options,
 /**
  * Dispatches the "part process" event with the follow custom event detail:
  *   url: The requested URL, without the SPF identifier.
- *   partial: The partial response object, a part of a multipart response.
+ *   part: The partial response object, a part of a multipart response.
  *
  * If a local "onPartProcess" callback is provided, it is executed first with
  * the same detail object.  If the callback is canceled, the event is not fired.
@@ -1226,12 +1147,12 @@ spf.nav.dispatchRequest_ = function(url, referer, previous, opt_options,
  */
 spf.nav.dispatchPartProcess_ = function(url, partial, opt_options,
                                         opt_noEvents) {
-  var detail = {'url': url, 'partial': partial};
+  var detail = {'url': url, 'part': partial};
   var options = opt_options || /** @type {spf.RequestOptions} */ ({});
-  var fn = options[spf.nav.Callbacks.PART_PROCESS];
+  var fn = options[spf.nav.Callback.PART_PROCESS];
   var proceed = spf.nav.callback(fn, detail);
   if (proceed && !opt_noEvents) {
-    proceed = spf.dispatch(spf.nav.Events.PART_PROCESS, detail);
+    proceed = spf.dispatch(spf.nav.Event.PART_PROCESS, detail);
   }
   return proceed;
 };
@@ -1240,7 +1161,7 @@ spf.nav.dispatchPartProcess_ = function(url, partial, opt_options,
 /**
  * Dispatches the "part done" event with the follow custom event detail:
  *   url: The requested URL, without the SPF identifier.
- *   partial: The partial response object, a part of a multipart response.
+ *   part: The partial response object, a part of a multipart response.
  *
  * If a local "onPartDone" callback is provided, it is executed first with the
  * same detail object.  If the callback is canceled, the event is not fired.
@@ -1255,12 +1176,12 @@ spf.nav.dispatchPartProcess_ = function(url, partial, opt_options,
  * @private
  */
 spf.nav.dispatchPartDone_ = function(url, partial, opt_options, opt_noEvents) {
-  var detail = {'url': url, 'partial': partial};
+  var detail = {'url': url, 'part': partial};
   var options = opt_options || /** @type {spf.RequestOptions} */ ({});
-  var fn = options[spf.nav.Callbacks.PART_DONE];
+  var fn = options[spf.nav.Callback.PART_DONE];
   var proceed = spf.nav.callback(fn, detail);
   if (proceed && !opt_noEvents) {
-    proceed = spf.dispatch(spf.nav.Events.PART_DONE, detail);
+    proceed = spf.dispatch(spf.nav.Event.PART_DONE, detail);
   }
   return proceed;
 };
@@ -1286,10 +1207,10 @@ spf.nav.dispatchPartDone_ = function(url, partial, opt_options, opt_noEvents) {
 spf.nav.dispatchProcess_ = function(url, response, opt_options, opt_noEvents) {
   var detail = {'url': url, 'response': response};
   var options = opt_options || /** @type {spf.RequestOptions} */ ({});
-  var fn = options[spf.nav.Callbacks.PROCESS];
+  var fn = options[spf.nav.Callback.PROCESS];
   var proceed = spf.nav.callback(fn, detail);
   if (proceed && !opt_noEvents) {
-    proceed = spf.dispatch(spf.nav.Events.PROCESS, detail);
+    proceed = spf.dispatch(spf.nav.Event.PROCESS, detail);
   }
   return proceed;
 };
@@ -1315,10 +1236,10 @@ spf.nav.dispatchProcess_ = function(url, response, opt_options, opt_noEvents) {
 spf.nav.dispatchDone_ = function(url, response, opt_options, opt_noEvents) {
   var detail = {'url': url, 'response': response};
   var options = opt_options || /** @type {spf.RequestOptions} */ ({});
-  var fn = options[spf.nav.Callbacks.DONE];
+  var fn = options[spf.nav.Callback.DONE];
   var proceed = spf.nav.callback(fn, detail);
   if (proceed && !opt_noEvents) {
-    proceed = spf.dispatch(spf.nav.Events.DONE, detail);
+    proceed = spf.dispatch(spf.nav.Event.DONE, detail);
   }
   return proceed;
 };
@@ -1427,7 +1348,7 @@ spf.nav.isTouchCapablePlatform_ = function() {
 /**
  * @enum {string}
  */
-spf.nav.Callbacks = {
+spf.nav.Callback = {
   ERROR: 'onError',
   REQUEST: 'onRequest',
   PART_PROCESS: 'onPartProcess',
@@ -1440,7 +1361,7 @@ spf.nav.Callbacks = {
 /**
  * @enum {string}
  */
-spf.nav.Events = {
+spf.nav.Event = {
   ERROR: 'error',
   RELOAD: 'reload',
   CLICK: 'click',
@@ -1453,58 +1374,43 @@ spf.nav.Events = {
 };
 
 
-/**
- * @enum {string}
- */
-spf.nav.DeprecatedCallbacks = {
-  PART: 'onPart',
-  SUCCESS: 'onSuccess'
-};
-
-
-/**
- * @enum {string}
- */
-spf.nav.DeprecatedEvents = {
-  REQUESTED: 'requested',
-  PART_RECEIVED: 'partreceived',
-  PART_PROCESSED: 'partprocessed',
-  RECEIVED: 'received',
-  PROCESSED: 'processed'
-};
-
-
 if (spf.tracing.ENABLED) {
   (function() {
-    var nav = spf.nav;
-    nav.init = spf.tracing.instrument(nav.init, 'spf.nav.init');
-    nav.dispose = spf.tracing.instrument(nav.dispose, 'spf.nav.dispose');
-    nav.handleClick_ = spf.tracing.instrument(
-        nav.handleClick_, 'spf.nav.handleClick_');
-    nav.handleHistory_ = spf.tracing.instrument(
-        nav.handleHistory_, 'spf.nav.handleHistory_');
-    nav.navigate = spf.tracing.instrument(nav.navigate, 'spf.nav.navigate');
-    nav.navigate_ = spf.tracing.instrument(
-        nav.navigate_, 'spf.nav.navigate_');
-    nav.navigatePromotePrefetch_ = spf.tracing.instrument(
-        nav.navigatePromotePrefetch_, 'spf.nav.navigatePromotePrefetch_');
-    nav.navigateSendRequest_ = spf.tracing.instrument(
-        nav.navigateSendRequest_, 'spf.nav.navigateSendRequest_');
-    nav.handleNavigateError_ = spf.tracing.instrument(
-        nav.handleNavigateError_, 'spf.nav.handleNavigateError_');
-    nav.handleNavigatePart_ = spf.tracing.instrument(
-        nav.handleNavigatePart_, 'spf.nav.handleNavigatePart_');
-    nav.handleNavigateSuccess_ = spf.tracing.instrument(
-        nav.handleNavigateSuccess_, 'spf.nav.handleNavigateSuccess_');
-    nav.cancel = spf.tracing.instrument(nav.cancel, 'spf.nav.cancel');
-    nav.callback = spf.tracing.instrument(nav.callback, 'spf.nav.callback');
-    nav.redirect = spf.tracing.instrument(nav.redirect, 'spf.nav.redirect');
-    nav.load = spf.tracing.instrument(nav.load, 'spf.nav.load');
-    nav.handleLoadError_ = spf.tracing.instrument(
-        nav.handleLoadError_, 'spf.nav.handleLoadError_');
-    nav.handleLoadPart_ = spf.tracing.instrument(
-        nav.handleLoadPart_, 'spf.nav.handleLoadPart_');
-    nav.handleLoadSuccess_ = spf.tracing.instrument(
-        nav.handleLoadSuccess_, 'spf.nav.handleLoadSuccess_');
+    spf.nav.init = spf.tracing.instrument(
+        spf.nav.init, 'spf.nav.init');
+    spf.nav.dispose = spf.tracing.instrument(
+        spf.nav.dispose, 'spf.nav.dispose');
+    spf.nav.handleClick_ = spf.tracing.instrument(
+        spf.nav.handleClick_, 'spf.nav.handleClick_');
+    spf.nav.handleHistory_ = spf.tracing.instrument(
+        spf.nav.handleHistory_, 'spf.nav.handleHistory_');
+    spf.nav.navigate = spf.tracing.instrument(
+        spf.nav.navigate, 'spf.nav.navigate');
+    spf.nav.navigate_ = spf.tracing.instrument(
+        spf.nav.navigate_, 'spf.nav.navigate_');
+    spf.nav.navigatePromotePrefetch_ = spf.tracing.instrument(
+        spf.nav.navigatePromotePrefetch_, 'spf.nav.navigatePromotePrefetch_');
+    spf.nav.navigateSendRequest_ = spf.tracing.instrument(
+        spf.nav.navigateSendRequest_, 'spf.nav.navigateSendRequest_');
+    spf.nav.handleNavigateError_ = spf.tracing.instrument(
+        spf.nav.handleNavigateError_, 'spf.nav.handleNavigateError_');
+    spf.nav.handleNavigatePart_ = spf.tracing.instrument(
+        spf.nav.handleNavigatePart_, 'spf.nav.handleNavigatePart_');
+    spf.nav.handleNavigateSuccess_ = spf.tracing.instrument(
+        spf.nav.handleNavigateSuccess_, 'spf.nav.handleNavigateSuccess_');
+    spf.nav.cancel = spf.tracing.instrument(
+        spf.nav.cancel, 'spf.nav.cancel');
+    spf.nav.callback = spf.tracing.instrument(
+        spf.nav.callback, 'spf.nav.callback');
+    spf.nav.redirect = spf.tracing.instrument(
+        spf.nav.redirect, 'spf.nav.redirect');
+    spf.nav.load = spf.tracing.instrument(
+        spf.nav.load, 'spf.nav.load');
+    spf.nav.handleLoadError_ = spf.tracing.instrument(
+        spf.nav.handleLoadError_, 'spf.nav.handleLoadError_');
+    spf.nav.handleLoadPart_ = spf.tracing.instrument(
+        spf.nav.handleLoadPart_, 'spf.nav.handleLoadPart_');
+    spf.nav.handleLoadSuccess_ = spf.tracing.instrument(
+        spf.nav.handleLoadSuccess_, 'spf.nav.handleLoadSuccess_');
   })();
 }

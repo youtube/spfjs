@@ -180,28 +180,64 @@ spf.RequestOptions.prototype.onError;
 
 
 /**
+ * Optional callback to execute before sending a SPF request. The argument
+ * to the callback will be an object that conforms to the
+ * {@code spf.EventDetail} interface for "spfrequest" events (see
+ * {@link spf.Event}).
+ * @type {function(spf.EventDetail)|undefined}
+ */
+spf.RequestOptions.prototype.onRequest;
+
+
+/**
  * Optional callback to execute upon receiving a part of a multipart SPF
- * response (see {@link spf.MultipartResponse}).  Called before
- * {@code onSuccess}, once per part of multipart responses; never called for
+ * response (see {@link spf.MultipartResponse}).  Called before the part is
+ * processed, once per part of multipart responses; never called for
  * single responses. If valid "X-SPF-Response-Type: multipart" and
  * "Transfer-Encoding: chunked" headers are sent, then this callback will be
  * executed on-the-fly as chunks are received.  The argument to the
  * callback will be an object that conforms to the {@code spf.EventDetail}
- * interface for "spfpartreceived" and "spfpartprocessed" events
- * (see {@link spf.Event}).
+ * interface for "spfpartprocess" events (see {@link spf.Event}).
  * @type {function(spf.EventDetail)|undefined}
  */
-spf.RequestOptions.prototype.onPart;
+spf.RequestOptions.prototype.onPartProcess;
 
 
 /**
- * Optional callback to execute if the request succeeds.  The argument to the
- * callback will be an object that conforms to the {@code spf.EventDetail}
- * interface for "spfreceived" and "spfprocessed" events
- * (see {@link spf.Event}).
+ * Optional callback to execute after processing a part of a multipart SPF
+ * response (see {@link spf.MultipartResponse}). Called once per part of
+ * multipart responses; never called for single responses. If valid
+ * "X-SPF-Response-Type: multipart" and "Transfer-Encoding: chunked"
+ * headers are sent, then this callback will be executed on-the-fly as
+ * chunks are received. The argument to the callback will be an object
+ * that conforms to the {@code spf.EventDetail} interface for
+ * "spfpartdone" events (see {@link spf.Event}).
  * @type {function(spf.EventDetail)|undefined}
  */
-spf.RequestOptions.prototype.onSuccess;
+spf.RequestOptions.prototype.onPartDone;
+
+
+/**
+ * Optional callback to execute upon receiving a single SPF response (see
+ * {@link spf.SingleResponse}). Called before the response is processed;
+ * never called for multipart responses. The argument to the callback will
+ * be an object that conforms to the {@code spf.EventDetail} interface for
+ * "spfprocess" events (see {@link spf.Event}).
+ * @type {function(spf.EventDetail)|undefined}
+ */
+spf.RequestOptions.prototype.onProcess;
+
+
+/**
+ * Optional callback to execute when the response is done being processed.
+ * Called once as the last event for both single and multipart responses (see
+ * {@link spf.SingleResponse} and {@link spf.MultipartResponse}).  The argument
+ * to the callback will be an object that conforms to the
+ * {@code spf.EventDetail} interface for "spfdone" events (see
+ * {@link spf.Event}).
+ * @type {function(spf.EventDetail)|undefined}
+ */
+spf.RequestOptions.prototype.onDone;
 
 
 /**
@@ -252,24 +288,49 @@ spf.EventDetail.prototype.name;
 
 /**
  * One part of a multipart SPF response (see {@link spf.MultipartResponse});
- * defined for "spfpartreceived" and "spfpartprocessed" events.
+ * defined for "spfpartprocess" and "spfpartdone" events.
  * @type {spf.SingleResponse|undefined}
  */
 spf.EventDetail.prototype.part;
 
 
 /**
- * A complete SPF response (see {@link spf.SingleResponse} and
- * {@link spf.MultipartResponse}); defined for "spfreceived" and "spfprocessed"
- * events.
+ * The URL of the previous page; defined for "spfhistory" and
+ * "spfrequest" events.
+ * @type {string|undefined}
+ */
+spf.EventDetail.prototype.previous;
+
+
+/**
+ * The URL of the previous page; defined for "spfhistory" and
+ * "spfrequest" events.
+ * @type {string|undefined}
+ */
+spf.EventDetail.prototype.referer;
+
+
+/**
+ * A complete SPF response; defined for "spfprocess" events as a single
+ * response and for "spfdone" events as either a single or multipart
+ * response (see {@link spf.SingleResponse} and {@link
+ * spf.MultipartResponse}.
  * @type {spf.SingleResponse|spf.MultipartResponse|undefined}
  */
 spf.EventDetail.prototype.response;
 
 
 /**
- * The URL of the request; defined for "spfrequested", "spfpartreceived",
- * "spfpartprocessed", "spfreceived", "spfprocessed", and "spferror" events.
+ * The target element of a click; defined for "spfclick" events.
+ * @type {Element|undefined}
+ */
+spf.EventDetail.prototype.target;
+
+
+/**
+ * The URL of the request; defined for "spferror", "spfreload", "spfclick",
+ * "spfhistory", "spfrequest", "spfpartprocess", "spfpartdone", "spfprocess",
+ * and "spfdone" events.
  * @type {string|undefined}
  */
 spf.EventDetail.prototype.url;

@@ -166,29 +166,26 @@ spf.MultipartResponse;
 /**
  * Type definition for the configuration options for requesting a URL.
  * - method: optional method with which to send the request; defaults to "GET".
- * - onError: optional callback to execute if the request fails. The first
- *       argument is the requested URL; the second argument is the Error that
- *       occurred.
- * - onPart: optional callback to execute upon receiving a part of a multipart
- *       SPF response (see {@link spf.MultipartResponse}).  Called before
- *       {@code onSuccess}, once per part of multipart responses; never called
- *       for single responses. If valid "X-SPF-Response-Type: multipart" and
- *       "Transfer-Encoding: chunked" headers are sent, then this callback will
- *       be executed on-the-fly as chunks are received.  The first argument is
- *       the requested URL; the second is the partial response object.
- * - onSuccess: optional callback to execute if the request succeeds.  The first
- *       argument is the requested URL; the second is the response object.  The
- *       response object will be either a complete single response object or
- *       a complete multipart response object.
- * - postData: optional data to send with a request.  Only used if the method is
- *       set to "POST".
+ * - postData: optional data to send with a request.  Only used if the method
+ *       is set to "POST".
+ * - onError: optional callback if an error occurs.
+ * - onRequest: optional callback when a request will be made.
+ * - onPartProcess: optional callback when part of a multipart response
+ *       will be processed.
+ * - onPartDone: optional callback when part of a multipart response
+ *       is done being processed.
+ * - onProcess: optional callback when a single response will be processed.
+ * - onDone: optional callback when either repsonse is done being processed.
  *
  * @typedef {{
  *   postData: (ArrayBuffer|Blob|Document|FormData|null|string|undefined),
  *   method: (string|undefined),
  *   onError: (function(spf.EventDetail)|undefined),
- *   onPart: (function(spf.EventDetail)|undefined),
- *   onSuccess: (function(spf.EventDetail)|undefined)
+ *   onRequest: (function(spf.EventDetail)|undefined),
+ *   onPartProcess: (function(spf.EventDetail)|undefined),
+ *   onPartDone: (function(spf.EventDetail)|undefined),
+ *   onProcess: (function(spf.EventDetail)|undefined),
+ *   onDone: (function(spf.EventDetail)|undefined)
  * }}
  */
 spf.RequestOptions;
@@ -196,16 +193,22 @@ spf.RequestOptions;
 
 /**
  * Type definititon for custom event detail (data), also used for callbacks.
- * - err: optional error that occurred; defined for "spferror" events
+ * - err: optional error that occurred; defined for "error" events
  * - name: optional name of the scripts or styles that will be unloaded;
  *       defined for "jsbeforeunload", "jsunload", "cssbeforeunload",
  *       and "cssunload" events.
- * - part: optional part of a multipart response; defined for "partreceived"
- *       and "partprocessed" events.
- * - response: optional complete response; defined for "received" and
- *       "processed" events.
- * - url: optional URL of the request; defined for "requested", "partreceived",
- *       "partprocessed", "received", "processed", and "error" events.
+ * - part: optional part of a multipart response; defined for "partprocess"
+ *       and "partdone" events.
+ * - previous: optional URL of the previous page; defined for "history" and
+ *       "request" events.
+ * - referer: optional URL of the referer page; defined for "history" and
+ *       "request" events.
+ * - response: optional complete response; defined for "process" and
+ *       "done" events.
+ * - target: optional target element; defined for "click" events.
+ * - url: optional URL of the request; defined for "error", "reload", "click",
+ *       "history", "request", "partprocess", "partdone", "process", and "done"
+ *       events.
  * - urls: optional list or URLs of scripts/styles to be unloaded; defined for
  *       "jsbeforeunload", "jsunload", "cssbeforeunload", and "cssunload"
  *       events.
@@ -214,6 +217,9 @@ spf.RequestOptions;
  *   err: (Error|undefined),
  *   name: (string|undefined),
  *   part: (spf.SingleResponse|undefined),
+ *   previous: (string|undefined),
+ *   referer: (string|undefined),
+ *   target: (Element|undefined),
  *   response: (spf.SingleResponse|spf.MultipartResponse|undefined),
  *   url: (string|undefined),
  *   urls: (Array.<string>|undefined)
