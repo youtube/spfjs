@@ -472,7 +472,7 @@ def write_targets(ninja):
                          ('paths', '"lib/*"'),
                          ('dest', jasmine_zip_dest)])
 
-  wtf_shim = 'vendor/tracing-framework/shims/wtf-trace-closure.js'
+  wtf_shim = 'third-party/tracing-framework/shims/wtf-trace-closure.js'
   js_srcs = find_js_sources() + [wtf_shim]
 
   ninja.newline()
@@ -519,7 +519,7 @@ def write_targets(ninja):
   ]
   manifest_srcs = [dev_out] + js_tests
   manifest_out = '$builddir/test/manifest.js'
-  phantomjs_run_jasmine_src = 'vendor/phantomjs/examples/run-jasmine.js'
+  phantomjs_run_jasmine_src = 'third-party/phantomjs/examples/run-jasmine.js'
   phantomjs_run_jasmine_out = '$builddir/test/run-jasmine.js'
   test_outs = jasmine_test_outs + [manifest_out, phantomjs_run_jasmine_out]
   runner_src = 'src/client/testing/runner.html'
