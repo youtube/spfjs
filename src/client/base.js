@@ -118,29 +118,29 @@ spf.now = function() {
 
 /**
  * Type definition for a single SPF response object.
- * - css: HTML string containing <link> and <style> tags of CSS to install.
- * - html: Map of Element IDs to HTML strings containing content with which
- *      to update the Elements.
  * - attr: Map of Element IDs to maps of attibute names to attribute values
  *      to set on the Elements.
- * - js: HTML string containing <script> tags of JS to execute.
- * - title: String of the new Document title.
+ * - body: Map of Element IDs to HTML strings containing content with which
+ *      to update the Elements.
  * - cacheType: String of the type of caching to use for this response.
+ * - foot: HTML string containing <script> tags of JS to execute.
+ * - head: HTML string containing <link> and <style> tags of CSS to install.
+ * - redirect: String of a URL to request instead.
  * - timing: Map of timing attributes to timestamp numbers.
+ * - title: String of the new Document title.
  * - url: String of the correct URL for the current request. This will replace
  *      the current URL in history.
- * - redirect: String of a URL to request instead.
  *
  * @typedef {{
- *   css: (string|undefined),
- *   html: (Object.<string, string>|undefined),
  *   attr: (Object.<string, Object.<string, string>>|undefined),
- *   js: (string|undefined),
- *   title: (string|undefined),
+ *   body: (Object.<string, string>|undefined),
  *   cacheType: (string|undefined),
+ *   foot: (string|undefined),
+ *   head: (string|undefined),
+ *   redirect: (string|undefined),
  *   timing: (Object.<string, number>|undefined),
- *   url: (string|undefined),
- *   redirect: (string|undefined)
+ *   title: (string|undefined),
+ *   url: (string|undefined)
  * }}
  */
 spf.SingleResponse;
@@ -148,14 +148,14 @@ spf.SingleResponse;
 
 /**
  * Type definition for a multipart SPF response object.
- * - parts: List of response objects.
  * - cacheType: String of the type of caching to use for this response.
+ * - parts: List of response objects.
  * - timing: Map of timing attributes to timestamp numbers.
  * - type: The string "multipart".
  *
  * @typedef {{
- *   parts: (Array.<spf.SingleResponse>|undefined),
  *   cacheType: (string|undefined),
+ *   parts: (Array.<spf.SingleResponse>|undefined),
  *   timing: (Object.<string, number>|undefined),
  *   type: string
  * }}
@@ -166,26 +166,26 @@ spf.MultipartResponse;
 /**
  * Type definition for the configuration options for requesting a URL.
  * - method: optional method with which to send the request; defaults to "GET".
+ * - onDone: optional callback when either repsonse is done being processed.
+ * - onError: optional callback if an error occurs.
+ * - onPartDone: optional callback when part of a multipart response is done
+ *       being processed.
+ * - onPartProcess: optional callback when part of a multipart response will be
+ *       pocessed.
+ * - onProcess: optional callback when a single response will be processed.
+ * - onRequest: optional callback when a request will be made.
  * - postData: optional data to send with a request.  Only used if the method
  *       is set to "POST".
- * - onError: optional callback if an error occurs.
- * - onRequest: optional callback when a request will be made.
- * - onPartProcess: optional callback when part of a multipart response
- *       will be processed.
- * - onPartDone: optional callback when part of a multipart response
- *       is done being processed.
- * - onProcess: optional callback when a single response will be processed.
- * - onDone: optional callback when either repsonse is done being processed.
  *
  * @typedef {{
- *   postData: (ArrayBuffer|Blob|Document|FormData|null|string|undefined),
  *   method: (string|undefined),
+ *   onDone: (function(spf.EventDetail)|undefined),
  *   onError: (function(spf.EventDetail)|undefined),
- *   onRequest: (function(spf.EventDetail)|undefined),
- *   onPartProcess: (function(spf.EventDetail)|undefined),
  *   onPartDone: (function(spf.EventDetail)|undefined),
+ *   onPartProcess: (function(spf.EventDetail)|undefined),
  *   onProcess: (function(spf.EventDetail)|undefined),
- *   onDone: (function(spf.EventDetail)|undefined)
+ *   onRequest: (function(spf.EventDetail)|undefined),
+ *   postData: (ArrayBuffer|Blob|Document|FormData|null|string|undefined)
  * }}
  */
 spf.RequestOptions;

@@ -106,15 +106,16 @@ class Servlet(object):
     """Creates an SPF response object for template.
 
     The object has the basic following format:
-    - css: HTML string containing <link> and <style> tags of CSS to install.
-    - html: Map of Element IDs to HTML strings containing content with which
-         to update the Elements.
-    - attr: Map of Element IDs to maps of attibute names to attribute values
-         to set on the Elements.
-    - js: HTML string containing <script> tags of JS to execute.
-    - title: String of the new Document title.
-    - timing: Map of timing attributes to timestamp numbers.
-    - redirect: String of a URL to request instead.
+    1. title - Update document title
+    2. url - Update document url
+    3. head - Install early page-wide styles
+    4. attr - Set element attributes
+    5. body - Set element content and install element-level scripts
+              (styles handled by browser)
+    6. foot - Install late page-wide scripts
+
+    All fields are optional and the commonly needed response values are
+    title, head, body, and foot.
 
     Args:
       content: The content template instanace to render.
@@ -125,12 +126,12 @@ class Servlet(object):
       The SPF response object.
     """
     response = {}
-    css = str(getattr(content, 'stylesheet', ''))
-    if css:
-      response['css'] = css
-    js = str(getattr(content, 'javascript', ''))
-    if js:
-      response['js'] = js
+    head = str(getattr(content, 'stylesheet', ''))
+    if head:
+      response['head'] = head
+    foot = str(getattr(content, 'javascript', ''))
+    if foot:
+      response['foot'] = foot
     title = str(getattr(content, 'title', ''))
     if title:
       response['title'] = title
@@ -138,13 +139,13 @@ class Servlet(object):
     if attr:
       response['attr'] = attr
     if fragments:
-      response['html'] = {}
+      response['body'] = {}
       for frag_id in fragments:
-        response['html'][frag_id] = getattr(content, fragments[frag_id])
+        response['body'][frag_id] = getattr(content, fragments[frag_id])
     else:
       content_str = str(content)
       if content_str:
-        response['html'] = {'content': content_str}
+        response['body'] = {'content': content_str}
     return response
 
   def RenderSPF(self, content, fragments=None):
@@ -189,8 +190,8 @@ class Servlet(object):
     multipart_end = ']\r\n'
     resp = self.CreateSPFResponse(content, fragments=fragments)
     first_chunk = {}
-    if 'css' in resp:
-      first_chunk['css'] = resp.pop('css')
+    if 'head' in resp:
+      first_chunk['head'] = resp.pop('head')
     if 'title' in resp:
       first_chunk['title'] = resp.pop('title')
     # Begin the multipart response.
