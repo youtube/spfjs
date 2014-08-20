@@ -272,9 +272,9 @@ spf.nav.handleHistory_ = function(url, opt_state) {
   var referer = opt_state && opt_state['spf-referer'];
   var current = opt_state && opt_state['spf-current'];
   spf.debug.debug('nav.handleHistory ', '(url=', url, 'state=', opt_state, ')');
-  // Redirect if the URL is not eligible for navigation.
+  // Reload if the URL is not eligible for navigation.
   if (!spf.nav.isNavigateEligible_(url)) {
-    spf.nav.redirect(url);
+    spf.nav.reload(url, spf.nav.ReloadReason.INELIGIBLE);
     return;
   }
   // Ignore the change if the "history" event is canceled.
@@ -306,9 +306,9 @@ spf.nav.navigate = function(url, opt_options) {
   if (!url || url == window.location.href) {
     return;
   }
-  // Redirect if the URL is not eligible for navigation.
+  // Reload if the URL is not eligible for navigation.
   if (!spf.nav.isNavigateEligible_(url)) {
-    spf.nav.redirect(url);
+    spf.nav.reload(url, spf.nav.ReloadReason.INELIGIBLE);
     return;
   }
   // Navigate to the URL.
@@ -358,9 +358,9 @@ spf.nav.navigate_ = function(url, opt_options, opt_current, opt_referer,
   // visible page is undetermined and should not be relied upon.
   var current = opt_history ? opt_current : window.location.href;
 
-  // Redirect if the "request" event is canceled.
+  // Reload if the "request" event is canceled.
   if (!spf.nav.dispatchRequest_(url, referer, current, options)) {
-    spf.nav.redirect(url);
+    spf.nav.reload(url, spf.nav.ReloadReason.REQUEST_CANCELED);
     return;
   }
 
@@ -522,7 +522,11 @@ spf.nav.handleNavigateError_ = function(options, url, err) {
   if (!spf.nav.dispatchError_(url, err, options)) {
     return;
   }
-  spf.nav.redirect(url);
+  var reason = spf.nav.ReloadReason.ERROR;
+  if (err) {
+    reason += ' Message: ' + err.message;
+  }
+  spf.nav.reload(url, reason);
 };
 
 
@@ -539,9 +543,9 @@ spf.nav.handleNavigateError_ = function(options, url, err) {
  * @private
  */
 spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
-  // Redirect if the "part process" event is canceled.
+  // Reload if the "part process" event is canceled.
   if (!spf.nav.dispatchPartProcess_(url, partial, options)) {
-    spf.nav.redirect(url);
+    spf.nav.reload(url, spf.nav.ReloadReason.PART_PROCESS_CANCELED);
     return;
   }
 
@@ -596,9 +600,9 @@ spf.nav.handleNavigateSuccess_ = function(options, reverse, original,
   // so don't fire the "process" event/callbacks.
   var multipart = response['type'] == 'multipart';
   if (!multipart) {
-    // Redirect if the "process" event is canceled.
+    // Reload if the "process" event is canceled.
     if (!spf.nav.dispatchProcess_(url, response, options)) {
-      spf.nav.redirect(url);
+      spf.nav.reload(url, spf.nav.ReloadReason.PROCESS_CANCELED);
       return;
     }
 
@@ -696,13 +700,14 @@ spf.nav.callback = function(fn, var_args) {
  * Redirect to a URL, to be used when navigation fails or is disabled.
  *
  * @param {string} url The requested URL, without the SPF identifier.
+ * @param {string} reason The reason code causing the reload.
  */
-spf.nav.redirect = function(url) {
-  spf.debug.warn('redirecting (', 'url=', url, ')');
+spf.nav.reload = function(url, reason) {
+  spf.debug.warn('redirecting (', 'url=', url, 'reason=', reason, ')');
   spf.nav.cancel();
   spf.nav.cancelAllPrefetchesExcept();
   // Dispatch the reload event to notify the app that a reload is required.
-  spf.nav.dispatchReload_(url);
+  spf.nav.dispatchReload_(url, reason);
   // If the url has already changed, clear its entry to prevent browser
   // inconsistency with history management for 301 responses on reloads. Chrome
   // will identify that the starting url was the same, and replace the current
@@ -937,7 +942,7 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
     // Abort the load/prefetch if the "process" callback is canceled.
     // Note: pass "true" to only execute callbacks and not dispatch events.
     if (!spf.nav.dispatchProcess_(url, response, options, true)) {
-      spf.nav.redirect(url);
+      spf.nav.reload(url, spf.nav.ReloadReason.PROCESS_CANCELED);
       return;
     }
 
@@ -1055,10 +1060,11 @@ spf.nav.dispatchError_ = function(url, err, opt_options, opt_noEvents) {
  *   url: The current URL.
  *
  * @param {string} url The target URL which is being reloaded.
+ * @param {string} reason The reason code causing the reload.
  * @private
  */
-spf.nav.dispatchReload_ = function(url) {
-  var detail = {'url': url};
+spf.nav.dispatchReload_ = function(url, reason) {
+  var detail = {'url': url, 'reason': reason};
   spf.dispatch(spf.nav.Event.RELOAD, detail);
 };
 
@@ -1373,6 +1379,19 @@ spf.nav.Event = {
   DONE: 'done'
 };
 
+spf.nav.ReloadReason = {
+  INELIGIBLE: (!SPF_DEBUG) ? '1' :
+      '1: Navigation not initialized or limit reached.',
+  REQUEST_CANCELED: (!SPF_DEBUG) ? '2' :
+      '2: Navigation canceled by the request event.',
+  PART_PROCESS_CANCELED: (!SPF_DEBUG) ? '3' :
+      '3: Navigation canceled by the partprocess event.',
+  PROCESS_CANCELED: (!SPF_DEBUG) ? '4' :
+      '4: Navigation canceled by the process event.',
+  ERROR: (!SPF_DEBUG) ? '10' :
+      '10: An uncaught error occurred processing.'
+};
+
 
 if (spf.tracing.ENABLED) {
   (function() {
@@ -1402,8 +1421,8 @@ if (spf.tracing.ENABLED) {
         spf.nav.cancel, 'spf.nav.cancel');
     spf.nav.callback = spf.tracing.instrument(
         spf.nav.callback, 'spf.nav.callback');
-    spf.nav.redirect = spf.tracing.instrument(
-        spf.nav.redirect, 'spf.nav.redirect');
+    spf.nav.reload = spf.tracing.instrument(
+        spf.nav.reload, 'spf.nav.reload');
     spf.nav.load = spf.tracing.instrument(
         spf.nav.load, 'spf.nav.load');
     spf.nav.handleLoadError_ = spf.tracing.instrument(
