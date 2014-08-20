@@ -303,6 +303,13 @@ spf.EventDetail.prototype.previous;
 
 
 /**
+ * A string containing a reason code and a text explanation (debug only);
+ * defined for the "spfreload" event.
+ */
+spf.EventDetail.prototype.reason;
+
+
+/**
  * The URL of the previous page; defined for "spfhistory" and
  * "spfrequest" events.
  * @type {string|undefined}
