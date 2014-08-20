@@ -201,6 +201,7 @@ spf.RequestOptions;
  *       and "partdone" events.
  * - previous: optional URL of the previous page; defined for "history" and
  *       "request" events.
+ * - reason: optional reason code and text; defined for the "reload" event.
  * - referer: optional URL of the referer page; defined for "history" and
  *       "request" events.
  * - response: optional complete response; defined for "process" and
@@ -218,6 +219,7 @@ spf.RequestOptions;
  *   name: (string|undefined),
  *   part: (spf.SingleResponse|undefined),
  *   previous: (string|undefined),
+ *   reason: (string|undefined),
  *   referer: (string|undefined),
  *   target: (Element|undefined),
  *   response: (spf.SingleResponse|spf.MultipartResponse|undefined),
