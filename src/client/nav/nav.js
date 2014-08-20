@@ -1058,6 +1058,7 @@ spf.nav.dispatchError_ = function(url, err, opt_options, opt_noEvents) {
 /**
  * Dispatches the "reload" event with the following custom event detail:
  *   url: The current URL.
+ *   reason: The reason code and text explaining the reload.
  *
  * @param {string} url The target URL which is being reloaded.
  * @param {string} reason The reason code causing the reload.
@@ -1379,6 +1380,9 @@ spf.nav.Event = {
   DONE: 'done'
 };
 
+/**
+ * @enum {string}
+ */
 spf.nav.ReloadReason = {
   INELIGIBLE: (!SPF_DEBUG) ? '1' :
       '1: Navigation not initialized or limit reached.',
