@@ -593,7 +593,7 @@ spf.nav.handleNavigateSuccess_ = function(options, reverse, original,
   if (spf.state.get('nav-promote') == original) {
     var timing = response['timing'] || {};
     timing['navigationStart'] = spf.state.get('nav-promote-time');
-    timing['spfPrefetchType'] = 'promote';
+    timing['spfPrefetched'] = true;
   }
 
   // If a multipart response was received, all processing is already done,
