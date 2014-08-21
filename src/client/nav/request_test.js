@@ -111,7 +111,11 @@ describe('spf.nav.request', function() {
       var res = {'foo': 'FOO', 'bar': 'BAR'};
 
       var cacheKey = 'prefetch ' + spf.url.absolute(url);
-      spf.cache.set(cacheKey, res);
+      var cacheObject = {
+        'response': res,
+        'type': 'prefetch'
+      };
+      spf.cache.set(cacheKey, cacheObject);
 
       var requestUrl = spf.url.identify(url, options.type);
       spf.nav.request.send(url, options);
@@ -136,7 +140,11 @@ describe('spf.nav.request', function() {
       };
 
       var cacheKey = 'prefetch ' + spf.url.absolute(url);
-      spf.cache.set(cacheKey, res);
+      var cacheObject = {
+        'response': res,
+        'type': 'prefetch'
+      };
+      spf.cache.set(cacheKey, cacheObject);
 
       var requestUrl = spf.url.identify(url, options.type);
       spf.nav.request.send(url, options);
@@ -160,7 +168,11 @@ describe('spf.nav.request', function() {
       var res = {'foo': 'FOO', 'bar': 'BAR'};
 
       var cacheKey = 'prefetch ' + spf.url.absolute(url) + ' previous ' + path;
-      spf.cache.set(cacheKey, res);
+      var cacheObject = {
+        'response': res,
+        'type': 'prefetch'
+      };
+      spf.cache.set(cacheKey, cacheObject);
 
       spf.nav.request.send(url, options);
 
@@ -185,7 +197,11 @@ describe('spf.nav.request', function() {
       var xhrText = '{"foo": "FOO", "baz": "BAZ"}';
 
       var cacheKey = 'prefetch ' + spf.url.absolute(url) + ' previous ' + path;
-      spf.cache.set(cacheKey, cacheRes);
+      var cacheObject = {
+        'response': cacheRes,
+        'type': 'prefetch'
+      };
+      spf.cache.set(cacheKey, cacheObject);
 
       var fake = createFakeRegularXHR(xhrText);
       spf.net.xhr.get = jasmine.createSpy('xhr.get').andCallFake(fake);
@@ -914,7 +930,11 @@ describe('spf.nav.request', function() {
       var startTime = new Date().getTime() - 1;
 
       var cacheKey = 'prefetch ' + spf.url.absolute(url);
-      spf.cache.set(cacheKey, res);
+      var cacheObject = {
+        'response': res,
+        'type': 'prefetch'
+      };
+      spf.cache.set(cacheKey, cacheObject);
 
       var requestUrl = spf.url.identify(url, options.type);
       spf.nav.request.send(url, options);
@@ -930,5 +950,20 @@ describe('spf.nav.request', function() {
 
   });
 
+  describe('cache object', function() {
+
+    it('preserves cache type', function() {
+      var key = 'key';
+      var response = {
+        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        type: 'multipart'
+      };
+      var type = 'prefetch';
+      spf.nav.request.setCacheObject_(key, response, type);
+      var cached = spf.nav.request.getCacheObject_(key);
+      expect(cached['response']).toBe(response);
+      expect(cached['type']).toBe(type);
+    });
+  });
 
 });

@@ -99,6 +99,7 @@ spf.nav.request.send = function(url, opt_options) {
   // Use the absolute URL without identifier to allow cached responses
   // from prefetching to apply to navigation.
   var cached = spf.nav.request.getCacheObject_(cacheKey, options.current);
+  timing['spfPrefetched'] = !!cached && cached.type == 'prefetch';
   timing['spfCached'] = !!cached;
   if (cached) {
     var response = /** @type {spf.SingleResponse|spf.MultipartResponse} */ (
@@ -174,8 +175,6 @@ spf.nav.request.handleResponseFromCache_ = function(url, options, timing,
   // W3C PerformanceTiming for page loads.
   if (options.type && spf.string.startsWith(options.type, 'navigate')) {
     timing['navigationStart'] = timing['startTime'];
-    // Record that this prefetched response is a cache hit.
-    timing['spfPrefetchType'] = 'cache';
     // If this cached response was a navigate and a unified cache is not being
     // used, then it was from prefetch-based caching and is only eligible to
     // be used once.
@@ -400,7 +399,7 @@ spf.nav.request.done_ = function(url, options, timing, response, cache) {
                                                 response['cacheType'],
                                                 options.type, true);
     if (cacheKey) {
-      spf.nav.request.setCacheObject_(cacheKey, response);
+      spf.nav.request.setCacheObject_(cacheKey, response, options.type || '');
     }
   }
   // Set the timing for the response (avoid caching stale timing values).
@@ -483,7 +482,8 @@ spf.nav.request.getCacheObject_ = function(cacheKey, opt_current) {
     if (cached) {
       return {
         key: keys[i],
-        response: cached
+        response: cached['response'],
+        type: cached['type']
       };
     }
   }
@@ -497,10 +497,15 @@ spf.nav.request.getCacheObject_ = function(cacheKey, opt_current) {
  * @param {string} cacheKey The base cache key for the requested URL.
  * @param {spf.SingleResponse|spf.MultipartResponse} response The received SPF
  *     response object.
+ * @param {string} type The type of request this cache entry was set with.
  * @private
  */
-spf.nav.request.setCacheObject_ = function(cacheKey, response) {
-  spf.cache.set(cacheKey, response,  /** @type {number} */ (
+spf.nav.request.setCacheObject_ = function(cacheKey, response, type) {
+  var cacheValue = {
+    'response': response,
+    'type': type
+  };
+  spf.cache.set(cacheKey, cacheValue,  /** @type {number} */ (
       spf.config.get('cache-lifetime')));
 };
 
