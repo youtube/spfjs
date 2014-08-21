@@ -48,14 +48,6 @@ spf.SingleResponse.prototype.cacheType;
 
 
 /**
- * HTML string containing <link> and <style> tags of CSS to install.
- * @deprecated Use {@code head} instead.
- * @type {string|undefined}
- */
-spf.SingleResponse.prototype.css;
-
-
-/**
  * Reserved for client data of any type.
  * @type {*|undefined}
  */
@@ -70,26 +62,11 @@ spf.SingleResponse.prototype.head;
 
 
 /**
- * Map of Element IDs to HTML strings containing content of the Elements.
- * @deprecated Use {@code body} instead.
- * @type {Object.<string, string>|undefined}
- */
-spf.SingleResponse.prototype.html;
-
-
-/**
  * HTML string containing JS and/or CSS tags to execute or install.
  * @type {string|undefined}
  */
 spf.SingleResponse.prototype.foot;
 
-
-/**
- * HTML string containing <script> tags of JS to execute.
- * @deprecated Use {@code foot} instead.
- * @type {string|undefined}
- */
-spf.SingleResponse.prototype.js;
 
 
 /**
