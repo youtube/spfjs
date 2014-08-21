@@ -683,24 +683,6 @@ describe('spf.nav.response', function() {
       expect(elements['foo'].innerHTML).toEqual('two');
     });
 
-    it('sets html from deprecated "html" field', function() {
-      elements = {
-        'foo': new FakeElement('one'),
-        'bar': new FakeElement()
-      };
-
-      var response = {
-        'html': {
-          'foo': 'two',
-          'bar': 'two'
-        }
-      };
-
-      spf.nav.response.process('/page', response, null, true);
-      expect(elements['foo'].innerHTML).toEqual('two');
-      expect(elements['foo'].innerHTML).toEqual('two');
-    });
-
     it('updates history for navigate with redirect url', function() {
       var response = { 'url': 'http://www.youtube.com/watch?v=3' };
 
