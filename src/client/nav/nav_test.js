@@ -81,7 +81,7 @@ describe('spf.nav', function() {
   };
   var fakeHistoryReplace = function(url, state, doCallback) {
     if (doCallback) {
-      var callback = spf.state.get('history-callback');
+      var callback = spf.state.get(spf.state.Key.HISTORY_CALLBACK);
       if (callback) {
         callback(url, state);
       }
@@ -137,7 +137,7 @@ describe('spf.nav', function() {
       var absoluteUrl = spf.url.absolute(url);
       spf.nav.prefetch(url);
       spf.nav.navigate(url);
-      expect(spf.state.get('nav-promote')).toEqual(url);
+      expect(spf.state.get(spf.state.Key.NAV_PROMOTE)).toEqual(url);
 
       jasmine.Clock.tick(MOCK_DELAY + 1);
       expect(spf.nav.handleNavigateSuccess_).toHaveBeenCalled();
@@ -208,7 +208,7 @@ describe('spf.nav', function() {
       var absoluteUrl = spf.url.absolute(url);
       spf.nav.prefetch(url);
       spf.nav.navigate(url);
-      expect(spf.state.get('nav-promote')).toEqual(url);
+      expect(spf.state.get(spf.state.Key.NAV_PROMOTE)).toEqual(url);
 
       jasmine.Clock.tick(MOCK_DELAY + 1);
       expect(spf.nav.handleNavigateError_).toHaveBeenCalled();
@@ -330,9 +330,9 @@ describe('spf.nav', function() {
 
     it('respects initialization', function() {
       var url = '/page';
-      spf.state.set('nav-init', false);
+      spf.state.set(spf.state.Key.NAV_INIT, false);
       expect(spf.nav.isNavigateEligible_(url)).toBe(false);
-      spf.state.set('nav-init', true);
+      spf.state.set(spf.state.Key.NAV_INIT, true);
       expect(spf.nav.isNavigateEligible_(url)).toBe(true);
     });
 
@@ -340,12 +340,12 @@ describe('spf.nav', function() {
     it('respects session navigation limit', function() {
       var url = '/page';
       spf.config.set('navigate-limit', 5);
-      spf.state.set('nav-counter', 5);
+      spf.state.set(spf.state.Key.NAV_COUNTER, 5);
       expect(spf.nav.isNavigateEligible_(url)).toBe(false);
-      spf.state.set('nav-counter', 4);
+      spf.state.set(spf.state.Key.NAV_COUNTER, 4);
       expect(spf.nav.isNavigateEligible_(url)).toBe(true);
       spf.config.set('navigate-limit', null);
-      spf.state.set('nav-counter', 999999);
+      spf.state.set(spf.state.Key.NAV_COUNTER, 999999);
       expect(spf.nav.isNavigateEligible_(url)).toBe(true);
     });
 
@@ -353,12 +353,12 @@ describe('spf.nav', function() {
     it('respects session lifetime', function() {
       var url = '/page';
       spf.config.set('navigate-lifetime', 1000);
-      spf.state.set('nav-time', spf.now() - 1000);
+      spf.state.set(spf.state.Key.NAV_TIME, spf.now() - 1000);
       expect(spf.nav.isNavigateEligible_(url)).toBe(false);
-      spf.state.set('nav-time', spf.now() - 500);
+      spf.state.set(spf.state.Key.NAV_TIME, spf.now() - 500);
       expect(spf.nav.isNavigateEligible_(url)).toBe(true);
       spf.config.set('navigate-lifetime', null);
-      spf.state.set('nav-time', spf.now() - (10 * 24 * 60 * 60 * 1000));
+      spf.state.set(spf.state.Key.NAV_TIME, spf.now() - (10 * 24 * 60 * 60 * 1000));
       expect(spf.nav.isNavigateEligible_(url)).toBe(true);
     });
 

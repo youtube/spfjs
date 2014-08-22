@@ -139,7 +139,7 @@ spf.cache.valid_ = function(unit) {
   // will not be valid.
   var max = parseInt(spf.config.get('cache-max'), 10);
   max = isNaN(max) ? Infinity : max;
-  var current = parseInt(spf.state.get('cache-counter'), 10) || 0;
+  var current = parseInt(spf.state.get(spf.state.Key.CACHE_COUNTER), 10) || 0;
   var count = current - unit['count'];
   // Both a valid age and count are required.
   return (age < lifetime) && (count < max);
@@ -154,8 +154,8 @@ spf.cache.valid_ = function(unit) {
  * @private
  */
 spf.cache.create_ = function(key, data, lifetime) {
-  var count = (parseInt(spf.state.get('cache-counter'), 10) || 0) + 1;
-  spf.state.set('cache-counter', count);
+  var count = (parseInt(spf.state.get(spf.state.Key.CACHE_COUNTER), 10) || 0) + 1;
+  spf.state.set(spf.state.Key.CACHE_COUNTER, count);
 
   return {'data': data, 'life': lifetime, 'time': spf.now(), 'count': count};
 };
@@ -168,10 +168,10 @@ spf.cache.create_ = function(key, data, lifetime) {
  * @private
  */
 spf.cache.storage_ = function(opt_storage) {
-  if (opt_storage || !spf.state.has('cache-storage')) {
+  if (opt_storage || !spf.state.has(spf.state.Key.CACHE_STORAGE)) {
     return /** @type {!Object.<string, spf.cache.Unit>} */ (
-        spf.state.set('cache-storage', (opt_storage || {})));
+        spf.state.set(spf.state.Key.CACHE_STORAGE, (opt_storage || {})));
   }
   return /** @type {!Object.<string, spf.cache.Unit>} */ (
-      spf.state.get('cache-storage'));
+      spf.state.get(spf.state.Key.CACHE_STORAGE));
 };

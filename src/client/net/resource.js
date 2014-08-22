@@ -19,6 +19,7 @@ goog.require('spf.array');
 goog.require('spf.debug');
 goog.require('spf.dom');
 goog.require('spf.dom.classlist');
+goog.require('spf.state');
 goog.require('spf.string');
 goog.require('spf.tasks');
 goog.require('spf.tracing');
@@ -392,7 +393,8 @@ spf.net.resource.prefetch_ = function(el, type, url, id) {
  * @param {string|Object.<string>} paths The paths.
  */
 spf.net.resource.path = function(type, paths) {
-  var key = spf.net.resource.PATHS_KEY_PREFIX + type;
+  var key = /** @type {spf.state.Key} */ (
+      spf.state.Key.RESOURCE_PATHS_PREFIX + type);
   spf.state.set(key, paths);
 };
 
@@ -411,7 +413,8 @@ spf.net.resource.path = function(type, paths) {
  * @return {string} The adjusted url.
  */
 spf.net.resource.canonicalize = function(type, url) {
-  var key = spf.net.resource.PATHS_KEY_PREFIX + type;
+  var key = /** @type {spf.state.Key} */ (
+      spf.state.Key.RESOURCE_PATHS_PREFIX + type);
   if (url) {
     var index = url.indexOf('//');
     if (index < 0) {
@@ -560,30 +563,6 @@ spf.net.resource.urls_ = {};
 
 
 /**
- * Key used to store and retrieve resource status in state.
- * @type {string}
- * @const
- */
-spf.net.resource.STATS_KEY = 'rsrc-s';
-
-
-/**
- * Key used to store and retrieve resource urls in state.
- * @type {string}
- * @const
- */
-spf.net.resource.URLS_KEY = 'rsrc-u';
-
-
-/**
- * Key prefix used to store and retrieve paths in state.
- * @type {string}
- * @const
- */
-spf.net.resource.PATHS_KEY_PREFIX = 'rsrc-p-';
-
-
-/**
  * Whether the browser is Internet Explorer; valid for MSIE 8+ aka Trident 4+.
  * @type {boolean}
  * @const
@@ -626,26 +605,26 @@ spf.net.resource.Event = {
 // Automatic initiazation for spf.net.resource.stats_.
 // When built for the bootloader, unconditionally set in state.
 if (SPF_BOOTLOADER) {
-  spf.state.set(spf.net.resource.STATS_KEY, spf.net.resource.stats_);
+  spf.state.set(spf.state.Key.RESOURCE_STATS, spf.net.resource.stats_);
 } else {
-  if (!spf.state.has(spf.net.resource.STATS_KEY)) {
-    spf.state.set(spf.net.resource.STATS_KEY, spf.net.resource.stats_);
+  if (!spf.state.has(spf.state.Key.RESOURCE_STATS)) {
+    spf.state.set(spf.state.Key.RESOURCE_STATS, spf.net.resource.stats_);
   }
   spf.net.resource.stats_ =
       /** @type {!Object.<spf.net.resource.Status>} */ (
-      spf.state.get(spf.net.resource.STATS_KEY));
+      spf.state.get(spf.state.Key.RESOURCE_STATS));
 }
 
 // Automatic initiazation for spf.net.resource.urls_.
 // When built for the bootloader, unconditionally set the map in state.
 if (SPF_BOOTLOADER) {
-  spf.state.set(spf.net.resource.URLS_KEY, spf.net.resource.urls_);
+  spf.state.set(spf.state.Key.RESOURCE_URLS, spf.net.resource.urls_);
 } else {
-  if (!spf.state.has(spf.net.resource.URLS_KEY)) {
-    spf.state.set(spf.net.resource.URLS_KEY, spf.net.resource.urls_);
+  if (!spf.state.has(spf.state.Key.RESOURCE_URLS)) {
+    spf.state.set(spf.state.Key.RESOURCE_URLS, spf.net.resource.urls_);
   }
   spf.net.resource.urls_ = /** @type {!Object.<Array.<string>>} */ (
-      spf.state.get(spf.net.resource.URLS_KEY));
+      spf.state.get(spf.state.Key.RESOURCE_URLS));
 }
 
 

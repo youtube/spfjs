@@ -33,17 +33,17 @@ goog.require('spf.url');
  */
 spf.nav.init = function() {
   spf.history.init(spf.nav.handleHistory_, spf.nav.dispatchError_);
-  if (!spf.state.get('nav-init') && document.addEventListener) {
+  if (!spf.state.get(spf.state.Key.NAV_INIT) && document.addEventListener) {
     document.addEventListener('click', spf.nav.handleClick_, false);
     if (spf.config.get('experimental-prefetch-mousedown') &&
         !spf.nav.isTouchCapablePlatform_()) {
       document.addEventListener('mousedown', spf.nav.handleMouseDown_, false);
-      spf.state.set('prefetch-listener', spf.nav.handleMouseDown_);
+      spf.state.set(spf.state.Key.PREFETCH_LISTENER, spf.nav.handleMouseDown_);
     }
-    spf.state.set('nav-init', true);
-    spf.state.set('nav-counter', 0);
-    spf.state.set('nav-time', spf.now());
-    spf.state.set('nav-listener', spf.nav.handleClick_);
+    spf.state.set(spf.state.Key.NAV_INIT, true);
+    spf.state.set(spf.state.Key.NAV_COUNTER, 0);
+    spf.state.set(spf.state.Key.NAV_TIME, spf.now());
+    spf.state.set(spf.state.Key.NAV_LISTENER, spf.nav.handleClick_);
   }
 };
 
@@ -53,20 +53,20 @@ spf.nav.init = function() {
  */
 spf.nav.dispose = function() {
   spf.nav.cancel();
-  if (spf.state.get('nav-init')) {
+  if (spf.state.get(spf.state.Key.NAV_INIT)) {
     if (document.removeEventListener) {
       document.removeEventListener('click', /** @type {function(Event)} */ (
-          spf.state.get('nav-listener')), false);
+          spf.state.get(spf.state.Key.NAV_LISTENER)), false);
       if (spf.config.get('experimental-prefetch-mousedown')) {
         document.removeEventListener('mousedown',
             /** @type {function(Event)} */ (
-                spf.state.get('prefetch-listener')), false);
+                spf.state.get(spf.state.Key.PREFETCH_LISTENER)), false);
       }
     }
-    spf.state.set('nav-init', false);
-    spf.state.set('nav-counter', null);
-    spf.state.set('nav-time', null);
-    spf.state.set('nav-listener', null);
+    spf.state.set(spf.state.Key.NAV_INIT, false);
+    spf.state.set(spf.state.Key.NAV_COUNTER, null);
+    spf.state.set(spf.state.Key.NAV_TIME, null);
+    spf.state.set(spf.state.Key.NAV_LISTENER, null);
   }
   spf.history.dispose();
 };
@@ -174,12 +174,12 @@ spf.nav.getEventURL_ = function(evt) {
  */
 spf.nav.isNavigateEligible_ = function(url) {
   // If navigation is requested but SPF is not initialized, cancel.
-  if (!spf.state.get('nav-init')) {
+  if (!spf.state.get(spf.state.Key.NAV_INIT)) {
     spf.debug.warn('navigation not initialized');
     return false;
   }
   // If a session limit has been set and reached, cancel.
-  var count = (parseInt(spf.state.get('nav-counter'), 10) || 0) + 1;
+  var count = (parseInt(spf.state.get(spf.state.Key.NAV_COUNTER), 10) || 0) + 1;
   var limit = parseInt(spf.config.get('navigate-limit'), 10);
   limit = isNaN(limit) ? Infinity : limit;
   if (count > limit) {
@@ -187,7 +187,7 @@ spf.nav.isNavigateEligible_ = function(url) {
     return false;
   }
   // If a session lifetime has been set and reached, redirect.
-  var timestamp = parseInt(spf.state.get('nav-time'), 10) - 1;
+  var timestamp = parseInt(spf.state.get(spf.state.Key.NAV_TIME), 10) - 1;
   var age = spf.now() - timestamp;
   var lifetime = parseInt(spf.config.get('navigate-lifetime'), 10);
   lifetime = isNaN(lifetime) ? Infinity : lifetime;
@@ -341,17 +341,17 @@ spf.nav.navigate_ = function(url, opt_options, opt_current, opt_referer,
   var options = opt_options || /** @type {spf.RequestOptions} */ ({});
 
   // Set the navigation counter.
-  var count = (parseInt(spf.state.get('nav-counter'), 10) || 0) + 1;
-  spf.state.set('nav-counter', count);
+  var count = (parseInt(spf.state.get(spf.state.Key.NAV_COUNTER), 10) || 0) + 1;
+  spf.state.set(spf.state.Key.NAV_COUNTER, count);
   // Set the navigation time.
-  spf.state.set('nav-time', spf.now());
+  spf.state.set(spf.state.Key.NAV_TIME, spf.now());
   // Set the navigation referer, stored in the history entry state object
   // to allow the correct value to be sent to the server during back/forward.
   // Only different than the current URL when navigation is in response to
   // a popState event.
   // Compare against "undefined" to allow empty referrer values in history.
   var referer = opt_referer == undefined ? window.location.href : opt_referer;
-  spf.state.set('nav-referer', referer);
+  spf.state.set(spf.state.Key.NAV_REFERER, referer);
   // The current URL will have already changed for history events, so in those
   // cases the current URL is provided from state. The opt_current should
   // always be used for history states. If it's unavailable that indicates the
@@ -382,10 +382,10 @@ spf.nav.navigate_ = function(url, opt_options, opt_current, opt_referer,
   // Set the current nav request to be the prefetch, if it exists.
   var prefetches = spf.nav.prefetches_();
   var prefetchXhr = prefetches[absoluteUrl];
-  spf.state.set('nav-request', prefetchXhr);
+  spf.state.set(spf.state.Key.NAV_REQUEST, prefetchXhr);
   // Make sure there is no current nav promotion set.
-  spf.state.set('nav-promote', null);
-  spf.state.set('nav-promote-time', null);
+  spf.state.set(spf.state.Key.NAV_PROMOTE, null);
+  spf.state.set(spf.state.Key.NAV_PROMOTE_TIME, null);
 
   // Check the prefetch XHR.  If it is not done, promote the prefetch
   // to navigate.  Otherwise, navigate immediately.
@@ -419,8 +419,8 @@ spf.nav.navigatePromotePrefetch_ = function(url, options, referer, history,
   spf.debug.debug('nav.navigatePromotePrefetch_ ', url);
   var preprocessKey = spf.nav.preprocessKey(url);
   var promoteKey = spf.nav.promoteKey(url);
-  spf.state.set('nav-promote', url);
-  spf.state.set('nav-promote-time', spf.now());
+  spf.state.set(spf.state.Key.NAV_PROMOTE, url);
+  spf.state.set(spf.state.Key.NAV_PROMOTE_TIME, spf.now());
   spf.tasks.cancel(preprocessKey);
   spf.tasks.run(promoteKey, true);
 
@@ -469,7 +469,7 @@ spf.nav.navigateSendRequest_ = function(url, options, current, referer,
     current: current,
     referer: referer
   });
-  spf.state.set('nav-request', xhr);
+  spf.state.set(spf.state.Key.NAV_REQUEST, xhr);
 
   // After the request has been sent, check for new navigation that needs
   // a history entry added.  Do this after sending the XHR to have the
@@ -516,7 +516,7 @@ spf.nav.navigateAddHistory_ = function(url, referer, handleError) {
  */
 spf.nav.handleNavigateError_ = function(options, url, err) {
   spf.debug.warn('navigate error', '(url=', url, ')');
-  spf.state.set('nav-request', null);
+  spf.state.set(spf.state.Key.NAV_REQUEST, null);
   // Ignore the error if the "error" event is canceled, but otherwise,
   // reload the page.
   if (!spf.nav.dispatchError_(url, err, options)) {
@@ -586,13 +586,13 @@ spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
  */
 spf.nav.handleNavigateSuccess_ = function(options, reverse, original,
                                           url, response) {
-  spf.state.set('nav-request', null);
+  spf.state.set(spf.state.Key.NAV_REQUEST, null);
 
   // If this is a navigation from a promotion, manually set the
   // navigation start time.
-  if (spf.state.get('nav-promote') == original) {
+  if (spf.state.get(spf.state.Key.NAV_PROMOTE) == original) {
     var timing = response['timing'] || {};
-    timing['navigationStart'] = spf.state.get('nav-promote-time');
+    timing['navigationStart'] = spf.state.get(spf.state.Key.NAV_PROMOTE_TIME);
     timing['spfPrefetched'] = true;
   }
 
@@ -662,12 +662,12 @@ spf.nav.handleNavigateRedirect_ = function(options, redirectUrl) {
  * Cancels the current navigation request, if any.
  */
 spf.nav.cancel = function() {
-  var xhr = /** @type {XMLHttpRequest} */ (spf.state.get('nav-request'));
+  var xhr = /** @type {XMLHttpRequest} */ (spf.state.get(spf.state.Key.NAV_REQUEST));
   if (xhr) {
     spf.debug.warn('aborting previous navigate ',
                    'xhr=', xhr);
     xhr.abort();
-    spf.state.set('nav-request', null);
+    spf.state.set(spf.state.Key.NAV_REQUEST, null);
   }
 };
 
@@ -861,7 +861,7 @@ spf.nav.handleLoadError_ = function(isPrefetch, options, original, url, err) {
 
   // If a prefetch has been promoted to a navigate, use the navigate error
   // handler.  Otherwise, execute the "error" callback.
-  if (isPrefetch && spf.state.get('nav-promote') == original) {
+  if (isPrefetch && spf.state.get(spf.state.Key.NAV_PROMOTE) == original) {
     spf.nav.handleNavigateError_(options, url, err);
   } else {
     // Note: pass "true" to only execute callbacks and not dispatch events.
@@ -905,7 +905,7 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
     spf.tasks.add(promoteKey, fn);
     // If the prefetch has been promoted, run the promotion task after
     // adding it and do not perform any preprocessing.
-    if (spf.state.get('nav-promote') == original) {
+    if (spf.state.get(spf.state.Key.NAV_PROMOTE) == original) {
       spf.tasks.run(promoteKey, true);
       return;
     }
@@ -963,7 +963,7 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
     // adding it and do not perform any preprocessing. If it has not
     // been promoted, remove the task queues becuase a subsequent
     // request will hit the cache.
-    if (spf.state.get('nav-promote') == original) {
+    if (spf.state.get(spf.state.Key.NAV_PROMOTE) == original) {
       var fn = spf.bind(spf.nav.handleNavigateSuccess_, null,
                         options, false, original, url, response);
       spf.tasks.add(promoteKey, fn);
@@ -1331,12 +1331,12 @@ spf.nav.cancelAllPrefetchesExcept = function(opt_skipUrl) {
  * @private
  */
 spf.nav.prefetches_ = function(opt_reqs) {
-  if (opt_reqs || !spf.state.has('nav-prefetches')) {
+  if (opt_reqs || !spf.state.has(spf.state.Key.NAV_PREFETCHES)) {
     return /** @type {!Object.<string, XMLHttpRequest>} */ (
-        spf.state.set('nav-prefetches', (opt_reqs || {})));
+        spf.state.set(spf.state.Key.NAV_PREFETCHES, (opt_reqs || {})));
   }
   return /** @type {!Object.<string, XMLHttpRequest>} */ (
-      spf.state.get('nav-prefetches'));
+      spf.state.get(spf.state.Key.NAV_PREFETCHES));
 };
 
 

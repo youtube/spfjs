@@ -11,6 +11,7 @@ goog.require('spf.array');
 goog.require('spf.net.resource');
 goog.require('spf.net.script');
 goog.require('spf.pubsub');
+goog.require('spf.state');
 goog.require('spf.url');
 
 
