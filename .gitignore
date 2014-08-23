@@ -1,6 +1,8 @@
 # Build output and files
 /build
 /build.ninja
+/web/_site
+/web/assets/vendor
 
 # External libraries
 /bower_components

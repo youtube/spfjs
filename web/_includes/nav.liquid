@@ -1,0 +1,8 @@
+{% assign nav__list = site.data.nav %}
+<ul>
+  {% for nav__item in nav__list %}
+    <li {% if nav__item.url == "/" %}class="index"{% endif %}>
+      <a href="{{ site.baseurl }}{{ nav__item.page.url | replace:'index.html','' }}">{{ nav__item.page.title }}</a>
+    </li>
+  {% endfor %}
+</ul>

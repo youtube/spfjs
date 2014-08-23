@@ -1,0 +1,46 @@
+# Copyright 2014 Google Inc. All rights reserved.
+#
+# Use of this source code is governed by The MIT License.
+# See the LICENSE file for details.
+
+# This data file is used by the nav plugin to build a tree for navigation.
+#
+# Required:
+#   path - the path component of the nav item
+#
+# Optional:
+#   sub - the list of nav items below this one
+#
+# Provided automatically:
+#   url - full path hierachy of the nav item
+#
+# Note that the paths for a nav item should be those post-processing, so for
+# example, an item path for `page.md` would be `page.html` by default, and if
+# `permalink: pretty` is set in the config, it would be `page/`.
+#
+# If a nav item is a directory (e.g. `path: dir/`) and no corresponding index.md
+# file exists, a synthetic one will be generated automatically.  These generated
+# index files have the following extra parameters:
+#
+# Optional for generated index files:
+#   title - a title value (defaults to the capitalized directory name)
+#   description - a description value
+
+
+- path: /
+- path: documentation/
+  sub:
+    - path: start/
+    - path: basics/
+      description: Learn the basics of integrating SPF on your site.
+      sub:
+        - path: client/
+        - path: server/
+        - path: processing/
+    - path: advanced/
+      description: Apply advanced techniques using SPF to enable high performance.
+      sub:
+        - path: caching/
+        - path: multipart/
+        - path: prefetching/
+- path: download/

@@ -1,0 +1,140 @@
+# Copyright 2014 Google Inc. All rights reserved.
+#
+# Use of this source code is governed by The MIT License.
+# See the LICENSE file for details.
+
+require 'fileutils'
+require 'sass'
+require 'autoprefixer-rails'
+
+
+SITE = "_site"
+
+LOCAL_WSK = "assets/vendor"
+LOCAL_IMAGES = "#{LOCAL_WSK}/images"
+LOCAL_STYLES = "#{LOCAL_WSK}/styles"
+
+WSK = "../vendor/web-starter-kit/app"
+WSK_IMAGES = "#{WSK}/images"
+WSK_STYLES = "#{WSK}/styles"
+
+AUTOPREFIXER_BROWSERS = [
+  'ie >= 10',
+  'ie_mob >= 10',
+  'ff >= 30',
+  'chrome >= 34',
+  'safari >= 7',
+  'opera >= 23',
+  'ios >= 7',
+  'android >= 4.4',
+  'bb >= 10'
+]
+
+
+# The WSK files might need to be downloaded.
+# WSK @43823c9.
+wsk_url = "https://github.com/google/web-starter-kit/archive/43823c998e90567d9b365336af4041e07b6d6d10.tar.gz"
+wsk_tgz = "../vendor/web-starter-kit/web-starter-kit-43823c998e90567d9b365336af4041e07b6d6d10.zip"
+wsk_dir = File.dirname(wsk_tgz)
+file wsk_tgz do
+  FileUtils.mkdir_p(wsk_dir) unless File.directory?(wsk_dir)
+  cmd = "curl -L #{wsk_url} -o #{wsk_tgz}"
+  puts(cmd) if verbose
+  system(cmd)
+end
+file WSK => wsk_tgz do
+  cmd = "tar -xmz -f #{wsk_tgz} --strip-components 1 -C #{wsk_dir}"
+  puts(cmd) if verbose
+  system(cmd)
+end
+
+
+# The local WSK css file depends on all the WSK inputs.
+CSS_OUT = "#{LOCAL_STYLES}/wsk.css"
+wsk_css_files = [
+  "#{WSK_STYLES}/h5bp.css",
+  "#{WSK_STYLES}/components/components.css",
+  "#{WSK_STYLES}/main.css",
+]
+wsk_css_files.each do |src|
+  file src => WSK
+  file CSS_OUT => src
+end
+file CSS_OUT do
+  css = ""
+  # Fix WSK paths.
+  wsk_css_files.each do |wsk_css_file|
+    css += File.read(wsk_css_file)
+  end
+  # Fix WSK paths.
+  css = css.gsub('url("../../images', 'url("../images')
+  # Prefix rules.
+  prefixed = AutoprefixerRails.process(css, browsers: AUTOPREFIXER_BROWSERS)
+  # Compress.
+  sass_engine = Sass::Engine.new(prefixed.css, {
+    :style => :compressed,
+    :cache => false,
+    :syntax => :scss,
+  })
+  compressed = sass_engine.render
+  # Output.
+  cssdir = File.dirname(CSS_OUT)
+  FileUtils.mkdir_p(cssdir) unless File.directory?(cssdir)
+  File.write(CSS_OUT, compressed)
+end
+
+# Note: WSK font files are not used and instead fonts are linked directly from
+# Google Fonts, but they may be installed locally during development if desired.
+
+# Each local WSK icon file depends on its WSK counterpart.
+IMG_OUTS = []
+wsk_icon_files = [
+  "#{WSK_IMAGES}/icons/icons-hinted.ttf",
+  "#{WSK_IMAGES}/icons/icons.eot",
+  "#{WSK_IMAGES}/icons/icons.svg",
+  "#{WSK_IMAGES}/icons/icons.ttf",
+  "#{WSK_IMAGES}/icons/icons.woff",
+  "#{WSK_IMAGES}/icons/icons.woff2",
+  "#{WSK_IMAGES}/hamburger.svg",
+]
+wsk_icon_files.each do |src|
+  file src => WSK
+  dst = src.sub(WSK_IMAGES, LOCAL_IMAGES)
+  IMG_OUTS.push(dst)
+  file dst => src do
+    dstdir = File.dirname(dst)
+    FileUtils.mkdir_p(dstdir) unless File.directory?(dstdir)
+    puts("cp #{src} #{dst}") if verbose
+    FileUtils.cp(src, dst)
+  end
+end
+
+
+# Tasks.
+task :css => [CSS_OUT]
+task :img => IMG_OUTS
+task :assets => [:css, :img]
+
+
+task :build => [:assets] do
+  cmd = "bundle exec jekyll build --trace"
+  puts(cmd) if verbose
+  system(cmd)
+end
+
+
+task :serve => [:assets] do
+  cmd = "bundle exec jekyll serve --watch --trace"
+  puts(cmd) if verbose
+  system(cmd)
+end
+
+
+task :clean do
+  clean_paths = [SITE, LOCAL_WSK]
+  puts("rm #{clean_paths}") if verbose
+  FileUtils.rm_rf(clean_paths)
+end
+
+
+task :default => [:build]
