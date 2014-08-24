@@ -115,17 +115,9 @@ spf.config.clear = function() {
 spf.config.values = {};
 
 
-/**
- * Key used to store and retrieve the config storage in state.
- * @type {string}
- * @const
- */
-spf.config.VALUES_KEY = 'config';
-
-
 // Automatic initialization for spf.config.values.
-if (!spf.state.has(spf.config.VALUES_KEY)) {
-  spf.state.set(spf.config.VALUES_KEY, spf.config.values);
+if (!spf.state.has(spf.state.Key.CONFIG_VALUES)) {
+  spf.state.set(spf.state.Key.CONFIG_VALUES, spf.config.values);
 }
 spf.config.values = /** @type {!Object.<spf.config.Value>} */ (
-    spf.state.get(spf.config.VALUES_KEY));
+    spf.state.get(spf.state.Key.CONFIG_VALUES));

@@ -118,22 +118,14 @@ spf.pubsub.clear = function(topic) {
 spf.pubsub.subscriptions = {};
 
 
-/**
- * Key used to store and retrieve subscriptions in state.
- * @type {string}
- * @const
- */
-spf.pubsub.SUBS_KEY = 'ps-s';
-
-
 // Automatic initialization for spf.pubsub.subscriptions.
 // When built for the bootloader, unconditionally set in state.
 if (SPF_BOOTLOADER) {
-  spf.state.set(spf.pubsub.SUBS_KEY, spf.pubsub.subscriptions);
+  spf.state.set(spf.state.Key.PUBSUB_SUBS, spf.pubsub.subscriptions);
 } else {
-  if (!spf.state.has(spf.pubsub.SUBS_KEY)) {
-    spf.state.set(spf.pubsub.SUBS_KEY, spf.pubsub.subscriptions);
+  if (!spf.state.has(spf.state.Key.PUBSUB_SUBS)) {
+    spf.state.set(spf.state.Key.PUBSUB_SUBS, spf.pubsub.subscriptions);
   }
   spf.pubsub.subscriptions = /** @type {!Object.<Array>} */ (
-      spf.state.get(spf.pubsub.SUBS_KEY));
+      spf.state.get(spf.state.Key.PUBSUB_SUBS));
 }

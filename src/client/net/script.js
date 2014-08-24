@@ -39,6 +39,7 @@ goog.require('spf.debug');
 goog.require('spf.net.resource');
 goog.require('spf.net.resource.urls');
 goog.require('spf.pubsub');
+goog.require('spf.state');
 goog.require('spf.string');
 goog.require('spf.tracing');
 
@@ -409,22 +410,6 @@ spf.net.script.anyDifferent_ = function(name, updated) {
 
 
 /**
- * Key used to store and retrieve script dependencies in state.
- * @type {string}
- * @const
- */
-spf.net.script.DEPS_KEY = 'js-d';
-
-
-/**
- * Key used to store and retrieve script urls in state.
- * @type {string}
- * @const
- */
-spf.net.script.URLS_KEY = 'js-u';
-
-
-/**
  * Map of dependencies.
  * @type {!Object.<(string|Array.<string>)>}
  * @private
@@ -432,13 +417,13 @@ spf.net.script.URLS_KEY = 'js-u';
 spf.net.script.deps_ = {};
 // When built for the bootloader, unconditionally set the map in state.
 if (SPF_BOOTLOADER) {
-  spf.state.set(spf.net.script.DEPS_KEY, spf.net.script.deps_);
+  spf.state.set(spf.state.Key.SCRIPT_DEPS, spf.net.script.deps_);
 } else {
-  if (!spf.state.has(spf.net.script.DEPS_KEY)) {
-    spf.state.set(spf.net.script.DEPS_KEY, spf.net.script.deps_);
+  if (!spf.state.has(spf.state.Key.SCRIPT_DEPS)) {
+    spf.state.set(spf.state.Key.SCRIPT_DEPS, spf.net.script.deps_);
   }
   spf.net.script.deps_ = /** @type {!Object.<(string|Array.<string>)>} */ (
-      spf.state.get(spf.net.script.DEPS_KEY));
+      spf.state.get(spf.state.Key.SCRIPT_DEPS));
 }
 
 
@@ -450,13 +435,13 @@ if (SPF_BOOTLOADER) {
 spf.net.script.urls_ = {};
 // When built for the bootloader, unconditionally set the map in state.
 if (SPF_BOOTLOADER) {
-  spf.state.set(spf.net.script.URLS_KEY, spf.net.script.urls_);
+  spf.state.set(spf.state.Key.SCRIPT_URLS, spf.net.script.urls_);
 } else {
-  if (!spf.state.has(spf.net.script.URLS_KEY)) {
-    spf.state.set(spf.net.script.URLS_KEY, spf.net.script.urls_);
+  if (!spf.state.has(spf.state.Key.SCRIPT_URLS)) {
+    spf.state.set(spf.state.Key.SCRIPT_URLS, spf.net.script.urls_);
   }
   spf.net.script.urls_ = /** @type {!Object.<(string|Array.<string>)>} */ (
-      spf.state.get(spf.net.script.URLS_KEY));
+      spf.state.get(spf.state.Key.SCRIPT_URLS));
 }
 
 

@@ -15,35 +15,71 @@ goog.provide('spf.state');
 /**
  * Checks whether a current state value exists.
  *
- * @param {string} name The state name.
+ * @param {spf.state.Key} key The state key.
  * @return {boolean} Whether the state value exists.
  */
-spf.state.has = function(name) {
-  return name in spf.state.values_;
+spf.state.has = function(key) {
+  return key in spf.state.values_;
 };
 
 
 /**
  * Gets a current state value.
  *
- * @param {string} name The state name.
+ * @param {spf.state.Key} key The state key.
  * @return {*} The state value.
  */
-spf.state.get = function(name) {
-  return spf.state.values_[name];
+spf.state.get = function(key) {
+  return spf.state.values_[key];
 };
 
 
 /**
  * Sets a current state value.
  *
- * @param {string} name The state name.
- * @param {*} value The state value.
- * @return {*} The state value.
+ * @param {spf.state.Key} key The state key.
+ * @param {T} value The state value.
+ * @return {T} The state value.
+ * @template T
  */
-spf.state.set = function(name, value) {
-  spf.state.values_[name] = value;
+spf.state.set = function(key, value) {
+  spf.state.values_[key] = value;
   return value;
+};
+
+
+/**
+ * @enum {string}
+ */
+spf.state.Key = {
+  CACHE_COUNTER: 'cache-counter',
+  CACHE_MAX: 'cache-max',
+  CACHE_STORAGE: 'cache-storage',
+  CONFIG_VALUES: 'config',
+  HISTORY_CALLBACK: 'history-callback',
+  HISTORY_ERROR_CALLBACK: 'history-error-callback',
+  HISTORY_IGNORE_POP: 'history-ignore-pop',
+  HISTORY_INIT: 'history-init',
+  HISTORY_LISTENER: 'history-listener',
+  HISTORY_TIMESTAMP: 'history-timestamp',
+  HISTORY_URL: 'history-url',
+  NAV_COUNTER: 'nav-counter',
+  NAV_INIT: 'nav-init',
+  NAV_LISTENER: 'nav-listener',
+  NAV_PREFETCHES: 'nav-prefetches',
+  NAV_PROMOTE: 'nav-promote',
+  NAV_PROMOTE_TIME: 'nav-promote-time',
+  NAV_REFERER: 'nav-referer',
+  NAV_REQUEST: 'nav-request',
+  NAV_TIME: 'nav-time',
+  PREFETCH_LISTENER: 'prefetch-listener',
+  PUBSUB_SUBS: 'ps-s',
+  RESOURCE_PATHS_PREFIX: 'rsrc-p-',
+  RESOURCE_STATS: 'rsrc-s',
+  RESOURCE_URLS: 'rsrc-u',
+  SCRIPT_DEPS: 'js-d',
+  SCRIPT_URLS: 'js-u',
+  TASKS_UID: 'uid'
 };
 
 
