@@ -286,25 +286,15 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
       for (var key in xhr['resourceTiming']) {
         timing[key] = xhr['resourceTiming'][key];
       }
-    } else {
-      // Normalize startTime as base timing, accounting for the 2 clocks:
-      // one from JS main thread when startTime was first set as spf.now()
-      // with absolute time then another one from Resource Timing API which is
-      // relative to the time resource was put in the fetch queue. E.g.:
-      // 1. timing.startTime = now() // e.g.: 12340000
-      // 2. xhr is requested (put in browser fetch queue)
-      // 3. 50ms later resource is actually requested, i.e: res.startTime = 50
-      // 4. normalize startTime as timing.startTime + res.startTime // 12340050
-      // 5. then timing.navigationStart = timing.startTime // 12340050
-      var startTime = timing['startTime'] = timing['startTime'] +
-          Math.round(xhr['resourceTiming']['startTime'] || 0);
+    } else if (window.performance && window.performance.timing) {
       // Normalize relative Resource Timing values as
-      // Navigation Timing absolute values.
+      // Navigation Timing absolute values using navigationStart as base.
+      var navigationStart = window.performance.timing.navigationStart;
       for (var metric in xhr['resourceTiming']) {
         var value = xhr['resourceTiming'][metric];
         if (value !== undefined && (spf.string.endsWith(metric, 'Start') ||
-            spf.string.endsWith(metric, 'End'))) {
-          timing[metric] = startTime + Math.round(value);
+            spf.string.endsWith(metric, 'End') || metric == 'startTime')) {
+          timing[metric] = navigationStart + Math.round(value);
         }
       }
     }
