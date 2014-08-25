@@ -163,4 +163,4 @@ for (var ns in spf.main.extra_) {
 }
 
 // Signal that the API is ready with custom event.  Only supported in IE 9+.
-spf.dispatch('ready');
+spf.dispatch(spf.EventName.READY);

@@ -89,7 +89,7 @@ spf.execute = function(fn, var_args) {
 /**
  * Dispatches a custom event.
  *
- * @param {string} name The custom event name.
+ * @param {spf.EventName} name The custom event name.
  * @param {!Object=} opt_detail The custom event detail (data).
  * @return {boolean} False if the event was canceled.
  */
@@ -98,7 +98,7 @@ spf.dispatch = function(name, opt_detail) {
     var evt = document.createEvent('CustomEvent');
     var bubbles = true;
     var cancelable = true;
-    evt.initCustomEvent('spf' + name, bubbles, cancelable, opt_detail);
+    evt.initCustomEvent(name, bubbles, cancelable, opt_detail);
     return document.dispatchEvent(evt);
   }
   return true;
@@ -113,6 +113,27 @@ spf.dispatch = function(name, opt_detail) {
  */
 spf.now = function() {
   return (new Date()).getTime();
+};
+
+
+/**
+ * @enum {string}
+ */
+spf.EventName = {
+  CLICK: 'spfclick',
+  CSS_BEFORE_UNLOAD: 'spfcssbeforeunload',
+  CSS_UNLOAD: 'spfcssunload',
+  DONE: 'spfdone',
+  ERROR: 'spferror',
+  HISTORY: 'spfhistory',
+  JS_BEFORE_UNLOAD: 'spfjsbeforeunload',
+  JS_UNLOAD: 'spfjsunload',
+  PART_DONE: 'spfpartdone',
+  PART_PROCESS: 'spfpartprocess',
+  PROCESS: 'spfprocess',
+  READY: 'spfready',
+  RELOAD: 'spfreload',
+  REQUEST: 'spfrequest'
 };
 
 

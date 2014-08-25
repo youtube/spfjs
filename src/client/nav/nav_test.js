@@ -443,7 +443,7 @@ describe('spf.nav', function() {
       var proceed = spf.nav.dispatchError_(url, err);
       var evtName = spf.dispatch.calls[0].args[0];
       expect(spf.dispatch).toHaveBeenCalled();
-      expect(evtName).toEqual('error');
+      expect(evtName).toEqual(spf.EventName.ERROR);
       expect(proceed).toBe(true);
     });
 
@@ -520,7 +520,7 @@ describe('spf.nav', function() {
       spf.nav.dispatchReload_(url);
       var evtName = spf.dispatch.calls[0].args[0];
       expect(spf.dispatch).toHaveBeenCalled();
-      expect(evtName).toEqual('reload');
+      expect(evtName).toEqual(spf.EventName.RELOAD);
     });
 
 
@@ -538,7 +538,7 @@ describe('spf.nav', function() {
       var proceed = spf.nav.dispatchClick_(url, target);
       var evtName = spf.dispatch.calls[0].args[0];
       expect(spf.dispatch).toHaveBeenCalled();
-      expect(evtName).toEqual('click');
+      expect(evtName).toEqual(spf.EventName.CLICK);
       expect(proceed).toBe(true);
     });
 
@@ -564,7 +564,7 @@ describe('spf.nav', function() {
       var proceed = spf.nav.dispatchHistory_(url);
       var evtName = spf.dispatch.calls[0].args[0];
       expect(spf.dispatch).toHaveBeenCalled();
-      expect(evtName).toEqual('history');
+      expect(evtName).toEqual(spf.EventName.HISTORY);
       expect(proceed).toBe(true);
     });
 
@@ -592,7 +592,7 @@ describe('spf.nav', function() {
       var proceed = spf.nav.dispatchRequest_(url, referer, previous);
       var evtName = spf.dispatch.calls[0].args[0];
       expect(spf.dispatch).toHaveBeenCalled();
-      expect(evtName).toEqual('request');
+      expect(evtName).toEqual(spf.EventName.REQUEST);
       expect(proceed).toBe(true);
     });
 
@@ -671,7 +671,7 @@ describe('spf.nav', function() {
       var proceed = spf.nav.dispatchPartProcess_(url, partial);
       var evtName = spf.dispatch.calls[0].args[0];
       expect(spf.dispatch).toHaveBeenCalled();
-      expect(evtName).toEqual('partprocess');
+      expect(evtName).toEqual(spf.EventName.PART_PROCESS);
       expect(proceed).toBe(true);
     });
 
@@ -750,7 +750,7 @@ describe('spf.nav', function() {
       var proceed = spf.nav.dispatchPartDone_(url, partial);
       var evtName = spf.dispatch.calls[0].args[0];
       expect(spf.dispatch).toHaveBeenCalled();
-      expect(evtName).toEqual('partdone');
+      expect(evtName).toEqual(spf.EventName.PART_DONE);
       expect(proceed).toBe(true);
     });
 
@@ -829,7 +829,7 @@ describe('spf.nav', function() {
       var proceed = spf.nav.dispatchProcess_(url, response);
       var evtName = spf.dispatch.calls[0].args[0];
       expect(spf.dispatch).toHaveBeenCalled();
-      expect(evtName).toEqual('process');
+      expect(evtName).toEqual(spf.EventName.PROCESS);
       expect(proceed).toBe(true);
     });
 
@@ -908,7 +908,7 @@ describe('spf.nav', function() {
       var proceed = spf.nav.dispatchDone_(url, response);
       var evtName = spf.dispatch.calls[0].args[0];
       expect(spf.dispatch).toHaveBeenCalled();
-      expect(evtName).toEqual('done');
+      expect(evtName).toEqual(spf.EventName.DONE);
       expect(proceed).toBe(true);
     });
 
