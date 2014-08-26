@@ -165,14 +165,34 @@ spf.nav.getEventURL_ = function(evt) {
 
 
 /**
- * Whether this URL is eligible for navigation, according to callbacks,
- * navigation limits and session lifetime.
+ * Whether this URL is allowed for navigation, according to same-origin security
+ * policy.
  *
  * @param {string} url The URL to navigate to, without the SPF identifier.
  * @return {boolean}
  * @private
  */
-spf.nav.isNavigateEligible_ = function(url) {
+spf.nav.isAllowed_ = function(url) {
+  // If the destination is not same-origin, cancel.
+  // TODO(nicksay): Add CORS origin whitelist.
+  var destination = spf.url.origin(url);
+  if (destination != spf.url.origin(window.location.href)) {
+    spf.debug.warn('destination not same-origin');
+    return false;
+  }
+  return true;
+};
+
+
+/**
+ * Whether this URL is eligible for navigation, according to the configured
+ * limits and lifetime.
+ *
+ * @param {string} url The URL to navigate to, without the SPF identifier.
+ * @return {boolean}
+ * @private
+ */
+spf.nav.isEligible_ = function(url) {
   // If navigation is requested but SPF is not initialized, cancel.
   if (!spf.state.get(spf.state.Key.NAV_INIT)) {
     spf.debug.warn('navigation not initialized');
@@ -186,7 +206,7 @@ spf.nav.isNavigateEligible_ = function(url) {
     spf.debug.warn('navigation limit reached');
     return false;
   }
-  // If a session lifetime has been set and reached, redirect.
+  // If a session lifetime has been set and reached, cancel.
   var timestamp = parseInt(spf.state.get(spf.state.Key.NAV_TIME), 10) - 1;
   var age = spf.now() - timestamp;
   var lifetime = parseInt(spf.config.get('navigate-lifetime'), 10);
@@ -214,18 +234,24 @@ spf.nav.handleClick_ = function(evt) {
   }
   var url = spf.nav.getEventURL_(evt);
   if (url === null) {
-    // No relevant URL for event target.
+    // Ignore clicks if there's no relevant URL for the event target.
     return;
   }
-  // Ignore clicks to the same page or to empty URLs.
+  // Do nothing if click is to the same page or an empty URL.
   if (!url || url == window.location.href) {
     spf.debug.debug('    ignoring click to same page');
     // Prevent the default browser navigation to avoid reloads.
     evt.preventDefault();
     return;
   }
-  // Ignore clicks if the URL is not eligible for navigation.
-  if (!spf.nav.isNavigateEligible_(url)) {
+  if (spf.config.get('experimental-same-origin')) {
+    // Ignore clicks if the URL is not allowed (e.g. cross-domain).
+    if (!spf.nav.isAllowed_(url)) {
+      return;
+    }
+  }
+  // Ignore clicks if the URL is not eligible (e.g. limit reached).
+  if (!spf.nav.isEligible_(url)) {
     return;
   }
   // Ignore clicks if the "click" event is canceled.
@@ -272,8 +298,15 @@ spf.nav.handleHistory_ = function(url, opt_state) {
   var referer = opt_state && opt_state['spf-referer'];
   var current = opt_state && opt_state['spf-current'];
   spf.debug.debug('nav.handleHistory ', '(url=', url, 'state=', opt_state, ')');
-  // Reload if the URL is not eligible for navigation.
-  if (!spf.nav.isNavigateEligible_(url)) {
+  if (spf.config.get('experimental-same-origin')) {
+    // Reload if the URL is not allowed (e.g. cross-domain).
+    if (!spf.nav.isAllowed_(url)) {
+      spf.nav.reload(url, spf.nav.ReloadReason.FORBIDDEN);
+      return;
+    }
+  }
+  // Reload if the URL is not eligible (e.g. limit reached).
+  if (!spf.nav.isEligible_(url)) {
     spf.nav.reload(url, spf.nav.ReloadReason.INELIGIBLE);
     return;
   }
@@ -306,8 +339,15 @@ spf.nav.navigate = function(url, opt_options) {
   if (!url || url == window.location.href) {
     return;
   }
-  // Reload if the URL is not eligible for navigation.
-  if (!spf.nav.isNavigateEligible_(url)) {
+  if (spf.config.get('experimental-same-origin')) {
+    // Reload if the URL is not allowed (e.g. cross-domain).
+    if (!spf.nav.isAllowed_(url)) {
+      spf.nav.reload(url, spf.nav.ReloadReason.FORBIDDEN);
+      return;
+    }
+  }
+  // Reload if the URL is not eligible (e.g. limit reached).
+  if (!spf.nav.isEligible_(url)) {
     spf.nav.reload(url, spf.nav.ReloadReason.INELIGIBLE);
     return;
   }
@@ -1392,6 +1432,8 @@ spf.nav.ReloadReason = {
       '3: Navigation canceled by the partprocess event.',
   PROCESS_CANCELED: (!SPF_DEBUG) ? '4' :
       '4: Navigation canceled by the process event.',
+  FORBIDDEN: (!SPF_DEBUG) ? '9' :
+      '9: Destination forbidden by same-origin security.',
   ERROR: (!SPF_DEBUG) ? '10' :
       '10: An uncaught error occurred processing.'
 };

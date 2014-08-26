@@ -15,6 +15,60 @@ goog.require('spf.config');
 goog.require('spf.string');
 
 
+
+/**
+ * See {@link https://developer.mozilla.org/en-US/docs/Web/API/URLUtils}.
+ *
+ * @typedef {{
+ *   href: string,
+ *   protocol: string,
+ *   host: string,
+ *   hostname: string,
+ *   port: string,
+ *   pathname: string,
+ *   search: string,
+ *   hash: string,
+ *   username: string,
+ *   password: string,
+ *   origin: string
+ * }}
+ */
+spf.url.URLUtils;
+
+
+/**
+ * Returns a URLUtils compatible object for a given url. For the interface, see
+ * {@link https://developer.mozilla.org/en-US/docs/Web/API/URLUtils}.
+ *
+ * @param {string} url A relative or absolute URL.
+ * @return {spf.url.URLUtils} The URLUtils object.
+ */
+spf.url.utils = function(url) {
+  var aEl = document.createElement('a');
+  aEl.href = url;
+  var utils = {
+    href: aEl.href,
+    protocol: aEl.protocol,
+    host: aEl.host,
+    hostname: aEl.hostname,
+    port: aEl.port,
+    pathname: aEl.pathname,
+    search: aEl.search,
+    hash: aEl.hash,
+    username: aEl.username,
+    password: aEl.password
+  };
+  // The origin is the combination of scheme, domain, and port.
+  utils.origin = utils.protocol + '//' + utils.host;
+  // IE does not include the leading slash on a path. So if the path is
+  // available, but no leading slash is present, prepend one.
+  if (!utils.pathname || utils.pathname[0] != '/') {
+    utils.pathname = '/' + utils.pathname;
+  }
+  return utils;
+};
+
+
 /**
  * Converts a relative URL to absolute based on the current document domain.
  * Also removes the fragment from the URL, if one exists.
@@ -23,29 +77,32 @@ goog.require('spf.string');
  * @return {string} An absolute URL (with fragment removed, if possible).
  */
 spf.url.absolute = function(relative) {
-  var aEl = document.createElement('a');
-  aEl.href = relative;
-  return spf.url.unfragment(aEl.href);
+  var utils = spf.url.utils(relative);
+  return spf.url.unfragment(utils.href);
 };
 
 
 /**
- * Returns just the path portion of a given URL, relative or absolute.
+ * Returns the path portion of a given URL.
  *
- * @param {string} url The full URL.
+ * @param {string} url A relative or absolute URL.
  * @return {string} The path portion of the URL.
  */
 spf.url.path = function(url) {
-  var aEl = document.createElement('a');
-  aEl.href = url;
-  var path = aEl.pathname;
-  // IE does not include the leading slash on a path. So if the path is
-  // available, but no leading slash is present, prepend one.
-  if (!!path && path[0] == '/') {
-    return path;
-  } else {
-    return '/' + path;
-  }
+  var utils = spf.url.utils(url);
+  return utils.pathname;
+};
+
+
+/**
+ * Returns the origin of a given URL (scheme + domain + port).
+ *
+ * @param {string} url A relative or absolute URL.
+ * @return {string} The origin of the URL.
+ */
+spf.url.origin = function(url) {
+  var utils = spf.url.utils(url);
+  return utils.origin;
 };
 
 

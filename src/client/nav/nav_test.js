@@ -299,11 +299,11 @@ describe('spf.nav', function() {
       spyOn(spf.nav, 'getAncestorWithHref_').andCallFake(function() {
           return {href: evt.target.href}; });
       spyOn(spf.nav, 'getAncestorWithLinkClass_').andCallFake(objFunc);
-      spyOn(spf.nav, 'isNavigateEligible_').andCallFake(falseFunc);
+      spyOn(spf.nav, 'isEligible_').andCallFake(falseFunc);
 
       spf.nav.handleClick_(evt);
 
-      expect(spf.nav.isNavigateEligible_).toHaveBeenCalled();
+      expect(spf.nav.isEligible_).toHaveBeenCalled();
       expect(evt.defaultPrevented).toEqual(false);
       expect(spf.nav.navigate_).not.toHaveBeenCalled();
     });
@@ -325,15 +325,29 @@ describe('spf.nav', function() {
   });
 
 
-  describe('isNavigateEligible', function() {
+  describe('isAllowed', function() {
+
+
+    it('respects same-origin security', function() {
+      var sameDomainUrl = '/page';
+      var crossDomainUrl = 'https://www.google.com/';
+      expect(spf.nav.isAllowed_(sameDomainUrl)).toBe(true);
+      expect(spf.nav.isAllowed_(crossDomainUrl)).toBe(false);
+    });
+
+
+  });
+
+
+  describe('isEligible', function() {
 
 
     it('respects initialization', function() {
       var url = '/page';
       spf.state.set(spf.state.Key.NAV_INIT, false);
-      expect(spf.nav.isNavigateEligible_(url)).toBe(false);
+      expect(spf.nav.isEligible_(url)).toBe(false);
       spf.state.set(spf.state.Key.NAV_INIT, true);
-      expect(spf.nav.isNavigateEligible_(url)).toBe(true);
+      expect(spf.nav.isEligible_(url)).toBe(true);
     });
 
 
@@ -341,12 +355,12 @@ describe('spf.nav', function() {
       var url = '/page';
       spf.config.set('navigate-limit', 5);
       spf.state.set(spf.state.Key.NAV_COUNTER, 5);
-      expect(spf.nav.isNavigateEligible_(url)).toBe(false);
+      expect(spf.nav.isEligible_(url)).toBe(false);
       spf.state.set(spf.state.Key.NAV_COUNTER, 4);
-      expect(spf.nav.isNavigateEligible_(url)).toBe(true);
+      expect(spf.nav.isEligible_(url)).toBe(true);
       spf.config.set('navigate-limit', null);
       spf.state.set(spf.state.Key.NAV_COUNTER, 999999);
-      expect(spf.nav.isNavigateEligible_(url)).toBe(true);
+      expect(spf.nav.isEligible_(url)).toBe(true);
     });
 
 
@@ -354,12 +368,12 @@ describe('spf.nav', function() {
       var url = '/page';
       spf.config.set('navigate-lifetime', 1000);
       spf.state.set(spf.state.Key.NAV_TIME, spf.now() - 1000);
-      expect(spf.nav.isNavigateEligible_(url)).toBe(false);
+      expect(spf.nav.isEligible_(url)).toBe(false);
       spf.state.set(spf.state.Key.NAV_TIME, spf.now() - 500);
-      expect(spf.nav.isNavigateEligible_(url)).toBe(true);
+      expect(spf.nav.isEligible_(url)).toBe(true);
       spf.config.set('navigate-lifetime', null);
       spf.state.set(spf.state.Key.NAV_TIME, spf.now() - (10 * 24 * 60 * 60 * 1000));
-      expect(spf.nav.isNavigateEligible_(url)).toBe(true);
+      expect(spf.nav.isEligible_(url)).toBe(true);
     });
 
 
