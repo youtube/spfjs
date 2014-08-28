@@ -33,8 +33,3 @@ defaults:
       path: documentation
     values:
       layout: documentation
-  -
-    scope:
-      path: download
-    values:
-      layout: download

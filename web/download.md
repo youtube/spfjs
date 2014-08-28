@@ -1,6 +1,7 @@
 ---
 title: Download
 description: Get the code.
+layout: download
 ---
 
 > **Note:** Stable releases are coming soon.  Until then, you can download
@@ -34,4 +35,4 @@ After you've grabbed the code, **[get started][start]**.
 
 
 [zip]: https://github.com/youtube/spfjs/archive/master.zip
-[start]: ../documentation/start.html
+[start]: ../documentation/start/
