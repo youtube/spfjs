@@ -45,7 +45,10 @@ spf.url.URLUtils;
  */
 spf.url.utils = function(url) {
   var aEl = document.createElement('a');
+  // If the URL is relative, IE will not populate host/port parameters.
   aEl.href = url;
+  // Assigning the absolute URL back to the href value solves this IE bug.
+  aEl.href = aEl.href;
   var utils = {
     href: aEl.href,
     protocol: aEl.protocol,
