@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>SPF</title>
+<meta name="description" content="A JavaScript framework for navigation and page updates from YouTube.">
+
+<link rel="canonical" href="http://youtube.github.io/spfjs/">
+
+<!-- Add to homescreen for Chrome on Android -->
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" sizes="196x196" href="/spfjs/images/touch/chrome-touch-icon-196x196.png">
+
+<!-- Add to homescreen for Safari on iOS -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="SPF">
+
+<!-- Tile icon for Win8 (144x144 + tile color) -->
+<meta name="msapplication-TileImage" content="/spfjs/images/touch/ms-touch-icon-144x144-precomposed.png">
+<meta name="msapplication-TileColor" content="#3372DF">
+
+<link rel="stylesheet" href="/spfjs/assets/vendor/styles/wsk.css">
+<link rel="stylesheet" href="/spfjs/assets/styles/main.css">
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,600,900|Roboto+Condensed:300,300italic,400,700">
+
+</head>
+<body class="home">
+
+<header id="app-bar" class="app-bar promote-layer">
+  <div class="app-bar-container">
+    <button id="menu" class="menu" title="Menu"></button>
+    <h1 class="logo"><a href="/spfjs/">SPF</a></h1>
+    <section class="app-bar-actions">
+      <a href="#"><i class="icon icon-chevron-up"></i> Top</a>
+    </section>
+  </div>
+</header>
+
+<div class="navdrawer">
+  <nav id="nav" class="navdrawer-container promote-layer">
+    <h4>Navigation</h4>
+    
+<ul>
+  
+    <li class="index">
+      <a href="/spfjs/">SPF</a>
+    </li>
+  
+    <li >
+      <a href="/spfjs/documentation/">Documentation</a>
+    </li>
+  
+    <li >
+      <a href="/spfjs/download/">Download</a>
+    </li>
+  
+</ul>
+
+  </nav>
+</div>
+
+<section class="stage">
+  <div class="container"><div class="container">
+    <h1><abbr>SPF</abbr> <span>Structured Page Fragments</span></h1>
+  </div></div>
+</section>
+
+<main class="clear">
+  <div class="container">
+
+    <h2>A lightweight framework that handles navigation and updates of page sections.</h2>
+
+<p>Using progressive enhancement and HTML5, SPF seamlessly updates pages with
+server-side rendering. Only document fragments are sent, and corresponding page
+sections are asynchronously updated when received. The SPF JS has no
+dependencies and is a single standalone file.  It is only ~9K when minified and
+gzipped, and it may be asynchronously delay-loaded.</p>
+
+<h2>Overview</h2>
+
+<p>When someone first arrives at a site, content is sent from the server and
+rendered normally.  This is <em>static</em> navigation.  But when going to the next
+page, only document fragments are sent, and sections are updated accordingly.
+We call this <em>dynamic</em> navigation.  The basic navigation flow is:</p>
+
+<ol>
+<li>Client handles click; adds history.</li>
+<li>Client requests fragments.</li>
+<li>Server responds with fragments.</li>
+<li>Client updates page.</li>
+</ol>
+
+<h2>Benefits</h2>
+
+<p>SPF allows you to leverage the benefits of an initial page load using static
+navigation, while gaining the performance and user experience benefits of
+dynamic rendering for subsequent pages.</p>
+
+<blockquote>
+<p><strong>User Experience</strong></p>
+
+<ul>
+<li>Fastest possible first page rendering</li>
+<li>Persistent interface stays responsive during navigation</li>
+</ul>
+</blockquote>
+
+<!-- -->
+
+<blockquote>
+<p><strong>Performance</strong></p>
+
+<ul>
+<li>Leverage existing web performance techniques for static rendering</li>
+<li>Subsequent responses are smaller</li>
+<li>Scripts and styles are already loaded for the next navigation</li>
+</ul>
+</blockquote>
+
+<!-- -->
+
+<blockquote>
+<p><strong>Development</strong></p>
+
+<ul>
+<li>Maintain productivity using the same code for static and dynamic rendering</li>
+<li>Use any server-side language and any template system</li>
+<li>Send data for use with a client-side system</li>
+</ul>
+</blockquote>
+
+<h2>Features</h2>
+
+<p>SPF has additional, optional features you can use to improve your site.</p>
+
+<blockquote>
+<p><strong>Caching</strong></p>
+
+<p>In some web apps, HTTP caching isn&#39;t appropriate.  SPF allows you
+to cache responses in client memory according to your application-specific
+parameters.</p>
+</blockquote>
+
+<!-- -->
+
+<blockquote>
+<p><strong>Multipart</strong></p>
+
+<p>SPF supports streaming multipart responses in chunks to enable
+on-the-fly processing.  This speeds up navigation by starting rendering early.</p>
+</blockquote>
+
+<!-- -->
+
+<blockquote>
+<p><strong>Prefetching</strong></p>
+
+<p>Make requests early, automatically or manually, to predictively
+boost performance with instant access to future pages.</p>
+</blockquote>
+
+
+  </div>
+</main>
+
+<section class="home-promo">
+  <div class="container">
+    <ul class="list-centered list--reset clear">
+      <li class="g-medium--half g-wide--1 g-wide--push-1 theme--spf">
+        <a class="themed" href="/spfjs/documentation/">
+          <span class="icon-circle--large themed--background"><i class="icon icon-lessons"></i></span>
+          <h3 class="large">Learn More</h3>
+          <p></p>
+        </a>
+      </li>
+      <li class="g-medium--half g-medium--last g-wide--1 g-wide--last theme--spf">
+        <a class="themed" href="/spfjs/download/">
+          <span class="icon-circle--large themed--background"><i class="icon icon-google-dev"></i></span>
+          <h3 class="large">Get the Code</h3>
+          <p></p>
+        </a>
+      </li>
+    </ul>
+  </div>
+</section>
+
+
+<footer>
+  <div class="container">
+    <p class="small">&copy; 2014 Google. Licensed under <a href="http://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</p>
+  </div>
+</footer>
+
+<script src="/spfjs/assets/scripts/main.js"></script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if (window.location.hostname == 'youtube.github.io') {
+    ga('create', 'UA-52278317-1', 'auto');
+    ga('send', 'pageview');
+  }
+</script>
+
+</body>
+</html>
