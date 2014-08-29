@@ -317,7 +317,7 @@ footer {
   font-weight: 300;
   padding-top: 0;
 }
-@media all and (min-width: 640px) {
+@media all and (min-width: 620px) {
   .home main h2 {
     padding-left: 15%;
     padding-right: 15%;
@@ -352,7 +352,7 @@ footer {
 .home main ol li {
   padding: 84px 0 1.5em 0;
 }
-@media all and (min-width: 640px) {
+@media all and (min-width: 620px) {
   .home main ol li {
     float: left;
     width: 25%;
@@ -367,7 +367,7 @@ footer {
   margin: 0 auto;
   padding: 0 0 1.5em 0;
 }
-@media all and (min-width: 640px) {
+@media all and (min-width: 620px) {
   .home main blockquote {
     float: left;
     width: 33.3333%;
@@ -427,6 +427,21 @@ main nav {
 .download-promo {
   margin-top: 26px;
   margin-bottom: 52px;
+}
+
+.feedback {
+  clear: both;
+  padding-top: 6em;
+  overflow: hidden;
+}
+.feedback footer {
+  border: 1px solid #D7DBEC;
+  border-width: 1px 0;
+  padding-top: 0;
+  padding-bottom: 1.6250em;
+}
+.feedback p {
+  font-size: 16px;
 }
 
 
