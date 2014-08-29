@@ -43,11 +43,11 @@ describe('spf.cache', function() {
 
   describe('get', function() {
 
-    it('missing data', function() {
+    it('returns undefined on missing data', function() {
       expect(spf.cache.get('foo')).toBeUndefined();
     });
 
-    it('valid data', function() {
+    it('returns valid data', function() {
       spf.cache.set('foo', 'value');
       expect(spf.cache.get('foo')).toEqual('value');
       var value = [1, 2, {'a': 'b'}, 3, 4];
@@ -55,7 +55,7 @@ describe('spf.cache', function() {
       expect(spf.cache.get('foo')).toBe(value);  // Exact match.
     });
 
-    it('expired data', function() {
+    it('returns undefined on expired data', function() {
       spf.cache.set('foo', 'value1', 100);
       spf.cache.set('bar', 'value2', 200);
       expect(spf.cache.get('foo')).toEqual('value1');
@@ -68,7 +68,32 @@ describe('spf.cache', function() {
       expect(spf.cache.get('bar')).toBeUndefined();
     });
 
-    it('cache-max = finite', function() {
+    it('collects the oldest data', function() {
+      spf.config.set('cache-max', 5);
+      for (var i = 1; i < 6; i++) {
+        spf.cache.set('foo' + i, 'value' + i);
+      }
+      expect(spf.cache.get('foo5')).toEqual('value5');
+      spf.cache.set('foo6', 'value6');
+      spf.cache.collect();
+      expect(spf.cache.get('foo1')).toBeUndefined();
+      expect(spf.cache.get('foo6')).toEqual('value6');
+    });
+
+    it('uses uncollected data', function() {
+      spf.config.set('cache-max', 5);
+      for (var i = 1; i < 6; i++) {
+        spf.cache.set('foo' + i, 'value' + i);
+      }
+      expect(spf.cache.get('foo5')).toEqual('value5');
+      spf.cache.set('foo6', 'value6');
+      // foo1 will be removed from the cache on the next collection, but until
+      // then, it's still available to cache requests.
+      expect(spf.cache.get('foo1')).toEqual('value1');
+      expect(spf.cache.get('foo6')).toEqual('value6');
+    });
+
+    it('updates the recency when accessed', function() {
       spf.config.set('cache-max', 5);
       for (var i = 1; i < 6; i++) {
         spf.cache.set('foo' + i, 'value' + i);
@@ -76,11 +101,15 @@ describe('spf.cache', function() {
       expect(spf.cache.get('foo1')).toEqual('value1');
       expect(spf.cache.get('foo5')).toEqual('value5');
       spf.cache.set('foo6', 'value6');
-      expect(spf.cache.get('foo1')).toBeUndefined();
+      spf.cache.collect();
+      // When foo1 was accessed, its recency was updated to move it to the top
+      // of the cache, leaving foo2 as the oldest value.
+      expect(spf.cache.get('foo1')).toEqual('value1');
+      expect(spf.cache.get('foo2')).toBeUndefined();
       expect(spf.cache.get('foo6')).toEqual('value6');
     });
 
-    it('cache-max = infinite', function() {
+    it('retains all values with an infinite cache-max', function() {
       spf.config.set('cache-max', null);
       for (var i = 1; i < 1000; i++) {
         spf.cache.set('foo' + i, 'value' + i);
@@ -95,7 +124,7 @@ describe('spf.cache', function() {
       expect(spf.cache.get('foo1999')).toEqual('value1999');
     });
 
-    it('cache-max = 0', function() {
+    it('retains nothing with a cache of 0', function() {
       // When cache-max = 0, there is no cache.
       spf.config.set('cache-max', 0);
       for (var i = 0; i < 10; i++) {
@@ -130,20 +159,52 @@ describe('spf.cache', function() {
     expect(spf.cache.get('bar')).toBeUndefined();
   });
 
-  it('collect', function() {
-    spf.cache.set('foo', 'value1', 100);
-    spf.cache.set('bar', 'value2', 200);
-    spf.cache.collect();
-    expect('foo' in storage).toBe(true);
-    expect('bar' in storage).toBe(true);
-    time.advance = 100;
-    spf.cache.collect();
-    expect('foo' in storage).toBe(false);
-    expect('bar' in storage).toBe(true);
-    time.advance = 200;
-    spf.cache.collect();
-    expect('foo' in storage).toBe(false);
-    expect('bar' in storage).toBe(false);
+  describe('collect', function() {
+    it('removes data after the lifetime expires', function() {
+      spf.cache.set('foo', 'value1', 100);
+      spf.cache.set('bar', 'value2', 200);
+      spf.cache.collect();
+      expect('foo' in storage).toBe(true);
+      expect('bar' in storage).toBe(true);
+      time.advance = 100;
+      spf.cache.collect();
+      expect('foo' in storage).toBe(false);
+      expect('bar' in storage).toBe(true);
+      time.advance = 200;
+      spf.cache.collect();
+      expect('foo' in storage).toBe(false);
+      expect('bar' in storage).toBe(false);
+    });
+
+    it('prioritizes lifetime over recency', function() {
+      spf.config.set('cache-max', 5);
+      for (var i = 1; i < 6; i++) {
+        spf.cache.set('foo' + i, 'value' + i);
+      }
+      spf.cache.set('foo6', 'value6', 100);
+      expect('foo1' in storage).toBe(true);
+      expect('foo6' in storage).toBe(true);
+      time.advance = 100;
+      spf.cache.collect();
+      expect('foo1' in storage).toBe(true);
+      expect('foo6' in storage).toBe(false);
+    });
+
+    it('removes both lifetime and oldest data', function() {
+      spf.config.set('cache-max', 5);
+      for (var i = 1; i < 7; i++) {
+        spf.cache.set('foo' + i, 'value' + i);
+      }
+      spf.cache.set('foo7', 'value7', 100);
+      expect('foo1' in storage).toBe(true);
+      expect('foo2' in storage).toBe(true);
+      expect('foo7' in storage).toBe(true);
+      time.advance = 100;
+      spf.cache.collect();
+      expect('foo1' in storage).toBe(false);
+      expect('foo2' in storage).toBe(true);
+      expect('foo7' in storage).toBe(false);
+    });
   });
 
 });
