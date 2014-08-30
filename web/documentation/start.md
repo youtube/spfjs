@@ -42,4 +42,4 @@ Then, add the script to your page and initialize SPF:
 ```
 
 
-[download]: ../download/
+[download]: ../../download/
