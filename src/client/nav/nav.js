@@ -199,7 +199,8 @@ spf.nav.isEligible_ = function(url) {
     return false;
   }
   // If a session limit has been set and reached, cancel.
-  var count = (parseInt(spf.state.get(spf.state.Key.NAV_COUNTER), 10) || 0) + 1;
+  var count = parseInt(spf.state.get(spf.state.Key.NAV_COUNTER), 10) || 0;
+  count++;
   var limit = parseInt(spf.config.get('navigate-limit'), 10);
   limit = isNaN(limit) ? Infinity : limit;
   if (count > limit) {
@@ -207,7 +208,8 @@ spf.nav.isEligible_ = function(url) {
     return false;
   }
   // If a session lifetime has been set and reached, cancel.
-  var timestamp = parseInt(spf.state.get(spf.state.Key.NAV_TIME), 10) - 1;
+  var timestamp = parseInt(spf.state.get(spf.state.Key.NAV_TIME), 10);
+  timestamp--;
   var age = spf.now() - timestamp;
   var lifetime = parseInt(spf.config.get('navigate-lifetime'), 10);
   lifetime = isNaN(lifetime) ? Infinity : lifetime;
@@ -702,7 +704,8 @@ spf.nav.handleNavigateRedirect_ = function(options, redirectUrl) {
  * Cancels the current navigation request, if any.
  */
 spf.nav.cancel = function() {
-  var xhr = /** @type {XMLHttpRequest} */ (spf.state.get(spf.state.Key.NAV_REQUEST));
+  var xhr = /** @type {XMLHttpRequest} */ (
+      spf.state.get(spf.state.Key.NAV_REQUEST));
   if (xhr) {
     spf.debug.warn('aborting previous navigate ',
                    'xhr=', xhr);

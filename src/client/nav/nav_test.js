@@ -366,13 +366,17 @@ describe('spf.nav', function() {
 
     it('respects session lifetime', function() {
       var url = '/page';
+      // Lifetime at 1s, age at 1s should be expired.
       spf.config.set('navigate-lifetime', 1000);
       spf.state.set(spf.state.Key.NAV_TIME, spf.now() - 1000);
       expect(spf.nav.isEligible_(url)).toBe(false);
+      // Lifetime at 1s, age at 0.5s should be unexpired.
       spf.state.set(spf.state.Key.NAV_TIME, spf.now() - 500);
       expect(spf.nav.isEligible_(url)).toBe(true);
+      // Lifetime at unlimited, age at 10d should be unexpired.
       spf.config.set('navigate-lifetime', null);
-      spf.state.set(spf.state.Key.NAV_TIME, spf.now() - (10 * 24 * 60 * 60 * 1000));
+      // 864000000ms = 10d * 24hr/d * 60min/hr * 60s/min * 1000ms/s.
+      spf.state.set(spf.state.Key.NAV_TIME, spf.now() - 864000000);
       expect(spf.nav.isEligible_(url)).toBe(true);
     });
 

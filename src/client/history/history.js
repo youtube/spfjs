@@ -197,27 +197,28 @@ spf.history.pop_ = function(evt) {
     return;
   }
   // Avoid the initial event on first load for a state.
-  if (evt.state) {
-    var state = evt.state;
-    var timestamp = state['spf-timestamp'];
-    // If the URL is the same and a state is present, the browser has left
-    // and returned to first load via back/forward.  In this case, reset
-    // the state to the original.
-    if (url == spf.state.get(spf.state.Key.HISTORY_URL)) {
-      spf.state.set(spf.state.Key.HISTORY_TIMESTAMP, timestamp);
-      spf.history.doReplaceState_(state, '', url);
-      spf.debug.debug('    replaceState:  ', 'url=', url, 'state=', state);
-    } else {
-      var current = parseInt(spf.state.get(spf.state.Key.HISTORY_TIMESTAMP), 10);
-      state['spf-back'] = (timestamp < current);
-      state['spf-current'] = spf.state.get(spf.state.Key.HISTORY_URL);
-      spf.state.set(spf.state.Key.HISTORY_TIMESTAMP, timestamp);
-      spf.state.set(spf.state.Key.HISTORY_URL, url);
-      var callback = /** @type {function(string, Object=)} */ (
-          spf.state.get(spf.state.Key.HISTORY_CALLBACK));
-      if (callback) {
-        callback(url, state);
-      }
+  if (!evt.state) {
+    return;
+  }
+  var state = evt.state;
+  var timestamp = state['spf-timestamp'];
+  // If the URL is the same and a state is present, the browser has left
+  // and returned to first load via back/forward.  In this case, reset
+  // the state to the original.
+  if (url == spf.state.get(spf.state.Key.HISTORY_URL)) {
+    spf.state.set(spf.state.Key.HISTORY_TIMESTAMP, timestamp);
+    spf.history.doReplaceState_(state, '', url);
+    spf.debug.debug('    replaceState:  ', 'url=', url, 'state=', state);
+  } else {
+    var current = parseInt(spf.state.get(spf.state.Key.HISTORY_TIMESTAMP), 10);
+    state['spf-back'] = (timestamp < current);
+    state['spf-current'] = spf.state.get(spf.state.Key.HISTORY_URL);
+    spf.state.set(spf.state.Key.HISTORY_TIMESTAMP, timestamp);
+    spf.state.set(spf.state.Key.HISTORY_URL, url);
+    var callback = /** @type {function(string, Object=)} */ (
+        spf.state.get(spf.state.Key.HISTORY_CALLBACK));
+    if (callback) {
+      callback(url, state);
     }
   }
 };

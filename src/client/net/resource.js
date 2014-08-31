@@ -203,7 +203,7 @@ spf.net.resource.create = function(type, url, opt_callback, opt_document) {
     }
     if (el && el.parentNode && doc == document && !SPF_DEBUG) {
       // Remove scripts afterwards to avoid unnecessary increased DOM size.
-      el.parentNode.removeChild(el)
+      el.parentNode.removeChild(el);
     }
     // IE 10 has a bug where it will synchronously call load handlers for
     // cached resources, force this to be async for consistency.
@@ -423,7 +423,7 @@ spf.net.resource.eval = function(type, text, name) {
   }
   previous = previous && previous[0];
   if (previous) {
-    spf.net.resource.destroy(type, previous)
+    spf.net.resource.destroy(type, previous);
   }
 };
 

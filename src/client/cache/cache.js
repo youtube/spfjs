@@ -195,7 +195,8 @@ spf.cache.create_ = function(key, data, lifetime) {
  * @private
  */
 spf.cache.updateCount_ = function(unit) {
-  var count = (parseInt(spf.state.get(spf.state.Key.CACHE_COUNTER), 10) || 0) + 1;
+  var count = parseInt(spf.state.get(spf.state.Key.CACHE_COUNTER), 10) || 0;
+  count++;
   spf.state.set(spf.state.Key.CACHE_COUNTER, count);
 
   unit.count = count;
