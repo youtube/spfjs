@@ -5,7 +5,7 @@ $# See the LICENSE file for details.
 
 $def _stylesheet():
   <!-- This style is inlined here for demo purposes. -->
-  <style type="text/css">
+  <style name="chunked">
     #chunked-actions p { float: left;
                          width: 44%; height: 4em;
                          margin: 1em; padding: 1em;
@@ -21,7 +21,7 @@ $def _attributes():
   { "nav": { "class": "test" } }
 
 $def _javascript():
-  <script src="/static/app-chunked.js"></script>
+  <script src="/static/app-chunked.js" name="chunked"></script>
 
 
 $var title: Chunked Test

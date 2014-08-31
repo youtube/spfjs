@@ -75,7 +75,7 @@ spf.state.Key = {
   PREFETCH_LISTENER: 'prefetch-listener',
   PUBSUB_SUBS: 'ps-s',
   RESOURCE_PATHS_PREFIX: 'rsrc-p-',
-  RESOURCE_STATS: 'rsrc-s',
+  RESOURCE_STATUS: 'rsrc-s',
   RESOURCE_URLS: 'rsrc-u',
   SCRIPT_DEPS: 'js-d',
   SCRIPT_URLS: 'js-u',

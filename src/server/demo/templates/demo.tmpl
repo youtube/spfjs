@@ -8,7 +8,7 @@ $# See the LICENSE file for details.
 
 $def _stylesheet():
   <!-- This style is inlined here for demo purposes. -->
-  <style type="text/css">
+  <style name="demo-inline">
     .demo p { float: left;
               width: 44%; height: 9em;
               margin: 1em; padding: 1em;
@@ -20,7 +20,7 @@ $def _stylesheet():
     .demo .sun img { height: 3em;
                      vertical-align: middle; }
   </style>
-  <link rel="stylesheet" href="/static/app-demo.css">
+  <link rel="stylesheet" href="/static/app-demo.css" name="demo-external">
 
 $def _attributes():
   { "nav": { "class": "demo$page_num" } }
@@ -33,7 +33,7 @@ $var attributes: $:_attributes()
 <div id="demo" class="pane demo">
   <h1>Demo Page $page_num</h1>
   <!-- Demonstrate scripts in the middle of a content fragment -->
-  <script src="/static/app-demo.js"></script>
+  <script src="/static/app-demo.js" name="demo"></script>
   <script>
     app.log('demo $page_num: embedded javascript')
     app.log('external js is loaded = ' + !!(window.app && app.demo && app.demo.loaded));
