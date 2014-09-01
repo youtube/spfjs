@@ -1089,7 +1089,7 @@ spf.nav.dispatchError_ = function(url, err, opt_options, opt_noEvents) {
   var fn = options[spf.nav.Callback.ERROR];
   var proceed = spf.nav.callback(fn, detail);
   if (proceed && !opt_noEvents) {
-    proceed = spf.dispatch(spf.nav.Event.ERROR, detail);
+    proceed = spf.dispatch(spf.EventName.ERROR, detail);
   }
   return proceed;
 };
@@ -1106,7 +1106,7 @@ spf.nav.dispatchError_ = function(url, err, opt_options, opt_noEvents) {
  */
 spf.nav.dispatchReload_ = function(url, reason) {
   var detail = {'url': url, 'reason': reason};
-  spf.dispatch(spf.nav.Event.RELOAD, detail);
+  spf.dispatch(spf.EventName.RELOAD, detail);
 };
 
 
@@ -1122,7 +1122,7 @@ spf.nav.dispatchReload_ = function(url, reason) {
  */
 spf.nav.dispatchClick_ = function(url, target) {
   var detail = {'url': url, 'target': target};
-  return spf.dispatch(spf.nav.Event.CLICK, detail);
+  return spf.dispatch(spf.EventName.CLICK, detail);
 };
 
 
@@ -1140,7 +1140,7 @@ spf.nav.dispatchClick_ = function(url, target) {
  */
 spf.nav.dispatchHistory_ = function(url, opt_referer, opt_previous) {
   var detail = {'url': url, 'referer': opt_referer, 'previous': opt_previous};
-  return spf.dispatch(spf.nav.Event.HISTORY, detail);
+  return spf.dispatch(spf.EventName.HISTORY, detail);
 };
 
 
@@ -1169,7 +1169,7 @@ spf.nav.dispatchRequest_ = function(url, referer, previous, opt_options,
   var fn = options[spf.nav.Callback.REQUEST];
   var proceed = spf.nav.callback(fn, detail);
   if (proceed && !opt_noEvents) {
-    proceed = spf.dispatch(spf.nav.Event.REQUEST, detail);
+    proceed = spf.dispatch(spf.EventName.REQUEST, detail);
   }
   return proceed;
 };
@@ -1199,7 +1199,7 @@ spf.nav.dispatchPartProcess_ = function(url, partial, opt_options,
   var fn = options[spf.nav.Callback.PART_PROCESS];
   var proceed = spf.nav.callback(fn, detail);
   if (proceed && !opt_noEvents) {
-    proceed = spf.dispatch(spf.nav.Event.PART_PROCESS, detail);
+    proceed = spf.dispatch(spf.EventName.PART_PROCESS, detail);
   }
   return proceed;
 };
@@ -1228,7 +1228,7 @@ spf.nav.dispatchPartDone_ = function(url, partial, opt_options, opt_noEvents) {
   var fn = options[spf.nav.Callback.PART_DONE];
   var proceed = spf.nav.callback(fn, detail);
   if (proceed && !opt_noEvents) {
-    proceed = spf.dispatch(spf.nav.Event.PART_DONE, detail);
+    proceed = spf.dispatch(spf.EventName.PART_DONE, detail);
   }
   return proceed;
 };
@@ -1257,7 +1257,7 @@ spf.nav.dispatchProcess_ = function(url, response, opt_options, opt_noEvents) {
   var fn = options[spf.nav.Callback.PROCESS];
   var proceed = spf.nav.callback(fn, detail);
   if (proceed && !opt_noEvents) {
-    proceed = spf.dispatch(spf.nav.Event.PROCESS, detail);
+    proceed = spf.dispatch(spf.EventName.PROCESS, detail);
   }
   return proceed;
 };
@@ -1286,7 +1286,7 @@ spf.nav.dispatchDone_ = function(url, response, opt_options, opt_noEvents) {
   var fn = options[spf.nav.Callback.DONE];
   var proceed = spf.nav.callback(fn, detail);
   if (proceed && !opt_noEvents) {
-    proceed = spf.dispatch(spf.nav.Event.DONE, detail);
+    proceed = spf.dispatch(spf.EventName.DONE, detail);
   }
   return proceed;
 };
@@ -1404,21 +1404,6 @@ spf.nav.Callback = {
   DONE: 'onDone'
 };
 
-
-/**
- * @enum {string}
- */
-spf.nav.Event = {
-  ERROR: 'error',
-  RELOAD: 'reload',
-  CLICK: 'click',
-  HISTORY: 'history',
-  REQUEST: 'request',
-  PART_PROCESS: 'partprocess',
-  PART_DONE: 'partdone',
-  PROCESS: 'process',
-  DONE: 'done'
-};
 
 /**
  * @enum {string}

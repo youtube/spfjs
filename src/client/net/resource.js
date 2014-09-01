@@ -73,8 +73,8 @@ spf.net.resource.load = function(type, urls, opt_nameOrFn, opt_fn) {
     var previous = spf.net.resource.urls.get(type, name);
     // If loading new resources for a name, handle unloading previous ones.
     if (!complete && previous) {
-      var evt = isJS ? spf.net.resource.Event.JS_BEFORE_UNLOAD :
-                       spf.net.resource.Event.CSS_BEFORE_UNLOAD;
+      var evt = isJS ? spf.EventName.JS_BEFORE_UNLOAD :
+                       spf.EventName.CSS_BEFORE_UNLOAD;
       spf.dispatch(evt, {'name': name, 'urls': previous});
       spf.net.resource.urls.clear(type, name);
       done = function() {
@@ -133,8 +133,8 @@ spf.net.resource.unload_ = function(type, name, urls) {
   var isJS = type == spf.net.resource.Type.JS;
   if (urls.length) {
     spf.debug.debug('  > resource.unload', type, urls);
-    var evt = isJS ? spf.net.resource.Event.JS_UNLOAD :
-                     spf.net.resource.Event.CSS_UNLOAD;
+    var evt = isJS ? spf.EventName.JS_UNLOAD :
+                     spf.EventName.CSS_UNLOAD;
     spf.dispatch(evt, {'name': name, 'urls': urls});
     spf.array.each(urls, function(url) {
       spf.net.resource.destroy(type, url);
@@ -697,17 +697,6 @@ spf.net.resource.State = {
 spf.net.resource.Type = {
   CSS: 'css',
   JS: 'js'
-};
-
-
-/**
- * @enum {string}
- */
-spf.net.resource.Event = {
-  CSS_BEFORE_UNLOAD: 'cssbeforeunload',
-  CSS_UNLOAD: 'cssunload',
-  JS_BEFORE_UNLOAD: 'jsbeforeunload',
-  JS_UNLOAD: 'jsunload'
 };
 
 
