@@ -17,8 +17,11 @@ goog.require('spf.state');
 
 
 /**
- * Gets data from the cache.  If the data age exceeds the data lifetime or
- * the globally configured maximum, no data is returned.
+ * Gets data from the cache.  If the data age exceeds the data lifetime, no
+ * data is returned.
+ *
+ * If data is successfully returned from cache, the data's moved to the top of
+ * the cache, making it less likely to be garbage collected.
  *
  * @param {string} key Key for the data object.
  * @return {*} The data, if it exists.
@@ -31,6 +34,7 @@ spf.cache.get = function(key) {
   var unit = storage[key];
   // If the data is valid, return it.
   if (spf.cache.valid_(unit)) {
+    spf.cache.updateCount_(unit);
     return unit['data'];
   }
   // Otherwise, the data should be removed from the cache.
@@ -96,6 +100,8 @@ spf.cache.collect = function() {
       delete storage[key];
     }
   }
+  // Trim the oldest entries if the cache is still above the max size.
+  spf.cache.trim_();
 };
 
 
@@ -134,15 +140,37 @@ spf.cache.valid_ = function(unit) {
   lifetime = isNaN(lifetime) ? Infinity : lifetime;
   var timestamp = unit['time'];
   var age = spf.now() - timestamp;
-  // A max of NaN is considered infinite.  If the count is less than the max,
-  // then the unit is valid.  Note that if the count is missing, the unit
-  // will not be valid.
+  return age < lifetime;
+};
+
+
+/**
+ * Trim down the cache units to fit under the cache maximum, based on the
+ * lowest count value (oldest entry).
+ *
+ * @private
+ */
+spf.cache.trim_ = function() {
+  var storage = spf.cache.storage_();
   var max = parseInt(spf.config.get('cache-max'), 10);
   max = isNaN(max) ? Infinity : max;
-  var current = parseInt(spf.state.get(spf.state.Key.CACHE_COUNTER), 10) || 0;
-  var count = current - unit['count'];
-  // Both a valid age and count are required.
-  return (age < lifetime) && (count < max);
+  var extra = Object.keys(storage).length - max;
+  // If the current cache is smaller than the max, no trimming is needed.
+  if (extra <= 0) {
+    return;
+  }
+
+  // Remove the smallest element 'extra' times to trim the cache down to size.
+  for (var i = 0; i < extra; i++) {
+    var min = {count: Infinity};
+    for (key in storage) {
+      if (storage[key].count < min.count) {
+        min.key = key;
+        min.count = storage[key].count;
+      }
+    }
+    delete storage[min.key];
+  }
 };
 
 
@@ -154,10 +182,23 @@ spf.cache.valid_ = function(unit) {
  * @private
  */
 spf.cache.create_ = function(key, data, lifetime) {
+  var unit = {'data': data, 'life': lifetime, 'time': spf.now(), 'count': 0};
+  spf.cache.updateCount_(unit);
+  return unit;
+};
+
+
+/**
+ * Update the count of the given unit and the global cache counter to the
+ * latest.
+ * @param {spf.cache.Unit} unit The cache unit.
+ * @private
+ */
+spf.cache.updateCount_ = function(unit) {
   var count = (parseInt(spf.state.get(spf.state.Key.CACHE_COUNTER), 10) || 0) + 1;
   spf.state.set(spf.state.Key.CACHE_COUNTER, count);
 
-  return {'data': data, 'life': lifetime, 'time': spf.now(), 'count': count};
+  unit.count = count;
 };
 
 
