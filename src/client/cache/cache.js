@@ -163,7 +163,7 @@ spf.cache.trim_ = function() {
   // Remove the smallest element 'extra' times to trim the cache down to size.
   for (var i = 0; i < extra; i++) {
     var min = {count: Infinity};
-    for (key in storage) {
+    for (var key in storage) {
       if (storage[key].count < min.count) {
         min.key = key;
         min.count = storage[key].count;
