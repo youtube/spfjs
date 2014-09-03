@@ -142,8 +142,10 @@ spf.tasks.cancelAllExcept = function(opt_keyPrefix, opt_skipKey) {
  * @return {string} The unique key.
  */
 spf.tasks.key = function(obj) {
-  var uid = (parseInt(spf.state.get(spf.state.Key.TASKS_UID), 10) || 0) + 1;
-  return obj['spf-key'] || (obj['spf-key'] = '' + spf.state.set(spf.state.Key.TASKS_UID, uid));
+  var uid = parseInt(spf.state.get(spf.state.Key.TASKS_UID), 10) || 0;
+  uid++;
+  return obj['spf-key'] || (
+      obj['spf-key'] = '' + spf.state.set(spf.state.Key.TASKS_UID, uid));
 };
 
 

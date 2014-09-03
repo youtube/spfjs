@@ -635,7 +635,7 @@ spf.nav.response.installScripts_ = function(result, opt_callback) {
     index++;
     if (index < result.scripts.length) {
       var item = result.scripts[index];
-      var fn = function(){};
+      var fn = function() {};
       if (item.url) {
         if (spf.config.get('experimental-execute-unified')) {
           if (item.name) {
@@ -757,7 +757,6 @@ spf.nav.response.installStyles_ = function(result) {
   // Install the styles.
   for (var i = 0, l = result.styles.length; i < l; i++) {
     var item = result.styles[i];
-    var fn = function(){};
     if (item.url) {
       if (spf.config.get('experimental-execute-unified')) {
         if (item.name) {
