@@ -69,6 +69,10 @@ describe('spf.cache', function() {
     });
 
     it('collects the oldest data', function() {
+      // Collection tests aren't supported unless Object.keys is available.
+      if (!Object.keys) {
+        return;
+      }
       spf.config.set('cache-max', 5);
       for (var i = 1; i < 6; i++) {
         spf.cache.set('foo' + i, 'value' + i);
@@ -94,6 +98,10 @@ describe('spf.cache', function() {
     });
 
     it('updates the recency when accessed', function() {
+      // Collection tests aren't supported unless Object.keys is available.
+      if (!Object.keys) {
+        return;
+      }
       spf.config.set('cache-max', 5);
       for (var i = 1; i < 6; i++) {
         spf.cache.set('foo' + i, 'value' + i);
@@ -161,6 +169,10 @@ describe('spf.cache', function() {
 
   describe('collect', function() {
     it('removes data after the lifetime expires', function() {
+      // Collection tests aren't supported unless Object.keys is available.
+      if (!Object.keys) {
+        return;
+      }
       spf.cache.set('foo', 'value1', 100);
       spf.cache.set('bar', 'value2', 200);
       spf.cache.collect();
@@ -177,6 +189,10 @@ describe('spf.cache', function() {
     });
 
     it('prioritizes lifetime over recency', function() {
+      // Collection tests aren't supported unless Object.keys is available.
+      if (!Object.keys) {
+        return;
+      }
       spf.config.set('cache-max', 5);
       for (var i = 1; i < 6; i++) {
         spf.cache.set('foo' + i, 'value' + i);
@@ -191,6 +207,10 @@ describe('spf.cache', function() {
     });
 
     it('removes both lifetime and oldest data', function() {
+      // Collection tests aren't supported unless Object.keys is available.
+      if (!Object.keys) {
+        return;
+      }
       spf.config.set('cache-max', 5);
       for (var i = 1; i < 7; i++) {
         spf.cache.set('foo' + i, 'value' + i);
