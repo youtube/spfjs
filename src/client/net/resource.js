@@ -201,7 +201,7 @@ spf.net.resource.create = function(type, url, opt_callback, opt_document) {
       spf.debug.debug('resource.create', type, url, 'loaded');
       spf.net.resource.status.set(type, url, spf.net.resource.State.LOADED);
     }
-    if (el && el.parentNode && doc == document && !SPF_DEBUG) {
+    if (isJS && el && el.parentNode && doc == document && !SPF_DEBUG) {
       // Remove scripts afterwards to avoid unnecessary increased DOM size.
       el.parentNode.removeChild(el);
     }
