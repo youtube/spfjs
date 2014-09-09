@@ -226,17 +226,30 @@ spf.nav.response.process = function(url, response, opt_callback, opt_navigate,
           }
           // Use the extracted HTML without scripts/styles to ensure they are
           // loaded properly.
-          el.innerHTML = extracted.html;
-          spf.debug.debug('    body update', id);
-          // Install scripts.
-          // Suspend main queue to allow JS execution to occur sequentially.
-          // TODO(nicksay): Consider using a sub-queue for JS execution.
-          spf.tasks.suspend(key);
-          spf.nav.response.installScripts_(extracted, function() {
-            spf.debug.debug('    body js', id);
-            spf.tasks.resume(key, sync);  // Resume main queue after JS.
-            spf.debug.debug('  process task done: body', id);
-          });
+          var installScripts = function() {
+            // Install scripts.
+            // Suspend main queue to allow JS execution to occur sequentially.
+            // TODO(nicksay): Consider using a sub-queue for JS execution.
+            spf.tasks.suspend(key);
+            spf.nav.response.installScripts_(extracted, function() {
+              spf.debug.debug('    body js', id);
+              spf.tasks.resume(key, sync);  // Resume main queue after JS.
+              spf.debug.debug('  process task done: body', id);
+            });
+          };
+          var innerHtmlHandler = /** @type {Function} */(
+              spf.config.get('experimental-html-handler'));
+          if (innerHtmlHandler) {
+            spf.tasks.suspend(key);  // Suspend for HTML handler.
+            innerHtmlHandler(extracted.html, el, function() {
+              installScripts();
+              spf.tasks.resume(key, sync);  // Resume queue after handler.
+            });
+          } else {
+            el.innerHTML = extracted.html;
+            spf.debug.debug('    body update', id);
+            installScripts();
+          }
         } else {
           spf.tasks.suspend(key);  // Suspend main queue for animation.
           var animationKey = spf.tasks.key(el);
