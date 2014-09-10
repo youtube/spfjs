@@ -17,7 +17,10 @@ goog.require('spf.state');
 /**
  * Type definition for a SPF config value.
  *
- * @typedef {string|number|boolean|null}
+ * Function type temporarily needed for experimental-html-handler.
+ * TODO(philharnish): Remove "Function".
+ *
+ * @typedef {string|number|boolean|Function|null}
  */
 spf.config.Value;
 
