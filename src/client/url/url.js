@@ -122,22 +122,45 @@ spf.url.identify = function(url, opt_type) {
   var ident = /** @type {string} */ (spf.config.get('url-identifier')) || '';
   if (ident) {
     var type = opt_type || '';
-    var frag = '';
-    if (spf.string.contains(url, '#')) {
-      var res = spf.string.bisect(url, '#');
-      url = res[0];
-      frag = '#' + res[1];
-    }
     ident = ident.replace('__type__', type);
+    var res = spf.url.splitFragment_(url);
+    url = res[0];
+
+    // The identifier may not be a parameter, but an extension.
     if (spf.string.startsWith(ident, '?') &&
         spf.string.contains(url, '?')) {
-      url += ident.replace('?', '&');
-    } else {
-      url += ident;
+      ident = ident.replace('?', '&');
     }
-    url += frag;
+
+    // Inject the idenitifier and re-add the fragment.
+    url += ident + res[1];
   }
   return url;
+};
+
+
+/**
+ * Appends the parameters to the url. Any existing parameters or fragments are
+ * maintained.
+ *
+ * @param {string} url A URL.
+ * @param {!Object.<string, string>} parameters An object with new parameters
+ *    as key/value pairs.
+ * @return {string} A new URL with the parameters included.
+ */
+spf.url.appendParameters = function(url, parameters) {
+  var res = spf.url.splitFragment_(url);
+  url = res[0];
+  delim = spf.string.contains(url, '?') ? '&' : '?';
+  for (key in parameters) {
+    url += delim + key;
+    if (parameters[key]) {
+      url += '=' + parameters[key];
+    }
+    delim = '&';
+  }
+  // Reattach the fragments.
+  return url + res[1];
 };
 
 
@@ -162,4 +185,23 @@ spf.url.unprotocol = function(url) {
 spf.url.unfragment = function(url) {
   var res = spf.string.bisect(url, '#');
   return res[0];
+};
+
+
+/**
+ * Splits the fragment section from the URL if present.
+ *
+ * @param {string} url A URL.
+ * @return {Array.<string>} An array containing the URL without the fragment and
+ *    the fragment including a hash.
+ * @private
+ */
+spf.url.splitFragment_ = function(url) {
+  var frag = '';
+  if (spf.string.contains(url, '#')) {
+    var res = spf.string.bisect(url, '#');
+    url = res[0];
+    frag = '#' + res[1];
+  }
+  return [url, frag];
 };
