@@ -20,21 +20,21 @@ describe('spf.url', function() {
 
   describe('identify', function() {
 
-    it('no identifier', function() {
+    it('handles no identifier', function() {
       spf.config.set('url-identifier', null);
       var url = '/page';
       expect(spf.url.identify(url)).toEqual('/page');
       expect(spf.url.identify(url, 'test')).toEqual('/page');
     });
 
-    it('static identifier', function() {
+    it('appends a static identifier directly', function() {
       spf.config.set('url-identifier', '.spf.json');
       var url = '/page.html';
       expect(spf.url.identify(url)).toEqual('/page.html.spf.json');
       expect(spf.url.identify(url, 'test')).toEqual('/page.html.spf.json');
     });
 
-    it('dynamic identifier', function() {
+    it('appends dynamic identifier as a parameter', function() {
       spf.config.set('url-identifier', '?spf=__type__');
       var url = '/page';
       expect(spf.url.identify(url)).toEqual('/page?spf=');
@@ -42,6 +42,29 @@ describe('spf.url', function() {
       url = '/page?arg=1';
       expect(spf.url.identify(url)).toEqual('/page?arg=1&spf=');
       expect(spf.url.identify(url, 'test')).toEqual('/page?arg=1&spf=test');
+    });
+
+  });
+
+  describe('appendParameters', function() {
+
+    it('ignores an empty object', function() {
+      var url = '/page';
+      expect(spf.url.appendParameters(url, {})).toEqual('/page');
+    });
+
+    it('uses the correct delimeter', function() {
+      var url = '/page';
+      var args = {'arg': 1};
+      expect(spf.url.appendParameters(url, args)).toEqual('/page?arg=1');
+      var url = '/page?old=1';
+      expect(spf.url.appendParameters(url, args)).toEqual('/page?old=1&arg=1');
+    });
+
+    it('respects fragments', function() {
+      var url = '/page#part';
+      var args = {'arg': 1};
+      expect(spf.url.appendParameters(url, args)).toEqual('/page?arg=1#part');
     });
 
   });
