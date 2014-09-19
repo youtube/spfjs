@@ -151,8 +151,8 @@ spf.url.identify = function(url, opt_type) {
 spf.url.appendParameters = function(url, parameters) {
   var res = spf.url.splitFragment_(url);
   url = res[0];
-  delim = spf.string.contains(url, '?') ? '&' : '?';
-  for (key in parameters) {
+  var delim = spf.string.contains(url, '?') ? '&' : '?';
+  for (var key in parameters) {
     url += delim + key;
     if (parameters[key]) {
       url += '=' + parameters[key];
