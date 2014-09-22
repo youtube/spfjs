@@ -252,12 +252,16 @@ spf.nav.handleClick_ = function(evt) {
       return;
     }
   }
-  // Ignore clicks if the URL is not eligible (e.g. limit reached).
-  if (!spf.nav.isEligible_(url)) {
-    return;
-  }
   // Ignore clicks if the "click" event is canceled.
   if (!spf.nav.dispatchClick_(url, evt.target)) {
+    return;
+  }
+  // Use direct navigation if a full SPF transition is not eligibile (e.g.
+  // limit reached).
+  if (!spf.nav.isEligible_(url)) {
+    spf.nav.reload(url, spf.nav.ReloadReason.INELIGIBLE);
+    // Prevent the default browser navigation to avoid reloads.
+    evt.preventDefault();
     return;
   }
 
@@ -307,13 +311,13 @@ spf.nav.handleHistory_ = function(url, opt_state) {
       return;
     }
   }
+  // Ignore the change if the "history" event is canceled.
+  if (!spf.nav.dispatchHistory_(url, referer, current)) {
+    return;
+  }
   // Reload if the URL is not eligible (e.g. limit reached).
   if (!spf.nav.isEligible_(url)) {
     spf.nav.reload(url, spf.nav.ReloadReason.INELIGIBLE);
-    return;
-  }
-  // Ignore the change if the "history" event is canceled.
-  if (!spf.nav.dispatchHistory_(url, referer, current)) {
     return;
   }
   // Navigate to the URL.
