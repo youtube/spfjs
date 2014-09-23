@@ -65,6 +65,7 @@ spf.state.Key = {
   HISTORY_URL: 'history-url',
   NAV_COUNTER: 'nav-counter',
   NAV_INIT: 'nav-init',
+  NAV_INIT_TIME: 'nav-init-time',
   NAV_LISTENER: 'nav-listener',
   NAV_PREFETCHES: 'nav-prefetches',
   NAV_PROMOTE: 'nav-promote',
