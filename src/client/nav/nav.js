@@ -41,6 +41,7 @@ spf.nav.init = function() {
       spf.state.set(spf.state.Key.PREFETCH_LISTENER, spf.nav.handleMouseDown_);
     }
     spf.state.set(spf.state.Key.NAV_INIT, true);
+    spf.state.set(spf.state.Key.NAV_INIT_TIME, spf.now());
     spf.state.set(spf.state.Key.NAV_COUNTER, 0);
     spf.state.set(spf.state.Key.NAV_TIME, spf.now());
     spf.state.set(spf.state.Key.NAV_LISTENER, spf.nav.handleClick_);
@@ -64,6 +65,7 @@ spf.nav.dispose = function() {
       }
     }
     spf.state.set(spf.state.Key.NAV_INIT, false);
+    spf.state.set(spf.state.Key.NAV_INIT_TIME, null);
     spf.state.set(spf.state.Key.NAV_COUNTER, null);
     spf.state.set(spf.state.Key.NAV_TIME, null);
     spf.state.set(spf.state.Key.NAV_LISTENER, null);
@@ -208,7 +210,11 @@ spf.nav.isEligible_ = function(url) {
     return false;
   }
   // If a session lifetime has been set and reached, cancel.
-  var timestamp = parseInt(spf.state.get(spf.state.Key.NAV_TIME), 10);
+  if (spf.config.get('experimental-init-lifetime')) {
+    var timestamp = parseInt(spf.state.get(spf.state.Key.NAV_INIT_TIME), 10);
+  } else {
+    var timestamp = parseInt(spf.state.get(spf.state.Key.NAV_TIME), 10);
+  }
   timestamp--;
   var age = spf.now() - timestamp;
   var lifetime = parseInt(spf.config.get('navigate-lifetime'), 10);
