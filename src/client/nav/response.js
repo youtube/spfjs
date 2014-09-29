@@ -544,8 +544,7 @@ spf.nav.response.extract_ = function(html) {
  * See {@link spf.net.script.load}, {@link spf.net.script.eval}, and
  * {@link #extract_}.
  *
- * @param {!spf.nav.response.TemporaryParseScriptsResultType} result The parsed
- *     HTML result.
+ * @param {!spf.nav.response.Extraction_} result The parsed HTML result.
  * @param {Function=} opt_callback Callback function to execute after
  *     all scripts are loaded.
  * @private
@@ -601,8 +600,7 @@ spf.nav.response.installScripts_ = function(result, opt_callback) {
  * Prefetches scripts that have been parsed from an HTML string.
  * See {@link spf.net.script.prefetch} and {@link #extract_}.
  *
- * @param {!spf.nav.response.TemporaryParseScriptsResultType} result The parsed
- *     HTML result.
+ * @param {!spf.nav.response.Extraction_} result The parsed HTML result.
  * @private
  */
 spf.nav.response.preinstallScripts_ = function(result) {
@@ -622,8 +620,7 @@ spf.nav.response.preinstallScripts_ = function(result) {
  * See {@link spf.net.style.load}, {@link spf.net.style.eval}, and
  * {@link #extract_}.
  *
- * @param {!spf.nav.response.TemporaryParseStylesResultType} result The parsed
- *     HTML result.
+ * @param {!spf.nav.response.Extraction_} result The parsed HTML result.
  * @private
  */
 spf.nav.response.installStyles_ = function(result) {
@@ -662,8 +659,7 @@ spf.nav.response.installStyles_ = function(result) {
  * Prefetches styles that have been parsed from an HTML string.
  * See {@link spf.net.style.prefetch} and {@link #extract_}.
  *
- * @param {!spf.nav.response.TemporaryParseStylesResultType} result The parsed
- *     HTML result.
+ * @param {!spf.nav.response.Extraction_} result The parsed HTML result.
  * @private
  */
 spf.nav.response.preinstallStyles_ = function(result) {
@@ -689,33 +685,6 @@ spf.nav.response.getCurrentUrl_ = function() {
 
 
 /**
- * A container for holding the result of parsing styles from an HTML string.
- * @constructor
- * @private
- */
-spf.nav.response.ParseStylesResult_ = function() {
-  /** @type {string} */
-  this.html = '';
-  /** @type {Array.<{url:string, text:string, name:string}>} */
-  this.styles = [];
-};
-
-
-
-/**
- * A container for holding the result of parsing scripts from an HTML string.
- * @constructor
- * @private
- */
-spf.nav.response.ParseScriptsResult_ = function() {
-  /** @type {string} */
-  this.html = '';
-  /** @type {Array.<{url:string, text:string, name:string, async:boolean}>} */
-  this.scripts = [];
-};
-
-
-/**
  * A container for holding the results from parsing and extracting resources
  * from an HTML string.  See {@link #extract}.
  *
@@ -731,17 +700,6 @@ spf.nav.response.Extraction_ = function() {
   this.styles = [];
 };
 
-
-/**
- * @typedef {spf.nav.response.ParseScriptsResult_|spf.nav.response.Extraction_}
- */
-spf.nav.response.TemporaryParseScriptsResultType;
-
-
-/**
- * @typedef {spf.nav.response.ParseStylesResult_|spf.nav.response.Extraction_}
- */
-spf.nav.response.TemporaryParseStylesResultType;
 
 
 /**
