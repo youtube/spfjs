@@ -73,7 +73,7 @@ spf.net.resource.load = function(type, urls, opt_nameOrFn, opt_fn) {
     var previous = spf.net.resource.urls.get(type, name);
     // Only unload previous urls which don't match the new values.
     previous = previous && spf.array.filter(previous, function(url) {
-      return spf.array.indexOf(urls, url) == -1;
+      return spf.array.indexOf(/** @type {Array} */ (urls), url) == -1;
     });
     // If loading new resources for a name, handle unloading previous ones.
     if (!complete && previous && previous.length) {
