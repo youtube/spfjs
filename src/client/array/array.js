@@ -98,6 +98,29 @@ spf.array.filter = function(arr, fn, opt_obj) {
 
 
 /**
+ * Compatible Array#indexOf implementation.
+ *
+ * @param {Array.<ITEM>|spf.array.ArrayLike} arr The array.
+ * @param {ITEM} val The value to find.
+ * @param {number=} opt_fromIndex The starting index to search from.
+ * @return {number} The index of the first matching element.
+ * @template ITEM
+ */
+spf.array.indexOf = function(arr, val, opt_fromIndex) {
+  if (!SPF_BOOTLOADER && arr.indexOf) {
+    return arr.indexOf(val, opt_fromIndex);
+  }
+  var start = opt_fromIndex || 0;
+  for (var i = start; i < arr.length; i++) {
+    if (i in arr && arr[i] === val) {
+      return i;
+    }
+  }
+  return -1;
+};
+
+
+/**
  * Compatible Array#map implementation.
  *
  * @param {Array.<ITEM>|spf.array.ArrayLike} arr The array.
