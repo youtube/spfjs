@@ -57,7 +57,7 @@ spf.net.resource.load = function(type, urls, opt_nameOrFn, opt_fn) {
   var canonicalize = spf.bind(spf.net.resource.canonicalize, null, type);
   urls = spf.array.map(urls, canonicalize);
 
-  // After the styles are loaded, execute the callback by default.
+  // After the resources are loaded, execute the callback by default.
   var done = fn;
 
   // If a name is provided with different URLs, then also unload the previous
@@ -71,8 +71,12 @@ spf.net.resource.load = function(type, urls, opt_nameOrFn, opt_fn) {
     var loaded = spf.bind(spf.net.resource.status.loaded, null, type);
     var complete = spf.array.every(urls, loaded);
     var previous = spf.net.resource.urls.get(type, name);
+    // Only unload previous urls which don't match the new values.
+    previous = previous && spf.array.filter(previous, function(url) {
+      return spf.array.indexOf(urls, url) == -1;
+    });
     // If loading new resources for a name, handle unloading previous ones.
-    if (!complete && previous) {
+    if (!complete && previous && previous.length) {
       var evt = isJS ? spf.EventName.JS_BEFORE_UNLOAD :
                        spf.EventName.CSS_BEFORE_UNLOAD;
       spf.dispatch(evt, {'name': name, 'urls': previous});

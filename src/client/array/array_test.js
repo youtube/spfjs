@@ -130,6 +130,30 @@ describe('spf.array', function() {
 
   });
 
+  describe('indexOf', function() {
+
+    it('finds values', function() {
+      var a = [0, 1, 2, 3];
+      expect(spf.array.indexOf(a, 1)).toEqual(1);
+    });
+
+    it('returns -1 for missing values', function() {
+      var a = [0, 1, 2, 3];
+      expect(spf.array.indexOf(a, 4)).toEqual(-1);
+    });
+
+    it('uses strict equality', function() {
+      var a = [0, 1, 2, 3];
+      expect(spf.array.indexOf(a, '1')).toEqual(-1);
+    });
+
+    it('starts at the from index', function() {
+      var a = [0, 1, 2, 1];
+      expect(spf.array.indexOf(a, 1, 2)).toEqual(3);
+    });
+
+  });
+
   describe('map', function() {
 
     var square = function(x) { return x * x; };

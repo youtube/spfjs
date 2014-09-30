@@ -195,6 +195,36 @@ describe('spf.net.resource', function() {
       expect(getStyleEls().length).toEqual(2);
     });
 
+    it('a single url with an in progress name (script)', function() {
+      spf.net.resource.load(JS, 'url-a.js', 'a');
+      spf.net.resource.load(JS, 'url-a.js', 'a');
+      jasmine.Clock.tick(1);
+      expect(getScriptEls().length).toEqual(1);
+    });
+
+    it('a single url with an in progress name (style)', function() {
+      spf.net.resource.load(CSS, 'url-a.css', 'a');
+      spf.net.resource.load(CSS, 'url-a.css', 'a');
+      jasmine.Clock.tick(1);
+      expect(getStyleEls().length).toEqual(1);
+    });
+
+    it('a single url with a mismatch in progress name (script)', function() {
+      spf.net.resource.load(JS, 'url-a.js', 'a');
+      spf.net.resource.load(JS, 'url-b.js', 'a');
+      jasmine.Clock.tick(1);
+      expect(getScriptEls().length).toEqual(1);
+      expect(getScriptUrls()).toContain('//test/url-b.js');
+    });
+
+    it('a single url with a mismatch in progress name (style)', function() {
+      spf.net.resource.load(CSS, 'url-a.css', 'a');
+      spf.net.resource.load(CSS, 'url-b.css', 'a');
+      jasmine.Clock.tick(1);
+      expect(getStyleEls().length).toEqual(1);
+      expect(getStyleUrls()).toContain('//test/url-b.css');
+    });
+
     it('multiple urls (script)', function() {
       spf.net.resource.load(JS, ['url-a-1.js', 'url-a-2.js']);
       jasmine.Clock.tick(1);
@@ -249,6 +279,56 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(CSS, ['url-b-1.css', 'url-b-2.css'], 'b');
       jasmine.Clock.tick(1);
       expect(getStyleEls().length).toEqual(4);
+    });
+
+    it('multiple urls with an in progress name (script)', function() {
+      spf.net.resource.load(JS, ['url-a-1.js', 'url-a-2.js'], 'a');
+      spf.net.resource.load(JS, ['url-a-1.js', 'url-a-2.js'], 'a');
+      jasmine.Clock.tick(1);
+      expect(getScriptEls().length).toEqual(2);
+    });
+
+    it('multiple urls with an in progress name (style)', function() {
+      spf.net.resource.load(CSS, ['url-a-1.css', 'url-a-2.css'], 'a');
+      spf.net.resource.load(CSS, ['url-a-1.css', 'url-a-2.css'], 'a');
+      jasmine.Clock.tick(1);
+      expect(getStyleEls().length).toEqual(2);
+    });
+
+    it('multiple urls with a mismatched in progress name (script)', function() {
+      spf.net.resource.load(JS, ['url-a-1.js', 'url-a-2.js'], 'a');
+      spf.net.resource.load(JS, ['url-a-3.js', 'url-a-4.js'], 'a');
+      jasmine.Clock.tick(1);
+      expect(getScriptEls().length).toEqual(2);
+      expect(getScriptUrls()).toContain('//test/url-a-3.js');
+      expect(getScriptUrls()).toContain('//test/url-a-4.js');
+    });
+
+    it('multiple urls with a mismatched in progress name (style)', function() {
+      spf.net.resource.load(CSS, ['url-a-1.css', 'url-a-2.css'], 'a');
+      spf.net.resource.load(CSS, ['url-a-3.css', 'url-a-4.css'], 'a');
+      jasmine.Clock.tick(1);
+      expect(getStyleEls().length).toEqual(2);
+      expect(getStyleUrls()).toContain('//test/url-a-3.css');
+      expect(getStyleUrls()).toContain('//test/url-a-4.css');
+    });
+
+    it('multiple urls with a partially mismatched name (script)', function() {
+      spf.net.resource.load(JS, ['url-a-1.js', 'url-a-2.js'], 'a');
+      spf.net.resource.load(JS, ['url-a-1.js', 'url-a-4.js'], 'a');
+      jasmine.Clock.tick(1);
+      expect(getScriptEls().length).toEqual(2);
+      expect(getScriptUrls()).toContain('//test/url-a-1.js');
+      expect(getScriptUrls()).toContain('//test/url-a-4.js');
+    });
+
+    it('multiple urls with a partially mismatched name (style)', function() {
+      spf.net.resource.load(CSS, ['url-a-1.css', 'url-a-2.css'], 'a');
+      spf.net.resource.load(CSS, ['url-a-1.css', 'url-a-4.css'], 'a');
+      jasmine.Clock.tick(1);
+      expect(getStyleEls().length).toEqual(2);
+      expect(getStyleUrls()).toContain('//test/url-a-1.css');
+      expect(getStyleUrls()).toContain('//test/url-a-4.css');
     });
 
   });
