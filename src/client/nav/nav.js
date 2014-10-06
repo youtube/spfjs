@@ -768,7 +768,12 @@ spf.nav.reload = function(url, reason) {
   }
   // Delay the redirect until after the history state has had time to clear.
   setTimeout(function() {
-    url = spf.url.appendParameters(url, {'spfreload': 1});
+    var reloadId = /** @type {?string} */ (spf.config.get('reload-identifier'));
+    if (reloadId) {
+      var params = {};
+      params[reloadId] = encodeURIComponent(reason);
+      url = spf.url.appendParameters(url, params);
+    }
     window.location.href = url;
   }, 0);
 };
