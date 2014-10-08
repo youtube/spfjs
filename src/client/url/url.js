@@ -123,8 +123,8 @@ spf.url.identify = function(url, opt_type) {
   if (ident) {
     var type = opt_type || '';
     ident = ident.replace('__type__', type);
-    var res = spf.url.splitFragment_(url);
-    url = res[0];
+    var result = spf.url.splitFragment_(url);
+    url = result[0];
 
     // The identifier may not be a parameter, but an extension.
     if (spf.string.startsWith(ident, '?') &&
@@ -133,7 +133,7 @@ spf.url.identify = function(url, opt_type) {
     }
 
     // Inject the idenitifier and re-add the fragment.
-    url += ident + res[1];
+    url += ident + result[1];
   }
   return url;
 };
@@ -149,8 +149,8 @@ spf.url.identify = function(url, opt_type) {
  * @return {string} A new URL with the parameters included.
  */
 spf.url.appendParameters = function(url, parameters) {
-  var res = spf.url.splitFragment_(url);
-  url = res[0];
+  var result = spf.url.splitFragment_(url);
+  url = result[0];
   var delim = spf.string.contains(url, '?') ? '&' : '?';
   for (var key in parameters) {
     url += delim + key;
@@ -160,7 +160,38 @@ spf.url.appendParameters = function(url, parameters) {
     delim = '&';
   }
   // Reattach the fragments.
-  return url + res[1];
+  return url + result[1];
+};
+
+
+/**
+ * Removes a list of parameters from a given url.
+ *
+ * @param {string} url A URL.
+ * @param {!Array.<string>} parameters A list of parameter keys to remove.
+ * @return {string} A new URL with the parameters removed.
+ */
+spf.url.removeParameters = function(url, parameters) {
+  // Remove any fragments from consideration
+  var result = spf.url.splitFragment_(url);
+  url = result[0];
+
+  for (var i = 0; i < parameters.length; i++) {
+    var param = parameters[i];
+
+    // Strip all parameters matching the param key.
+    var regex = new RegExp('([?&])' + param + '(?:=[^&]*)?(?:(?=[&])|$)', 'g');
+    url = url.replace(regex, function(_, delim) {
+      return delim == '?' ? delim : '';
+    });
+  }
+
+  // Remove an unecessary trailing question marks.
+  if (spf.string.endsWith(url, '?')) {
+    url = url.slice(0, -1);
+  }
+
+  return url + result[1];
 };
 
 

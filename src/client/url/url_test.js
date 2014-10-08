@@ -69,6 +69,44 @@ describe('spf.url', function() {
 
   });
 
+  describe('removeParameters', function() {
+
+    it('does not change an URL without the parameter', function() {
+      var url = '/page';
+      expect(spf.url.removeParameters(url, ['param'])).toEqual('/page');
+    });
+
+    it('removes the parameter', function() {
+      var url = '/page?param=abc';
+      expect(spf.url.removeParameters(url, ['param'])).toEqual('/page');
+    });
+
+    it('removes the parameter without a value', function() {
+      var url = '/page?param';
+      expect(spf.url.removeParameters(url, ['param'])).toEqual('/page');
+    });
+
+    it('does not affect other parameters', function() {
+      var url = '/page?param1=123&param=abc&param3=def';
+      expect(spf.url.removeParameters(url, ['param'])).toEqual(
+          '/page?param1=123&param3=def');
+    });
+
+    it('respects fragments', function() {
+      var url = '/page?param=123#frag';
+      expect(spf.url.removeParameters(url, ['param'])).toEqual('/page#frag');
+
+      url = '/page?param=123#frag&param=abc';
+      expect(spf.url.removeParameters(url, ['param'])).toEqual(
+          '/page#frag&param=abc');
+    });
+
+    it('removes multiple instances', function() {
+      var url = '/page?param=123&next=4&param=5';
+      expect(spf.url.removeParameters(url, ['param'])).toEqual('/page?&next=4');
+    });
+
+  });
 
   describe('unprotocol', function() {
 

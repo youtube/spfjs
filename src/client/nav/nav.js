@@ -306,6 +306,11 @@ spf.nav.handleHistory_ = function(url, opt_state) {
   var referer = opt_state && opt_state['spf-referer'];
   var current = opt_state && opt_state['spf-current'];
   spf.debug.debug('nav.handleHistory ', '(url=', url, 'state=', opt_state, ')');
+  // If the reload-identifier is present, remove it to prevent confusing data.
+  var reloadId = /** @type {?string} */ (spf.config.get('reload-identifier'));
+  if (reloadId) {
+    url = spf.url.removeParameters(url, [reloadId]);
+  }
   if (spf.config.get('experimental-same-origin')) {
     // Reload if the URL is not allowed (e.g. cross-domain).
     if (!spf.nav.isAllowed_(url)) {
