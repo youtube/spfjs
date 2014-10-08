@@ -71,7 +71,7 @@ describe('spf.url', function() {
 
   describe('removeParameters', function() {
 
-    it('does not change an URL without the parameter', function() {
+    it('does not change a URL without the parameter', function() {
       var url = '/page';
       expect(spf.url.removeParameters(url, ['param'])).toEqual('/page');
     });
