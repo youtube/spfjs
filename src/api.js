@@ -68,12 +68,18 @@ spf.SingleResponse.prototype.head;
 spf.SingleResponse.prototype.foot;
 
 
-
 /**
  * String of a URL to request instead.
  * @type {string|undefined}
  */
 spf.SingleResponse.prototype.redirect;
+
+
+/**
+ * Boolean to indicate the page should be reloaded.
+ * @type {boolean|undefined}
+ */
+spf.SingleResponse.prototype.reload;
 
 
 /**

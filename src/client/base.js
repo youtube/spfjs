@@ -147,6 +147,7 @@ spf.EventName = {
  * - foot: HTML string containing <script> tags of JS to execute.
  * - head: HTML string containing <link> and <style> tags of CSS to install.
  * - redirect: String of a URL to request instead.
+ * - reload: Boolean to indicate the page should be reloaded.
  * - timing: Map of timing attributes to timestamp numbers.
  * - title: String of the new Document title.
  * - url: String of the correct URL for the current request. This will replace
@@ -159,6 +160,7 @@ spf.EventName = {
  *   foot: (string|undefined),
  *   head: (string|undefined),
  *   redirect: (string|undefined),
+ *   reload: (boolean|undefined),
  *   timing: (Object.<string, number>|undefined),
  *   title: (string|undefined),
  *   url: (string|undefined)
