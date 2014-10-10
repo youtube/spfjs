@@ -104,8 +104,8 @@ spf.main.api_ = {
   'dispose': spf.main.dispose,
   'navigate': spf.nav.navigate,
   'load': spf.nav.load,
-  'process': spf.nav.response.process,  // TODO: Remove after deprecation.
-  'prefetch': spf.nav.prefetch
+  'prefetch': spf.nav.prefetch,
+  'process': spf.nav.process
 };
 /** @private {!Object} */
 spf.main.extra_ = {

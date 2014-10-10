@@ -1126,6 +1126,37 @@ spf.nav.handleLoadRedirect_ = function(isPrefetch, options, original,
 
 
 /**
+ * Process a SPF response on the current page outside of a navigation flow.
+ *
+ * @param {spf.SingleResponse|spf.MultipartResponse} response The SPF response
+ *     object to process.
+ * @param {function((spf.SingleResponse|spf.MultipartResponse))=} opt_callback
+ *     Function to execute when processing is done; the argument is
+ *     the {@code response}.
+ */
+spf.nav.process = function(response, opt_callback) {
+  var url = window.location.href;
+  var multipart = response['type'] == 'multipart';
+  var done = function(index, max, _, resp) {
+    if (index == max && opt_callback) {
+      opt_callback(resp);
+    }
+  };
+  if (multipart) {
+    var parts = response['parts'];
+    for (var i = 0; i < parts.length; i++) {
+      var fn = spf.bind(done, null, i, parts.length - 1);
+      spf.nav.response.process(url, parts[i], fn);
+    }
+  } else {
+    response = /** @type {spf.SingleResponse} */ (response);
+    var fn = spf.bind(done, null, 0, 0);
+    spf.nav.response.process(url, response, fn);
+  }
+};
+
+
+/**
  * Dispatches the "error" event with the following custom event detail:
  *   url: The current URL.
  *   err: The Error object.
