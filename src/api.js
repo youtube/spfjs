@@ -41,6 +41,13 @@ spf.SingleResponse.prototype.body;
 
 
 /**
+ * String of the cache key used to store this response.
+ * @type {string|undefined}
+ */
+spf.SingleResponse.prototype.cacheKey;
+
+
+/**
  * String of the type of caching to use for this response.
  * @type {string|undefined}
  */
@@ -103,6 +110,13 @@ spf.SingleResponse.prototype.url;
  * @interface
  */
 spf.MultipartResponse;
+
+
+/**
+ * String of the key used to cache this response.
+ * @type {string|undefined}
+ */
+spf.MultipartResponse.prototype.cacheKey;
 
 
 /**
@@ -410,6 +424,32 @@ spf.process = function(response) {};
  * @return {XMLHttpRequest} The XHR of the current request.
  */
 spf.prefetch = function(url, opt_options) {};
+
+
+/**
+ * Namespace for cache handling functions.
+ */
+spf.cache = {};
+
+
+/**
+ * Removes an entry from cache.
+ *
+ * Removed entries will be completely removed from cache, affecting both normal
+ * navigations as well as those triggered by a history change.
+ *
+ * @param {string} key The key to remove from cache.
+ */
+spf.cache.remove = function(key) {};
+
+
+/**
+ * Clear all entries from cache.
+ *
+ * Removed entries will be completely removed from cache, affecting both normal
+ * navigations as well as those triggered by a history change.
+ */
+spf.cache.clear = function() {};
 
 
 /**

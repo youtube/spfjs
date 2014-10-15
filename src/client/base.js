@@ -143,6 +143,7 @@ spf.EventName = {
  *      to set on the Elements.
  * - body: Map of Element IDs to HTML strings containing content with which
  *      to update the Elements.
+ * - cacheKey: Key used to cache this response.
  * - cacheType: String of the type of caching to use for this response.
  * - foot: HTML string containing <script> tags of JS to execute.
  * - head: HTML string containing <link> and <style> tags of CSS to install.
@@ -155,6 +156,7 @@ spf.EventName = {
  * @typedef {{
  *   attr: (Object.<string, Object.<string, string>>|undefined),
  *   body: (Object.<string, string>|undefined),
+ *   cacheKey: (string|undefined),
  *   cacheType: (string|undefined),
  *   foot: (string|undefined),
  *   head: (string|undefined),
@@ -169,12 +171,14 @@ spf.SingleResponse;
 
 /**
  * Type definition for a multipart SPF response object.
+ * - cacheKey: Key used to cache this response.
  * - cacheType: String of the type of caching to use for this response.
  * - parts: List of response objects.
  * - timing: Map of timing attributes to timestamp numbers.
  * - type: The string "multipart".
  *
  * @typedef {{
+ *   cacheKey: (string|undefined),
  *   cacheType: (string|undefined),
  *   parts: (Array.<spf.SingleResponse>|undefined),
  *   timing: (Object.<string, number>|undefined),

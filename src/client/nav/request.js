@@ -389,6 +389,7 @@ spf.nav.request.done_ = function(url, options, timing, response, cache) {
                                                 response['cacheType'],
                                                 options.type, true);
     if (cacheKey) {
+      response['cacheKey'] = cacheKey;
       spf.nav.request.setCacheObject_(cacheKey, response, options.type || '');
     }
   }

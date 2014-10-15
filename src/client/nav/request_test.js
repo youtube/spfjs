@@ -18,6 +18,7 @@ goog.require('spf.url');
 describe('spf.nav.request', function() {
 
   var MOCK_DELAY = 10;
+  var IGNORED_KEYS = ['cacheKey', 'timing']
   var options;
   var createFakeRegularXHR = function(xhrText, isMultipart) {
     var fakeXHR = {
@@ -128,7 +129,7 @@ describe('spf.nav.request', function() {
       expect(options.onError.calls.length).toEqual(0);
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
-      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, IGNORED_KEYS);
     });
 
 
@@ -157,7 +158,7 @@ describe('spf.nav.request', function() {
       expect(options.onError.calls.length).toEqual(0);
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
-      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, IGNORED_KEYS);
     });
 
 
@@ -184,7 +185,7 @@ describe('spf.nav.request', function() {
       expect(options.onError.calls.length).toEqual(0);
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
-      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, IGNORED_KEYS);
     });
 
 
@@ -216,9 +217,9 @@ describe('spf.nav.request', function() {
       expect(options.onError.calls.length).toEqual(0);
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
-      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(xhrRes, ['timing']);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(xhrRes, IGNORED_KEYS);
       expect(onSuccessArgs[1]).not.toEqualObjectIgnoringKeys(cacheRes,
-                                                             ['timing']);
+                                                             IGNORED_KEYS);
     });
 
 
@@ -239,7 +240,7 @@ describe('spf.nav.request', function() {
       expect(options.onError.calls.length).toEqual(0);
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
-      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, IGNORED_KEYS);
     });
 
 
@@ -280,7 +281,7 @@ describe('spf.nav.request', function() {
       expect(options.onError.calls.length).toEqual(0);
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
-      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, IGNORED_KEYS);
     });
 
 
@@ -324,7 +325,7 @@ describe('spf.nav.request', function() {
       expect(options.onError.calls.length).toEqual(0);
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
-      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, IGNORED_KEYS);
     });
 
 
@@ -394,7 +395,7 @@ describe('spf.nav.request', function() {
       expect(options.onError.calls.length).toEqual(0);
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
-      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, IGNORED_KEYS);
     });
 
 
@@ -465,7 +466,7 @@ describe('spf.nav.request', function() {
       expect(options.onError.calls.length).toEqual(0);
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
-      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, IGNORED_KEYS);
     });
 
 
@@ -512,7 +513,7 @@ describe('spf.nav.request', function() {
       expect(options.onError.calls.length).toEqual(0);
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
-      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, IGNORED_KEYS);
     });
 
 
@@ -557,7 +558,7 @@ describe('spf.nav.request', function() {
       expect(options.onError.calls.length).toEqual(0);
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
-      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, IGNORED_KEYS);
     });
 
 
@@ -598,7 +599,7 @@ describe('spf.nav.request', function() {
       expect(options.onError.calls.length).toEqual(0);
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
-      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, IGNORED_KEYS);
     });
 
 
@@ -642,7 +643,7 @@ describe('spf.nav.request', function() {
       expect(options.onError.calls.length).toEqual(0);
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
-      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, IGNORED_KEYS);
     });
 
 
@@ -712,7 +713,7 @@ describe('spf.nav.request', function() {
       expect(options.onError.calls.length).toEqual(0);
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
-      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, IGNORED_KEYS);
     });
 
 
@@ -783,7 +784,7 @@ describe('spf.nav.request', function() {
       expect(options.onError.calls.length).toEqual(0);
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
-      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, IGNORED_KEYS);
     });
 
 
@@ -807,7 +808,7 @@ describe('spf.nav.request', function() {
       expect(options.onError.calls.length).toEqual(0);
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
-      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, IGNORED_KEYS);
     });
 
 
@@ -831,7 +832,7 @@ describe('spf.nav.request', function() {
       expect(options.onError.calls.length).toEqual(0);
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
-      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, IGNORED_KEYS);
     });
 
 
@@ -878,7 +879,7 @@ describe('spf.nav.request', function() {
       expect(options.onError.calls.length).toEqual(0);
       var onSuccessArgs = options.onSuccess.mostRecentCall.args;
       expect(onSuccessArgs[0]).toEqual(url);
-      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, ['timing']);
+      expect(onSuccessArgs[1]).toEqualObjectIgnoringKeys(res, IGNORED_KEYS);
     });
 
 
