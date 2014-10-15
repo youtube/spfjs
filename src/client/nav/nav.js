@@ -336,9 +336,9 @@ spf.nav.handleHistory_ = function(url, opt_state) {
  * Navigates to a URL.
  *
  * A pushState history entry is added for the URL, and if successful, the
- * navigation is performed.  If not, the browser is redirected to the URL.
+ * navigation is performed.  If not, the browser is reloaded to the URL.
  * During the navigation, first the content is requested.  If the reponse is
- * sucessfully parsed, it is processed.  If not, the browser is redirected to
+ * sucessfully parsed, it is processed.  If not, the browser is reloaded to
  * the URL.  Only a single navigation request can be in flight at once.  If a
  * second URL is navigated to while a first is still pending, the first will be
  * cancelled.
@@ -602,6 +602,12 @@ spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
     return;
   }
 
+  // Check for reload responses.
+  if (partial['reload']) {
+    spf.nav.reload(url, spf.nav.ReloadReason.RESPONSE_RECEIVED);
+    return;
+  }
+
   // Check for redirect responses.
   if (partial['redirect']) {
     spf.nav.handleNavigateRedirect_(options, partial['redirect']);
@@ -659,6 +665,12 @@ spf.nav.handleNavigateSuccess_ = function(options, reverse, original,
       return;
     }
 
+    // Check for reload responses.
+    if (response['reload']) {
+      spf.nav.reload(url, spf.nav.ReloadReason.RESPONSE_RECEIVED);
+      return;
+    }
+
     // Check for redirect responses.
     if (response['redirect']) {
       spf.nav.handleNavigateRedirect_(options, response['redirect']);
@@ -704,7 +716,7 @@ spf.nav.handleNavigateRedirect_ = function(options, redirectUrl) {
     spf.history.replace(redirectUrl, null, true, true);
   } catch (err) {
     spf.nav.cancel();
-    spf.debug.error('error caught, redirecting ',
+    spf.debug.error('error caught, reloading ',
                     '(url=', redirectUrl, 'err=', err, ')');
     spf.nav.handleNavigateError_(options, redirectUrl, err);
   }
@@ -751,13 +763,13 @@ spf.nav.callback = function(fn, var_args) {
 
 
 /**
- * Redirect to a URL, to be used when navigation fails or is disabled.
+ * Reloads the page with a URL, to be used when navigation fails or is disabled.
  *
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {string} reason The reason code causing the reload.
  */
 spf.nav.reload = function(url, reason) {
-  spf.debug.warn('redirecting (', 'url=', url, 'reason=', reason, ')');
+  spf.debug.warn('reloading (', 'url=', url, 'reason=', reason, ')');
   spf.nav.cancel();
   spf.nav.cancelAllPrefetchesExcept();
   // Dispatch the reload event to notify the app that a reload is required.
@@ -771,7 +783,7 @@ spf.nav.reload = function(url, reason) {
       window.location.href == url) {
     spf.history.removeCurrentEntry();
   }
-  // Delay the redirect until after the history state has had time to clear.
+  // Delay the reload until after the history state has had time to clear.
   setTimeout(function() {
     var reloadId = /** @type {?string} */ (spf.config.get('reload-identifier'));
     if (reloadId) {
@@ -949,7 +961,20 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
     return;
   }
 
-  // Check for redirects.
+  // Check for reload responses.
+  // For a load, abort; for a promoted prefetch, reload immediately; for a
+  // prefetch, ignore and the reload will be processed when a navigate occurs.
+  if (partial['reload']) {
+    if (!isPrefetch) {
+      return;
+    }
+    if (spf.state.get(spf.state.Key.NAV_PROMOTE) == original) {
+      spf.nav.reload(url, spf.nav.ReloadReason.RESPONSE_RECEIVED);
+      return;
+    }
+  }
+
+  // Check for redirect responses.
   if (partial['redirect']) {
     spf.nav.handleLoadRedirect_(isPrefetch, options, original,
                                 partial['redirect']);
@@ -1004,6 +1029,19 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
     if (!spf.nav.dispatchProcess_(url, response, options, true)) {
       spf.nav.reload(url, spf.nav.ReloadReason.PROCESS_CANCELED);
       return;
+    }
+
+    // Check for reload responses.
+    // For a load, abort; for a promoted prefetch, reload immediately; for a
+    // prefetch, ignore and the reload will be processed when a navigate occurs.
+    if (response['reload']) {
+      if (!isPrefetch) {
+        return;
+      }
+      if (spf.state.get(spf.state.Key.NAV_PROMOTE) == original) {
+        spf.nav.reload(url, spf.nav.ReloadReason.RESPONSE_RECEIVED);
+        return;
+      }
     }
 
     // Check for redirect responses.
@@ -1437,6 +1475,8 @@ spf.nav.ReloadReason = {
       '3: Navigation canceled by the partprocess event.',
   PROCESS_CANCELED: (!SPF_DEBUG) ? '4' :
       '4: Navigation canceled by the process event.',
+  RESPONSE_RECEIVED: (!SPF_DEBUG) ? '5' :
+      '5: Reload response received.',
   FORBIDDEN: (!SPF_DEBUG) ? '9' :
       '9: Destination forbidden by same-origin security.',
   ERROR: (!SPF_DEBUG) ? '10' :
