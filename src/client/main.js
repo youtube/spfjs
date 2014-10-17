@@ -109,6 +109,13 @@ spf.main.api_ = {
 };
 /** @private {!Object} */
 spf.main.extra_ = {
+  'cache': {
+    // Cache API.
+    // * Remove one entry.
+    'remove': spf.cache.remove,
+    // * Clear all entries.
+    'clear': spf.cache.clear
+  },
   'script': {
     // The bootloader API.
     // * Load scripts.
