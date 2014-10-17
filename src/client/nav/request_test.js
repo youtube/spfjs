@@ -18,7 +18,7 @@ goog.require('spf.url');
 describe('spf.nav.request', function() {
 
   var MOCK_DELAY = 10;
-  var IGNORED_KEYS = ['cacheKey', 'timing']
+  var IGNORED_KEYS = ['cacheKey', 'timing'];
   var options;
   var createFakeRegularXHR = function(xhrText, isMultipart) {
     var fakeXHR = {

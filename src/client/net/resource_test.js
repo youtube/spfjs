@@ -564,15 +564,18 @@ describe('spf.net.resource', function() {
   });
 
 
-  describe('prefix', function() {
+  describe('key', function() {
 
-    it('adds prefixes (script)', function() {
-      expect(spf.net.resource.prefix(JS, 'foo')).toEqual('js-foo');
+    it('builds full key (script)', function() {
+      expect(spf.net.resource.key(JS, 'foo')).toEqual('js-foo');
     });
 
-    it('adds prefixes (sytle)', function() {
-      expect(spf.net.resource.prefix(CSS, 'foo')).toEqual('css-foo');
+    it('builds full key (sytle)', function() {
+      expect(spf.net.resource.key(CSS, 'foo')).toEqual('css-foo');
     });
+
+    it('skips falsy labels', function() {
+      expect(spf.net.resource.key(JS, 'foo', null).toEqual('js-foo');
 
   });
 

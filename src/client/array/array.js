@@ -79,7 +79,7 @@ spf.array.every = function(arr, fn, opt_obj) {
  *   the item value, the item index, and the array; it should return the
  *   new result.
  * @param {THIS=} opt_obj The value to use as "this" in the function.
- * @return {Array.<RESULT>} A new array of filtered results.
+ * @return {!Array.<RESULT>} A new array of filtered results.
  * @template THIS, ITEM, RESULT
  */
 spf.array.filter = function(arr, fn, opt_obj) {
