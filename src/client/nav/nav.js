@@ -23,6 +23,7 @@ goog.require('spf.history');
 goog.require('spf.nav.request');
 goog.require('spf.nav.response');
 goog.require('spf.state');
+goog.require('spf.string');
 goog.require('spf.tasks');
 goog.require('spf.tracing');
 goog.require('spf.url');
@@ -685,6 +686,15 @@ spf.nav.handleNavigateSuccess_ = function(options, reverse, original,
     // queued after existing ones from any ongoing part prcoessing.
     var r = /** @type {spf.SingleResponse} */ (multipart ? {} : response);
     spf.nav.response.process(url, r, function() {
+      // Check for a URL fragment and matching element.  If one is found,
+      // scroll it into view before completing navigation.
+      var result = spf.string.bisect(url, '#');
+      if (result[1]) {
+        var el = document.getElementById(result[1]);
+        if (el) {
+          el.scrollIntoView();
+        }
+      }
       spf.nav.dispatchDone_(url, response, options);
     }, true, reverse);
   } catch (err) {
