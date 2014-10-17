@@ -389,14 +389,15 @@ spf.load = function(url, opt_options) {};
 
 
 /**
- * Process a response using the SPF protocol.
- *
- * @deprecated Use spf.load instead.
+ * Process a SPF response on the current page outside of a navigation flow.
  *
  * @param {spf.SingleResponse|spf.MultipartResponse} response The SPF response
  *     object to process.
+ * @param {function(spf.SingleResponse|spf.MultipartResponse)=} opt_callback
+ *     Function to execute when processing is done; the argument is
+ *     the {@code response}.
  */
-spf.process = function(response) {};
+spf.process = function(response, opt_callback) {};
 
 
 /**
