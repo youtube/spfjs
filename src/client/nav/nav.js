@@ -576,11 +576,7 @@ spf.nav.handleNavigateError_ = function(options, url, err) {
   if (!spf.nav.dispatchError_(url, err, options)) {
     return;
   }
-  var reason = spf.nav.ReloadReason.ERROR;
-  if (err) {
-    reason += ' Message: ' + err.message;
-  }
-  spf.nav.reload(url, reason);
+  spf.nav.reload(url, spf.nav.ReloadReason.ERROR, err);
 };
 
 
@@ -776,14 +772,22 @@ spf.nav.callback = function(fn, var_args) {
  * Reloads the page with a URL, to be used when navigation fails or is disabled.
  *
  * @param {string} url The requested URL, without the SPF identifier.
- * @param {string} reason The reason code causing the reload.
+ * @param {spf.nav.ReloadReason} reason The reason code causing the reload.
+ * @param {Error=} opt_err An optional error object used in the dispatched
+ *    reason.
  */
-spf.nav.reload = function(url, reason) {
-  spf.debug.warn('reloading (', 'url=', url, 'reason=', reason, ')');
+spf.nav.reload = function(url, reason, opt_err) {
+  var err = opt_err ? opt_err.message : '';
+  spf.debug.warn('reloading (', 'url=', url, 'reason=', reason,
+                 'error=', err, ')');
   spf.nav.cancel();
   spf.nav.cancelAllPrefetchesExcept();
   // Dispatch the reload event to notify the app that a reload is required.
-  spf.nav.dispatchReload_(url, reason);
+  var logReason = reason;
+  if (err) {
+    logReason += ' Message: ' + err;
+  }
+  spf.nav.dispatchReload_(url, logReason);
   // If the url has already changed, clear its entry to prevent browser
   // inconsistency with history management for 301 responses on reloads. Chrome
   // will identify that the starting url was the same, and replace the current
