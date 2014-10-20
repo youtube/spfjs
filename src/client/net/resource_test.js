@@ -575,7 +575,8 @@ describe('spf.net.resource', function() {
     });
 
     it('skips falsy labels', function() {
-      expect(spf.net.resource.key(JS, 'foo', null).toEqual('js-foo');
+      expect(spf.net.resource.key(JS, 'foo', null)).toEqual('js-foo');
+    });
 
   });
 
