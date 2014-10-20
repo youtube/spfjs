@@ -82,10 +82,10 @@ var FLAGS = {
 var DESCRIPTIONS = {
   help: 'Show this help message and exit.',
   path: 'The path that should be traversed to build the dependencies. ' +
-        'Repeat as needed for multiple paths.',
+      'Repeat as needed for multiple paths.',
   mode: 'The type of output to generate either "list" for a list of ' +
-        'filenames or "concat" for a single concatenated text ' +
-        'containing the contents of all the files.'
+      'filenames or "concat" for a single concatenated text ' +
+      'containing the contents of all the files.'
 };
 
 
@@ -99,7 +99,6 @@ var DEFAULTS = {
   path: '.',
   mode: 'list'
 };
-
 
 
 /**
@@ -131,7 +130,6 @@ tests.isJS = function(str) {
 };
 
 
-
 /**
  * Namespace for functions to handle arrays.
  */
@@ -150,7 +148,7 @@ arrays.flatten = function(arr) {
     return [arr];
   }
   return arr.reduce(function(prev, cur) {
-      return prev.concat(arrays.flatten(cur));
+    return prev.concat(arrays.flatten(cur));
   }, []);
 };
 
@@ -181,7 +179,6 @@ arrays.filterJS = function(arr) {
     return tests.isJS(val);
   });
 };
-
 
 
 /**
@@ -245,11 +242,11 @@ files.find = function(paths) {
 };
 
 
-
 /**
  * Namespace for functions to handle dependencies.
  */
 var deps = {};
+
 
 
 /**
@@ -289,7 +286,7 @@ deps.create = function(path) {
   return fs.read(path).then(function(content) {
     return new deps.Info(path, content);
   });
-}
+};
 
 
 /**
@@ -440,7 +437,6 @@ deps.calculate = function(paths, inputs) {
 };
 
 
-
 /**
  * Namespace for functions to handle the command line interface.
  */
@@ -468,7 +464,7 @@ cli.help = function() {
       'Usage: %s [options] argument [arguments]', program));
   util.puts('');
   var wrap = wordwrap(78);
-  util.puts('Arguments:')
+  util.puts('Arguments:');
   util.puts(wrap('The inputs to calculate dependencies for: files, ' +
                  'directories, or namespaces (e.g. "ns:my.project").'));
   util.puts('');
@@ -476,7 +472,7 @@ cli.help = function() {
   util.puts('Options:');
   for (var flag in FLAGS) {
     util.puts(util.format('--%s, -%s', flag, FLAGS[flag]));
-    util.puts(wrap(DESCRIPTIONS[flag]))
+    util.puts(wrap(DESCRIPTIONS[flag]));
     if (flag in DEFAULTS) {
       util.puts(wrap('Default: ' + DEFAULTS[flag]));
     }
