@@ -165,7 +165,7 @@ spf.net.script.ready = function(names, opt_fn, opt_require) {
       opt_fn();
     } else {
       // Otherwise, wait for them to be loaded.
-      var topic = spf.net.resource.prefix(type, names.sort().join('|'));
+      var topic = spf.net.resource.key(type, names.sort().join('|'));
       spf.debug.debug('  subscribing', topic);
       spf.pubsub.subscribe(topic, opt_fn);
     }
@@ -207,7 +207,7 @@ spf.net.script.ignore = function(names, fn) {
   // Convert to an array if needed.
   names = spf.array.toArray(names);
   spf.debug.debug('script.ignore', names);
-  var topic = spf.net.resource.prefix(type, names.sort().join('|'));
+  var topic = spf.net.resource.key(type, names.sort().join('|'));
   spf.debug.debug('  unsubscribing', topic);
   spf.pubsub.unsubscribe(topic, fn);
 };
