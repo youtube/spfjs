@@ -5,6 +5,14 @@
   <title>SPF Unit Tests</title>
 
   <link rel="stylesheet" href="jasmine.css">
+  <script>
+    // Page error counter to ensure an error free jasmine runner.
+    window.errors = 0;
+    window.onerror = function(msg, url, line) {
+      console.log(msg, url, line);
+      window.errors++;
+    };
+  </script>
   <script src="jasmine.js"></script>
   <script src="jasmine-html.js"></script>
 
@@ -13,6 +21,11 @@
 <body>
   <script>
     (function() {
+      describe('jasmine runner', function() {
+        it('has no error', function() {
+          expect(window.errors).toEqual(0);
+        });
+      });
       var reporter = new jasmine.HtmlReporter();
       var env = jasmine.getEnv();
       env.updateInterval = 1000;
