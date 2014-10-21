@@ -121,6 +121,33 @@ spf.nav.request.send = function(url, opt_options) {
     if (options.current) {
       headers['X-SPF-Previous'] = options.current;
     }
+    // As an advanced option, allow request identification via a header.  This
+    // will allow removal of the default identification via URL:
+    //     GET /path
+    //     Accept: application/json
+    //     X-SPF-Request: navigate
+    // instead of:
+    //     GET /path?spf=navigate
+    // But, it comes with 2 extra restrictions:
+    // (1) The server MUST return a `Vary` header on some value that is
+    // different between SPF requests and default browser requests to avoid
+    // caching problems.  The best way to manage this is usually via the
+    // `Accept` header.  Since JSON is used for transport of SPF responses,
+    // a request that sends a value of `application/json` will work and will
+    // be different than standard requests.  A list of defaults used by
+    // various browser can be found at
+    // https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation.
+    // For the quest shown above, the response should then include:
+    //      Vary: Accept
+    // (2) The server MUST use SPF-based redirection, as custom headers (i.e.
+    // the `X-SPF-Request` header) are typically not propgated by browsers
+    // during 30X HTTP redirection.
+    var headerId = /** @type {?string} */ (
+        spf.config.get('advanced-header-identifier'));
+    if (headerId) {
+      headers['X-SPF-Request'] = headerId.replace('__type__', options.type);
+      headers['Accept'] = 'application/json';
+    }
     var chunking = {
       multipart: false,
       extra: '',

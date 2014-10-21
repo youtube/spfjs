@@ -11,6 +11,8 @@
 
 goog.provide('spf.net.xhr');
 
+goog.require('spf');
+
 
 /**
  * Type definition for the configuration options for an XMLHttpRequest.
