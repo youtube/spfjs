@@ -72,7 +72,6 @@ spf.state.Key = {
   NAV_PROMOTE_TIME: 'nav-promote-time',
   NAV_REFERER: 'nav-referer',
   NAV_REQUEST: 'nav-request',
-  NAV_TIME: 'nav-time',
   PREFETCH_LISTENER: 'prefetch-listener',
   PUBSUB_SUBS: 'ps-s',
   RESOURCE_PATHS_PREFIX: 'rsrc-p-',

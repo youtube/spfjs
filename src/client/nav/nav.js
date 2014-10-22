@@ -44,7 +44,6 @@ spf.nav.init = function() {
     spf.state.set(spf.state.Key.NAV_INIT, true);
     spf.state.set(spf.state.Key.NAV_INIT_TIME, spf.now());
     spf.state.set(spf.state.Key.NAV_COUNTER, 0);
-    spf.state.set(spf.state.Key.NAV_TIME, spf.now());
     spf.state.set(spf.state.Key.NAV_LISTENER, spf.nav.handleClick_);
   }
 };
@@ -68,7 +67,6 @@ spf.nav.dispose = function() {
     spf.state.set(spf.state.Key.NAV_INIT, false);
     spf.state.set(spf.state.Key.NAV_INIT_TIME, null);
     spf.state.set(spf.state.Key.NAV_COUNTER, null);
-    spf.state.set(spf.state.Key.NAV_TIME, null);
     spf.state.set(spf.state.Key.NAV_LISTENER, null);
   }
   spf.history.dispose();
@@ -211,11 +209,7 @@ spf.nav.isEligible_ = function(url) {
     return false;
   }
   // If a session lifetime has been set and reached, cancel.
-  if (spf.config.get('experimental-init-lifetime')) {
-    var timestamp = parseInt(spf.state.get(spf.state.Key.NAV_INIT_TIME), 10);
-  } else {
-    var timestamp = parseInt(spf.state.get(spf.state.Key.NAV_TIME), 10);
-  }
+  var timestamp = parseInt(spf.state.get(spf.state.Key.NAV_INIT_TIME), 10);
   timestamp--;
   var age = spf.now() - timestamp;
   var lifetime = parseInt(spf.config.get('navigate-lifetime'), 10);
@@ -397,8 +391,6 @@ spf.nav.navigate_ = function(url, opt_options, opt_current, opt_referer,
   // Set the navigation counter.
   var count = (parseInt(spf.state.get(spf.state.Key.NAV_COUNTER), 10) || 0) + 1;
   spf.state.set(spf.state.Key.NAV_COUNTER, count);
-  // Set the navigation time.
-  spf.state.set(spf.state.Key.NAV_TIME, spf.now());
   // Set the navigation referer, stored in the history entry state object
   // to allow the correct value to be sent to the server during back/forward.
   // Only different than the current URL when navigation is in response to
