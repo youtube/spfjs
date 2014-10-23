@@ -18,6 +18,7 @@ goog.require('spf.debug');
 goog.require('spf.dom');
 goog.require('spf.dom.classlist');
 goog.require('spf.history');
+goog.require('spf.net.connect');
 goog.require('spf.net.script');
 goog.require('spf.net.style');
 goog.require('spf.string');
@@ -159,6 +160,8 @@ spf.nav.response.process = function(url, response, opt_callback, opt_navigate,
     fn = spf.bind(function(head, timing) {
       // Extract scripts and styles from the fragment.
       var extracted = spf.nav.response.extract_(head);
+      // Install links.
+      spf.nav.response.installLinks_(extracted);
       // Install styles.
       spf.nav.response.installStyles_(extracted);
       spf.debug.debug('    head css');
@@ -402,6 +405,7 @@ spf.nav.response.preprocess = function(url, response, opt_callback) {
   if (response['head']) {
     fn = spf.bind(function(head) {
       var extracted = spf.nav.response.extract_(head);
+      spf.nav.response.preinstallLinks_(extracted);
       spf.nav.response.preinstallStyles_(extracted);
       spf.nav.response.preinstallScripts_(extracted);
       spf.debug.debug('  preprocess task done: head');
@@ -484,6 +488,15 @@ spf.nav.response.extract_ = function(html) {
                             name: style['name'] || ''});
       });
     }
+    // Add the parsed links to the result.
+    if (html['links'] && spf.config.get('experimental-preconnect')) {
+      spf.array.each(html['links'], function(link) {
+        if (link['rel'] == 'preconnect') {
+          result.links.push({url: link['url'] || '',
+                             rel: link['rel'] || ''});
+        }
+      });
+    }
     result.html = html['html'] || '';
     return result;
   }
@@ -492,7 +505,7 @@ spf.nav.response.extract_ = function(html) {
   html = html.replace(spf.nav.response.ElementRegEx.SCRIPT_STYLE,
       function(full, tag, attr, text) {
         // A script tag can be either an inline or external style.
-        // Parse name, src, and async attributes.
+        // Parse the name, src, and async attributes.
         if (tag == 'script') {
           var name = attr.match(spf.nav.response.AttributeRegEx.NAME);
           name = name ? name[1] : '';
@@ -502,7 +515,7 @@ spf.nav.response.extract_ = function(html) {
           result.scripts.push({url: url, text: text, name: name, async: async});
           return '';
         }
-        // A style tag is an inline style.  Parse name attribute.
+        // A style tag is an inline style.  Parse the name attribute.
         if (tag == 'style') {
           var name = attr.match(spf.nav.response.AttributeRegEx.NAME);
           name = name ? name[1] : '';
@@ -519,7 +532,7 @@ spf.nav.response.extract_ = function(html) {
         var rel = attr.match(spf.nav.response.AttributeRegEx.REL);
         rel = rel ? rel[1] : '';
         // A rel=stylesheet tag is an external style.
-        // Parse name and href attributes.
+        // Parse the name and href attributes.
         if (rel == 'stylesheet') {
           var name = attr.match(spf.nav.response.AttributeRegEx.NAME);
           name = name ? name[1] : '';
@@ -527,9 +540,17 @@ spf.nav.response.extract_ = function(html) {
           url = url ? url[1] : '';
           result.styles.push({url: url, text: '', name: name});
           return '';
-        } else {
-          return full;
         }
+        // A rel=preconnect tag indicates early connection.
+        // Parse the href attribute.
+        if (rel == 'preconnect' && spf.config.get('experimental-preconnect')) {
+          var url = attr.match(spf.nav.response.AttributeRegEx.HREF);
+          url = url ? url[1] : '';
+          result.links.push({url: url, rel: rel});
+          return '';
+        }
+        // An unknown link was matched.  Do nothing.
+        return full;
       });
 
   // The result html is what's left after parsing.
@@ -675,6 +696,38 @@ spf.nav.response.preinstallStyles_ = function(result) {
 
 
 /**
+ * Installs links (i.e. DNS) that have been parsed from an HTML string.
+ * See {@link spf.net.connect.preconnect} and {@link #extract_}.
+ *
+ * @param {!spf.nav.response.Extraction_} result The parsed HTML result.
+ * @private
+ */
+spf.nav.response.installLinks_ = function(result) {
+  // Currently, only preconnect links are supported.
+  spf.nav.response.preinstallLinks_(result);
+};
+
+
+/**
+ * Prefetches links (i.e. DNS) that have been parsed from an HTML string.
+ * See {@link spf.net.connect.preconnect} and {@link #extract_}.
+ *
+ * @param {!spf.nav.response.Extraction_} result The parsed HTML result.
+ * @private
+ */
+spf.nav.response.preinstallLinks_ = function(result) {
+  if (result.links.length <= 0) {
+    return;
+  }
+  // Preconnect.
+  var urls = spf.array.map(result.links, function(item) {
+    return item.rel == 'preconnect' ? item.url : '';
+  });
+  spf.net.connect.preconnect(urls);
+};
+
+
+/**
  * Provides the current (absolute) URL from the window.
  * @return {string} Get the current window's URL.
  * @private
@@ -694,12 +747,13 @@ spf.nav.response.getCurrentUrl_ = function() {
 spf.nav.response.Extraction_ = function() {
   /** @type {string} */
   this.html = '';
-  /** @type {Array.<{url:string, text:string, name:string, async:boolean}>} */
+  /** @type {!Array.<{url:string, text:string, name:string, async:boolean}>} */
   this.scripts = [];
-   /** @type {Array.<{url:string, text:string, name:string}>} */
+  /** @type {!Array.<{url:string, text:string, name:string}>} */
   this.styles = [];
+  /** @type {!Array.<{url:string, rel:string}>} */
+  this.links = [];
 };
-
 
 
 /**
@@ -776,9 +830,17 @@ if (spf.tracing.ENABLED) {
         'spf.nav.response.preinstallScripts_');
 
     spf.nav.response.installStyles_ = spf.tracing.instrument(
-        spf.nav.response.installStyles_, 'spf.nav.response.installStyles_');
+        spf.nav.response.installStyles_,
+        'spf.nav.response.installStyles_');
     spf.nav.response.preinstallStyles_ = spf.tracing.instrument(
         spf.nav.response.preinstallStyles_,
         'spf.nav.response.preinstallStyles_');
+
+    spf.nav.response.installLinks_ = spf.tracing.instrument(
+        spf.nav.response.installLinks_,
+        'spf.nav.response.installLinks_');
+    spf.nav.response.preinstallLinks_ = spf.tracing.instrument(
+        spf.nav.response.preinstallLinks_,
+        'spf.nav.response.preinstallLinks_');
   })();
 }
