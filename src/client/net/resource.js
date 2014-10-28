@@ -376,6 +376,7 @@ spf.net.resource.prefetch = function(type, url) {
  */
 spf.net.resource.prefetch_ = function(el, type, url, id, group) {
   var isJS = type == spf.net.resource.Type.JS;
+  var isCSS = type == spf.net.resource.Type.CSS;
   var doc = el.contentWindow.document;
   if (isJS) {
     var fetchEl = doc.createElement('object');
@@ -392,10 +393,16 @@ spf.net.resource.prefetch_ = function(el, type, url, id, group) {
     }
     fetchEl.id = id;
     doc.body.appendChild(fetchEl);
-  } else {
+  } else if (isCSS) {
     // Stylesheets can be prefetched in the same way as loaded.
     var fetchEl = spf.net.resource.create(type, url, null, doc, group);
     fetchEl.id = id;
+  } else {
+    // For establishing a preconnection, use an image request.
+    var fetchEl = doc.createElement('img');
+    fetchEl.src = url;
+    fetchEl.id = id;
+    doc.body.appendChild(fetchEl);
   }
 };
 
@@ -689,8 +696,7 @@ spf.net.resource.urls_ = {};
  * @type {boolean}
  * @const
  */
-spf.net.resource.IS_IE = spf.string.contains(
-    navigator.userAgent, ' Trident/');
+spf.net.resource.IS_IE = spf.string.contains(navigator.userAgent, ' Trident/');
 
 
 /**
@@ -709,6 +715,7 @@ spf.net.resource.State = {
  */
 spf.net.resource.Type = {
   CSS: 'css',
+  IMG: 'img',
   JS: 'js'
 };
 
