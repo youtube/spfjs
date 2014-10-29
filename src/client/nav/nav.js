@@ -247,11 +247,9 @@ spf.nav.handleClick_ = function(evt) {
     evt.preventDefault();
     return;
   }
-  if (spf.config.get('experimental-same-origin')) {
-    // Ignore clicks if the URL is not allowed (e.g. cross-domain).
-    if (!spf.nav.isAllowed_(url)) {
-      return;
-    }
+  // Ignore clicks if the URL is not allowed (e.g. cross-domain).
+  if (!spf.nav.isAllowed_(url)) {
+    return;
   }
   // Ignore clicks if the URL is not eligible (e.g. limit reached).
   if (!spf.nav.isEligible_(url)) {
@@ -306,12 +304,10 @@ spf.nav.handleHistory_ = function(url, opt_state) {
   if (reloadId) {
     url = spf.url.removeParameters(url, [reloadId]);
   }
-  if (spf.config.get('experimental-same-origin')) {
-    // Reload if the URL is not allowed (e.g. cross-domain).
-    if (!spf.nav.isAllowed_(url)) {
-      spf.nav.reload(url, spf.nav.ReloadReason.FORBIDDEN);
-      return;
-    }
+  // Reload if the URL is not allowed (e.g. cross-domain).
+  if (!spf.nav.isAllowed_(url)) {
+    spf.nav.reload(url, spf.nav.ReloadReason.FORBIDDEN);
+    return;
   }
   // Reload if the URL is not eligible (e.g. limit reached).
   if (!spf.nav.isEligible_(url)) {
@@ -347,12 +343,10 @@ spf.nav.navigate = function(url, opt_options) {
   if (!url || url == window.location.href) {
     return;
   }
-  if (spf.config.get('experimental-same-origin')) {
-    // Reload if the URL is not allowed (e.g. cross-domain).
-    if (!spf.nav.isAllowed_(url)) {
-      spf.nav.reload(url, spf.nav.ReloadReason.FORBIDDEN);
-      return;
-    }
+  // Reload if the URL is not allowed (e.g. cross-domain).
+  if (!spf.nav.isAllowed_(url)) {
+    spf.nav.reload(url, spf.nav.ReloadReason.FORBIDDEN);
+    return;
   }
   // Reload if the URL is not eligible (e.g. limit reached).
   if (!spf.nav.isEligible_(url)) {
