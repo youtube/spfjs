@@ -1545,6 +1545,10 @@ if (spf.tracing.ENABLED) {
         spf.nav.callback, 'spf.nav.callback');
     spf.nav.reload = spf.tracing.instrument(
         spf.nav.reload, 'spf.nav.reload');
+    spf.nav.prefetch = spf.tracing.instrument(
+        spf.nav.prefetch, 'spf.nav.prefetch');
+    spf.nav.prefetch_ = spf.tracing.instrument(
+        spf.nav.prefetch_, 'spf.nav.prefetch_');
     spf.nav.load = spf.tracing.instrument(
         spf.nav.load, 'spf.nav.load');
     spf.nav.handleLoadError_ = spf.tracing.instrument(
