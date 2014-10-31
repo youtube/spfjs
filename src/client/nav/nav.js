@@ -158,7 +158,7 @@ spf.nav.getEventURL_ = function(evt) {
   var target = spf.nav.getAncestorWithHref_(evt.target, linkEl);
   // Ignore clicks on targets without an href.
   if (!target) {
-    spf.debug.debug('    ignoring click without href');
+    spf.debug.debug('    ignoring click without href parent');
     return null;
   }
   return target.href;
@@ -223,6 +223,32 @@ spf.nav.isEligible_ = function(url) {
 
 
 /**
+ * Whether this URL should be handled for navigation (i.e. not same-page
+ * hash-based navigation).
+ *
+ * @param {string} url The URL to navigate to, without the SPF identifier.
+ * @param {string=} opt_current The current page URL, without the SPF
+ *     identifier.
+ * @return {boolean}
+ * @private
+ */
+spf.nav.isNavigable_ = function(url, opt_current) {
+  // Check for hash-only URLs and absolute URLs with hashes.
+  // If the URL points to the current page, it is not handled.
+  if (spf.string.contains(url, '#')) {
+    var absoluteUrl = spf.url.absolute(url);
+    var current = opt_current || window.location.href;
+    var currentUrl = spf.url.unfragment(current);
+    if (currentUrl == absoluteUrl) {
+      spf.debug.debug('    not handling hash-only URL');
+      return false;
+    }
+  }
+  return true;
+};
+
+
+/**
  * Handles page click events on SPF links, adds pushState history entries for
  * them, and navigates.
  *
@@ -231,20 +257,13 @@ spf.nav.isEligible_ = function(url) {
  */
 spf.nav.handleClick_ = function(evt) {
   spf.debug.debug('nav.handleClick ', 'evt=', evt);
+  // Allow other click handlers to cancel navigation.
   if (evt.defaultPrevented) {
-    // Allow other click handlers to cancel navigation.
     return;
   }
   var url = spf.nav.getEventURL_(evt);
-  if (url === null) {
-    // Ignore clicks if there's no relevant URL for the event target.
-    return;
-  }
-  // Do nothing if click is to the same page or an empty URL.
-  if (!url || url == window.location.href) {
-    spf.debug.debug('    ignoring click to same page');
-    // Prevent the default browser navigation to avoid reloads.
-    evt.preventDefault();
+  // Ignore clicks without a URL.
+  if (!url) {
     return;
   }
   // Ignore clicks if the URL is not allowed (e.g. cross-domain).
@@ -276,8 +295,8 @@ spf.nav.handleClick_ = function(evt) {
 spf.nav.handleMouseDown_ = function(evt) {
   spf.debug.debug('nav.handleMouseDown ', 'evt=', evt);
   var url = spf.nav.getEventURL_(evt);
-  // Ignore clicks to the same page or to empty URLs.
-  if (!url || url == window.location.href) {
+  // Ignore clicks without a URL.
+  if (!url) {
     return;
   }
   // Allow other mousedown handlers to run before issuing a prefetch request.
@@ -339,8 +358,8 @@ spf.nav.handleHistory_ = function(url, opt_state) {
  */
 spf.nav.navigate = function(url, opt_options) {
   spf.debug.debug('nav.navigate ', '(url=', url, 'options=', opt_options, ')');
-  // Ignore navigation to the same page or to an empty URL.
-  if (!url || url == window.location.href) {
+  // Ignore navigation to an empty URL.
+  if (!url) {
     return;
   }
   // Reload if the URL is not allowed (e.g. cross-domain).
@@ -380,23 +399,34 @@ spf.nav.navigate_ = function(url, opt_options, opt_current, opt_referer,
                              opt_history, opt_reverse) {
   spf.debug.info('nav.navigate_ ', url, opt_options, opt_current,
                  opt_referer, opt_history, opt_reverse);
+  // Abort previous navigation, if needed.
+  spf.nav.cancel();
+
   var options = opt_options || /** @type {spf.RequestOptions} */ ({});
 
-  // Set the navigation counter.
-  var count = (parseInt(spf.state.get(spf.state.Key.NAV_COUNTER), 10) || 0) + 1;
-  spf.state.set(spf.state.Key.NAV_COUNTER, count);
   // Set the navigation referer, stored in the history entry state object
   // to allow the correct value to be sent to the server during back/forward.
   // Only different than the current URL when navigation is in response to
   // a popState event.
   // Compare against "undefined" to allow empty referrer values in history.
   var referer = opt_referer == undefined ? window.location.href : opt_referer;
-  spf.state.set(spf.state.Key.NAV_REFERER, referer);
   // The current URL will have already changed for history events, so in those
   // cases the current URL is provided from state. The opt_current should
   // always be used for history states. If it's unavailable that indicates the
   // visible page is undetermined and should not be relied upon.
   var current = opt_history ? opt_current : window.location.href;
+
+  // If the URL is not navigable, attempt to scroll to support hash navigation.
+  if (!spf.nav.isNavigable_(url, current)) {
+    spf.nav.navigateScroll_(url);
+    // Add a history entry, if needed.
+    if (!opt_history) {
+      var handleError = spf.bind(spf.nav.handleNavigateError_, null,
+                                 options);
+      spf.nav.navigateAddHistory_(url, referer, handleError);
+    }
+    return;
+  }
 
   // Reload if the "request" event is canceled.
   if (!spf.nav.dispatchRequest_(url, referer, current, options)) {
@@ -404,8 +434,10 @@ spf.nav.navigate_ = function(url, opt_options, opt_current, opt_referer,
     return;
   }
 
-  // Abort previous navigation, if needed.
-  spf.nav.cancel();
+  // Set the navigation counter.
+  var count = (parseInt(spf.state.get(spf.state.Key.NAV_COUNTER), 10) || 0) + 1;
+  spf.state.set(spf.state.Key.NAV_COUNTER, count);
+
   // Abort all ongoing prefetch requests, except for the navigation one if it
   // exists.  This will reduce network contention for the navigation request
   // by eliminating concurrent reqeuests that will not be used.
@@ -521,18 +553,51 @@ spf.nav.navigateSendRequest_ = function(url, options, current, referer,
 
 
 /**
+ * Scrolls to a target specified by a URL hash.
+ *
+ * @param {string} url The requested URL, without the SPF identifier.
+ * @private
+ */
+spf.nav.navigateScroll_ = function(url) {
+  var result = spf.string.partition(url, '#');
+  // Do nothing if the URL does not contain a hash.
+  if (!result[1]) {
+    return;
+  }
+  // If a non-empty hash is found, attempt to scroll the element into view.
+  // Otherwise, scroll to the top of the page.
+  if (result[2]) {
+    var el = document.getElementById(result[2]);
+    if (el) {
+      spf.debug.debug('    scrolling into view', result[2]);
+      el.scrollIntoView();
+    }
+  } else {
+    spf.debug.debug('    scrolling to top');
+    window.scroll(0, 0);
+  }
+};
+
+
+/**
  * Add the navigate state to the history.
  *
  * @param {string} url The URL to navigate to, without the SPF identifier.
  * @param {string} referer The Referrer URL, without the SPF identifier.
- * @param {function(string, Error)} handleError The error handler the navigate.
+ * @param {function(string, Error)} handleError The error handler.
  * @private
  */
 spf.nav.navigateAddHistory_ = function(url, referer, handleError) {
   try {
-    // Add the URL to the history stack.
     var state = {'spf-referer': referer};
-    spf.history.add(url, state);
+    // Add the URL to the history stack.
+    // But if the new URL is the same as the current, replace instead.
+    // When comparing the URLs, consider the hash too, if any.
+    if (spf.url.absolute(url, true) == window.location.href) {
+      spf.history.replace(url, null, false, true);
+    } else {
+      spf.history.add(url, state);
+    }
   } catch (err) {
     // Abort the navigation.
     spf.nav.cancel();
@@ -668,15 +733,7 @@ spf.nav.handleNavigateSuccess_ = function(options, reverse, original,
     // queued after existing ones from any ongoing part prcoessing.
     var r = /** @type {spf.SingleResponse} */ (multipart ? {} : response);
     spf.nav.response.process(url, r, function() {
-      // Check for a URL fragment and matching element.  If one is found,
-      // scroll it into view before completing navigation.
-      var result = spf.string.partition(url, '#');
-      if (result[2]) {
-        var el = document.getElementById(result[2]);
-        if (el) {
-          el.scrollIntoView();
-        }
-      }
+      spf.nav.navigateScroll_(url);
       spf.nav.dispatchDone_(url, response, options);
     }, true, reverse);
   } catch (err) {

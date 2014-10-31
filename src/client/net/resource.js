@@ -93,7 +93,7 @@ spf.net.resource.load = function(type, urls, opt_nameOrFn, opt_fn) {
   spf.net.resource.urls.set(type, pseudonym, urls);
   // Subscribe the callback to execute when all urls are loaded.
   var topic = spf.net.resource.key(type, pseudonym);
-  spf.debug.debug('  subscribing', topic, done);
+  spf.debug.debug('  subscribing', topic);
   spf.pubsub.subscribe(topic, done);
   // Start asynchronously loading all the resources.
   spf.array.each(urls, function(url) {

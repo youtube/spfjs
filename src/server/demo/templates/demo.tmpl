@@ -50,6 +50,10 @@ $def _stylesheet():
     .demo td.no {
       background-color: #FEE;
     }
+    #demo-target {
+      text-align: center;
+      margin: 50em 0 10em;  /* for testing scrolling */
+    }
   </style>
   <link rel="stylesheet" href="/static/app-demo.css" name="demo-external">
 
@@ -214,6 +218,36 @@ $var attributes: $:_attributes()
     </tbody>
     <tbody>
       <tr>
+        <td><code>href</code> attribute with path and hash</td>
+        <td class="yes">Yes</td>
+        <td class="yes">Yes</td>
+      </tr>
+      <tr>
+        <td><code>&lt;a class="spf-link" href="<em> &hellip; </em>#<em> &hellip; </em>"&gt;</code></td>
+        <td colspan="2">
+          <a class="spf-link" href="/demo/1#demo-target">Demo 1 Target</a>
+          <a class="spf-link" href="/demo/2#demo-target">Demo 2 Target</a>
+          <a class="spf-link" href="/demo/3#demo-target">Demo 3 Target</a>
+          <a class="spf-link" href="/demo/4#demo-target">Demo 4 Target</a>
+          <a class="spf-link" href="/demo/5#demo-target">Demo 5 Target</a>
+        </td>
+      </tr>
+    </tbody>
+    <tbody>
+      <tr>
+        <td><code>href</code> attribute with only hash</td>
+        <td class="no">No</td>
+        <td class="no">No</td>
+      </tr>
+      <tr>
+        <td><code>&lt;a class="spf-link" href="#<em> &hellip; </em>"&gt;</code></td>
+        <td colspan="2">
+          <a class="spf-link" href="#demo-target">Demo Target</a>
+        </td>
+      </tr>
+    </tbody>
+    <tbody>
+      <tr>
         <td><code>spf.navigate</code> JS API</td>
         <td class="yes">Yes</td>
         <td class="yes">Yes</td>
@@ -264,5 +298,9 @@ $var attributes: $:_attributes()
       </tr>
     </tbody>
   </table>
+
+  <p id="demo-target">
+    This is a target for testing scrolling support.  &nbsp;&nbsp;  <a href="#">Top</a>
+  </p>
 
 </div>
