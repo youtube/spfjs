@@ -13,6 +13,9 @@ See the LICENSE file for details.
 
 
 /* This file only exists to demonstrate external CSS being loaded. */
-#demo-text {
-  color: orange;
+#demo-text-external-no {
+  display: none;
+}
+#demo-text-external-yes {
+  display: inline !important;
 }

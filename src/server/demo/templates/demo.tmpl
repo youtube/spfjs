@@ -9,16 +9,47 @@ $# See the LICENSE file for details.
 $def _stylesheet():
   <!-- This style is inlined here for demo purposes. -->
   <style name="demo-inline">
-    .demo p { float: left;
-              width: 44%; height: 9em;
-              margin: 1em; padding: 1em;
-              border: 1px solid #eee; }
-    .demo .sun { display: inline-block;
-                 padding: 0.5em;
-                 border: 1px solid #fff; }
-    .demo a:hover .sun { border-color: #000; }
-    .demo .sun img { height: 3em;
-                     vertical-align: middle; }
+    #demo-text-internal-no {
+      display: none;
+    }
+    #demo-text-internal-yes {
+      display: inline !important;
+    }
+
+    .demo .yes {
+      color: #090;
+    }
+    .demo .no {
+      color: #C00;
+    }
+    .demo code em {
+      background: #DDD;
+    }
+    .demo table {
+      width: 98%;
+      border-collapse: collapse;
+    }
+    .demo thead,
+    .demo tbody {
+      border: 1px solid #BBB;
+      text-align: center;
+    }
+    .demo tr th {
+      padding: 1em 0.5em;
+    }
+    .demo tr:first-child td {
+      padding: 1em 0.5em 0.5em;
+      border-bottom: 1px solid #EEE;
+    }
+    .demo tr:last-child td {
+      padding: 0.5em 0.5em 1em;
+    }
+    .demo td.yes {
+      background-color: #EFE;
+    }
+    .demo td.no {
+      background-color: #FEE;
+    }
   </style>
   <link rel="stylesheet" href="/static/app-demo.css" name="demo-external">
 
@@ -39,199 +70,199 @@ $var attributes: $:_attributes()
     app.log('external js is loaded = ' + !!(window.app && app.demo && app.demo.loaded));
   </script>
 
-  <div>
-    This page is for demonstration purposes only.
-    <span id="demo-text">This text should be orange.</span>
-  </div>
+  <p>
+    These pages demonstrate different types of SPF link and response handling.
+    Each type of link has multiple samples to easily test several navigations.
+  </p>
 
-  <div class="samples">
-    <p>
-      <strong>Sample <code>spf-link</code> links:</strong>
-      <br>
-      A dynamic page transition <em>should</em> occur when clicked.
-      <br>
-      The URL <em>should</em> update.
-      <br>
-      <a class="spf-link" href="/">
-        <span class="sun">
-          <img src="/static/sun.png">Overview
-        </span>
-      </a>
-      <a class="spf-link" href="/spec">Spec</a>
-      &nbsp;&nbsp;&nbsp;&nbsp;
-      <a class="spf-link" href="/demo/1">Demo 1</a>
-      <a class="spf-link" href="/demo/2">Demo 2</a>
-      <a class="spf-link" href="/demo/3">Demo 3</a>
-      <a class="spf-link" href="/demo/4">Demo 4</a>
-      <a class="spf-link" href="/demo/5">Demo 5</a>
-      <a class="spf-link" href="/demo/6">Demo 6</a>
-    </p>
-    <p>
-      <strong>Sample links:</strong>
-      <br>
-      A dynamic page transition <em>should not</em> occur when clicked.
-      <br>
-      The URL <em>should</em> update.
-      <br>
-      <a href="/">
-        <span class="sun">
-          <img src="/static/sun.png">Overview
-        </span>
-      </a>
-      <a href="/spec">Spec</a>
-      &nbsp;&nbsp;&nbsp;&nbsp;
-      <a href="/demo/1">Demo 1</a>
-      <a href="/demo/2">Demo 2</a>
-      <a href="/demo/3">Demo 3</a>
-      <a href="/demo/4">Demo 4</a>
-      <a href="/demo/5">Demo 5</a>
-      <a href="/demo/6">Demo 6</a>
-    </p>
-    <p>
-      <strong>Sample links in a <code>spf-link</code> container:</strong>
-      <br>
-      A dynamic page transition <em>should</em> occur when clicked.
-      <br>
-      The URL <em>should</em> update.
-      <br>
-      <span class="spf-link">
-        <a href="/">
-          <span class="sun">
-            <img src="/static/sun.png">Overview
+  <p>
+    Inline CSS Loaded? <strong id="demo-text-internal-no" class="no">NO</strong><strong id="demo-text-internal-yes" class="yes" style="display: none">YES</strong>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    External CSS Loaded? <strong id="demo-text-external-no" class="no">NO</strong><strong id="demo-text-external-yes" class="yes" style="display: none">YES</strong>
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Transition?</th>
+        <th>URL update?</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>regular link</td>
+        <td class="no">No</td>
+        <td class="yes">Yes</td>
+      </tr>
+      <tr>
+        <td><code>&lt;a href="<em> &hellip; </em>"&gt;</code></td>
+        <td colspan="2">
+          <a href="/demo/1">Demo 1</a>
+          <a href="/demo/2">Demo 2</a>
+          <a href="/demo/3">Demo 3</a>
+          <a href="/demo/4">Demo 4</a>
+          <a href="/demo/5">Demo 5</a>
+        </td>
+      </tr>
+    </tbody>
+    <tbody>
+      <tr>
+        <td><code>spf-link</code> link</td>
+        <td class="yes">Yes</td>
+        <td class="yes">Yes</td>
+      </tr>
+      <tr>
+        <td><code>&lt;a class="spf-link" href="<em> &hellip; </em>"&gt;</code></td>
+        <td colspan="2">
+          <a class="spf-link" href="/demo/1">Demo 1</a>
+          <a class="spf-link" href="/demo/2">Demo 2</a>
+          <a class="spf-link" href="/demo/3">Demo 3</a>
+          <a class="spf-link" href="/demo/4">Demo 4</a>
+          <a class="spf-link" href="/demo/5">Demo 5</a>
+        </td>
+      </tr>
+    </tbody>
+    <tbody>
+      <tr>
+        <td><code>spf-link</code> container</td>
+        <td class="yes">Yes</td>
+        <td class="yes">Yes</td>
+      </tr>
+      <tr>
+        <td><code>&lt;span class="spf-link"&gt;&lt;a href="<em> &hellip; </em>"&gt;</code></td>
+        <td colspan="2">
+          <span class="spf-link">
+            <a href="/demo/1">Demo 1</a>
+            <a href="/demo/2">Demo 2</a>
+            <a href="/demo/3">Demo 3</a>
+            <a href="/demo/4">Demo 4</a>
+            <a href="/demo/5">Demo 5</a>
           </span>
-        </a>
-        <a href="/spec">Spec</a>
-        &nbsp;&nbsp;&nbsp;&nbsp;
-        <a href="/demo/1">Demo 1</a>
-        <a href="/demo/2">Demo 2</a>
-        <a href="/demo/3">Demo 3</a>
-        <a href="/demo/4">Demo 4</a>
-        <a href="/demo/5">Demo 5</a>
-        <a href="/demo/6">Demo 6</a>
-      </span>
-    </p>
-    <p>
-      <strong>Sample <code>spf-link</code> links in a <code>spf-nolink</code> container:</strong>
-      <br>
-      A dynamic page transition <em>should not</em> occur when clicked.
-      <br>
-      The URL <em>should</em> update.
-      <br>
-      <span class="spf-nolink">
-        <a class="spf-link" href="/">
-          <span class="sun">
-            <img src="/static/sun.png">Overview
+        </td>
+      </tr>
+    </tbody>
+    <tbody>
+      <tr>
+        <td><code>spf-nolink</code> container</td>
+        <td class="no">No</td>
+        <td class="yes">Yes</td>
+      </tr>
+      <tr>
+        <td><code>&lt;span class="spf-nolink"&gt;&lt;a class="spf-link" href="<em> &hellip; </em>"&gt;</code></td>
+        <td colspan="2">
+          <span class="spf-nolink">
+            <a class="spf-link" href="/demo/1">Demo 1</a>
+            <a class="spf-link" href="/demo/2">Demo 2</a>
+            <a class="spf-link" href="/demo/3">Demo 3</a>
+            <a class="spf-link" href="/demo/4">Demo 4</a>
+            <a class="spf-link" href="/demo/5">Demo 5</a>
           </span>
-        </a>
-        <a class="spf-link" href="/spec">Spec</a>
-        &nbsp;&nbsp;&nbsp;&nbsp;
-        <a class="spf-link" href="/demo/1">Demo 1</a>
-        <a class="spf-link" href="/demo/2">Demo 2</a>
-        <a class="spf-link" href="/demo/3">Demo 3</a>
-        <a class="spf-link" href="/demo/4">Demo 4</a>
-        <a class="spf-link" href="/demo/5">Demo 5</a>
-        <a class="spf-link" href="/demo/6">Demo 6</a>
-      </span>
-    </p>
-    <p>
-      <strong>Sample buttons to load content via JavaScript <em>with</em> navigation:</strong>
-      <br>
-      A dynamic page transition <em>should</em> occur when clicked.
-      <br>
-      The URL <em>should</em> update.
-      <br>
-      <button onclick="spf.navigate('/')">Overview</button>
-      <button onclick="spf.navigate('/spec')">Spec</button>
-      &nbsp;&nbsp;&nbsp;&nbsp;
-      <button onclick="spf.navigate('/demo/1')">Demo 1</button>
-      <button onclick="spf.navigate('/demo/2')">Demo 2</button>
-      <button onclick="spf.navigate('/demo/3')">Demo 3</button>
-      <button onclick="spf.navigate('/demo/4')">Demo 4</button>
-      <button onclick="spf.navigate('/demo/5')">Demo 5</button>
-      <button onclick="spf.navigate('/demo/6')">Demo 6</button>
-    </p>
-    <p>
-      <strong>Sample buttons to load content via JavaScript <em>without</em> navigation:</strong>
-      <br>
-      A dynamic page transition <em>should</em> occur when clicked.
-      <br>
-      The URL <em>should not</em> update.
-      <br>
-      <button onclick="spf.load('/')">Overview</button>
-      <button onclick="spf.load('/spec')">Spec</button>
-      &nbsp;&nbsp;&nbsp;&nbsp;
-      <button onclick="spf.load('/demo/1')">Demo 1</button>
-      <button onclick="spf.load('/demo/2')">Demo 2</button>
-      <button onclick="spf.load('/demo/3')">Demo 3</button>
-      <button onclick="spf.load('/demo/4')">Demo 4</button>
-      <button onclick="spf.load('/demo/5')">Demo 5</button>
-      <button onclick="spf.load('/demo/6')">Demo 6</button>
-    </p>
-    <p>
-      <strong>Sample <code>spf-link</code> links with non-200 responses:</strong>
-      <br>
-      A dynamic page transition <em>should</em> occur when clicked.
-      <br>
-      The URL <em>should</em> update.
-      <br>
-      404 Not Found: <a class="spf-link" href="/missing">Missing</a>
-      &nbsp;&nbsp;&nbsp;&nbsp;
-      303 See Other: <a class="spf-link" href="/other/foo">Other Foo</a>
-    </p>
-    <p>
-      <strong>Sample links with non-200 responses:</strong>
-      <br>
-      A dynamic page transition <em>should not</em> occur when clicked.
-      <br>
-      The URL <em>should</em> update.
-      <br>
-      404 Not Found: <a href="/missing">Missing</a>
-      &nbsp;&nbsp;&nbsp;&nbsp;
-      303 See Other: <a href="/other/foo">Other Foo</a>
-    </p>
-    <p>
-      <strong>Sample <code>spf-link</code> links without <code>href</code> attributes:</strong>
-      <br>
-      A dynamic page transition <em>should not</em> occur when clicked.
-      <br>
-      The URL <em>should not</em> update.
-      <br>
-      <!-- missing hrefs point nowhere -->
-      <a class="spf-link">
-        <span class="sun">
-          <img src="/static/sun.png">Overview
-        </span>
-      </a>
-      <a class="spf-link">Spec</a>
-      &nbsp;&nbsp;&nbsp;&nbsp;
-      <!-- emtpy hrefs point to the same page -->
-      <a class="spf-link" href="">Demo 1</a>
-      <a class="spf-link" href="">Demo 2</a>
-      <a class="spf-link" href="">Demo 3</a>
-      <a class="spf-link" href="">Demo 4</a>
-      <a class="spf-link" href="">Demo 5</a>
-      <a class="spf-link" href="">Demo 6</a>
-    </p>
-    <p>
-      <strong>Sample links with <code>spf-link</code> children:</strong>
-      <br>
-      A dynamic page transition <em>should not</em> occur when clicked.
-      <br>
-      The URL <em>should</em> update.
-      <br>
-      <a href="/">
-        <span class="sun spf-link">
-          <img src="/static/sun.png">Overview
-        </span>
-      </a>
-      <a href="/spec"><span class="spf-link">Spec</span></a>
-      &nbsp;&nbsp;&nbsp;&nbsp;
-      <a href="/demo/1"><span class="spf-link">Demo 1</span></a>
-      <a href="/demo/2"><span class="spf-link">Demo 2</span></a>
-      <a href="/demo/3"><span class="spf-link">Demo 3</span></a>
-      <a href="/demo/4"><span class="spf-link">Demo 4</span></a>
-      <a href="/demo/5"><span class="spf-link">Demo 5</span></a>
-      <a href="/demo/6"><span class="spf-link">Demo 6</span></a>
-    </p>
-  </div>
+        </td>
+      </tr>
+    </tbody>
+    <tbody>
+      <tr>
+        <td><code>spf-link</code> element inside regular link</td>
+        <td class="no">No</td>
+        <td class="yes">Yes</td>
+      </tr>
+      <tr>
+        <td><code>&lt;a href="<em> &hellip; </em>"&gt;&lt;span class="spf-link"&gt;</code></td>
+        <td colspan="2">
+          <a href="/demo/1"><span class="spf-link">Demo 1</span></a>
+          <a href="/demo/2"><span class="spf-link">Demo 2</span></a>
+          <a href="/demo/3"><span class="spf-link">Demo 3</span></a>
+          <a href="/demo/4"><span class="spf-link">Demo 4</span></a>
+          <a href="/demo/5"><span class="spf-link">Demo 5</span></a>
+        </td>
+      </tr>
+    </tbody>
+    <tbody>
+      <tr>
+        <td>missing <code>href</code> attribute</td>
+        <td class="no">No</td>
+        <td class="no">No</td>
+      </tr>
+      <tr>
+        <td><code>&lt;a class="spf-link"&gt;</code></td>
+        <td colspan="2">
+          <a class="spf-link">Demo 1 Missing</a>
+          <a class="spf-link">Demo 2 Missing</a>
+          <a class="spf-link">Demo 3 Missing</a>
+          <a class="spf-link">Demo 4 Missing</a>
+          <a class="spf-link">Demo 5 Missing</a>
+        </td>
+      </tr>
+    </tbody>
+    <tbody>
+      <tr>
+        <td>empty <code>href</code> attribute</td>
+        <td class="yes">Yes</td>
+        <td class="no">No</td>
+      </tr>
+      <tr>
+        <td><code>&lt;a class="spf-link" href=""&gt;</code></td>
+        <td colspan="2">
+          <a class="spf-link" href="">Demo 1 Empty</a>
+          <a class="spf-link" href="">Demo 2 Empty</a>
+          <a class="spf-link" href="">Demo 3 Empty</a>
+          <a class="spf-link" href="">Demo 4 Empty</a>
+          <a class="spf-link" href="">Demo 5 Empty</a>
+        </td>
+      </tr>
+    </tbody>
+    <tbody>
+      <tr>
+        <td><code>spf.navigate</code> JS API</td>
+        <td class="yes">Yes</td>
+        <td class="yes">Yes</td>
+      </tr>
+      <tr>
+        <td><code>&lt;button onclick="spf.navigate(<em> &hellip; </em>)"&gt;</code></td>
+        <td colspan="2">
+          <button onclick="spf.navigate('/demo/1')">Demo 1</button>
+          <button onclick="spf.navigate('/demo/2')">Demo 2</button>
+          <button onclick="spf.navigate('/demo/3')">Demo 3</button>
+          <button onclick="spf.navigate('/demo/4')">Demo 4</button>
+          <button onclick="spf.navigate('/demo/5')">Demo 5</button>
+          <button onclick="spf.navigate('/demo/6')">Demo 6</button>
+        </td>
+      </tr>
+    </tbody>
+    <tbody>
+      <tr>
+        <td><code>spf.load</code> JS API</td>
+        <td class="no">No</td>
+        <td class="no">No</td>
+      </tr>
+      <tr>
+        <td><code>&lt;button onclick="spf.load(<em> &hellip; </em>)"&gt;</code></td>
+        <td colspan="2">
+          <button onclick="spf.load('/demo/1')">Demo 1</button>
+          <button onclick="spf.load('/demo/2')">Demo 2</button>
+          <button onclick="spf.load('/demo/3')">Demo 3</button>
+          <button onclick="spf.load('/demo/4')">Demo 4</button>
+          <button onclick="spf.load('/demo/5')">Demo 5</button>
+          <button onclick="spf.load('/demo/6')">Demo 6</button>
+        </td>
+      </tr>
+    </tbody>
+    <tbody>
+      <tr>
+        <td>non-200 responses</td>
+        <td class="yes">Yes</td>
+        <td class="yes">Yes</td>
+      </tr>
+      <tr>
+        <td><code>&lt;a class="spf-link" href="<em> &hellip; </em>"&gt;</code></td>
+        <td colspan="2">
+          404 Not Found: <a class="spf-link" href="/missing">Missing</a>
+          &nbsp;&nbsp;&nbsp;&nbsp;
+          303 See Other: <a class="spf-link" href="/other/foo">Other Foo</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
 </div>
