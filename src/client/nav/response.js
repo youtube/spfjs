@@ -583,22 +583,14 @@ spf.nav.response.installScripts_ = function(result, opt_callback) {
       var item = result.scripts[index];
       var fn = function() {};
       if (item.url) {
-        if (spf.config.get('experimental-execute-unified')) {
-          if (item.name) {
-            fn = spf.bind(spf.net.script.load, null, item.url, item.name);
-          } else {
-            fn = spf.bind(spf.net.script.get, null, item.url);
-          }
-        } else {
+        if (item.name) {
           fn = spf.bind(spf.net.script.load, null, item.url, item.name);
+        } else {
+          fn = spf.bind(spf.net.script.get, null, item.url);
         }
       } else if (item.text) {
-        if (spf.config.get('experimental-execute-unified')) {
-          if (item.name) {
-            fn = spf.bind(spf.net.script.eval, null, item.text, item.name);
-          } else {
-            fn = spf.bind(spf.net.script.exec, null, item.text);
-          }
+        if (item.name) {
+          fn = spf.bind(spf.net.script.eval, null, item.text, item.name);
         } else {
           fn = spf.bind(spf.net.script.exec, null, item.text);
         }
@@ -652,22 +644,14 @@ spf.nav.response.installStyles_ = function(result) {
   for (var i = 0, l = result.styles.length; i < l; i++) {
     var item = result.styles[i];
     if (item.url) {
-      if (spf.config.get('experimental-execute-unified')) {
-        if (item.name) {
-          spf.net.style.load(item.url, item.name);
-        } else {
-          spf.net.style.get(item.url);
-        }
-      } else {
+      if (item.name) {
         spf.net.style.load(item.url, item.name);
+      } else {
+        spf.net.style.get(item.url);
       }
     } else if (item.text) {
-      if (spf.config.get('experimental-execute-unified')) {
-        if (item.name) {
-          spf.net.style.eval(item.text, item.name);
-        } else {
-          spf.net.style.exec(item.text);
-        }
+      if (item.name) {
+        spf.net.style.eval(item.text, item.name);
       } else {
         spf.net.style.exec(item.text);
       }
