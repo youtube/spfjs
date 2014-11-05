@@ -214,7 +214,7 @@ spf.url.unprotocol = function(url) {
  * @return {string}  A URL without a fragment, if possible.
  */
 spf.url.unfragment = function(url) {
-  var res = spf.string.bisect(url, '#');
+  var res = spf.string.partition(url, '#');
   return res[0];
 };
 
@@ -228,11 +228,6 @@ spf.url.unfragment = function(url) {
  * @private
  */
 spf.url.splitFragment_ = function(url) {
-  var frag = '';
-  if (spf.string.contains(url, '#')) {
-    var res = spf.string.bisect(url, '#');
-    url = res[0];
-    frag = '#' + res[1];
-  }
-  return [url, frag];
+  var res = spf.string.partition(url, '#');
+  return [res[0], res[1] + res[2]];
 };

@@ -670,9 +670,9 @@ spf.nav.handleNavigateSuccess_ = function(options, reverse, original,
     spf.nav.response.process(url, r, function() {
       // Check for a URL fragment and matching element.  If one is found,
       // scroll it into view before completing navigation.
-      var result = spf.string.bisect(url, '#');
-      if (result[1]) {
-        var el = document.getElementById(result[1]);
+      var result = spf.string.partition(url, '#');
+      if (result[2]) {
+        var el = document.getElementById(result[2]);
         if (el) {
           el.scrollIntoView();
         }
