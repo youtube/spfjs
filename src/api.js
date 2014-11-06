@@ -350,6 +350,32 @@ spf.EventDetail.prototype.urls;
 
 
 /**
+ * Definition of the Scheduler API which can be used by the application to
+ * control execution of tasks.
+ * @interface
+ */
+spf.TaskScheduler;
+
+
+/**
+ * Adds a task to the scheduler, it is expected to be executed asynchronously as
+ * determined by the scheduler.
+ *
+ * @param {!Function} task The task to execute.
+ * @return {number} The ID identifying the task.
+ */
+spf.TaskScheduler.prototype.addTask = function(task) {};
+
+
+/**
+ * Cancels a task if it has not been executed yet.
+ *
+ * @param {number} id The ID of the task to cancel.
+ */
+spf.TaskScheduler.prototype.cancelTask = function(id) {};
+
+
+/**
  * Initializes SPF.
  *
  * @param {Object=} opt_config Optional global configuration object.

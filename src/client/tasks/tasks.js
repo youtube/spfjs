@@ -50,7 +50,7 @@ spf.tasks.add = function(key, fn, opt_delay) {
 spf.tasks.run = function(key, opt_sync) {
   var queue = spf.tasks.queues_[key];
   if (queue) {
-    var active = queue.timer > 0;
+    var active = !!queue.scheduledKey || !!queue.timeoutKey;
     var suspended = !(queue.semaphore > 0);
     if (!suspended && (opt_sync || !active)) {
       spf.tasks.do_(key, opt_sync);
@@ -110,7 +110,7 @@ spf.tasks.resume = function(key, opt_sync) {
 spf.tasks.cancel = function(key) {
   var queue = spf.tasks.queues_[key];
   if (queue) {
-    clearTimeout(queue.timer);
+    spf.tasks.clearAsyncTasks_(queue);
     delete spf.tasks.queues_[key];
   }
 };
@@ -158,23 +158,74 @@ spf.tasks.key = function(obj) {
 spf.tasks.do_ = function(key, opt_sync) {
   var queue = spf.tasks.queues_[key];
   if (queue) {
-    clearTimeout(queue.timer);
-    queue.timer = 0;
-    if (queue.semaphore > 0) {
-      var task = queue.items.shift();
+    spf.tasks.clearAsyncTasks_(queue);
+    if (queue.semaphore > 0 && queue.items.length) {
+      var task = queue.items[0];
       if (task) {
         var next = spf.bind(spf.tasks.do_, null, key, opt_sync);
-        var step = spf.bind(function(taskFn, nextFn) {
+        var step = spf.bind(function(nextFn, taskFn) {
           taskFn();
           nextFn();
-        }, null, task.fn, next);
+        }, null, next);
         if (opt_sync) {
-          step();
+          queue.items.shift();
+          step(task.fn);
         } else {
-          queue.timer = setTimeout(step, task.delay);
+          spf.tasks.scheduleTask_(queue, task, step);
         }
       }
     }
+  }
+};
+
+
+/**
+ * Schedule a task for asynchronous execution.
+ * @param {!spf.tasks.Queue} queue The current queue being executed.
+ * @param {!spf.tasks.Task} task The task to be scheduled.
+ * @param {!Function} step The task execution function.
+ * @private
+ */
+spf.tasks.scheduleTask_ = function(queue, task, step) {
+  if (task.delay) {
+    // For a delay an empty step is run, and the task's functionality is saved
+    // for the next step.
+    var fn = spf.bind(step, null, spf.nullFunction);
+    queue.timeoutKey = setTimeout(fn, task.delay);
+    // Instead of removing the task from the queue, set it's delay to 0 so it
+    // will be processed traditionally on the next step.
+    task.delay = 0;
+  } else {
+    queue.items.shift();
+    var fn = spf.bind(step, null, task.fn);
+    var scheduler = /** @type {spf.TaskScheduler} */ (
+        spf.config.get('advanced-task-scheduler'));
+    if (scheduler) {
+      queue.scheduledKey = scheduler.addTask(fn);
+    } else {
+      queue.timeoutKey = setTimeout(fn, 0);
+    }
+  }
+};
+
+
+/**
+ * Clear the current asynchronous tasks.
+ * @param {!spf.tasks.Queue} queue The queue.
+ * @private
+ */
+spf.tasks.clearAsyncTasks_ = function(queue) {
+  if (queue.scheduledKey) {
+    var scheduler = /** @type {spf.TaskScheduler} */ (
+        spf.config.get('advanced-task-scheduler'));
+    if (scheduler) {
+      scheduler.cancelTask(queue.scheduledKey);
+    }
+    queue.scheduledKey = 0;
+  }
+  if (queue.timeoutKey) {
+    clearTimeout(queue.timeoutKey);
+    queue.timeoutKey = 0;
   }
 };
 
@@ -195,13 +246,15 @@ spf.tasks.Task;
 /**
  * Type definition for a SPF task queue.
  * - items: The ordered list of tasks.
- * - timer: The timer being used to handle delays.
+ * - scheduledKey: A key to track the current scheduled task.
+ * - timeoutKey: A key to track the current task delayed by a timeout.
  * - semaphore: A POSIX Semaphore style value used to control suspending and
  *     resuming a running queue.
  *
  * @typedef {{
  *   items: !Array.<spf.tasks.Task>,
- *   timer: number,
+ *   scheduledKey: number,
+ *   timeoutKey: number,
  *   semaphore: number
  * }}
  */
@@ -213,7 +266,7 @@ spf.tasks.Queue;
  * @private
  */
 spf.tasks.createQueue_ = function() {
-  return {items: [], timer: 0, semaphore: 1};
+  return {items: [], scheduledKey: 0, timeoutKey: 0, semaphore: 1};
 };
 
 
