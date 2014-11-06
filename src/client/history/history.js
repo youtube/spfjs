@@ -196,7 +196,9 @@ spf.history.pop_ = function(evt) {
     spf.state.set(spf.state.Key.HISTORY_IGNORE_POP, false);
     return;
   }
-  // Avoid the initial event on first load for a state.
+  // Avoid the initial event on first load, and ignore events for history
+  // entries that are not handled by SPF (e.g. when navigating within a page
+  // using links with hash-only URLs, there are no associated states).
   if (!evt.state) {
     return;
   }

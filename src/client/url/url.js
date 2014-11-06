@@ -74,14 +74,15 @@ spf.url.utils = function(url) {
 
 /**
  * Converts a relative URL to absolute based on the current document domain.
- * Also removes the fragment from the URL, if one exists.
  *
  * @param {string} relative A relative URL.
+ * @param {boolean=} opt_keepHash  Whether to keep any hash in the URL,
+ *     if one exists.  Defaults to false.
  * @return {string} An absolute URL (with fragment removed, if possible).
  */
-spf.url.absolute = function(relative) {
+spf.url.absolute = function(relative, opt_keepHash) {
   var utils = spf.url.utils(relative);
-  return spf.url.unfragment(utils.href);
+  return opt_keepHash ? utils.href : spf.url.unfragment(utils.href);
 };
 
 

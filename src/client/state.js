@@ -70,7 +70,6 @@ spf.state.Key = {
   NAV_PREFETCHES: 'nav-prefetches',
   NAV_PROMOTE: 'nav-promote',
   NAV_PROMOTE_TIME: 'nav-promote-time',
-  NAV_REFERER: 'nav-referer',
   NAV_REQUEST: 'nav-request',
   PREFETCH_LISTENER: 'prefetch-listener',
   PUBSUB_SUBS: 'ps-s',

@@ -384,6 +384,50 @@ describe('spf.nav', function() {
   });
 
 
+  describe('isNavigable', function() {
+
+
+    it('allows standard URLs to different pages', function() {
+      var current = window.location.href;
+      var url = '/page';
+      var crossDomainUrl = 'https://www.google.com/';
+      expect(spf.nav.isNavigable_(url, current)).toBe(true);
+      expect(spf.nav.isNavigable_(crossDomainUrl, current)).toBe(true);
+    });
+
+
+    it('allows hash URLs to different pages', function() {
+      var current = window.location.href;
+      var urlWithHash1 = '/page#target';
+      var crossDomainUrlWithHash1 = 'https://www.google.com/#target';
+      var urlWithHash2 = '/page#';
+      var crossDomainUrlWithHash2 = 'https://www.google.com/#';
+      expect(spf.nav.isNavigable_(urlWithHash1, current)).toBe(true);
+      expect(spf.nav.isNavigable_(crossDomainUrlWithHash1, current)).toBe(true);
+      expect(spf.nav.isNavigable_(urlWithHash2, current)).toBe(true);
+      expect(spf.nav.isNavigable_(crossDomainUrlWithHash2, current)).toBe(true);
+    });
+
+
+    it('allows standard URLs to same pages', function() {
+      var current = window.location.href;
+      var url = current;
+      expect(spf.nav.isNavigable_(url, current)).toBe(true);
+    });
+
+
+    it('denies hash URLs to same pages', function() {
+      var current = window.location.href;
+      var urlWithHash1 = current + '#target';
+      var urlWithHash2 = current + '#';
+      expect(spf.nav.isNavigable_(urlWithHash1, current)).toBe(false);
+      expect(spf.nav.isNavigable_(urlWithHash2, current)).toBe(false);
+    });
+
+
+  });
+
+
   describe('navigate', function() {
 
 
