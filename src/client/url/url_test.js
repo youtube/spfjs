@@ -61,7 +61,7 @@ describe('spf.url', function() {
       expect(spf.url.appendParameters(url, args)).toEqual('/page?old=1&arg=1');
     });
 
-    it('respects fragments', function() {
+    it('respects hashes', function() {
       var url = '/page#part';
       var args = {'arg': 1};
       expect(spf.url.appendParameters(url, args)).toEqual('/page?arg=1#part');
@@ -92,7 +92,7 @@ describe('spf.url', function() {
           '/page?param1=123&param3=def');
     });
 
-    it('respects fragments', function() {
+    it('respects hashes', function() {
       var url = '/page?param=123#frag';
       expect(spf.url.removeParameters(url, ['param'])).toEqual('/page#frag');
 
@@ -150,21 +150,21 @@ describe('spf.url', function() {
   });
 
 
-  describe('unfragment', function() {
+  describe('unhash', function() {
 
-    it('no fragment', function() {
+    it('no hash', function() {
       var url = '/page';
-      expect(spf.url.unfragment(url)).toEqual('/page');
+      expect(spf.url.unhash(url)).toEqual('/page');
     });
 
-    it('empty fragment', function() {
+    it('empty hash', function() {
       var url = '/page#';
-      expect(spf.url.unfragment(url)).toEqual('/page');
+      expect(spf.url.unhash(url)).toEqual('/page');
     });
 
-    it('fragment', function() {
+    it('hash', function() {
       var url = '/page#frag';
-      expect(spf.url.unfragment(url)).toEqual('/page');
+      expect(spf.url.unhash(url)).toEqual('/page');
     });
 
   });

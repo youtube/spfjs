@@ -78,11 +78,11 @@ spf.url.utils = function(url) {
  * @param {string} relative A relative URL.
  * @param {boolean=} opt_keepHash  Whether to keep any hash in the URL,
  *     if one exists.  Defaults to false.
- * @return {string} An absolute URL (with fragment removed, if possible).
+ * @return {string} An absolute URL (with hash removed, if possible).
  */
 spf.url.absolute = function(relative, opt_keepHash) {
   var utils = spf.url.utils(relative);
-  return opt_keepHash ? utils.href : spf.url.unfragment(utils.href);
+  return opt_keepHash ? utils.href : spf.url.unhash(utils.href);
 };
 
 
@@ -124,7 +124,7 @@ spf.url.identify = function(url, opt_type) {
   if (ident) {
     var type = opt_type || '';
     ident = ident.replace('__type__', type);
-    var result = spf.url.splitFragment_(url);
+    var result = spf.string.partition(url, '#');
     url = result[0];
 
     // The identifier may not be a parameter, but an extension.
@@ -133,15 +133,15 @@ spf.url.identify = function(url, opt_type) {
       ident = ident.replace('?', '&');
     }
 
-    // Inject the idenitifier and re-add the fragment.
-    url += ident + result[1];
+    // Inject the idenitifier and re-add the hash.
+    url += ident + result[1] + result[2];
   }
   return url;
 };
 
 
 /**
- * Appends the parameters to the url. Any existing parameters or fragments are
+ * Appends the parameters to the url. Any existing parameters or hashes are
  * maintained.
  *
  * @param {string} url A URL.
@@ -150,7 +150,7 @@ spf.url.identify = function(url, opt_type) {
  * @return {string} A new URL with the parameters included.
  */
 spf.url.appendParameters = function(url, parameters) {
-  var result = spf.url.splitFragment_(url);
+  var result = spf.string.partition(url, '#');
   url = result[0];
   var delim = spf.string.contains(url, '?') ? '&' : '?';
   for (var key in parameters) {
@@ -160,8 +160,8 @@ spf.url.appendParameters = function(url, parameters) {
     }
     delim = '&';
   }
-  // Reattach the fragments.
-  return url + result[1];
+  // Reattach the hash.
+  return url + result[1] + result[2];
 };
 
 
@@ -173,26 +173,22 @@ spf.url.appendParameters = function(url, parameters) {
  * @return {string} A new URL with the parameters removed.
  */
 spf.url.removeParameters = function(url, parameters) {
-  // Remove any fragments from consideration
-  var result = spf.url.splitFragment_(url);
+  var result = spf.string.partition(url, '#');
   url = result[0];
-
   for (var i = 0; i < parameters.length; i++) {
     var param = parameters[i];
-
     // Strip all parameters matching the param key.
     var regex = new RegExp('([?&])' + param + '(?:=[^&]*)?(?:(?=[&])|$)', 'g');
     url = url.replace(regex, function(_, delim) {
       return delim == '?' ? delim : '';
     });
   }
-
   // Remove an unecessary trailing question marks.
   if (spf.string.endsWith(url, '?')) {
     url = url.slice(0, -1);
   }
-
-  return url + result[1];
+  // Reattach the hash.
+  return url + result[1] + result[2];
 };
 
 
@@ -209,26 +205,12 @@ spf.url.unprotocol = function(url) {
 
 
 /**
- * Removes a fragment from a URL.
+ * Removes a hash from a URL.
  *
  * @param {string} url A URL.
- * @return {string}  A URL without a fragment, if possible.
+ * @return {string}  A URL without a hash, if possible.
  */
-spf.url.unfragment = function(url) {
+spf.url.unhash = function(url) {
   var res = spf.string.partition(url, '#');
   return res[0];
-};
-
-
-/**
- * Splits the fragment section from the URL if present.
- *
- * @param {string} url A URL.
- * @return {Array.<string>} An array containing the URL without the fragment and
- *    the fragment including a hash.
- * @private
- */
-spf.url.splitFragment_ = function(url) {
-  var res = spf.string.partition(url, '#');
-  return [res[0], res[1] + res[2]];
 };

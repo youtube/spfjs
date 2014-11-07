@@ -238,7 +238,7 @@ spf.nav.isNavigable_ = function(url, opt_current) {
   if (spf.string.contains(url, '#')) {
     var absoluteUrl = spf.url.absolute(url);
     var current = opt_current || window.location.href;
-    var currentUrl = spf.url.unfragment(current);
+    var currentUrl = spf.url.unhash(current);
     if (currentUrl == absoluteUrl) {
       spf.debug.debug('    not handling hash-only URL');
       return false;
