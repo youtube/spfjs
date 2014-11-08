@@ -7,6 +7,8 @@
  * @fileoverview Tests for asynchronous queued task execution.
  */
 
+
+goog.require('spf.config');
 goog.require('spf.tasks');
 
 

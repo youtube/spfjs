@@ -12,6 +12,7 @@
 goog.provide('spf.tasks');
 
 goog.require('spf');
+goog.require('spf.config');
 goog.require('spf.state');
 goog.require('spf.string');
 goog.require('spf.tracing');
