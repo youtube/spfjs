@@ -117,6 +117,12 @@ spf.now = function() {
 
 
 /**
+ * An empty no-op function.
+ */
+spf.nullFunction = function() {};
+
+
+/**
  * @enum {string}
  */
 spf.EventName = {
@@ -219,7 +225,7 @@ spf.RequestOptions;
 
 
 /**
- * Type definititon for custom event detail (data), also used for callbacks.
+ * Type definition for custom event detail (data), also used for callbacks.
  * - err: optional error that occurred; defined for "error" events
  * - name: optional name of the scripts or styles that will be unloaded;
  *       defined for "jsbeforeunload", "jsunload", "cssbeforeunload",
@@ -255,3 +261,17 @@ spf.RequestOptions;
  * }}
  */
 spf.EventDetail;
+
+
+/**
+ * Type definition for a task scheduler optionally used by spf.tasks.
+ * - addTask: Function to add a new task to the scheduler. It returns a key
+ *       which can be used to cancel its execution.
+ * - cancelTask: Function which cancels a previously scheduled task.
+ *
+ * @typedef {{
+ *   addTask: (function(!Function): number),
+ *   cancelTask: (function(number))
+ * }}
+ */
+spf.TaskScheduler;

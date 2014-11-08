@@ -12,7 +12,42 @@ goog.require('spf.tasks');
 
 describe('spf.tasks', function() {
 
-  it('key', function() {
+  var MOCK_DELAY = 10;
+  var trackingObject = {};
+
+  var fakeScheduler = {
+    addTask: function(fn) {
+      return setTimeout(fn, 0);
+    },
+    cancelTask: function(key) {
+      clearTimeout(key);
+    }
+  };
+
+  var createFakeTask = function(name) {
+    return function() {
+      if (name in trackingObject) {
+        trackingObject[name]++;
+      } else {
+        trackingObject[name] = 1;
+      }
+    };
+  };
+
+
+  beforeEach(function() {
+    trackingObject = {};
+    spf.config.set('advanced-task-scheduler', null);
+    jasmine.Clock.useMock();
+  });
+
+
+  afterEach(function() {
+    spf.tasks.cancel('queue');
+  });
+
+
+  it('builds a correct key', function() {
     var obj1 = {};
     var obj2 = {};
     // No keys.
@@ -42,5 +77,224 @@ describe('spf.tasks', function() {
       keys.push(key);
     }
   });
+
+
+  it('processes tasks synchronously', function() {
+    spf.tasks.add('queue', createFakeTask('task1'));
+    spf.tasks.add('queue', createFakeTask('task2'));
+    // Nothing in executed from an add.
+    expect('task1' in trackingObject).toBe(false);
+    expect('task2' in trackingObject).toBe(false);
+    // Both tasks should be run once.
+    spf.tasks.run('queue', true);
+    expect('task1' in trackingObject).toBe(true);
+    expect('task2' in trackingObject).toBe(true);
+    expect(trackingObject['task1']).toEqual(1);
+    expect(trackingObject['task2']).toEqual(1);
+    // Further runs shouldn't change anything.
+    spf.tasks.run('queue', true);
+    expect(trackingObject['task1']).toEqual(1);
+    expect(trackingObject['task2']).toEqual(1);
+  });
+
+
+  it('processes tasks asynchronously', function() {
+    spf.tasks.add('queue', createFakeTask('task1'));
+    spf.tasks.add('queue', createFakeTask('task2'));
+    // Both tasks should be run once asynchronously.
+    spf.tasks.run('queue');
+    expect('task1' in trackingObject).toBe(false);
+    expect('task2' in trackingObject).toBe(false);
+    jasmine.Clock.tick(1);
+    expect('task1' in trackingObject).toBe(true);
+    expect('task2' in trackingObject).toBe(true);
+    expect(trackingObject['task1']).toEqual(1);
+    expect(trackingObject['task2']).toEqual(1);
+    // Further runs shouldn't change anything.
+    spf.tasks.run('queue');
+    jasmine.Clock.tick(1);
+    expect(trackingObject['task1']).toEqual(1);
+    expect(trackingObject['task2']).toEqual(1);
+  });
+
+
+  it('calls the scheduler when available and asynchronous', function() {
+    spyOn(fakeScheduler, 'addTask').andCallThrough();
+    spf.config.set('advanced-task-scheduler', fakeScheduler);
+    spf.tasks.add('queue', createFakeTask('task1'));
+    spf.tasks.add('queue', createFakeTask('task2'));
+    // Synchronous execution should not call the scheduler.
+    spf.tasks.run('queue', true);
+    expect('task1' in trackingObject).toBe(true);
+    expect('task2' in trackingObject).toBe(true);
+    expect(fakeScheduler.addTask).not.toHaveBeenCalled();
+    // Asynchronous execution should use the scheduler.
+    spf.tasks.add('queue', createFakeTask('task3'));
+    spf.tasks.run('queue');
+    jasmine.Clock.tick(1);
+    expect('task3'in trackingObject).toBe(true);
+    expect(fakeScheduler.addTask).toHaveBeenCalled();
+  });
+
+
+  it('processes tasks with a delay', function() {
+    spf.tasks.add('queue', createFakeTask('task1'), MOCK_DELAY);
+    spf.tasks.add('queue', createFakeTask('task2'), MOCK_DELAY);
+    // Both tasks should be run once asynchronously.
+    spf.tasks.run('queue');
+    expect('task1' in trackingObject).toBe(false);
+    expect('task2' in trackingObject).toBe(false);
+    jasmine.Clock.tick(MOCK_DELAY + 1);
+    expect('task1' in trackingObject).toBe(true);
+    expect('task2' in trackingObject).toBe(false);
+    jasmine.Clock.tick(MOCK_DELAY);
+    expect('task1' in trackingObject).toBe(true);
+    expect('task2' in trackingObject).toBe(true);
+    expect(trackingObject['task1']).toEqual(1);
+    expect(trackingObject['task2']).toEqual(1);
+    // Further runs shouldn't change anything.
+    spf.tasks.run('queue');
+    jasmine.Clock.tick(MOCK_DELAY);
+    expect(trackingObject['task1']).toEqual(1);
+    expect(trackingObject['task2']).toEqual(1);
+  });
+
+
+  it('ignores delays from a synchronous run', function() {
+    spf.tasks.add('queue', createFakeTask('task1'));
+    spf.tasks.add('queue', createFakeTask('task2'), MOCK_DELAY);
+    spf.tasks.add('queue', createFakeTask('task3'));
+    // Synchronous tasks should be run immediately, while a delay should be
+    // asynchronous.
+    spf.tasks.run('queue', true);
+    expect('task1' in trackingObject).toBe(true);
+    expect('task2' in trackingObject).toBe(true);
+    expect('task3' in trackingObject).toBe(true);
+    expect(trackingObject['task1']).toEqual(1);
+    expect(trackingObject['task2']).toEqual(1);
+    expect(trackingObject['task3']).toEqual(1);
+    // Further runs shouldn't change anything.
+    spf.tasks.run('queue', true);
+    expect(trackingObject['task1']).toEqual(1);
+    expect(trackingObject['task2']).toEqual(1);
+    expect(trackingObject['task3']).toEqual(1);
+  });
+
+
+  it('overrides active state when run synchronously.', function() {
+    spf.tasks.add('queue', createFakeTask('task1'));
+    spf.tasks.add('queue', createFakeTask('task2'), MOCK_DELAY);
+    spf.tasks.add('queue', createFakeTask('task3'));
+    // Running synchronously should ignore active state and continue processing.
+    spf.tasks.run('queue');
+    jasmine.Clock.tick(1);
+    expect('task1' in trackingObject).toBe(true);
+    expect('task2' in trackingObject).toBe(false);
+    expect('task3' in trackingObject).toBe(false);
+    spf.tasks.run('queue', true);
+    expect('task1' in trackingObject).toBe(true);
+    expect('task2' in trackingObject).toBe(true);
+    expect('task3' in trackingObject).toBe(true);
+    expect(trackingObject['task1']).toEqual(1);
+    expect(trackingObject['task2']).toEqual(1);
+    expect(trackingObject['task3']).toEqual(1);
+  });
+
+
+  it('can suspend the task queue', function() {
+    spf.tasks.add('queue', createFakeTask('task1'));
+    spf.tasks.add('queue', function() {
+      spf.tasks.suspend('queue');
+    });
+    spf.tasks.add('queue', createFakeTask('task3'));
+    // The suspention should stop the execution.
+    spf.tasks.run('queue', true);
+    expect('task1' in trackingObject).toBe(true);
+    expect('task3' in trackingObject).toBe(false);
+    // A subsequent run call should be a noop.
+    spf.tasks.run('queue', true);
+    expect('task1' in trackingObject).toBe(true);
+    expect('task3' in trackingObject).toBe(false);
+    // A resume should finish the execution.
+    spf.tasks.resume('queue', true);
+    expect('task1' in trackingObject).toBe(true);
+    expect('task3' in trackingObject).toBe(true);
+    expect(trackingObject['task1']).toEqual(1);
+    expect(trackingObject['task3']).toEqual(1);
+  });
+
+
+  it('can suspend a queue when async', function() {
+    spf.tasks.add('queue', createFakeTask('task1'));
+    spf.tasks.add('queue', function() {
+      spf.tasks.suspend('queue');
+    });
+    spf.tasks.add('queue', createFakeTask('task3'));
+    // The suspention should stop the execution.
+    spf.tasks.run('queue');
+    expect('task1' in trackingObject).toBe(false);
+    expect('task3' in trackingObject).toBe(false);
+    jasmine.Clock.tick(1);
+    expect('task1' in trackingObject).toBe(true);
+    expect('task3' in trackingObject).toBe(false);
+    // A subsequent run call should be a noop.
+    spf.tasks.run('queue');
+    expect('task1' in trackingObject).toBe(true);
+    expect('task3' in trackingObject).toBe(false);
+    // A resume should finish the execution.
+    spf.tasks.resume('queue');
+    jasmine.Clock.tick(1);
+    expect('task1' in trackingObject).toBe(true);
+    expect('task3' in trackingObject).toBe(true);
+    expect(trackingObject['task1']).toEqual(1);
+    expect(trackingObject['task3']).toEqual(1);
+  });
+
+
+  it('can cancel execution when suspended', function() {
+    spf.tasks.add('queue', createFakeTask('task1'));
+    spf.tasks.add('queue', function() {
+      spf.tasks.suspend('queue');
+    });
+    spf.tasks.add('queue', createFakeTask('task3'));
+    // The suspention should stop the execution.
+    spf.tasks.run('queue', true);
+    expect('task1' in trackingObject).toBe(true);
+    expect('task3' in trackingObject).toBe(false);
+    // Canceling should remove all later tasks.
+    spf.tasks.cancel('queue');
+    spf.tasks.resume('queue', true);
+    expect('task1' in trackingObject).toBe(true);
+    expect('task3' in trackingObject).toBe(false);
+    expect(trackingObject['task1']).toEqual(1);
+  });
+
+
+  it('cancels asynchronous tasks', function() {
+    spf.tasks.add('queue', createFakeTask('task1'));
+    // Canceling during a delay should cancel the async task.
+    spf.tasks.run('queue');
+    expect('task1' in trackingObject).toBe(false);
+    spf.tasks.cancel('queue');
+    jasmine.Clock.tick(1);
+    expect('task1' in trackingObject).toBe(false);
+  });
+
+
+  it('cancels scheduled tasks', function() {
+    spyOn(fakeScheduler, 'addTask').andCallThrough();
+    spyOn(fakeScheduler, 'cancelTask').andCallThrough();
+    spf.config.set('advanced-task-scheduler', fakeScheduler);
+    spf.tasks.add('queue', createFakeTask('task1'));
+    // Canceling during a delay should cancel the async task.
+    spf.tasks.run('queue');
+    expect('task1' in trackingObject).toBe(false);
+    expect(fakeScheduler.addTask).toHaveBeenCalled();
+    spf.tasks.cancel('queue');
+    jasmine.Clock.tick(1);
+    expect('task1' in trackingObject).toBe(false);
+    expect(fakeScheduler.cancelTask).toHaveBeenCalled();
+  });
+
 
 });
