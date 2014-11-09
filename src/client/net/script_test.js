@@ -103,27 +103,12 @@ describe('spf.net.script', function() {
 
   describe('load', function() {
 
-    it('passes a single url', function() {
-      var url = 'url-a.js';
-      spf.net.script.load(url);
-      expect(spf.net.resource.load).toHaveBeenCalledWith(
-          JS, url, undefined, undefined);
-    });
-
     it('passes a single url with name', function() {
       var url = 'url-a.js';
       var name = 'a';
       spf.net.script.load(url, name);
       expect(spf.net.resource.load).toHaveBeenCalledWith(
           JS, url, name, undefined);
-    });
-
-    it('passes a single url with callback', function() {
-      var url = 'url-a.js';
-      var fn = function() {};
-      spf.net.script.load(url, fn);
-      expect(spf.net.resource.load).toHaveBeenCalledWith(
-          JS, url, fn, undefined);
     });
 
     it('passes a single url with name and callback', function() {
@@ -135,27 +120,12 @@ describe('spf.net.script', function() {
           JS, url, name, fn);
     });
 
-    it('passes multiple urls', function() {
-      var urls = ['url-a-1.js', 'url-a-2.js'];
-      spf.net.script.load(urls);
-      expect(spf.net.resource.load).toHaveBeenCalledWith(
-          JS, urls, undefined, undefined);
-    });
-
     it('passes multiple urls with name', function() {
       var urls = ['url-a-1.js', 'url-a-2.js'];
       var name = 'a';
       spf.net.script.load(urls, name);
       expect(spf.net.resource.load).toHaveBeenCalledWith(
           JS, urls, name, undefined);
-    });
-
-    it('passes multiple urls with callback', function() {
-      var urls = ['url-a-1.js', 'url-a-2.js'];
-      var fn = function() {};
-      spf.net.script.load(urls, fn);
-      expect(spf.net.resource.load).toHaveBeenCalledWith(
-          JS, urls, fn, undefined);
     });
 
     it('passes multiple urls with name and callback', function() {

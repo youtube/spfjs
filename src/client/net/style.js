@@ -18,7 +18,7 @@ goog.require('spf.tracing');
 
 
 /**
- * Loads one or more styles asynchronously and optionally defines a name to
+ * Loads one or more styles asynchronously and defines a name to
  * use for dependency management and unloading.  See {@link #unload} to
  * remove previously loaded styles.
  *
@@ -26,8 +26,8 @@ goog.require('spf.tracing');
  *   reload a style, unload it first with {@link #unload}.  To unconditionally
  *   load a style, see {@link #get}.
  *
- * - A name can be specified to identify the same style at different URLs.
- *   (For example, "main-A.css" and "main-B.css" are both "main".)  If a name
+ * - A name must be specified to identify the same style at different URLs.
+ *   (For example, "main-A.css" and "main-B.css" are both "main".)  When a name
  *   is specified, all other styles with the same name will be unloaded.
  *   This allows switching between versions of the same style at different URLs.
  *
@@ -37,14 +37,13 @@ goog.require('spf.tracing');
  *   in the following browser versions: IE 6, Chrome 19, Firefox 9, Safari 6.
  *
  * @param {string|Array.<string>} urls One or more URLs of styles to load.
- * @param {(string|Function)=} opt_nameOrFn Name to identify the styles
- *     or callback function to execute when the styles are loaded.
+ * @param {string} name Name to identify the styles.
  * @param {Function=} opt_fn Optional callback function to execute when the
  *     styles are loaded.
  */
-spf.net.style.load = function(urls, opt_nameOrFn, opt_fn) {
+spf.net.style.load = function(urls, name, opt_fn) {
   var type = spf.net.resource.Type.CSS;
-  spf.net.resource.load(type, urls, opt_nameOrFn, opt_fn);
+  spf.net.resource.load(type, urls, name, opt_fn);
 };
 
 
