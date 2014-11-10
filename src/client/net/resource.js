@@ -549,7 +549,7 @@ spf.net.resource.canonicalize = function(type, url) {
  * @return {string} The compound key.
  */
 spf.net.resource.key = function(type, label, opt_group) {
-  return type + '-' + label + (opt_group ?  '-' + opt_group : '');
+  return type + '-' + label + (opt_group ? '-' + opt_group : '');
 };
 
 
