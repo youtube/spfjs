@@ -134,7 +134,7 @@ describe('spf.tasks', function() {
     spf.tasks.add('queue', createFakeTask('task3'));
     spf.tasks.run('queue');
     jasmine.Clock.tick(1);
-    expect('task3'in trackingObject).toBe(true);
+    expect('task3' in trackingObject).toBe(true);
     expect(fakeScheduler.addTask).toHaveBeenCalled();
   });
 
@@ -273,6 +273,11 @@ describe('spf.tasks', function() {
 
 
   it('cancels asynchronous tasks', function() {
+    // Jasmine's clearTimeout mocks don't work in IE8, so skip these tests in
+    // that scenario.
+    if (window.clearTimeout != clearTimeout) {
+      return;
+    }
     spf.tasks.add('queue', createFakeTask('task1'));
     // Canceling during a delay should cancel the async task.
     spf.tasks.run('queue');
@@ -284,6 +289,11 @@ describe('spf.tasks', function() {
 
 
   it('cancels scheduled tasks', function() {
+    // Jasmine's clearTimeout mocks don't work in IE8, so skip these tests in
+    // that scenario.
+    if (window.clearTimeout != clearTimeout) {
+      return;
+    }
     spyOn(fakeScheduler, 'addTask').andCallThrough();
     spyOn(fakeScheduler, 'cancelTask').andCallThrough();
     spf.config.set('advanced-task-scheduler', fakeScheduler);
