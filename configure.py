@@ -324,6 +324,7 @@ def write_rules(ninja):
   ninja.comment('Setup python packages.')
   ninja.rule('setup',
              command=('cd $dir '
+                      '&& export PYTHONPATH="$$PWD/lib/python2.7/site-packages/:$$PYTHONPATH" '
                       '&& export PYTHONUSERBASE="$$PWD" '
                       '&& python setup.py -q install --user '
                       '&& python setup.py -q clean --all'),

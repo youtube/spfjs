@@ -1,8 +1,11 @@
 language: python
 python:
   - "2.7"
+install:
+  - easy_install http://closure-linter.googlecode.com/files/closure_linter-latest.tar.gz
 before_script:
   - make
   - make tests
+  - make lint
 script:
   phantomjs build/test/run-jasmine.js build/test/runner.html
