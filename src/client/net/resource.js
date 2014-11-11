@@ -38,27 +38,22 @@ goog.require('spf.url');
  *
  * @param {spf.net.resource.Type} type Type of the resources.
  * @param {string|Array.<string>} urls One or more URLs of resources to load.
- * @param {(string|Function)=} opt_nameOrFn Name to identify the resources
- *     or callback function to execute when the resources are loaded.
+ * @param {string} name Name to identify the resources.
  * @param {Function=} opt_fn Optional callback function to execute when the
  *     resources are loaded.
  */
-spf.net.resource.load = function(type, urls, opt_nameOrFn, opt_fn) {
+spf.net.resource.load = function(type, urls, name, opt_fn) {
   var isJS = type == spf.net.resource.Type.JS;
 
   // Convert to an array if needed.
   urls = spf.array.toArray(urls);
-  // Determine if a name was provided with 3 or 4 arguments.
-  var withName = spf.string.isString(opt_nameOrFn);
-  var name = /** @type {string} */ (withName ? opt_nameOrFn : '');
-  var fn = /** @type {Function|undefined} */ (withName ? opt_fn : opt_nameOrFn);
   spf.debug.debug('resource.load', type, urls, name);
 
   var canonicalize = spf.bind(spf.net.resource.canonicalize, null, type);
   urls = spf.array.map(urls, canonicalize);
 
   // After the resources are loaded, execute the callback by default.
-  var done = fn;
+  var done = opt_fn;
 
   // If a name is provided with different URLs, then also unload the previous
   // versions after the resources are loaded.
@@ -83,7 +78,7 @@ spf.net.resource.load = function(type, urls, opt_nameOrFn, opt_fn) {
       spf.net.resource.urls.clear(type, name);
       done = function() {
         spf.net.resource.unload_(type, name, previous);
-        fn && fn();
+        opt_fn && opt_fn();
       };
     }
   }

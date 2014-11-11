@@ -13,21 +13,20 @@
  * bootstrap and main code is loaded on the same page, the main code extends
  * the bootstrap code for seamless script loading.
  *
- * Single script:
- * spf.net.script.load(url, function() {
- *   // url is loaded
- * });
+ * Unconditionally load a script:
+ *     spf.net.script.get(url, function() {
+ *       // url is loaded
+ *     });
  *
- * Multiple scripts:
- * spf.net.script.load([url1, url2], function() {
- *   // url1 and url2 are loaded
- * });
- *
- * Named script(s) and readiness:
- * spf.net.script.load(url, 'name');
- * spf.net.script.ready('name', function() {
- *   // url is loaded
- * });
+ * Conditionally load a script only if not already loaded:
+ *     spf.net.script.load(url, 'name', function() {
+ *       // url is loaded
+ *     });
+ * Or:
+ *     spf.net.script.load(url, 'name');
+ *     spf.net.script.ready('name', function() {
+ *       // url is loaded
+ *     });
  *
  * @author nicksay@google.com (Alex Nicksay)
  */
@@ -45,7 +44,7 @@ goog.require('spf.tracing');
 
 
 /**
- * Loads one or more scripts asynchronously and optionally defines a name to
+ * Loads one or more scripts asynchronously and defines a name to
  * use for dependency management and unloading.  See {@link #ready} to wait
  * for named scripts to be loaded and {@link #unload} to remove previously
  * loaded scripts.
@@ -54,8 +53,8 @@ goog.require('spf.tracing');
  *   reload a script, unload it first with {@link #unload}.  To unconditionally
  *   load a script, see {@link #get}.
  *
- * - A name can be specified to identify the same script at different URLs.
- *   (For example, "main-A.js" and "main-B.js" are both "main".)  If a name
+ * - A name must be specified to identify the same script at different URLs.
+ *   (For example, "main-A.js" and "main-B.js" are both "main".)  When a name
  *   is specified, all other scripts with the same name will be unloaded
  *   before the callback is executed.  This allows switching between
  *   versions of the same script at different URLs.
@@ -64,14 +63,13 @@ goog.require('spf.tracing');
  *   callback will be executed each time, even if the script is not reloaded.
  *
  * @param {string|Array.<string>} urls One or more URLs of scripts to load.
- * @param {(string|Function)=} opt_nameOrFn Name to identify the scripts
- *     or callback function to execute when the scripts are loaded.
+ * @param {string} name Name to identify the scripts.
  * @param {Function=} opt_fn Optional callback function to execute when the
  *     scripts are loaded.
  */
-spf.net.script.load = function(urls, opt_nameOrFn, opt_fn) {
+spf.net.script.load = function(urls, name, opt_fn) {
   var type = spf.net.resource.Type.JS;
-  spf.net.resource.load(type, urls, opt_nameOrFn, opt_fn);
+  spf.net.resource.load(type, urls, name, opt_fn);
 };
 
 

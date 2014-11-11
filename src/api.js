@@ -492,30 +492,30 @@ spf.script = {};
 
 
 /**
- * Loads one or more scripts asynchronously and optionally defines a name to
+ * Loads one or more scripts asynchronously and defines a name to
  * use for dependency management and unloading.  See {@link #ready} to wait
  * for named scripts to be loaded and {@link #unload} to remove previously
  * loaded scripts.
  *
  * - Subsequent calls to load the same URL will not reload the script.  To
- *   reload a script, unload it first with {@link #unload}.
+ *   reload a script, unload it first with {@link #unload}.  To unconditionally
+ *   load a script, see {@link #get}.
  *
- * - A callback can be specified to execute once the script has loaded.  The
- *   callback will be executed each time, even if the script is not reloaded.
- *
- * - A name can be specified to identify the same script at different URLs.
- *   (For example, "main-A.js" and "main-B.js" are both "main".)  If a name
+ * - A name must be specified to identify the same script at different URLs.
+ *   (For example, "main-A.js" and "main-B.js" are both "main".)  When a name
  *   is specified, all other scripts with the same name will be unloaded
  *   before the callback is executed.  This allows switching between
  *   versions of the same script at different URLs.
  *
+ * - A callback can be specified to execute once the script has loaded.  The
+ *   callback will be executed each time, even if the script is not reloaded.
+ *
  * @param {string|Array.<string>} urls One or more URLs of scripts to load.
- * @param {(string|Function)=} opt_nameOrFn Name to identify the script(s)
- *     or callback function to execute when the script is loaded.
- * @param {Function=} opt_fn Callback function to execute when the script is
- *     loaded.
+ * @param {string} name Name to identify the scripts.
+ * @param {Function=} opt_fn Optional callback function to execute when the
+ *     scripts are loaded.
  */
-spf.script.load = function(urls, opt_nameOrFn, opt_fn) {};
+spf.script.load = function(urls, name, opt_fn) {};
 
 
 /**
@@ -634,30 +634,30 @@ spf.style = {};
 
 
 /**
- * Loads one or more styles asynchronously and optionally defines a name to
+ * Loads one or more styles asynchronously and defines a name to
  * use for dependency management and unloading.  See {@link #unload} to
  * remove previously loaded styles.
  *
  * - Subsequent calls to load the same URL will not reload the style.  To
- *   reload a style, unload it first with {@link #unload}.
+ *   reload a style, unload it first with {@link #unload}.  To unconditionally
+ *   load a style, see {@link #get}.
+ *
+ * - A name must be specified to identify the same style at different URLs.
+ *   (For example, "main-A.css" and "main-B.css" are both "main".)  When a name
+ *   is specified, all other styles with the same name will be unloaded.
+ *   This allows switching between versions of the same style at different URLs.
  *
  * - A callback can be specified to execute once the style has loaded.  The
  *   callback will be executed each time, even if the style is not reloaded.
  *   NOTE: Unlike scripts, this callback is best effort and is supported
  *   in the following browser versions: IE 6, Chrome 19, Firefox 9, Safari 6.
  *
- * - A name can be specified to identify the same style at different URLs.
- *   (For example, "main-A.css" and "main-B.css" are both "main".)  If a name
- *   is specified, all other styles with the same name will be unloaded.
- *   This allows switching between versions of the same style at different URLs.
- *
  * @param {string|Array.<string>} urls One or more URLs of styles to load.
- * @param {(string|Function)=} opt_nameOrFn Name to identify the style(s)
- *     or callback function to execute when the style is loaded.
- * @param {Function=} opt_fn Callback function to execute when the style is
- *     loaded.
+ * @param {string} name Name to identify the styles.
+ * @param {Function=} opt_fn Optional callback function to execute when the
+ *     styles are loaded.
  */
-spf.style.load = function(urls, opt_nameOrFn, opt_fn) {};
+spf.style.load = function(urls, name, opt_fn) {};
 
 
 /**
