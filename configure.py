@@ -171,6 +171,7 @@ def write_header(ninja):
 
 def write_variables(ninja):
   ninja.variable('builddir', 'build')
+  ninja.variable('distdir', 'dist')
   ninja.variable('jscompiler_jar', 'vendor/closure-compiler/compiler.jar')
   ninja.variable('jslinter_bin', 'vendor/closure-linter/bin/gjslint')
   ninja.variable('jslinter_dir', 'vendor/closure-linter')
@@ -286,6 +287,12 @@ def write_rules(ninja):
   ninja.rule('configure',
              command='python ./configure.py',
              generator=True)
+
+  ninja.newline()
+  ninja.comment('Copy.')
+  ninja.rule('copy',
+             command='cp $prefix$in $out',
+             description='cp $prefix$in -> $out')
 
   ninja.newline()
   ninja.comment('Symlink.')
@@ -597,6 +604,20 @@ def write_targets(ninja):
               implicit=demo_outs)
 
   ninja.newline()
+  ninja.comment('Distribution.')
+  dist_srcs = [
+    '$builddir/spf.js',
+    '$builddir/spf-debug.js',
+    '$builddir/spf-trace.js',
+    '$builddir/boot.js',
+    '$builddir/boot-debug.js',
+    '$builddir/boot-trace.js',
+  ]
+  dist_outs = [s.replace('$builddir', '$distdir') for s in dist_srcs]
+  for dist_src, dist_out in zip(dist_srcs, dist_outs):
+    ninja.build(dist_out, 'copy', dist_src)
+
+  ninja.newline()
   ninja.comment('Generate build file.')
   # Update the build file if this script or the build syntax changes.
   ninja.build('build.ninja', 'configure',
@@ -616,22 +637,22 @@ def write_aliases(ninja):
   ninja.newline()
   ninja.comment('Aliases.')
   aliases = [
-      ninja.build('spf', 'phony',
-                  '$builddir/spf.js'),
-      ninja.build('spf-debug', 'phony',
-                  '$builddir/spf-debug.js'),
-      ninja.build('spf-trace', 'phony',
-                  '$builddir/spf-trace.js'),
-      ninja.build('bootloader', 'phony',
-                  '$builddir/boot.js'),
-      ninja.build('debug-bootloader', 'phony',
-                  '$builddir/boot-debug.js'),
-      ninja.build('tracing-bootloader', 'phony',
-                  '$builddir/boot-trace.js'),
-      ninja.build('tests', 'phony',
-                  '$builddir/test/runner.html'),
-      ninja.build('demo', 'phony',
-                  '$builddir/demo/app.py'),
+      ninja.build('spf', 'phony', '$builddir/spf.js'),
+      ninja.build('spf-debug', 'phony', '$builddir/spf-debug.js'),
+      ninja.build('spf-trace', 'phony', '$builddir/spf-trace.js'),
+      ninja.build('bootloader', 'phony', '$builddir/boot.js'),
+      ninja.build('debug-bootloader', 'phony', '$builddir/boot-debug.js'),
+      ninja.build('tracing-bootloader', 'phony', '$builddir/boot-trace.js'),
+      ninja.build('tests', 'phony', '$builddir/test/runner.html'),
+      ninja.build('demo', 'phony', '$builddir/demo/app.py'),
+      ninja.build('dist', 'phony', [
+                    '$distdir/spf.js',
+                    '$distdir/spf-debug.js',
+                    '$distdir/spf-trace.js',
+                    '$distdir/boot.js',
+                    '$distdir/boot-debug.js',
+                    '$distdir/boot-trace.js',
+                  ]),
   ]
   aliases = [a for outs in aliases for a in outs]  # Reduce to a single list.
   ninja.build('all', 'phony', aliases)

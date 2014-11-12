@@ -15,7 +15,7 @@ PYTHON = $(shell command -v python || echo _missing_python_)
 
 
 # Require Ninja.
-default all tests demo lint fix: $(NINJA)
+default all tests demo lint fix dist: $(NINJA)
 spf spf-debug spf-trace: $(NINJA)
 boot boot-debug boot-trace: $(NINJA)
 
@@ -57,10 +57,12 @@ lint:
 	@$(NINJA) lint
 fix:
 	@$(NINJA) fix
+dist:
+	@$(NINJA) dist
 
 # Remove build output and files
 clean:
-	@rm -rf build build.ninja
+	@rm -rf build build.ninja dist
 # Get back to a newly-cloned state.
 reset: clean
 	@rm -rf vendor
