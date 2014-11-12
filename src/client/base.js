@@ -227,7 +227,7 @@ spf.RequestOptions;
 /**
  * Type definition for custom event detail (data), also used for callbacks.
  * - err: optional error that occurred; defined for "error" events
- * - name: optional name of the scripts or styles that will be unloaded;
+ * - name: optional name of the scripts or stylesheets that will be unloaded;
  *       defined for "jsbeforeunload", "jsunload", "cssbeforeunload",
  *       and "cssunload" events.
  * - part: optional part of a multipart response; defined for "partprocess"
@@ -243,8 +243,8 @@ spf.RequestOptions;
  * - url: optional URL of the request; defined for "error", "reload", "click",
  *       "history", "request", "partprocess", "partdone", "process", and "done"
  *       events.
- * - urls: optional list or URLs of scripts/styles to be unloaded; defined for
- *       "jsbeforeunload", "jsunload", "cssbeforeunload", and "cssunload"
+ * - urls: optional list or URLs of scripts/stylesheets to be unloaded; defined
+ *       for "jsbeforeunload", "jsunload", "cssbeforeunload", and "cssunload"
  *       events.
  *
  * @typedef {{

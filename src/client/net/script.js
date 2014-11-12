@@ -44,10 +44,9 @@ goog.require('spf.tracing');
 
 
 /**
- * Loads one or more scripts asynchronously and defines a name to
- * use for dependency management and unloading.  See {@link #ready} to wait
- * for named scripts to be loaded and {@link #unload} to remove previously
- * loaded scripts.
+ * Loads a script asynchronously and defines a name to use for dependency
+ * management and unloading.  See {@link #ready} to wait for named scripts to
+ * be loaded and {@link #unload} to remove previously loaded scripts.
  *
  * - Subsequent calls to load the same URL will not reload the script.  To
  *   reload a script, unload it first with {@link #unload}.  To unconditionally
@@ -62,14 +61,14 @@ goog.require('spf.tracing');
  * - A callback can be specified to execute once the script has loaded.  The
  *   callback will be executed each time, even if the script is not reloaded.
  *
- * @param {string|Array.<string>} urls One or more URLs of scripts to load.
- * @param {string} name Name to identify the scripts.
+ * @param {string} url URL of the script to load.
+ * @param {string} name Name to identify the script.
  * @param {Function=} opt_fn Optional callback function to execute when the
- *     scripts are loaded.
+ *     script is loaded.
  */
-spf.net.script.load = function(urls, name, opt_fn) {
+spf.net.script.load = function(url, name, opt_fn) {
   var type = spf.net.resource.Type.JS;
-  spf.net.resource.load(type, urls, name, opt_fn);
+  spf.net.resource.load(type, url, name, opt_fn);
 };
 
 
@@ -102,7 +101,7 @@ spf.net.script.discover = function() {
  * has been loaded before.  A script directly loaded by this method cannot
  * be unloaded by name.  Compare to {@link #load}.
  *
- * @param {string} url The URL of the script to load.
+ * @param {string} url URL of the script to load.
  * @param {Function=} opt_fn Function to execute when loaded.
  */
 spf.net.script.get = function(url, opt_fn) {
@@ -257,9 +256,14 @@ spf.net.script.require_ = function(names) {
   // If not, load the scripts for that name.
   spf.array.each(names, function(name) {
     var deps = spf.net.script.deps_[name];
-    var urls = spf.net.script.urls_[name] || name;
+    var url = spf.net.script.urls_[name] || name;
     var next = function() {
-      spf.net.script.load(urls, name);
+      // TODO(nicksay): Remove compatibility code before next release.
+      // Trick the compiler.  While the compatibility code is in place, existing
+      // urls in state might be arrays instead of strings.  This support
+      // will be removed soon, but until it is, cast the variable.
+      url = /** @type {string} */ (url);
+      spf.net.script.load(url, name);
     };
     if (deps) {
       spf.net.script.require(deps, next);
@@ -331,7 +335,7 @@ spf.net.script.exec = function(text) {
  * See {@link #require}.
  *
  * @param {Object.<(string|Array.<string>)>} deps The dependency map.
- * @param {Object.<(string|Array.<string>)>=} opt_urls The optional URL map.
+ * @param {Object.<string>=} opt_urls The optional URL map.
  */
 spf.net.script.declare = function(deps, opt_urls) {
   if (deps) {

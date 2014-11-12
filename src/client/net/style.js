@@ -4,7 +4,7 @@
 // See the LICENSE file for details.
 
 /**
- * @fileoverview Functions for dynamically loading styles.
+ * @fileoverview Functions for dynamically loading stylesheets.
  *
  * @author nicksay@google.com (Alex Nicksay)
  */
@@ -18,37 +18,39 @@ goog.require('spf.tracing');
 
 
 /**
- * Loads one or more styles asynchronously and defines a name to
- * use for dependency management and unloading.  See {@link #unload} to
- * remove previously loaded styles.
+ * Loads a stylesheet asynchronously and defines a name to use for dependency
+ * management and unloading.  See {@link #unload} to remove previously loaded
+ * stylesheets.
  *
- * - Subsequent calls to load the same URL will not reload the style.  To
- *   reload a style, unload it first with {@link #unload}.  To unconditionally
- *   load a style, see {@link #get}.
+ * - Subsequent calls to load the same URL will not reload the stylesheet.  To
+ *   reload a stylesheet, unload it first with {@link #unload}.  To
+ *   unconditionally load a stylesheet, see {@link #get}.
  *
- * - A name must be specified to identify the same style at different URLs.
+ * - A name must be specified to identify the same stylesheet at different URLs.
  *   (For example, "main-A.css" and "main-B.css" are both "main".)  When a name
- *   is specified, all other styles with the same name will be unloaded.
- *   This allows switching between versions of the same style at different URLs.
+ *   is specified, all other stylesheets with the same name will be unloaded.
+ *   This allows switching between versions of the same stylesheet at different
+ *   URLs.
  *
- * - A callback can be specified to execute once the style has loaded.  The
- *   callback will be executed each time, even if the style is not reloaded.
- *   NOTE: Unlike scripts, this callback is best effort and is supported
- *   in the following browser versions: IE 6, Chrome 19, Firefox 9, Safari 6.
+ * - A callback can be specified to execute once the stylesheet has loaded.  The
+ *   callback will be executed each time, even if the stylesheet is not
+ *   reloaded.  NOTE: Unlike scripts, this callback is best effort and is
+ *   supported in the following browser versions: IE 6, Chrome 19, Firefox 9,
+ *   Safari 6.
  *
- * @param {string|Array.<string>} urls One or more URLs of styles to load.
- * @param {string} name Name to identify the styles.
+ * @param {string} url URL of the stylesheet to load.
+ * @param {string} name Name to identify the stylesheet.
  * @param {Function=} opt_fn Optional callback function to execute when the
- *     styles are loaded.
+ *     stylesheet is loaded.
  */
-spf.net.style.load = function(urls, name, opt_fn) {
+spf.net.style.load = function(url, name, opt_fn) {
   var type = spf.net.resource.Type.CSS;
-  spf.net.resource.load(type, urls, name, opt_fn);
+  spf.net.resource.load(type, url, name, opt_fn);
 };
 
 
 /**
- * Unloads styles identified by dependency name.  See {@link #load}.
+ * Unloads a stylesheet identified by dependency name.  See {@link #load}.
  *
  * @param {string} name The dependency name.
  */
@@ -59,7 +61,7 @@ spf.net.style.unload = function(name) {
 
 
 /**
- * Discovers existing styles in the document and registers them as loaded.
+ * Discovers existing stylesheets in the document and registers them as loaded.
  */
 spf.net.style.discover = function() {
   var type = spf.net.resource.Type.CSS;
@@ -68,12 +70,12 @@ spf.net.style.discover = function() {
 
 
 /**
- * Unconditionally loads a style by dynamically creating an element and
+ * Unconditionally loads a stylesheet by dynamically creating an element and
  * appending it to the document without regard for whether it has been loaded
- * before. A style directly loaded by this method cannot be unloaded by name.
- * Compare to {@link #load}.
+ * before. A stylesheet directly loaded by this method cannot be unloaded by
+ * name.  Compare to {@link #load}.
  *
- * @param {string} url The URL of the style to load.
+ * @param {string} url URL of the stylesheet to load.
  * @param {Function=} opt_fn Function to execute when loaded.
  */
 spf.net.style.get = function(url, opt_fn) {
@@ -85,11 +87,11 @@ spf.net.style.get = function(url, opt_fn) {
 
 
 /**
- * Prefetchs one or more styles; the styles will be requested but not loaded.
- * Use to prime the browser cache and avoid needing to request the style when
- * subsequently loaded.  See {@link #load}.
+ * Prefetchs one or more stylesheets; the stylesheets will be requested but not
+ * loaded.  Use to prime the browser cache and avoid needing to request the
+ * stylesheet when subsequently loaded.  See {@link #load}.
  *
- * @param {string|Array.<string>} urls One or more URLs of styles to prefetch.
+ * @param {string|Array.<string>} urls One or more stylesheet URLs to prefetch.
  */
 spf.net.style.prefetch = function(urls) {
   var type = spf.net.resource.Type.CSS;
