@@ -1,10 +1,11 @@
 # Build output and files
 /build
 /build.ninja
+/dist
 /web/_site
-/web/assets/vendor
 
 # External libraries
 /bower_components
 /node_modules
 /vendor
+/web/assets/vendor
