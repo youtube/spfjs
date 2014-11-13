@@ -5,7 +5,7 @@
 
 /**
  * @fileoverview Functions for loading and unloading external resources such
- * as scripts and styles.
+ * as scripts and stylesheets.
  * See {@link spf.net.script} and {@link spf.net.style}.
  *
  * @author nicksay@google.com (Alex Nicksay)
@@ -29,25 +29,31 @@ goog.require('spf.url');
 
 
 /**
- * Loads resources asynchronously and optionally defines a name to use for
+ * Loads a resource asynchronously and optionally defines a name to use for
  * dependency management and unloading.  See {@link #unload} to remove
  * previously loaded resources.
  *
- * NOTE: Automatic unloading of styles depends on "onload" support and is
+ * NOTE: Automatic unloading of stylesheets depends on "onload" support and is
  * best effort.  Chrome 19, Safari 6, Firefox 9, Opera and IE 5.5 are supported.
  *
- * @param {spf.net.resource.Type} type Type of the resources.
- * @param {string|Array.<string>} urls One or more URLs of resources to load.
- * @param {string} name Name to identify the resources.
+ * @param {spf.net.resource.Type} type Type of the resource.
+ * @param {string} url URL of the resource to load.
+ * @param {string} name Name to identify the resource.
  * @param {Function=} opt_fn Optional callback function to execute when the
- *     resources are loaded.
+ *     resource is loaded.
  */
-spf.net.resource.load = function(type, urls, name, opt_fn) {
+spf.net.resource.load = function(type, url, name, opt_fn) {
+  spf.debug.debug('resource.load', type, url, name);
   var isJS = type == spf.net.resource.Type.JS;
 
   // Convert to an array if needed.
-  urls = spf.array.toArray(urls);
-  spf.debug.debug('resource.load', type, urls, name);
+  var urls = spf.array.toArray(url);
+  if (!SPF_BOOTLOADER && urls.length > 1) {
+    // TODO(nicksay): Remove compatibility code before next release.
+    setTimeout(function() {
+      throw new Error(type + ' load called with too many urls ' + urls);
+    }, 0);
+  }
 
   var canonicalize = spf.bind(spf.net.resource.canonicalize, null, type);
   urls = spf.array.map(urls, canonicalize);

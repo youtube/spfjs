@@ -275,7 +275,7 @@ spf.EventDetail.prototype.err;
 
 
 /**
- * The name of the scripts or styles that will be unloaded; defined for
+ * The name of the scripts or stylesheets that will be unloaded; defined for
  * "spfjsbeforeunload", "spfjsunload", "spfcssbeforeunload", and
  * "spfcssunload" events.
  * @type {string|undefined}
@@ -341,8 +341,8 @@ spf.EventDetail.prototype.url;
 
 
 /**
- * The list of URLs of the scripts or styles that will be unloaded; defined for
- * "spfjsbeforeunload", "spfjsunload", "spfcssbeforeunload", and
+ * The list of URLs of the scripts or stylesheets that will be unloaded; defined
+ * for "spfjsbeforeunload", "spfjsunload", "spfcssbeforeunload", and
  * "spfcssunload" events.
  * @type {Array.<string>|undefined}
  */
@@ -492,10 +492,9 @@ spf.script = {};
 
 
 /**
- * Loads one or more scripts asynchronously and defines a name to
- * use for dependency management and unloading.  See {@link #ready} to wait
- * for named scripts to be loaded and {@link #unload} to remove previously
- * loaded scripts.
+ * Loads a script asynchronously and defines a name to use for dependency
+ * management and unloading.  See {@link #ready} to wait for named scripts to
+ * be loaded and {@link #unload} to remove previously loaded scripts.
  *
  * - Subsequent calls to load the same URL will not reload the script.  To
  *   reload a script, unload it first with {@link #unload}.  To unconditionally
@@ -510,16 +509,16 @@ spf.script = {};
  * - A callback can be specified to execute once the script has loaded.  The
  *   callback will be executed each time, even if the script is not reloaded.
  *
- * @param {string|Array.<string>} urls One or more URLs of scripts to load.
- * @param {string} name Name to identify the scripts.
+ * @param {string} url URL of the script to load.
+ * @param {string} name Name to identify the script.
  * @param {Function=} opt_fn Optional callback function to execute when the
- *     scripts are loaded.
+ *     script is loaded.
  */
-spf.script.load = function(urls, name, opt_fn) {};
+spf.script.load = function(url, name, opt_fn) {};
 
 
 /**
- * Unloads scripts identified by name.  See {@link #load}.
+ * Unloads a script identified by name.  See {@link #load}.
  *
  * NOTE: Unloading a script will prevent execution of ALL pending callbacks
  * but is NOT guaranteed to stop the browser loading a pending URL.
@@ -603,7 +602,7 @@ spf.script.unrequire = function(names) {};
  * See {@link #require}.
  *
  * @param {Object.<(string|Array.<string>)>} deps The dependency map.
- * @param {Object.<(string|Array.<string>)>=} opt_urls The optional URL map.
+ * @param {Object.<string>=} opt_urls The optional URL map.
  */
 spf.script.declare = function(deps, opt_urls) {};
 
@@ -617,6 +616,7 @@ spf.script.declare = function(deps, opt_urls) {};
  */
 spf.script.path = function(paths) {};
 
+
 /**
  * Prefetchs one or more scripts; the scripts will be requested but not loaded.
  * Use to prime the browser cache and avoid needing to request the script when
@@ -628,53 +628,55 @@ spf.script.prefetch = function(urls) {};
 
 
 /**
- * Namespace for style-loading functions.
+ * Namespace for stylesheet-loading functions.
  */
 spf.style = {};
 
 
 /**
- * Loads one or more styles asynchronously and defines a name to
- * use for dependency management and unloading.  See {@link #unload} to
- * remove previously loaded styles.
+ * Loads a stylesheet asynchronously and defines a name to use for dependency
+ * management and unloading.  See {@link #unload} to remove previously loaded
+ * stylesheets.
  *
- * - Subsequent calls to load the same URL will not reload the style.  To
- *   reload a style, unload it first with {@link #unload}.  To unconditionally
- *   load a style, see {@link #get}.
+ * - Subsequent calls to load the same URL will not reload the stylesheet.  To
+ *   reload a stylesheet, unload it first with {@link #unload}.  To
+ *   unconditionally load a stylesheet, see {@link #get}.
  *
- * - A name must be specified to identify the same style at different URLs.
+ * - A name must be specified to identify the same stylesheet at different URLs.
  *   (For example, "main-A.css" and "main-B.css" are both "main".)  When a name
- *   is specified, all other styles with the same name will be unloaded.
- *   This allows switching between versions of the same style at different URLs.
+ *   is specified, all other stylesheets with the same name will be unloaded.
+ *   This allows switching between versions of the same stylesheet at different
+ *   URLs.
  *
- * - A callback can be specified to execute once the style has loaded.  The
- *   callback will be executed each time, even if the style is not reloaded.
- *   NOTE: Unlike scripts, this callback is best effort and is supported
- *   in the following browser versions: IE 6, Chrome 19, Firefox 9, Safari 6.
+ * - A callback can be specified to execute once the stylesheet has loaded.  The
+ *   callback will be executed each time, even if the stylesheet is not
+ *   reloaded.  NOTE: Unlike scripts, this callback is best effort and is
+ *   supported in the following browser versions: IE 6, Chrome 19, Firefox 9,
+ *   Safari 6.
  *
- * @param {string|Array.<string>} urls One or more URLs of styles to load.
- * @param {string} name Name to identify the styles.
+ * @param {string} url URL of the stylesheet to load.
+ * @param {string} name Name to identify the stylesheet.
  * @param {Function=} opt_fn Optional callback function to execute when the
- *     styles are loaded.
+ *     stylesheet is loaded.
  */
-spf.style.load = function(urls, name, opt_fn) {};
+spf.style.load = function(url, name, opt_fn) {};
 
 
 /**
- * Unloads styles identified by name.  See {@link #load}.
+ * Unloads a stylesheet identified by name.  See {@link #load}.
  *
- * @param {string} name The name of the style(s).
+ * @param {string} name Name of the stylesheet.
  */
 spf.style.unload = function(name) {};
 
 
 /**
- * Unconditionally loads a style by dynamically creating an element and
+ * Unconditionally loads a stylesheet by dynamically creating an element and
  * appending it to the document without regard for whether it has been loaded
- * before. A style directly loaded by this method cannot be unloaded by name.
- * Compare to {@link #load}.
+ * before. A stylesheet directly loaded by this method cannot be unloaded by
+ * name.  Compare to {@link #load}.
  *
- * @param {string} url The URL of the style to load.
+ * @param {string} url URL of the stylesheet to load.
  */
 spf.style.get = function(url) {};
 
@@ -690,10 +692,10 @@ spf.style.path = function(paths) {};
 
 
 /**
- * Prefetchs one or more styles; the styles will be requested but not loaded.
- * Use to prime the browser cache and avoid needing to request the style when
- * subsequently loaded.  See {@link #load}.
+ * Prefetchs one or more stylesheets; the stylesheets will be requested but not
+ * loaded. Use to prime the browser cache and avoid needing to request the
+ * stylesheet when subsequently loaded.  See {@link #load}.
  *
- * @param {string|Array.<string>} urls One or more URLs of styles to prefetch.
+ * @param {string|Array.<string>} urls One or more stylesheet URLs to prefetch.
  */
 spf.style.prefetch = function(urls) {};
