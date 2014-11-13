@@ -1,6 +1,3 @@
-# Distribution files
-/dist
-
 # Build output and files
 /build
 /build.ninja
