@@ -178,9 +178,12 @@ def write_variables(ninja):
   ninja.variable('jsfixer_bin', 'vendor/closure-linter/bin/fixjsstyle')
   ninja.variable('jsfixer_dir', 'vendor/closure-linter')
   ninja.variable('license_js', 'src/license.js')
-  ninja.variable('license', 'cat $license_js')
-  ninja.variable('preamble', 'true')
+  ninja.variable('license_cmd', 'cat $license_js')
+  ninja.variable('preamble_cmd', 'true')
   ninja.variable('wrapper_js', 'src/wrapper.js')
+  ninja.variable('package_json', './package.json')
+  ninja.variable('filter_cmd', 'cat')
+
 
   common_jsflags = [
       '--compilation_level ADVANCED_OPTIMIZATIONS',
@@ -263,8 +266,8 @@ def write_rules(ninja):
   ninja.newline()
   ninja.comment('Build JS files.');
   ninja.rule('jscompile',
-             command='$license > $out '
-                     '&& $preamble >> $out '
+             command='$license_cmd > $out '
+                     '&& $preamble_cmd >> $out '
                      '&& java -jar $jscompiler_jar $flags $in >> $out '
                      '|| (rm $out; false)',
              description='jscompile $out')
@@ -293,6 +296,12 @@ def write_rules(ninja):
   ninja.rule('copy',
              command='cp $prefix$in $out',
              description='cp $prefix$in -> $out')
+
+  ninja.newline()
+  ninja.comment('Filter.')
+  ninja.rule('filter',
+             command='cat $prefix$in | $filter_cmd > $out',
+             description='filter $prefix$in -> $out')
 
   ninja.newline()
   ninja.comment('Symlink.')
@@ -342,6 +351,7 @@ def write_rules(ninja):
 def write_targets(ninja):
   license_js = '$license_js'
   wrapper_js = '$wrapper_js'
+  package_json = '$package_json'
 
   ninja.newline()
   ninja.comment('Libraries.')
@@ -518,6 +528,7 @@ def write_targets(ninja):
 
   wtf_shim = 'third-party/tracing-framework/shims/wtf-trace-closure.js'
   js_srcs = find_js_sources() + [wtf_shim]
+  trace_preamble_cmd = 'head -n 6 ' + wtf_shim
 
   ninja.newline()
   ninja.comment('Main.')
@@ -529,7 +540,7 @@ def write_targets(ninja):
               implicit=[jscompiler_jar, license_js, wrapper_js])
   ninja.build('$builddir/spf-trace.js', 'jscompile', js_srcs,
               variables=[('flags', '$trace_jsflags $main_jsflags'),
-                         ('preamble', 'head -n 6 ' + wtf_shim)],
+                         ('preamble_cmd', trace_preamble_cmd)],
               implicit=[jscompiler_jar, license_js, wrapper_js])
 
   ninja.newline()
@@ -542,7 +553,7 @@ def write_targets(ninja):
               implicit=[jscompiler_jar, license_js])
   ninja.build('$builddir/boot-trace.js', 'jscompile', js_srcs,
               variables=[('flags', '$trace_jsflags $bootloader_jsflags'),
-                         ('preamble', 'head -n 6 ' + wtf_shim)],
+                         ('preamble_cmd', trace_preamble_cmd)],
               implicit=[jscompiler_jar, license_js])
 
   ninja.newline()
@@ -551,6 +562,9 @@ def write_targets(ninja):
   ninja.build(dev_out, 'jscompile', js_srcs,
               variables=[('flags', '$dev_jsflags')],
               implicit=[jscompiler_jar, license_js])
+
+  version_cmd = 'v=$$(node -pe \'require("$package_json").version\')'
+  dist_filter_cmd = '(%s; sed "2 s/SPF/SPF $$v/")' % version_cmd
 
   ninja.newline()
   ninja.comment('Tests.')
@@ -615,7 +629,9 @@ def write_targets(ninja):
   ]
   dist_outs = [s.replace('$builddir', '$distdir') for s in dist_srcs]
   for dist_src, dist_out in zip(dist_srcs, dist_outs):
-    ninja.build(dist_out, 'copy', dist_src)
+    ninja.build(dist_out, 'filter', dist_src,
+                variables=[('filter_cmd', dist_filter_cmd)],
+                implicit=[package_json])
 
   ninja.newline()
   ninja.comment('Generate build file.')
