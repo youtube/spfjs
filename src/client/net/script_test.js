@@ -9,6 +9,8 @@
 
 goog.require('spf.array');
 goog.require('spf.net.resource');
+goog.require('spf.net.resource.status');
+goog.require('spf.net.resource.url');
 goog.require('spf.net.script');
 goog.require('spf.pubsub');
 goog.require('spf.state');
@@ -46,8 +48,7 @@ describe('spf.net.script', function() {
         el.src = url;
         el.className = type + '-' + url.replace(/[^\w]/g, '');
         nodes.push(el);
-        var key = type + '-' + url;
-        spf.net.resource.status_[key] = spf.net.resource.State.LOADED;
+        spf.net.resource.status.set(spf.net.resource.State.LOADED, type, url);
         opt_callback && opt_callback();
         return el;
       },
@@ -61,8 +62,7 @@ describe('spf.net.script', function() {
           return true;
         });
         nodes.splice(idx, 1);
-        var key = type + '-' + url;
-        delete spf.net.resource.status_[key];
+        spf.net.resource.status.clear(type, url);
       }
     }
   };
@@ -74,9 +74,9 @@ describe('spf.net.script', function() {
 
     spf.state.values_ = {};
     spf.pubsub.subscriptions = {};
-    spf.net.script.urls_ = {};
+    spf.net.script.url_ = {};
     spf.net.script.deps_ = {};
-    spf.net.resource.urls_ = {};
+    spf.net.resource.url_ = {};
     spf.net.resource.status_ = {};
 
     nodes = [];
@@ -103,7 +103,7 @@ describe('spf.net.script', function() {
 
   describe('load', function() {
 
-    it('passes a single url with name', function() {
+    it('passes a url with name', function() {
       var url = 'url-a.js';
       var name = 'a';
       var fn = undefined;
@@ -111,28 +111,12 @@ describe('spf.net.script', function() {
       expect(spf.net.resource.load).toHaveBeenCalledWith(JS, url, name, fn);
     });
 
-    it('passes a single url with name and callback', function() {
+    it('passes a url with name and callback', function() {
       var url = 'url-a.js';
       var name = 'a';
       var fn = function() {};
       spf.net.script.load(url, name, fn);
       expect(spf.net.resource.load).toHaveBeenCalledWith(JS, url, name, fn);
-    });
-
-    it('passes multiple urls with name', function() {
-      var urls = ['url-a-1.js', 'url-a-2.js'];
-      var name = 'a';
-      var fn = undefined;
-      spf.net.script.load(urls, name);
-      expect(spf.net.resource.load).toHaveBeenCalledWith(JS, urls, name, fn);
-    });
-
-    it('passes multiple urls with name and callback', function() {
-      var urls = ['url-a-1.js', 'url-a-2.js'];
-      var name = 'a';
-      var fn = function() {};
-      spf.net.script.load(urls, name, fn);
-      expect(spf.net.resource.load).toHaveBeenCalledWith(JS, urls, name, fn);
     });
 
   });
@@ -266,7 +250,7 @@ describe('spf.net.script', function() {
 
     it('registers completion', function() {
       spf.net.script.done('foo');
-      expect('foo' in spf.net.resource.urls_);
+      expect(spf.net.resource.url.loaded(JS, 'foo')).toBe(true);
     });
 
     it('executes callbacks', function() {

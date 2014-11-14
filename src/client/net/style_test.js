@@ -26,7 +26,7 @@ describe('spf.net.style', function() {
 
   describe('load', function() {
 
-    it('passes a single url with name', function() {
+    it('passes a url with name', function() {
       var url = 'url-a.css';
       var name = 'a';
       var fn = undefined;
@@ -34,28 +34,12 @@ describe('spf.net.style', function() {
       expect(spf.net.resource.load).toHaveBeenCalledWith(CSS, url, name, fn);
     });
 
-    it('passes a single url with name and callback', function() {
+    it('passes a url with name and callback', function() {
       var url = 'url-a.css';
       var name = 'a';
       var fn = function() {};
       spf.net.style.load(url, name, fn);
       expect(spf.net.resource.load).toHaveBeenCalledWith(CSS, url, name, fn);
-    });
-
-    it('passes multiple urls with name', function() {
-      var urls = ['url-a-1.css', 'url-a-2.css'];
-      var name = 'a';
-      var fn = undefined;
-      spf.net.style.load(urls, name);
-      expect(spf.net.resource.load).toHaveBeenCalledWith(CSS, urls, name, fn);
-    });
-
-    it('passes multiple urls with name and callback', function() {
-      var urls = ['url-a-1.css', 'url-a-2.css'];
-      var name = 'a';
-      var fn = function() {};
-      spf.net.style.load(urls, name, fn);
-      expect(spf.net.resource.load).toHaveBeenCalledWith(CSS, urls, name, fn);
     });
 
   });
