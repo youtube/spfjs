@@ -8,6 +8,7 @@
     "type": "git",
     "url": "https://github.com/youtube/spfjs.git"
   },
+  "main": "dist/spf.js",
   "ignore": [
     "**/.*",
     "bower_components",
