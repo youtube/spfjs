@@ -106,9 +106,9 @@ describe('spf.net.script', function() {
     it('passes a single url with name', function() {
       var url = 'url-a.js';
       var name = 'a';
+      var fn = undefined;
       spf.net.script.load(url, name);
-      expect(spf.net.resource.load).toHaveBeenCalledWith(
-          JS, url, name, undefined);
+      expect(spf.net.resource.load).toHaveBeenCalledWith(JS, url, name, fn);
     });
 
     it('passes a single url with name and callback', function() {
@@ -116,16 +116,15 @@ describe('spf.net.script', function() {
       var name = 'a';
       var fn = function() {};
       spf.net.script.load(url, name, fn);
-      expect(spf.net.resource.load).toHaveBeenCalledWith(
-          JS, url, name, fn);
+      expect(spf.net.resource.load).toHaveBeenCalledWith(JS, url, name, fn);
     });
 
     it('passes multiple urls with name', function() {
       var urls = ['url-a-1.js', 'url-a-2.js'];
       var name = 'a';
+      var fn = undefined;
       spf.net.script.load(urls, name);
-      expect(spf.net.resource.load).toHaveBeenCalledWith(
-          JS, urls, name, undefined);
+      expect(spf.net.resource.load).toHaveBeenCalledWith(JS, urls, name, fn);
     });
 
     it('passes multiple urls with name and callback', function() {
@@ -133,8 +132,7 @@ describe('spf.net.script', function() {
       var name = 'a';
       var fn = function() {};
       spf.net.script.load(urls, name, fn);
-      expect(spf.net.resource.load).toHaveBeenCalledWith(
-          JS, urls, name, fn);
+      expect(spf.net.resource.load).toHaveBeenCalledWith(JS, urls, name, fn);
     });
 
   });
@@ -156,16 +154,15 @@ describe('spf.net.script', function() {
     it('passes url', function() {
       var url = 'url-a.js';
       spf.net.script.get(url);
-      expect(spf.net.resource.create).toHaveBeenCalledWith(
-          JS, url, undefined);
+      var fn = undefined;
+      expect(spf.net.resource.create).toHaveBeenCalledWith(JS, url, fn);
     });
 
     it('passes url with function', function() {
       var url = 'url-a.js';
       var fn = function() {};
       spf.net.script.get(url, fn);
-      expect(spf.net.resource.create).toHaveBeenCalledWith(
-          JS, url, fn);
+      expect(spf.net.resource.create).toHaveBeenCalledWith(JS, url, fn);
     });
 
   });
@@ -176,16 +173,14 @@ describe('spf.net.script', function() {
     it('calls for a single url', function() {
       var url = 'url-a.js';
       spf.net.script.prefetch(url);
-      expect(spf.net.resource.prefetch).toHaveBeenCalledWith(
-          JS, url);
+      expect(spf.net.resource.prefetch).toHaveBeenCalledWith(JS, url);
     });
 
     it('calls for multiples urls', function() {
       var urls = ['url-a-1.js', 'url-a-2.js'];
       spf.net.script.prefetch(urls);
       spf.array.each(urls, function(url) {
-        expect(spf.net.resource.prefetch).toHaveBeenCalledWith(
-            JS, url);
+        expect(spf.net.resource.prefetch).toHaveBeenCalledWith(JS, url);
       });
     });
 
