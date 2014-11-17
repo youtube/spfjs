@@ -114,6 +114,24 @@ describe('spf.pubsub', function() {
     expect(callbacks.two.calls.length).toEqual(1);
   });
 
+  it('rename', function() {
+    // Subscribe.
+    spf.pubsub.subscribe('foo', callbacks.one);
+    spf.pubsub.subscribe('foo', callbacks.two);
+    spf.pubsub.publish('foo');
+    expect(callbacks.one.calls.length).toEqual(1);
+    expect(callbacks.two.calls.length).toEqual(1);
+    // Rename.
+    spf.pubsub.rename('foo', 'bar');
+    spf.pubsub.publish('bar');
+    expect(callbacks.one.calls.length).toEqual(2);
+    expect(callbacks.two.calls.length).toEqual(2);
+    expect(subs['foo'] || []).not.toContain(callbacks.one);
+    expect(subs['foo'] || []).not.toContain(callbacks.two);
+    expect(subs['bar'] || []).toContain(callbacks.one);
+    expect(subs['bar'] || []).toContain(callbacks.two);
+  });
+
   it('clear', function() {
     spf.pubsub.subscribe('bar', callbacks.three);
     spf.pubsub.subscribe('bar', callbacks.four);

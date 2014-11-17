@@ -7,8 +7,12 @@
  * @fileoverview Tests for loading and unloading external resources.
  */
 
+goog.require('spf');
 goog.require('spf.array');
 goog.require('spf.net.resource');
+goog.require('spf.net.resource.name');
+goog.require('spf.net.resource.status');
+goog.require('spf.net.resource.url');
 goog.require('spf.pubsub');
 goog.require('spf.state');
 goog.require('spf.url');
@@ -120,6 +124,7 @@ describe('spf.net.resource', function() {
 
     spf.state.values_ = {};
     spf.pubsub.subscriptions = {};
+    spf.net.resource.name_ = {};
     spf.net.resource.url_ = {};
     spf.net.resource.status_ = {};
 
@@ -131,6 +136,7 @@ describe('spf.net.resource', function() {
       four: jasmine.createSpy('four')
     };
 
+    spyOn(spf, 'dispatch');
     spyOn(spf.url, 'absolute').andCallFake(fakes.url.absolute);
     spyOn(spf.net.resource, 'create').andCallFake(fakes.resource.create);
     spyOn(spf.net.resource, 'destroy').andCallFake(fakes.resource.destroy);
@@ -139,90 +145,766 @@ describe('spf.net.resource', function() {
 
   describe('load', function() {
 
-    it('a url (script)', function() {
-      spf.net.resource.load(JS, 'url-a.js');
-      jasmine.Clock.tick(1);
+    it('loads with no name (script)', function() {
+      // Calling load without a name isn't officially supported.
+      // Ensure that it still works if someone does.
+      var url = 'url-a.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      spf.net.resource.load(JS, url);
+      jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      spf.net.resource.load(JS, 'url-a.js');
-      jasmine.Clock.tick(1);
-      spf.net.resource.load(JS, 'url-a.js');
-      jasmine.Clock.tick(1);
+      expect(getScriptEls()[0].src).toEqual(canonical);
+    });
+
+    it('loads with no name (style)', function() {
+      // Calling load without a name isn't officially supported.
+      // Ensure that it still works if someone does.
+      var url = 'url-a.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      spf.net.resource.load(CSS, url);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getStyleEls().length).toEqual(1);
+      expect(getStyleEls()[0].href).toEqual(canonical);
+    });
+
+    it('executes callbacks with no name (script)', function() {
+      // Calling load without a name isn't officially supported, but ensure
+      // that it still works if someone does.
+      var url = 'url-a.js';
+      var name = undefined;
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      spf.net.resource.load(JS, url, name, callbacks.one);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(callbacks.one.calls.length).toEqual(1);
+    });
+
+    it('executes callbacks with no name (style)', function() {
+      // Calling load without a name isn't officially supported, but ensure
+      // that it still works if someone does.
+      var url = 'url-a.css';
+      var name = undefined;
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      spf.net.resource.load(CSS, url, name, callbacks.one);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(callbacks.one.calls.length).toEqual(1);
+    });
+
+    it('does not reload url with no name (script)', function() {
+      // Calling load without a name isn't officially supported, but ensure
+      // that it still works if someone does.
+      var url = 'url-a.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      spf.net.resource.load(JS, url);
+      jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      spf.net.resource.load(JS, 'url-b.js');
-      jasmine.Clock.tick(1);
-      expect(getScriptEls().length).toEqual(2);
-    });
-
-    it('a url (style)', function() {
-      spf.net.resource.load(CSS, 'url-a.css');
-      jasmine.Clock.tick(1);
-      expect(getStyleEls().length).toEqual(1);
-      spf.net.resource.load(CSS, 'url-a.css');
-      jasmine.Clock.tick(1);
-      spf.net.resource.load(CSS, 'url-a.css');
-      jasmine.Clock.tick(1);
-      expect(getStyleEls().length).toEqual(1);
-      spf.net.resource.load(CSS, 'url-b.css');
-      jasmine.Clock.tick(1);
-      expect(getStyleEls().length).toEqual(2);
-    });
-
-    it('a url with a name (script)', function() {
-      spf.net.resource.load(JS, 'url-a.js', 'a');
-      jasmine.Clock.tick(1);
+      expect(getScriptEls()[0].src).toEqual(canonical);
+      var el = getScriptEls()[0];
+      spf.net.resource.load(JS, url);
+      jasmine.Clock.tick(1); // Finish loading.
+      spf.net.resource.load(JS, url);
+      jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      spf.net.resource.load(JS, 'url-a.js', 'a');
-      jasmine.Clock.tick(1);
-      spf.net.resource.load(JS, 'url-a.js', 'a');
-      jasmine.Clock.tick(1);
+      expect(getScriptEls()[0].src).toEqual(canonical);
+      expect(getScriptEls()[0]).toBe(el);
+    });
+
+    it('does not reload url with no name (style)', function() {
+      // Calling load without a name isn't officially supported, but ensure
+      // that it still works if someone does.
+      var url = 'url-a.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      spf.net.resource.load(CSS, url);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getStyleEls().length).toEqual(1);
+      expect(getStyleEls()[0].href).toEqual(canonical);
+      var el = getStyleEls()[0];
+      spf.net.resource.load(CSS, url);
+      jasmine.Clock.tick(1); // Finish loading.
+      spf.net.resource.load(CSS, url);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getStyleEls().length).toEqual(1);
+      expect(getStyleEls()[0].href).toEqual(canonical);
+      expect(getStyleEls()[0]).toBe(el);
+    });
+
+    it('executes repeat callbacks for url with no name (script)', function() {
+      // Calling load without a name isn't officially supported, but ensure
+      // that it still works if someone does.
+      var url = 'url-a.js';
+      var name = undefined;
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      spf.net.resource.load(JS, url, name, callbacks.one);
+      spf.net.resource.load(JS, url, name, callbacks.two);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(callbacks.one.calls.length).toEqual(1);
+      expect(callbacks.two.calls.length).toEqual(1);
+      // Repeated calls should execute callbacks again.
+      spf.net.resource.load(JS, url, name, callbacks.one);
+      spf.net.resource.load(JS, url, name, callbacks.two);
+      expect(callbacks.one.calls.length).toEqual(2);
+      expect(callbacks.two.calls.length).toEqual(2);
+    });
+
+    it('executes repeat callbacks for url with no name (style)', function() {
+      // Calling load without a name isn't officially supported, but ensure
+      // that it still works if someone does.
+      var url = 'url-a.css';
+      var name = undefined;
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      spf.net.resource.load(CSS, url, name, callbacks.one);
+      spf.net.resource.load(CSS, url, name, callbacks.two);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(callbacks.one.calls.length).toEqual(1);
+      expect(callbacks.two.calls.length).toEqual(1);
+      // Repeated calls should execute callbacks again.
+      spf.net.resource.load(CSS, url, name, callbacks.one);
+      spf.net.resource.load(CSS, url, name, callbacks.two);
+      expect(callbacks.one.calls.length).toEqual(2);
+      expect(callbacks.two.calls.length).toEqual(2);
+    });
+
+    it('loads (script)', function() {
+      var name = 'a';
+      var url = 'url-a.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      spf.net.resource.load(JS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      spf.net.resource.load(JS, 'url-b.js', 'b');
-      jasmine.Clock.tick(1);
-      expect(getScriptEls().length).toEqual(2);
+      expect(getScriptEls()[0].src).toEqual(canonical);
+      expect(getScriptEls()[0].getAttribute('name')).toEqual(name);
     });
 
-    it('a url with a name (style)', function() {
-      spf.net.resource.load(CSS, 'url-a.css', 'a');
-      jasmine.Clock.tick(1);
+    it('loads (style)', function() {
+      var name = 'a';
+      var url = 'url-a.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      spf.net.resource.load(CSS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
-      spf.net.resource.load(CSS, 'url-a.css', 'a');
-      jasmine.Clock.tick(1);
-      spf.net.resource.load(CSS, 'url-a.css', 'a');
-      jasmine.Clock.tick(1);
-      expect(getStyleEls().length).toEqual(1);
-      spf.net.resource.load(CSS, 'url-b.css', 'b');
-      jasmine.Clock.tick(1);
-      expect(getStyleEls().length).toEqual(2);
+      expect(getStyleEls()[0].href).toEqual(canonical);
+      expect(getStyleEls()[0].getAttribute('name')).toEqual(name);
     });
 
-    it('a url with an in progress name (script)', function() {
-      spf.net.resource.load(JS, 'url-a.js', 'a');
-      spf.net.resource.load(JS, 'url-a.js', 'a');
-      jasmine.Clock.tick(1);
+    it('executes callbacks (script)', function() {
+      var name = 'a';
+      var url = 'url-a.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      spf.net.resource.load(JS, url, name, callbacks.one);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(callbacks.one.calls.length).toEqual(1);
+    });
+
+    it('executes callbacks (style)', function() {
+      var name = 'a';
+      var url = 'url-a.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      spf.net.resource.load(CSS, url, name, callbacks.one);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(callbacks.one.calls.length).toEqual(1);
+    });
+
+    it('does not reload url for same name after loaded (script)', function() {
+      var name = 'a';
+      var url = 'url-a.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      spf.net.resource.load(JS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-    });
-
-    it('a url with an in progress name (style)', function() {
-      spf.net.resource.load(CSS, 'url-a.css', 'a');
-      spf.net.resource.load(CSS, 'url-a.css', 'a');
-      jasmine.Clock.tick(1);
-      expect(getStyleEls().length).toEqual(1);
-    });
-
-    it('a url with a mismatch in progress name (script)', function() {
-      spf.net.resource.load(JS, 'url-a.js', 'a');
-      spf.net.resource.load(JS, 'url-b.js', 'a');
-      jasmine.Clock.tick(1);
+      expect(getScriptEls()[0].src).toEqual(canonical);
+      expect(getScriptEls()[0].getAttribute('name')).toEqual(name);
+      var el = getScriptEls()[0];
+      spf.net.resource.load(JS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      spf.net.resource.load(JS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      expect(getScriptUrls()).toContain('//test/url-b.js');
+      expect(getScriptEls()[0].src).toEqual(canonical);
+      expect(getScriptEls()[0].getAttribute('name')).toEqual(name);
+      expect(getScriptEls()[0]).toBe(el);
+      expect(spf.dispatch).not.toHaveBeenCalled();
     });
 
-    it('a url with a mismatch in progress name (style)', function() {
-      spf.net.resource.load(CSS, 'url-a.css', 'a');
-      spf.net.resource.load(CSS, 'url-b.css', 'a');
-      jasmine.Clock.tick(1);
+    it('does not reload url for same name after loaded (style)', function() {
+      var name = 'a';
+      var url = 'url-a.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      spf.net.resource.load(CSS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
-      expect(getStyleUrls()).toContain('//test/url-b.css');
+      expect(getStyleEls()[0].href).toEqual(canonical);
+      expect(getStyleEls()[0].getAttribute('name')).toEqual(name);
+      var el = getStyleEls()[0];
+      spf.net.resource.load(CSS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      spf.net.resource.load(CSS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getStyleEls().length).toEqual(1);
+      expect(getStyleEls()[0].href).toEqual(canonical);
+      expect(getStyleEls()[0].getAttribute('name')).toEqual(name);
+      expect(getStyleEls()[0]).toBe(el);
+      expect(spf.dispatch).not.toHaveBeenCalled();
+    });
+
+    it('does not reload url for same name while loading (script)', function() {
+      var name = 'a';
+      var url = 'url-a.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      spf.net.resource.load(JS, url, name);
+      expect(getScriptEls().length).toEqual(1);
+      var el = getScriptEls()[0];
+      spf.net.resource.load(JS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getScriptEls().length).toEqual(1);
+      expect(getScriptEls()[0].src).toEqual(canonical);
+      expect(getScriptEls()[0].getAttribute('name')).toEqual(name);
+      expect(getScriptEls()[0]).toBe(el);
+      expect(spf.dispatch).not.toHaveBeenCalled();
+    });
+
+    it('does not reload url for same name while loading (style)', function() {
+      var name = 'a';
+      var url = 'url-a.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      spf.net.resource.load(CSS, url, name);
+      expect(getStyleEls().length).toEqual(1);
+      var el = getStyleEls()[0];
+      spf.net.resource.load(CSS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getStyleEls().length).toEqual(1);
+      expect(getStyleEls()[0].href).toEqual(canonical);
+      expect(getStyleEls()[0].getAttribute('name')).toEqual(name);
+      expect(getStyleEls()[0]).toBe(el);
+      expect(spf.dispatch).not.toHaveBeenCalled();
+    });
+
+    it('executes repeat callbacks after loaded (script)', function() {
+      var name = 'a';
+      var url = 'url-a.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      spf.net.resource.load(JS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      spf.net.resource.load(JS, url, name, callbacks.one);
+      spf.net.resource.load(JS, url, name, callbacks.one);
+      expect(callbacks.one.calls.length).toEqual(2);
+    });
+
+    it('executes repeat callbacks after loaded (style)', function() {
+      var name = 'a';
+      var url = 'url-a.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      spf.net.resource.load(CSS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      spf.net.resource.load(CSS, url, name, callbacks.one);
+      spf.net.resource.load(CSS, url, name, callbacks.one);
+      expect(callbacks.one.calls.length).toEqual(2);
+    });
+
+    it('executes repeat callbacks while loading (script)', function() {
+      var name = 'a';
+      var url = 'url-a.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      spf.net.resource.load(JS, url, name, callbacks.one);
+      spf.net.resource.load(JS, url, name, callbacks.one);
+      spf.net.resource.load(JS, url, name, callbacks.two);
+      spf.net.resource.load(JS, url, name, callbacks.two);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(callbacks.one.calls.length).toEqual(2);
+      expect(callbacks.two.calls.length).toEqual(2);
+      // Repeated calls should execute callbacks again.
+      spf.net.resource.load(JS, url, name, callbacks.one);
+      spf.net.resource.load(JS, url, name, callbacks.two);
+      expect(callbacks.one.calls.length).toEqual(3);
+      expect(callbacks.two.calls.length).toEqual(3);
+    });
+
+    it('executes repeat callbacks while loading (style)', function() {
+      var name = 'a';
+      var url = 'url-a.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      spf.net.resource.load(CSS, url, name, callbacks.one);
+      spf.net.resource.load(CSS, url, name, callbacks.one);
+      spf.net.resource.load(CSS, url, name, callbacks.two);
+      spf.net.resource.load(CSS, url, name, callbacks.two);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(callbacks.one.calls.length).toEqual(2);
+      expect(callbacks.two.calls.length).toEqual(2);
+      // Repeated calls should execute callbacks again.
+      spf.net.resource.load(CSS, url, name, callbacks.one);
+      spf.net.resource.load(CSS, url, name, callbacks.two);
+      expect(callbacks.one.calls.length).toEqual(3);
+      expect(callbacks.two.calls.length).toEqual(3);
+    });
+
+    it('switches to new url for same name after loaded (script)', function() {
+      var name = 'a';
+      var url = 'url-a.js';
+      var newUrl = 'url-b.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      var newCanonical = spf.net.resource.canonicalize(JS, newUrl);
+      spf.net.resource.load(JS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      spf.net.resource.load(JS, newUrl, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getScriptEls().length).toEqual(1);
+      expect(getScriptEls()[0].src).toEqual(newCanonical);
+      expect(getScriptEls()[0].getAttribute('name')).toEqual(name);
+      expect(spf.net.resource.url.get(JS, name)).toEqual(newCanonical);
+      expect(spf.net.resource.name.get(JS, newCanonical)).toEqual(name);
+      expect(spf.net.resource.status.loaded(JS, canonical)).toBe(false);
+      expect(spf.net.resource.status.loaded(JS, newCanonical)).toBe(true);
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.JS_BEFORE_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.JS_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+    });
+
+    it('switches to new url for same name after loaded (style)', function() {
+      var name = 'a';
+      var url = 'url-a.css';
+      var newUrl = 'url-b.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      var newCanonical = spf.net.resource.canonicalize(CSS, newUrl);
+      spf.net.resource.load(CSS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      spf.net.resource.load(CSS, newUrl, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getStyleEls().length).toEqual(1);
+      expect(getStyleEls()[0].href).toEqual(newCanonical);
+      expect(getStyleEls()[0].getAttribute('name')).toEqual(name);
+      expect(spf.net.resource.url.get(CSS, name)).toEqual(newCanonical);
+      expect(spf.net.resource.name.get(CSS, newCanonical)).toEqual(name);
+      expect(spf.net.resource.status.loaded(CSS, canonical)).toBe(false);
+      expect(spf.net.resource.status.loaded(CSS, newCanonical)).toBe(true);
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.CSS_BEFORE_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.CSS_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+    });
+
+    it('switches to new url for same name while loading (script)', function() {
+      var name = 'a';
+      var url = 'url-a.js';
+      var newUrl = 'url-b.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      var newCanonical = spf.net.resource.canonicalize(JS, newUrl);
+      spf.net.resource.load(JS, url, name);
+      spf.net.resource.load(JS, newUrl, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getScriptEls().length).toEqual(1);
+      expect(getScriptEls()[0].src).toEqual(newCanonical);
+      expect(getScriptEls()[0].getAttribute('name')).toEqual(name);
+      expect(spf.net.resource.url.get(JS, name)).toEqual(newCanonical);
+      expect(spf.net.resource.name.get(JS, newCanonical)).toEqual(name);
+      expect(spf.net.resource.status.loaded(JS, canonical)).toBe(false);
+      expect(spf.net.resource.status.loaded(JS, newCanonical)).toBe(true);
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.JS_BEFORE_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.JS_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+    });
+
+    it('switches to new url for same name while loading (style)', function() {
+      var name = 'a';
+      var url = 'url-a.css';
+      var newUrl = 'url-b.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      var newCanonical = spf.net.resource.canonicalize(CSS, newUrl);
+      spf.net.resource.load(CSS, url, name);
+      spf.net.resource.load(CSS, newUrl, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getStyleEls().length).toEqual(1);
+      expect(getStyleEls()[0].href).toEqual(newCanonical);
+      expect(getStyleEls()[0].getAttribute('name')).toEqual(name);
+      expect(spf.net.resource.url.get(CSS, name)).toEqual(newCanonical);
+      expect(spf.net.resource.name.get(CSS, newCanonical)).toEqual(name);
+      expect(spf.net.resource.status.loaded(CSS, canonical)).toBe(false);
+      expect(spf.net.resource.status.loaded(CSS, newCanonical)).toBe(true);
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.CSS_BEFORE_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.CSS_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+    });
+
+    it('cancels previous callbacks when ' +
+       'switches to new url for same name while loading (script)', function() {
+      var name = 'a';
+      var url = 'url-a.js';
+      var newUrl = 'url-b.js';
+      spf.net.resource.load(JS, url, name, callbacks.one);
+      spf.net.resource.load(JS, newUrl, name, callbacks.two);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(callbacks.one.calls.length).toEqual(0);
+      expect(callbacks.two.calls.length).toEqual(1);
+    });
+
+    it('cancels previous callbacks when ' +
+       'switches to new url for same name while loading (style)', function() {
+      var name = 'a';
+      var url = 'url-a.css';
+      var newUrl = 'url-b.css';
+      spf.net.resource.load(CSS, url, name, callbacks.one);
+      spf.net.resource.load(CSS, newUrl, name, callbacks.two);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(callbacks.one.calls.length).toEqual(0);
+      expect(callbacks.two.calls.length).toEqual(1);
+    });
+
+    it('switches to new name for same url after loaded (script)', function() {
+      var name = 'a';
+      var newName = 'b';
+      var url = 'url-a.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      spf.net.resource.load(JS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      spf.net.resource.load(JS, url, newName);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getScriptEls().length).toEqual(1);
+      expect(getScriptEls()[0].src).toEqual(canonical);
+      // TODO(nicksay): Update DOM attributes to match internal status.
+      // expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
+      expect(spf.net.resource.url.get(JS, name)).toBe(undefined);
+      expect(spf.net.resource.url.get(JS, newName)).toEqual(canonical);
+      expect(spf.net.resource.name.get(JS, canonical)).toEqual(newName);
+      expect(spf.net.resource.status.loaded(JS, canonical)).toBe(true);
+      expect(spf.dispatch).not.toHaveBeenCalled();
+    });
+
+    it('switches to new name for same url after loaded (style)', function() {
+      var name = 'a';
+      var newName = 'b';
+      var url = 'url-a.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      spf.net.resource.load(CSS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      spf.net.resource.load(CSS, url, newName);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getStyleEls().length).toEqual(1);
+      expect(getStyleEls()[0].href).toEqual(canonical);
+      // TODO(nicksay): Update DOM attributes to match internal status.
+      // expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
+      expect(spf.net.resource.url.get(CSS, name)).toBe(undefined);
+      expect(spf.net.resource.url.get(CSS, newName)).toEqual(canonical);
+      expect(spf.net.resource.name.get(CSS, canonical)).toEqual(newName);
+      expect(spf.net.resource.status.loaded(CSS, canonical)).toBe(true);
+      expect(spf.dispatch).not.toHaveBeenCalled();
+    });
+
+    it('switches to new name for same url while loading (script)', function() {
+      var name = 'a';
+      var newName = 'b';
+      var url = 'url-a.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      spf.net.resource.load(JS, url, name);
+      spf.net.resource.load(JS, url, newName);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getScriptEls().length).toEqual(1);
+      expect(getScriptEls()[0].src).toEqual(canonical);
+      // TODO(nicksay): Update DOM attributes to match internal status.
+      // expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
+      expect(spf.net.resource.url.get(JS, name)).toBe(undefined);
+      expect(spf.net.resource.url.get(JS, newName)).toEqual(canonical);
+      expect(spf.net.resource.name.get(JS, canonical)).toEqual(newName);
+      expect(spf.net.resource.status.loaded(JS, canonical)).toBe(true);
+      expect(spf.dispatch).not.toHaveBeenCalled();
+    });
+
+    it('switches to new name for same url while loading (style)', function() {
+      var name = 'a';
+      var newName = 'b';
+      var url = 'url-a.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      spf.net.resource.load(CSS, url, name);
+      spf.net.resource.load(CSS, url, newName);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getStyleEls().length).toEqual(1);
+      expect(getStyleEls()[0].href).toEqual(canonical);
+      // TODO(nicksay): Update DOM attributes to match internal status.
+      // expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
+      expect(spf.net.resource.url.get(CSS, name)).toBe(undefined);
+      expect(spf.net.resource.url.get(CSS, newName)).toEqual(canonical);
+      expect(spf.net.resource.name.get(CSS, canonical)).toEqual(newName);
+      expect(spf.net.resource.status.loaded(CSS, canonical)).toBe(true);
+      expect(spf.dispatch).not.toHaveBeenCalled();
+    });
+
+    it('switches to new url for same name, then ' +
+       'switches to new name for same url after loaded (script)', function() {
+      var name = 'a';
+      var newName = 'b';
+      var url = 'url-a.js';
+      var newUrl = 'url-b.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      var newCanonical = spf.net.resource.canonicalize(JS, newUrl);
+      // Load.
+      spf.net.resource.load(JS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      // Switch to new url for same name.
+      spf.net.resource.load(JS, newUrl, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      // Switch to new name for same url.
+      spf.net.resource.load(JS, newUrl, newName);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getScriptEls().length).toEqual(1);
+      expect(getScriptEls()[0].src).toEqual(newCanonical);
+      // TODO(nicksay): Update DOM attributes to match internal status.
+      // expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
+      expect(spf.net.resource.url.get(JS, name)).toBe(undefined);
+      expect(spf.net.resource.url.get(JS, newName)).toEqual(newCanonical);
+      expect(spf.net.resource.name.get(JS, canonical)).toEqual(undefined);
+      expect(spf.net.resource.name.get(JS, newCanonical)).toEqual(newName);
+      expect(spf.net.resource.status.loaded(JS, canonical)).toBe(false);
+      expect(spf.net.resource.status.loaded(JS, newCanonical)).toBe(true);
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.JS_BEFORE_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.JS_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+    });
+
+    it('switches to new url for same name, then ' +
+       'switches to new name for same url after loaded (style)', function() {
+      var name = 'a';
+      var newName = 'b';
+      var url = 'url-a.css';
+      var newUrl = 'url-b.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      var newCanonical = spf.net.resource.canonicalize(CSS, newUrl);
+      // Load.
+      spf.net.resource.load(CSS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      // Switch to new url for same name.
+      spf.net.resource.load(CSS, newUrl, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      // Switch to new name for same url.
+      spf.net.resource.load(CSS, newUrl, newName);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getStyleEls().length).toEqual(1);
+      expect(getStyleEls()[0].href).toEqual(newCanonical);
+      // TODO(nicksay): Update DOM attributes to match internal status.
+      // expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
+      expect(spf.net.resource.url.get(CSS, name)).toBe(undefined);
+      expect(spf.net.resource.url.get(CSS, newName)).toEqual(newCanonical);
+      expect(spf.net.resource.name.get(CSS, canonical)).toEqual(undefined);
+      expect(spf.net.resource.name.get(CSS, newCanonical)).toEqual(newName);
+      expect(spf.net.resource.status.loaded(CSS, canonical)).toBe(false);
+      expect(spf.net.resource.status.loaded(CSS, newCanonical)).toBe(true);
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.CSS_BEFORE_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.CSS_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+    });
+
+    it('switches to new url for same name, then ' +
+       'switches to new name for same url while loading (script)', function() {
+      var name = 'a';
+      var newName = 'b';
+      var url = 'url-a.js';
+      var newUrl = 'url-b.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      var newCanonical = spf.net.resource.canonicalize(JS, newUrl);
+      // Load.
+      spf.net.resource.load(JS, url, name);
+      // Switch to new url for same name.
+      spf.net.resource.load(JS, newUrl, name);
+      // Switch to new name for same url.
+      spf.net.resource.load(JS, newUrl, newName);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getScriptEls().length).toEqual(1);
+      expect(getScriptEls()[0].src).toEqual(newCanonical);
+      // TODO(nicksay): Update DOM attributes to match internal status.
+      // expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
+      expect(spf.net.resource.url.get(JS, name)).toBe(undefined);
+      expect(spf.net.resource.url.get(JS, newName)).toEqual(newCanonical);
+      expect(spf.net.resource.name.get(JS, canonical)).toEqual(undefined);
+      expect(spf.net.resource.name.get(JS, newCanonical)).toEqual(newName);
+      expect(spf.net.resource.status.loaded(JS, canonical)).toBe(false);
+      expect(spf.net.resource.status.loaded(JS, newCanonical)).toBe(true);
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.JS_BEFORE_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.JS_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+    });
+
+    it('switches to new url for same name, then ' +
+       'switches to new name for same url while loading (style)', function() {
+      var name = 'a';
+      var newName = 'b';
+      var url = 'url-a.css';
+      var newUrl = 'url-b.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      var newCanonical = spf.net.resource.canonicalize(CSS, newUrl);
+      // Load.
+      spf.net.resource.load(CSS, url, name);
+      // Switch to new url for same name.
+      spf.net.resource.load(CSS, newUrl, name);
+      // Switch to new name for same url.
+      spf.net.resource.load(CSS, newUrl, newName);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getStyleEls().length).toEqual(1);
+      expect(getStyleEls()[0].href).toEqual(newCanonical);
+      // TODO(nicksay): Update DOM attributes to match internal status.
+      // expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
+      expect(spf.net.resource.url.get(CSS, name)).toBe(undefined);
+      expect(spf.net.resource.url.get(CSS, newName)).toEqual(newCanonical);
+      expect(spf.net.resource.name.get(CSS, canonical)).toEqual(undefined);
+      expect(spf.net.resource.name.get(CSS, newCanonical)).toEqual(newName);
+      expect(spf.net.resource.status.loaded(CSS, canonical)).toBe(false);
+      expect(spf.net.resource.status.loaded(CSS, newCanonical)).toBe(true);
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.CSS_BEFORE_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.CSS_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+    });
+
+    it('switches to new name for same url, then ' +
+       'switches to new url for same name after loaded (script)', function() {
+      var name = 'a';
+      var newName = 'b';
+      var url = 'url-a.js';
+      var newUrl = 'url-b.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      var newCanonical = spf.net.resource.canonicalize(JS, newUrl);
+      // Load.
+      spf.net.resource.load(JS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      // Switch to new name for same url.
+      spf.net.resource.load(JS, url, newName);
+      jasmine.Clock.tick(1); // Finish loading.
+      // Switch to new url for same name.
+      spf.net.resource.load(JS, newUrl, newName);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getScriptEls().length).toEqual(1);
+      expect(getScriptEls()[0].src).toEqual(newCanonical);
+      // TODO(nicksay): Update DOM attributes to match internal status.
+      // expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
+      expect(spf.net.resource.url.get(JS, name)).toBe(undefined);
+      expect(spf.net.resource.url.get(JS, newName)).toEqual(newCanonical);
+      expect(spf.net.resource.name.get(JS, canonical)).toEqual(undefined);
+      expect(spf.net.resource.name.get(JS, newCanonical)).toEqual(newName);
+      expect(spf.net.resource.status.loaded(JS, canonical)).toBe(false);
+      expect(spf.net.resource.status.loaded(JS, newCanonical)).toBe(true);
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.JS_BEFORE_UNLOAD,
+          {name: newName, urls: [canonical], url: canonical});
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.JS_UNLOAD,
+          {name: newName, urls: [canonical], url: canonical});
+    });
+
+    it('switches to new name for same url, then ' +
+       'switches to new url for same name after loaded (style)', function() {
+      var name = 'a';
+      var newName = 'b';
+      var url = 'url-a.css';
+      var newUrl = 'url-b.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      var newCanonical = spf.net.resource.canonicalize(CSS, newUrl);
+      // Load.
+      spf.net.resource.load(CSS, url, name);
+      jasmine.Clock.tick(1); // Finish loading.
+      // Switch to new name for same url.
+      spf.net.resource.load(CSS, url, newName);
+      jasmine.Clock.tick(1); // Finish loading.
+      // Switch to new url for same name.
+      spf.net.resource.load(CSS, newUrl, newName);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getStyleEls().length).toEqual(1);
+      expect(getStyleEls()[0].href).toEqual(newCanonical);
+      // TODO(nicksay): Update DOM attributes to match internal status.
+      // expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
+      expect(spf.net.resource.url.get(CSS, name)).toBe(undefined);
+      expect(spf.net.resource.url.get(CSS, newName)).toEqual(newCanonical);
+      expect(spf.net.resource.name.get(CSS, canonical)).toEqual(undefined);
+      expect(spf.net.resource.name.get(CSS, newCanonical)).toEqual(newName);
+      expect(spf.net.resource.status.loaded(CSS, canonical)).toBe(false);
+      expect(spf.net.resource.status.loaded(CSS, newCanonical)).toBe(true);
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.CSS_BEFORE_UNLOAD,
+          {name: newName, urls: [canonical], url: canonical});
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.CSS_UNLOAD,
+          {name: newName, urls: [canonical], url: canonical});
+    });
+
+    it('switches to new name for same url, then ' +
+       'switches to new url for same name while loading (script)', function() {
+      var name = 'a';
+      var newName = 'b';
+      var url = 'url-a.js';
+      var newUrl = 'url-b.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      var newCanonical = spf.net.resource.canonicalize(JS, newUrl);
+      // Load.
+      spf.net.resource.load(JS, url, name);
+      // Switch to new name for same url.
+      spf.net.resource.load(JS, url, newName);
+      // Switch to new url for same name.
+      spf.net.resource.load(JS, newUrl, newName);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getScriptEls().length).toEqual(1);
+      expect(getScriptEls()[0].src).toEqual(newCanonical);
+      // TODO(nicksay): Update DOM attributes to match internal status.
+      // expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
+      expect(spf.net.resource.url.get(JS, name)).toBe(undefined);
+      expect(spf.net.resource.url.get(JS, newName)).toEqual(newCanonical);
+      expect(spf.net.resource.name.get(JS, canonical)).toEqual(undefined);
+      expect(spf.net.resource.name.get(JS, newCanonical)).toEqual(newName);
+      expect(spf.net.resource.status.loaded(JS, canonical)).toBe(false);
+      expect(spf.net.resource.status.loaded(JS, newCanonical)).toBe(true);
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.JS_BEFORE_UNLOAD,
+          {name: newName, urls: [canonical], url: canonical});
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.JS_UNLOAD,
+          {name: newName, urls: [canonical], url: canonical});
+    });
+
+    it('switches to new name for same url, then ' +
+       'switches to new url for same name while loading (style)', function() {
+      var name = 'a';
+      var newName = 'b';
+      var url = 'url-a.css';
+      var newUrl = 'url-b.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      var newCanonical = spf.net.resource.canonicalize(CSS, newUrl);
+      // Load.
+      spf.net.resource.load(CSS, url, name);
+      // Switch to new name for same url.
+      spf.net.resource.load(CSS, url, newName);
+      // Switch to new url for same name.
+      spf.net.resource.load(CSS, newUrl, newName);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getStyleEls().length).toEqual(1);
+      expect(getStyleEls()[0].href).toEqual(newCanonical);
+      // TODO(nicksay): Update DOM attributes to match internal status.
+      // expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
+      expect(spf.net.resource.url.get(CSS, name)).toBe(undefined);
+      expect(spf.net.resource.url.get(CSS, newName)).toEqual(newCanonical);
+      expect(spf.net.resource.name.get(CSS, canonical)).toEqual(undefined);
+      expect(spf.net.resource.name.get(CSS, newCanonical)).toEqual(newName);
+      expect(spf.net.resource.status.loaded(CSS, canonical)).toBe(false);
+      expect(spf.net.resource.status.loaded(CSS, newCanonical)).toBe(true);
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.CSS_BEFORE_UNLOAD,
+          {name: newName, urls: [canonical], url: canonical});
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.CSS_UNLOAD,
+          {name: newName, urls: [canonical], url: canonical});
     });
 
   });
@@ -230,36 +912,179 @@ describe('spf.net.resource', function() {
 
   describe('unload', function() {
 
-    it('a url by name (script)', function() {
+    it('unloads after loaded (script)', function() {
+      var name = 'a';
+      var url = 'url-a.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
       // Load a URL.
-      spf.net.resource.load(JS, 'url-a.js', 'a');
-      jasmine.Clock.tick(1);
-      expect(getScriptUrls()).toContain('//test/url-a.js');
+      spf.net.resource.load(JS, url, name);
+      jasmine.Clock.tick(1);  // Finish loading.
+      expect(getScriptUrls()).toContain(canonical);
       // Unload it.
-      spf.net.resource.unload(JS, 'a');
-      expect('//test/url-a.js' in spf.net.resource.status_).toBe(false);
-      expect(getScriptUrls()).not.toContain('//test/url-a.js');
-      // Repeated calls should be no-ops.
-      spf.net.resource.unload(JS, 'a');
-      spf.net.resource.unload(JS, 'a');
-      expect('//test/url-a.js' in spf.net.resource.status_).toBe(false);
-      expect(getScriptUrls()).not.toContain('//test/url-a.js');
+      spf.net.resource.unload(JS, name);
+      expect(spf.net.resource.status.get(JS, canonical)).toBe(undefined);
+      expect(getScriptUrls()).not.toContain(canonical);
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.JS_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
     });
 
-    it('a url by name (style)', function() {
+    it('unloads after loaded (style)', function() {
+      var name = 'a';
+      var url = 'url-a.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
       // Load a URL.
-      spf.net.resource.load(CSS, 'url-a.css', 'a');
-      jasmine.Clock.tick(1);
-      expect(getStyleUrls()).toContain('//test/url-a.css');
+      spf.net.resource.load(CSS, url, name);
+      jasmine.Clock.tick(1);  // Finish loading.
+      expect(getStyleUrls()).toContain(canonical);
       // Unload it.
       spf.net.resource.unload(CSS, 'a');
+      expect(spf.net.resource.status.get(CSS, canonical)).toBe(undefined);
+      expect(getStyleUrls()).not.toContain(canonical);
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.CSS_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+    });
+
+    it('unloads while loading (script)', function() {
+      var name = 'a';
+      var url = 'url-a.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      // Load a URL.
+      spf.net.resource.load(JS, url, name);
+      // Unload it.
+      spf.net.resource.unload(JS, name);
+      expect(spf.net.resource.status.get(JS, canonical)).toBe(undefined);
+      expect(getScriptUrls()).not.toContain(canonical);
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.JS_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+    });
+
+    it('unloads while loading (style)', function() {
+      var name = 'a';
+      var url = 'url-a.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      // Load a URL.
+      spf.net.resource.load(CSS, url, name);
+      // Unload it.
+      spf.net.resource.unload(CSS, name);
       expect('//test/url-a.css' in spf.net.resource.status_).toBe(false);
-      expect(getStyleUrls()).not.toContain('//test/url-a.css');
-      // Repeated calls should be no-ops.
-      spf.net.resource.unload(CSS, 'a');
-      spf.net.resource.unload(CSS, 'a');
-      expect('//test/url-a.css' in spf.net.resource.status_).toBe(false);
-      expect(getStyleUrls()).not.toContain('//test/url-a.css');
+      expect(getStyleUrls()).not.toContain(canonical);
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.CSS_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+    });
+
+    it('does nothing for repeated calls (script)', function() {
+      var name = 'a';
+      var url = 'url-a.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      // Calls before loading should be no-ops.
+      var unload = spf.bind(spf.net.resource.unload, null, JS, name);
+      expect(unload).not.toThrow();
+      // Load a URL.
+      spf.net.resource.load(JS, url, name);
+      jasmine.Clock.tick(1);
+      // Unload it.
+      spf.net.resource.unload(JS, name);
+      spf.net.resource.unload(JS, name);
+      expect(canonical in spf.net.resource.status_).toBe(false);
+      expect(getScriptUrls()).not.toContain(canonical);
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.JS_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+      expect(spf.dispatch.calls.length).toEqual(1);
+      // Repated calls should be no-ops.
+      spf.net.resource.unload(JS, name);
+      spf.net.resource.unload(JS, name);
+      spf.net.resource.unload(JS, name);
+      expect(canonical in spf.net.resource.status_).toBe(false);
+      expect(getScriptUrls()).not.toContain(canonical);
+      expect(spf.dispatch.calls.length).toEqual(1);
+    });
+
+    it('does nothing for repeated calls (style)', function() {
+      var name = 'a';
+      var url = 'url-a.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      // Calls before loading should be no-ops.
+      var unload = spf.bind(spf.net.resource.unload, null, CSS, name);
+      expect(unload).not.toThrow();
+      // Load a URL.
+      spf.net.resource.load(CSS, url, name);
+      jasmine.Clock.tick(1);
+      // Unload it.
+      spf.net.resource.unload(CSS, name);
+      spf.net.resource.unload(CSS, name);
+      expect(canonical in spf.net.resource.status_).toBe(false);
+      expect(getStyleUrls()).not.toContain(canonical);
+      expect(spf.dispatch).toHaveBeenCalledWith(
+          spf.EventName.CSS_UNLOAD,
+          {name: name, urls: [canonical], url: canonical});
+      expect(spf.dispatch.calls.length).toEqual(1);
+      // Repated calls should be no-ops.
+      spf.net.resource.unload(CSS, name);
+      spf.net.resource.unload(CSS, name);
+      spf.net.resource.unload(CSS, name);
+      expect(canonical in spf.net.resource.status_).toBe(false);
+      expect(getStyleUrls()).not.toContain(canonical);
+      expect(spf.dispatch.calls.length).toEqual(1);
+    });
+
+    it('cancels previous callbacks while loading (script)', function() {
+      var name = 'a';
+      var url = 'url-a.js';
+      var canonical = spf.net.resource.canonicalize(JS, url);
+      // Load a URL.
+      spf.net.resource.load(JS, url, name, callbacks.one);
+      // Unload it.
+      spf.net.resource.unload(JS, name);
+      expect(callbacks.one.calls.length).toEqual(0);
+      // Load it again with a differnt callback.
+      spf.net.resource.load(JS, url, name, callbacks.two);
+      jasmine.Clock.tick(1);  // Finish loading.
+      expect(callbacks.one.calls.length).toEqual(0);
+      expect(callbacks.two.calls.length).toEqual(1);
+    });
+
+    it('cancels previous callbacks while loading (style)', function() {
+      var name = 'a';
+      var url = 'url-a.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      // Load a URL.
+      spf.net.resource.load(CSS, url, name, callbacks.one);
+      // Unload it.
+      spf.net.resource.unload(CSS, name);
+      expect(callbacks.one.calls.length).toEqual(0);
+      // Load it again with a differnt callback.
+      spf.net.resource.load(CSS, url, name, callbacks.two);
+      jasmine.Clock.tick(1);  // Finish loading.
+      expect(callbacks.one.calls.length).toEqual(0);
+      expect(callbacks.two.calls.length).toEqual(1);
+    });
+
+  });
+
+
+  describe('create', function() {
+
+    it('prepends nodes to avoid execution errors (script)', function() {
+      spf.net.resource.create(JS, 'url-a.js');
+      spf.net.resource.create(JS, 'url-b.js');
+      jasmine.Clock.tick(1);
+      expect(getScriptEls().length).toEqual(2);
+      expect(getScriptEls()[0].src).toEqual('//test/url-b.js');
+      expect(getScriptEls()[1].src).toEqual('//test/url-a.js');
+    });
+
+    it('appends nodes to preserve order (style)', function() {
+      spf.net.resource.load(CSS, 'url-a.css');
+      spf.net.resource.load(CSS, 'url-b.css');
+      jasmine.Clock.tick(1);
+      expect(getStyleEls().length).toEqual(2);
+      expect(getStyleEls()[0].href).toEqual('//test/url-a.css');
+      expect(getStyleEls()[1].href).toEqual('//test/url-b.css');
     });
 
   });

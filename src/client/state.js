@@ -73,6 +73,7 @@ spf.state.Key = {
   NAV_REQUEST: 'nav-request',
   PREFETCH_LISTENER: 'prefetch-listener',
   PUBSUB_SUBS: 'ps-s',
+  RESOURCE_NAME: 'rsrc-n',
   RESOURCE_PATHS_PREFIX: 'rsrc-p-',
   RESOURCE_STATUS: 'rsrc-s',
   RESOURCE_URL: 'rsrc-u',
