@@ -16,6 +16,19 @@ if [[ $# < 1 ]]; then
   exit 1
 fi
 
+# Make sure node is properly installed.
+node=$(command -v node)
+npm=$(command -v npm)
+if [[ $node == "" || $npm == "" ]]; then
+  echo "Both node and npm must be installed to release."
+  exit 1
+fi
+npm_semver=$(npm list --parseable semver)
+if [[ $npm_semver == "" ]]; then
+  echo 'The "semver" package is needed.  Run "npm install" and try again.'
+  exit 1
+fi
+
 # Validate the commit.
 commit=$(git rev-parse --quiet --verify $1)
 if [[ $commit == "" ]]; then
@@ -85,6 +98,33 @@ git tag "v$version"
 
 # Push the tag.
 git push --tags
+
+# Publish to npm.
+npm_user=$(npm whoami 2> /dev/null)
+npm_publish="false"
+if [[ $npm_user == "" ]]; then
+  echo 'Skipping "npm publish" because npm credentials were not found.'
+  echo "To get credentials on this machine, run the following:"
+  echo "    npm login"
+else
+  npm_owner=$(npm owner ls | grep "$npm_user")
+  if [[ $npm_owner == "" ]]; then
+    echo 'Skipping "npm publish" because npm ownership was not found.'
+    echo "The current list of npm owners is:"
+    npm owner ls | sed 's/^/    /'
+    echo "To get ownership, have an existing owner run the following:"
+    echo "    npm owner add $npm_user"
+  else
+    npm_publish="true"
+  fi
+fi
+if [[ $npm_publish == "false" ]]; then
+  echo "To publish this release to npm later, run the following:"
+  echo "    git checkout v$version"
+  echo "    npm publish"
+else
+  npm publish
+fi
 
 # Return to the original branch.
 git checkout $branch
