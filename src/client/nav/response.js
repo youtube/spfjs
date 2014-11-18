@@ -491,7 +491,7 @@ spf.nav.response.extract_ = function(html) {
     // Add the parsed links to the result.
     if (html['links'] && spf.config.get('experimental-preconnect')) {
       spf.array.each(html['links'], function(link) {
-        if (link['rel'] == 'preconnect') {
+        if (link['rel'] == 'spf-preconnect') {
           result.links.push({url: link['url'] || '',
                              rel: link['rel'] || ''});
         }
@@ -541,9 +541,10 @@ spf.nav.response.extract_ = function(html) {
           result.styles.push({url: url, text: '', name: name});
           return '';
         }
-        // A rel=preconnect tag indicates early connection.
+        // A rel=spf-preconnect tag indicates early connection.
         // Parse the href attribute.
-        if (rel == 'preconnect' && spf.config.get('experimental-preconnect')) {
+        if (rel == 'spf-preconnect' &&
+            spf.config.get('experimental-preconnect')) {
           var url = attr.match(spf.nav.response.AttributeRegEx.HREF);
           url = url ? url[1] : '';
           result.links.push({url: url, rel: rel});
@@ -705,7 +706,7 @@ spf.nav.response.preinstallLinks_ = function(result) {
   }
   // Preconnect.
   var urls = spf.array.map(result.links, function(item) {
-    return item.rel == 'preconnect' ? item.url : '';
+    return item.rel == 'spf-preconnect' ? item.url : '';
   });
   spf.net.connect.preconnect(urls);
 };
