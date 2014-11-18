@@ -75,9 +75,9 @@ spf.state.Key = {
   PUBSUB_SUBS: 'ps-s',
   RESOURCE_PATHS_PREFIX: 'rsrc-p-',
   RESOURCE_STATUS: 'rsrc-s',
-  RESOURCE_URLS: 'rsrc-u',
+  RESOURCE_URL: 'rsrc-u',
   SCRIPT_DEPS: 'js-d',
-  SCRIPT_URLS: 'js-u',
+  SCRIPT_URL: 'js-u',
   TASKS_UID: 'uid'
 };
 

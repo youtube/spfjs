@@ -334,7 +334,9 @@ spf.EventDetail.prototype.target;
 /**
  * The URL of the request; defined for "spferror", "spfreload", "spfclick",
  * "spfhistory", "spfrequest", "spfpartprocess", "spfpartdone", "spfprocess",
- * and "spfdone" events.
+ * and "spfdone" events - or - the URL of the script or stylesheet that will
+ * be unloaded; defined for "spfjsbeforeunload", "spfjsunload",
+ * "spfcssbeforeunload", and "spfcssunload" events.
  * @type {string|undefined}
  */
 spf.EventDetail.prototype.url;
@@ -345,6 +347,9 @@ spf.EventDetail.prototype.url;
  * for "spfjsbeforeunload", "spfjsunload", "spfcssbeforeunload", and
  * "spfcssunload" events.
  * @type {Array.<string>|undefined}
+ * @deprecated Use {@link #url} instead. This will always be a single item
+ *   array containing the URL and the property will be removed in the next
+ *   release.
  */
 spf.EventDetail.prototype.urls;
 

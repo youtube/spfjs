@@ -36,7 +36,7 @@ goog.provide('spf.net.script');
 goog.require('spf.array');
 goog.require('spf.debug');
 goog.require('spf.net.resource');
-goog.require('spf.net.resource.urls');
+goog.require('spf.net.resource.url');
 goog.require('spf.pubsub');
 goog.require('spf.state');
 goog.require('spf.string');
@@ -147,7 +147,7 @@ spf.net.script.ready = function(names, opt_fn, opt_require) {
   // Find unknown names.
   var unknown = [];
   spf.array.each(names, function(name) {
-    if (name && !spf.net.resource.urls.get(type, name)) {
+    if (name && spf.net.resource.url.get(type, name) == undefined) {
       unknown.push(name);
     }
   });
@@ -155,8 +155,8 @@ spf.net.script.ready = function(names, opt_fn, opt_require) {
   // Check if all urls for the names are loaded.
   var known = !unknown.length;
   if (opt_fn) {
-    var depsLoaded = spf.bind(spf.net.resource.urls.loaded, null, type);
-    var ready = spf.array.every(names, depsLoaded);
+    var loaded = spf.bind(spf.net.resource.url.loaded, null, type);
+    var ready = spf.array.every(names, loaded);
     if (known && ready) {
       // If ready, execute the callback.
       opt_fn();
@@ -182,7 +182,7 @@ spf.net.script.ready = function(names, opt_fn, opt_require) {
  */
 spf.net.script.done = function(name) {
   var type = spf.net.resource.Type.JS;
-  spf.net.resource.urls.set(type, name, []);  // No associated URLs.
+  spf.net.resource.url.set(type, name, '');  // No associated URL.
   spf.net.resource.check(type);
 };
 
@@ -231,9 +231,18 @@ spf.net.script.require = function(names, opt_fn) {
     names = spf.array.toArray(names);
     spf.array.each(names, function(name) {
       if (name) {
-        var current = spf.net.script.urls_[name] || name;
-        var different = spf.net.script.anyDifferent_(name, current);
-        if (different) {
+        var url = spf.net.script.url_[name] || name;
+        // TODO(nicksay): Remove compatibility code before 2.0.0 release.
+        // For compatibility with previous versions where the
+        // spf.net.script.url_ object stored in state contained arrays of URLs,
+        // only return the first. Since these arrays should all have length = 1,
+        // this is safe.
+        if (spf.array.isArray(url)) {
+          url = url[0];
+        }
+        url = spf.net.resource.canonicalize(type, url);
+        var previous = spf.net.resource.url.get(type, name);
+        if (previous && url != previous) {
           spf.net.script.unrequire(name);
         }
       }
@@ -256,13 +265,15 @@ spf.net.script.require_ = function(names) {
   // If not, load the scripts for that name.
   spf.array.each(names, function(name) {
     var deps = spf.net.script.deps_[name];
-    var url = spf.net.script.urls_[name] || name;
+    var url = spf.net.script.url_[name] || name;
+    // TODO(nicksay): Remove compatibility code before 2.0.0 release.
+    // For compatibility with previous versions where the spf.net.script.url_
+    // object stored in state contained arrays of URLs, only return the first.
+    // Since these arrays should all have length = 1, this is safe.
+    if (spf.array.isArray(url)) {
+      url = url[0];
+    }
     var next = function() {
-      // TODO(nicksay): Remove compatibility code before next release.
-      // Trick the compiler.  While the compatibility code is in place, existing
-      // urls in state might be arrays instead of strings.  This support
-      // will be removed soon, but until it is, cast the variable.
-      url = /** @type {string} */ (url);
       spf.net.script.load(url, name);
     };
     if (deps) {
@@ -344,7 +355,7 @@ spf.net.script.declare = function(deps, opt_urls) {
     }
     if (opt_urls) {
       for (var name in opt_urls) {
-        spf.net.script.urls_[name] = opt_urls[name];
+        spf.net.script.url_[name] = opt_urls[name];
       }
     }
   }
@@ -365,30 +376,7 @@ spf.net.script.path = function(paths) {
 
 
 /**
- * Checks to see if urls for a dependency are different.
- * (If none are already loaded, then they are not different.)
- *
- * @param {string} name The dependency name.
- * @param {string|Array.<string>} updated One or more new/updated URLs to check.
- * @return {boolean}
- * @private
- */
-spf.net.script.anyDifferent_ = function(name, updated) {
-  var type = spf.net.resource.Type.JS;
-  var urls = spf.net.resource.urls.get(type, name);
-  if (urls) {
-    updated = spf.array.toArray(updated);
-    return !spf.array.every(urls, function(url, i) {
-      return urls[i] == spf.net.resource.canonicalize(type, updated[i]);
-    });
-  } else {
-    return false;
-  }
-};
-
-
-/**
- * Map of dependencies.
+ * Map of dependencies used for {@link #require}.
  * @type {!Object.<(string|Array.<string>)>}
  * @private
  */
@@ -406,20 +394,21 @@ if (SPF_BOOTLOADER) {
 
 
 /**
- * Map of urls for dependencies.
- * @type {!Object.<(string|Array.<string>)>}
+ * Map of dependency names to URLs for {@link #require}, used for custom
+ * resolution before URL canonicalization.
+ * @type {!Object.<string>}
  * @private
  */
-spf.net.script.urls_ = {};
+spf.net.script.url_ = {};
 // When built for the bootloader, unconditionally set the map in state.
 if (SPF_BOOTLOADER) {
-  spf.state.set(spf.state.Key.SCRIPT_URLS, spf.net.script.urls_);
+  spf.state.set(spf.state.Key.SCRIPT_URL, spf.net.script.url_);
 } else {
-  if (!spf.state.has(spf.state.Key.SCRIPT_URLS)) {
-    spf.state.set(spf.state.Key.SCRIPT_URLS, spf.net.script.urls_);
+  if (!spf.state.has(spf.state.Key.SCRIPT_URL)) {
+    spf.state.set(spf.state.Key.SCRIPT_URL, spf.net.script.url_);
   }
-  spf.net.script.urls_ = /** @type {!Object.<(string|Array.<string>)>} */ (
-      spf.state.get(spf.state.Key.SCRIPT_URLS));
+  spf.net.script.url_ = /** @type {!Object.<string>} */ (
+      spf.state.get(spf.state.Key.SCRIPT_URL));
 }
 
 
@@ -453,7 +442,5 @@ if (spf.tracing.ENABLED) {
         spf.net.script.declare, 'spf.net.script.declare');
     spf.net.script.path = spf.tracing.instrument(
         spf.net.script.path, 'spf.net.script.path');
-    spf.net.script.anyDifferent_ = spf.tracing.instrument(
-        spf.net.script.anyDifferent_, 'spf.net.script.anyDifferent_');
   })();
 }
