@@ -14,7 +14,7 @@ goog.require('spf.net.style');
 
 describe('spf.net.style', function() {
 
-  var css = spf.net.resource.Type.CSS;
+  var CSS = spf.net.resource.Type.CSS;
 
   beforeEach(function() {
     spyOn(spf.net.resource, 'load');
@@ -29,9 +29,9 @@ describe('spf.net.style', function() {
     it('passes a single url with name', function() {
       var url = 'url-a.css';
       var name = 'a';
+      var fn = undefined;
       spf.net.style.load(url, name);
-      expect(spf.net.resource.load).toHaveBeenCalledWith(
-          css, url, name, undefined);
+      expect(spf.net.resource.load).toHaveBeenCalledWith(CSS, url, name, fn);
     });
 
     it('passes a single url with name and callback', function() {
@@ -39,16 +39,15 @@ describe('spf.net.style', function() {
       var name = 'a';
       var fn = function() {};
       spf.net.style.load(url, name, fn);
-      expect(spf.net.resource.load).toHaveBeenCalledWith(
-          css, url, name, fn);
+      expect(spf.net.resource.load).toHaveBeenCalledWith(CSS, url, name, fn);
     });
 
     it('passes multiple urls with name', function() {
       var urls = ['url-a-1.css', 'url-a-2.css'];
       var name = 'a';
+      var fn = undefined;
       spf.net.style.load(urls, name);
-      expect(spf.net.resource.load).toHaveBeenCalledWith(
-          css, urls, name, undefined);
+      expect(spf.net.resource.load).toHaveBeenCalledWith(CSS, urls, name, fn);
     });
 
     it('passes multiple urls with name and callback', function() {
@@ -56,8 +55,7 @@ describe('spf.net.style', function() {
       var name = 'a';
       var fn = function() {};
       spf.net.style.load(urls, name, fn);
-      expect(spf.net.resource.load).toHaveBeenCalledWith(
-          css, urls, name, fn);
+      expect(spf.net.resource.load).toHaveBeenCalledWith(CSS, urls, name, fn);
     });
 
   });
@@ -68,7 +66,7 @@ describe('spf.net.style', function() {
     it('passes name', function() {
       var name = 'a';
       spf.net.style.unload(name);
-      expect(spf.net.resource.unload).toHaveBeenCalledWith(css, name);
+      expect(spf.net.resource.unload).toHaveBeenCalledWith(CSS, name);
     });
 
   });
@@ -78,17 +76,16 @@ describe('spf.net.style', function() {
 
     it('passes url', function() {
       var url = 'url-a.css';
+      var fn = undefined;
       spf.net.style.get(url);
-      expect(spf.net.resource.create).toHaveBeenCalledWith(
-          css, url, undefined);
+      expect(spf.net.resource.create).toHaveBeenCalledWith(CSS, url, fn);
     });
 
     it('passes url with function', function() {
       var url = 'url-a.css';
       var fn = function() {};
       spf.net.style.get(url, fn);
-      expect(spf.net.resource.create).toHaveBeenCalledWith(
-          css, url, fn);
+      expect(spf.net.resource.create).toHaveBeenCalledWith(CSS, url, fn);
     });
 
   });
@@ -99,16 +96,14 @@ describe('spf.net.style', function() {
     it('calls for a single url', function() {
       var url = 'url-a.css';
       spf.net.style.prefetch(url);
-      expect(spf.net.resource.prefetch).toHaveBeenCalledWith(
-          css, url);
+      expect(spf.net.resource.prefetch).toHaveBeenCalledWith(CSS, url);
     });
 
     it('calls for multiples urls', function() {
       var urls = ['url-a-1.css', 'url-a-2.css'];
       spf.net.style.prefetch(urls);
       spf.array.each(urls, function(url) {
-        expect(spf.net.resource.prefetch).toHaveBeenCalledWith(
-            css, url);
+        expect(spf.net.resource.prefetch).toHaveBeenCalledWith(CSS, url);
       });
     });
 
