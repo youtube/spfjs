@@ -12,6 +12,7 @@
  */
 
 goog.provide('spf.net.resource');
+goog.provide('spf.net.resource.name');
 goog.provide('spf.net.resource.status');
 goog.provide('spf.net.resource.url');
 
@@ -20,6 +21,7 @@ goog.require('spf.array');
 goog.require('spf.debug');
 goog.require('spf.dom');
 goog.require('spf.dom.classlist');
+goog.require('spf.pubsub');
 goog.require('spf.state');
 goog.require('spf.string');
 goog.require('spf.tasks');
@@ -61,8 +63,11 @@ spf.net.resource.load = function(type, url, name, opt_fn) {
 
   url = spf.net.resource.canonicalize(type, url);
 
-  // After the resources are loaded, execute the callback by default.
-  var done = opt_fn;
+  // Calling load without a name or with an empty string for a name isn't
+  // officially supported, but if it happens, use a pseudonym to allow the
+  // the resource to load and fire the callback.
+  var pseudonym = name || '^' + url;
+  var topic = spf.net.resource.key(type, pseudonym);
 
   // If a name is provided with a different URL, then also unload the previous
   // version after the resource is loaded.
@@ -72,34 +77,46 @@ spf.net.resource.load = function(type, url, name, opt_fn) {
   // before loading the main SPF code, then this should be an error.  Automatic
   // unloading of scripts is primarily intended for navigation between versions.
   if (name && !SPF_BOOTLOADER) {
-    var loaded = spf.net.resource.status.loaded(type, url);
-    var previous = spf.net.resource.url.get(type, name);
-    // TODO(nicksay): Consider if the loaded check is required here.
     // If loading a new resource for a name, handle unloading the previous one.
-    if (!loaded && previous && url != previous) {
+    var prevUrl = spf.net.resource.url.get(type, name);
+    if (prevUrl && url != prevUrl) {
       var evt = isJS ? spf.EventName.JS_BEFORE_UNLOAD :
                        spf.EventName.CSS_BEFORE_UNLOAD;
       // TODO(nicksay): Remove compatibility code before 2.0.0 release.
       // For compatibility with previous versions, which used the 'urls' key
       // and an array, temporarily dispatch the event with both keys.
-      spf.dispatch(evt, {'name': name, 'urls': [previous], 'url': previous});
-      spf.net.resource.url.clear(type, name);
-      done = function() {
-        spf.net.resource.unload_(type, name, previous);
-        opt_fn && opt_fn();
-      };
+      spf.dispatch(evt, {'name': name, 'urls': [prevUrl], 'url': prevUrl});
+      spf.net.resource.unloadPrepare_(type, name, prevUrl);
+      // Wait until the new resource has finished loading before destroying
+      // the previous one to avoid flashes of unstyled content w/ CSS.
+      var unloadComplete = spf.bind(spf.net.resource.unloadComplete_, null,
+                                    type, name, prevUrl);
+      spf.pubsub.subscribe(topic, unloadComplete);
     }
   }
 
-  var pseudonym = name || '^' + url;
-  // Associate the resources with the name/pseudonym for unloading + callbacks.
+  // Associate the name/pseudonym with the resource for tracking name changes.
+  // Associate the resource with the name/pseudonym for unloading + callbacks.
+  var prevName = spf.net.resource.name.get(type, url);
+  if (prevName && pseudonym != prevName) {
+    // If changing names for this resource, remove the existing
+    // name-to-resource and resource-to-name mappings (which are re-set just
+    // below), and then transfer any callbacks.
+    spf.net.resource.url.clear(type, prevName);
+    spf.net.resource.name.clear(type, url);
+    var prevTopic = spf.net.resource.key(type, prevName);
+    spf.pubsub.rename(prevTopic, topic);
+  }
+  spf.net.resource.name.set(type, url, pseudonym);
   spf.net.resource.url.set(type, pseudonym, url);
+
   // Subscribe the callback to execute when the url is loaded.
-  var topic = spf.net.resource.key(type, pseudonym);
-  spf.debug.debug('  subscribing', topic);
-  spf.pubsub.subscribe(topic, done);
+  spf.debug.debug('  subscribing callback', topic);
+  spf.pubsub.subscribe(topic, opt_fn);
   var check = spf.bind(spf.net.resource.check, null, type);
+
   // If a status exists, the resource is already loading or loaded.
+  // Otherwise, create the resource.
   if (spf.net.resource.status.get(type, url)) {
     check();
   } else {
@@ -120,23 +137,46 @@ spf.net.resource.load = function(type, url, name, opt_fn) {
 spf.net.resource.unload = function(type, name) {
   spf.debug.warn('resource.unload', type, name);
   var url = spf.net.resource.url.get(type, name);
-  spf.net.resource.url.clear(type, name);
-  spf.net.resource.unload_(type, name, url);
+  spf.net.resource.unloadPrepare_(type, name, url);
+  spf.net.resource.unloadComplete_(type, name, url);
 };
 
 
 /**
- * See {@link #unload_}.
+ * See {@link #unload}.
  *
  * @param {spf.net.resource.Type} type Type of the resource.
  * @param {string} name The dependency name.
  * @param {string|undefined} url The URL.
  * @private
  */
-spf.net.resource.unload_ = function(type, name, url) {
+spf.net.resource.unloadPrepare_ = function(type, name, url) {
+  spf.debug.debug('  > resource.unloadPrepare_', type, url);
+  // Clear the dependency name to URL mapping.
+  spf.net.resource.url.clear(type, name);
+  // Clear the URL to dependency name mapping.
+  if (url) {
+    spf.net.resource.name.clear(type, url);
+  }
+  var topic = spf.net.resource.key(type, name);
+  spf.debug.debug('  clearing callbacks for', topic);
+  // Clear any pending callbacks for the dependency name.
+  spf.pubsub.clear(topic);
+};
+
+
+/**
+ * See {@link #unload}.
+ *
+ * @param {spf.net.resource.Type} type Type of the resource.
+ * @param {string} name The dependency name.
+ * @param {string|undefined} url The URL.
+ * @private
+ */
+spf.net.resource.unloadComplete_ = function(type, name, url) {
   var isJS = type == spf.net.resource.Type.JS;
   if (url) {
-    spf.debug.debug('  > resource.unload', type, url);
+    spf.debug.debug('  > resource.unloadComplete_', type, url);
     var evt = isJS ? spf.EventName.JS_UNLOAD :
                      spf.EventName.CSS_UNLOAD;
     // TODO(nicksay): Remove compatibility code before 2.0.0 release.
@@ -310,6 +350,7 @@ spf.net.resource.discover = function(type) {
       spf.dom.classlist.add(el, cls);
       var name = el.getAttribute('name');
       if (name) {
+        spf.net.resource.name.set(type, url, name);
         spf.net.resource.url.set(type, name, url);
       }
       els.push(el);
@@ -625,6 +666,44 @@ spf.net.resource.status.loaded = function(type, url) {
 
 
 /**
+ * Sets the dependency name for a resource URL.
+ *
+ * @param {spf.net.resource.Type} type Type of the resource.
+ * @param {string} url The URL.
+ * @param {string} name The dependency name.
+ */
+spf.net.resource.name.set = function(type, url, name) {
+  var key = spf.net.resource.key(type, url);
+  spf.net.resource.name_[key] = name;
+};
+
+
+/**
+ * Returns the dependency name currently set for a resource URL.
+ *
+ * @param {spf.net.resource.Type} type Type of the resource.
+ * @param {string} url The URL.
+ * @return {string|undefined} The dependency name.
+ */
+spf.net.resource.name.get = function(type, url) {
+  var key = spf.net.resource.key(type, url);
+  return spf.net.resource.name_[key];
+};
+
+
+/**
+ * Clears the previously set dependency name for a resource URL.
+ *
+ * @param {spf.net.resource.Type} type Type of the resource.
+ * @param {string} url The URL.
+ */
+spf.net.resource.name.clear = function(type, url) {
+  var key = spf.net.resource.key(type, url);
+  delete spf.net.resource.name_[key];
+};
+
+
+/**
  * Sets the resource URL for a dependency name.
  *
  * @param {spf.net.resource.Type} type Type of the resource.
@@ -695,6 +774,14 @@ spf.net.resource.status_ = {};
 
 
 /**
+ * Map a URL to a dependency name.
+ * @type {!Object.<string>}
+ * @private
+ */
+spf.net.resource.name_ = {};
+
+
+/**
  * Map a dependency name to a URL.
  * @type {!Object.<string>}
  * @private
@@ -742,6 +829,18 @@ if (SPF_BOOTLOADER) {
   spf.net.resource.status_ =
       /** @type {!Object.<spf.net.resource.State>} */ (
       spf.state.get(spf.state.Key.RESOURCE_STATUS));
+}
+
+// Automatic initiazation for spf.net.resource.name_.
+// When built for the bootloader, unconditionally set the map in state.
+if (SPF_BOOTLOADER) {
+  spf.state.set(spf.state.Key.RESOURCE_NAME, spf.net.resource.name_);
+} else {
+  if (!spf.state.has(spf.state.Key.RESOURCE_NAME)) {
+    spf.state.set(spf.state.Key.RESOURCE_NAME, spf.net.resource.name_);
+  }
+  spf.net.resource.name_ = /** @type {!Object.<string>} */ (
+      spf.state.get(spf.state.Key.RESOURCE_NAME));
 }
 
 // Automatic initiazation for spf.net.resource.url_.

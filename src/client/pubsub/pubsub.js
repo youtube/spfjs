@@ -108,6 +108,25 @@ spf.pubsub.publish_ = function(topic, opt_unsub) {
 
 
 /**
+ * Renames a topic.  All functions subscribed to the old topic will then
+ * be subscribed to the new topic instead.
+ *
+ * @param {string} oldTopic The old name for the topic. Passing an empty string
+ *     does nothing.
+ * @param {string} newTopic The new name for the topic. Passing an empty string
+ *     does nothing.
+ */
+spf.pubsub.rename = function(oldTopic, newTopic) {
+  if (oldTopic && newTopic && oldTopic in spf.pubsub.subscriptions) {
+    var existing = spf.pubsub.subscriptions[newTopic] || [];
+    spf.pubsub.subscriptions[newTopic] =
+        existing.concat(spf.pubsub.subscriptions[oldTopic]);
+    spf.pubsub.clear(oldTopic);
+  }
+};
+
+
+/**
  * Clears the subscription list for a topic.
  *
  * @param {string} topic Topic to clear.
