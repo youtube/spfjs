@@ -531,6 +531,17 @@ spf.nav.navigateSendRequest_ = function(url, options, current, referer,
   var handleSuccess = spf.bind(spf.nav.handleNavigateSuccess_, null,
                                options, reverse, '');
 
+  // Before sending a new navigation request, clear previous resource timings
+  // to avoid (1) hitting buffer size limits or (2) accidentally getting timings
+  // for a previous request in Chrome, where the API is asynchronous and the
+  // latest values will not be available immediately.
+  // Only do this for navigations to avoid removing unrelated resource timings
+  // during prefetch or load calls.
+  // As an advanced option, allow timings to persist if desired.
+  if (!spf.config.get('advanced-navigate-persist-timing')) {
+    spf.nav.clearResourceTimings_();
+  }
+
   var xhr = spf.nav.request.send(url, {
     method: options['method'],
     onPart: handlePart,
@@ -1507,6 +1518,25 @@ spf.nav.cancelAllPrefetchesExcept = function(opt_skipUrl) {
     }
   }
 };
+
+
+/**
+ * Clears all resource timings for the page.
+ *
+ * @private
+ */
+spf.nav.clearResourceTimings_ = (function() {
+  var clearResourceTimings = window.performance && (
+      window.performance.clearResourceTimings ||
+      window.performance['webkitClearResourceTimings'] ||
+      window.performance['mozClearResourceTimings'] ||
+      window.performance['msClearResourceTimings'] ||
+      window.performance['oClearResourceTimings']);
+  if (clearResourceTimings) {
+    return spf.bind(clearResourceTimings, window.performance);
+  }
+  return spf.nullFunction;
+})();
 
 
 /**
