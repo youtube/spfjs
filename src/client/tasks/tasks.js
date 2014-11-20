@@ -201,8 +201,9 @@ spf.tasks.scheduleTask_ = function(queue, task, step) {
     var fn = spf.bind(step, null, task.fn);
     var scheduler = /** @type {spf.TaskScheduler} */ (
         spf.config.get('advanced-task-scheduler'));
-    if (scheduler) {
-      queue.scheduledKey = scheduler.addTask(fn);
+    var addTask = scheduler && scheduler['addTask'];
+    if (addTask) {
+      queue.scheduledKey = addTask(fn);
     } else {
       queue.timeoutKey = setTimeout(fn, 0);
     }
@@ -219,8 +220,9 @@ spf.tasks.clearAsyncTasks_ = function(queue) {
   if (queue.scheduledKey) {
     var scheduler = /** @type {spf.TaskScheduler} */ (
         spf.config.get('advanced-task-scheduler'));
-    if (scheduler) {
-      scheduler.cancelTask(queue.scheduledKey);
+    var cancelTask = scheduler && scheduler['cancelTask'];
+    if (cancelTask) {
+      cancelTask(queue.scheduledKey);
     }
     queue.scheduledKey = 0;
   }
