@@ -173,6 +173,16 @@ describe('spf.net.script', function() {
 
   describe('ready', function() {
 
+    it('executes callbacks immediately with no dependencies', function() {
+      spf.net.script.ready(undefined, callbacks.one);
+      spf.net.script.ready(null, callbacks.one);
+      spf.net.script.ready('', callbacks.one);
+      expect(callbacks.one.calls.length).toEqual(3);
+      spf.net.script.ready([], callbacks.two);
+      spf.net.script.ready([null, undefined, ''], callbacks.two);
+      expect(callbacks.two.calls.length).toEqual(2);
+    });
+
     it('waits to execute callbacks on a single dependency', function() {
       // Check pre-ready.
       spf.net.script.ready('my:foo', callbacks.one);
@@ -218,6 +228,42 @@ describe('spf.net.script', function() {
       expect(callbacks.two.calls.length).toEqual(2);
       expect(callbacks.three.calls.length).toEqual(1);
       spf.net.script.ready(['my:foo', 'bar'], callbacks.three);
+      spf.net.script.ready(['my:foo', 'bar'], callbacks.three);
+      expect(callbacks.one.calls.length).toEqual(1);
+      expect(callbacks.two.calls.length).toEqual(2);
+      expect(callbacks.three.calls.length).toEqual(3);
+    });
+
+    it('ignores empty dependencies while ' +
+       'waits to execute callbacks on multiple dependencies', function() {
+      spf.net.script.ready('my:foo', callbacks.one);
+      spf.net.script.ready('bar', callbacks.two);
+      // Insert some empty dependencies to make sure it still works.
+      spf.net.script.ready(['', 'my:foo', null, 'bar'], callbacks.three);
+      expect(callbacks.one.calls.length).toEqual(0);
+      expect(callbacks.two.calls.length).toEqual(0);
+      expect(callbacks.three.calls.length).toEqual(0);
+      // Load first.
+      spf.net.script.load('foo.js', 'my:foo');
+      jasmine.Clock.tick(1);
+      // Check.
+      expect(callbacks.one.calls.length).toEqual(1);
+      expect(callbacks.two.calls.length).toEqual(0);
+      expect(callbacks.three.calls.length).toEqual(0);
+      // Load second.
+      spf.net.script.load('bar.js', 'bar');
+      jasmine.Clock.tick(1);
+      // Check.
+      expect(callbacks.one.calls.length).toEqual(1);
+      expect(callbacks.two.calls.length).toEqual(1);
+      expect(callbacks.three.calls.length).toEqual(1);
+      // Check again.
+      spf.net.script.ready('bar', callbacks.two);
+      expect(callbacks.one.calls.length).toEqual(1);
+      expect(callbacks.two.calls.length).toEqual(2);
+      expect(callbacks.three.calls.length).toEqual(1);
+      // Insert some empty dependencies to make sure it still works.
+      spf.net.script.ready(['my:foo', 'bar', undefined, ''], callbacks.three);
       spf.net.script.ready(['my:foo', 'bar'], callbacks.three);
       expect(callbacks.one.calls.length).toEqual(1);
       expect(callbacks.two.calls.length).toEqual(2);

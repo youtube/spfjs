@@ -130,6 +130,7 @@ spf.net.script.prefetch = function(urls) {
 /**
  * Waits for one or more scripts identified by name to be loaded and executes
  * the callback function.  See {@link #load} or {@link #done} to define names.
+ * If an empty name is provided, it will be considered loaded immediately.
  *
  * @param {string|Array.<string>} names One or more names.
  * @param {Function=} opt_fn Callback function to execute when the
@@ -144,10 +145,15 @@ spf.net.script.ready = function(names, opt_fn, opt_require) {
   names = spf.array.toArray(names);
   spf.debug.debug('script.ready', names);
 
+  // Filter out empty names.
+  names = spf.array.filter(names, function(name) {
+    return !!name;
+  });
+
   // Find unknown names.
   var unknown = [];
   spf.array.each(names, function(name) {
-    if (name && spf.net.resource.url.get(type, name) == undefined) {
+    if (spf.net.resource.url.get(type, name) == undefined) {
       unknown.push(name);
     }
   });
