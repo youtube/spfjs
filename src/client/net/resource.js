@@ -118,6 +118,14 @@ spf.net.resource.load = function(type, url, name, opt_fn) {
   // If a status exists, the resource is already loading or loaded.
   // Otherwise, create the resource.
   if (spf.net.resource.status.get(type, url)) {
+    if (prevName && pseudonym != prevName) {
+      // If changing names for this resource and it's already loaded, find
+      // it and update the name attribute to keep the DOM in sync.
+      var el = spf.net.resource.find(type, url);
+      if (el) {
+        el.setAttribute('name', name || '');
+      }
+    }
     check();
   } else {
     var el = spf.net.resource.create(type, url, check);
@@ -316,15 +324,28 @@ spf.net.resource.create = function(type, url, opt_callback, opt_document,
  */
 spf.net.resource.destroy = function(type, url, opt_document) {
   url = spf.net.resource.canonicalize(type, url);
+  var el = spf.net.resource.find(type, url, opt_document);
+  if (el && el.parentNode) {
+    el.parentNode.removeChild(el);
+  }
+  spf.net.resource.status.clear(type, url);
+};
+
+
+/**
+ * Finds a previously created element that was appended to the document.
+ * See {@link #create}.
+ *
+ * @param {spf.net.resource.Type} type Type of the resource.
+ * @param {string} url URL of the resource.
+ * @param {Document=} opt_document Optional document to use.
+ * @return {!Node|undefined} The found element, or undefined if not found.
+ */
+spf.net.resource.find = function(type, url, opt_document) {
   var label = spf.net.resource.label(url);
   var cls = spf.net.resource.key(type, label);
   var els = spf.dom.query('.' + cls, opt_document);
-  spf.array.each(els, function(el) {
-    if (el && el.parentNode) {
-      el.parentNode.removeChild(el);
-    }
-  });
-  spf.net.resource.status.clear(type, url);
+  return els[0];
 };
 
 
