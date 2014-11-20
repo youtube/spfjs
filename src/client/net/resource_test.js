@@ -9,6 +9,7 @@
 
 goog.require('spf');
 goog.require('spf.array');
+goog.require('spf.dom');
 goog.require('spf.net.resource');
 goog.require('spf.net.resource.name');
 goog.require('spf.net.resource.status');
@@ -27,6 +28,9 @@ describe('spf.net.resource', function() {
   var nodes;
   var callbacks;
   var reals = {
+    dom: {
+      query: spf.dom.query
+    },
     resource: {
       create: spf.net.resource.create,
       destroy: spf.net.resource.destroy
@@ -49,6 +53,11 @@ describe('spf.net.resource', function() {
         return spf.array.filter(nodes, function(n) {
           return n.className == className;
         });
+      }
+    },
+    dom: {
+      query: function(selector, opt_document) {
+        return reals.dom.query(selector, fakes.doc);
       }
     },
     url: {
@@ -137,6 +146,7 @@ describe('spf.net.resource', function() {
     };
 
     spyOn(spf, 'dispatch');
+    spyOn(spf.dom, 'query').andCallFake(fakes.dom.query);
     spyOn(spf.url, 'absolute').andCallFake(fakes.url.absolute);
     spyOn(spf.net.resource, 'create').andCallFake(fakes.resource.create);
     spyOn(spf.net.resource, 'destroy').andCallFake(fakes.resource.destroy);
@@ -568,8 +578,7 @@ describe('spf.net.resource', function() {
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
       expect(getScriptEls()[0].src).toEqual(canonical);
-      // TODO(nicksay): Update DOM attributes to match internal status.
-      // expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
+      expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(JS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(JS, newName)).toEqual(canonical);
       expect(spf.net.resource.name.get(JS, canonical)).toEqual(newName);
@@ -588,8 +597,7 @@ describe('spf.net.resource', function() {
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
       expect(getStyleEls()[0].href).toEqual(canonical);
-      // TODO(nicksay): Update DOM attributes to match internal status.
-      // expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
+      expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(CSS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(CSS, newName)).toEqual(canonical);
       expect(spf.net.resource.name.get(CSS, canonical)).toEqual(newName);
@@ -607,8 +615,7 @@ describe('spf.net.resource', function() {
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
       expect(getScriptEls()[0].src).toEqual(canonical);
-      // TODO(nicksay): Update DOM attributes to match internal status.
-      // expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
+      expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(JS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(JS, newName)).toEqual(canonical);
       expect(spf.net.resource.name.get(JS, canonical)).toEqual(newName);
@@ -626,8 +633,7 @@ describe('spf.net.resource', function() {
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
       expect(getStyleEls()[0].href).toEqual(canonical);
-      // TODO(nicksay): Update DOM attributes to match internal status.
-      // expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
+      expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(CSS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(CSS, newName)).toEqual(canonical);
       expect(spf.net.resource.name.get(CSS, canonical)).toEqual(newName);
@@ -654,8 +660,7 @@ describe('spf.net.resource', function() {
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
       expect(getScriptEls()[0].src).toEqual(newCanonical);
-      // TODO(nicksay): Update DOM attributes to match internal status.
-      // expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
+      expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(JS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(JS, newName)).toEqual(newCanonical);
       expect(spf.net.resource.name.get(JS, canonical)).toEqual(undefined);
@@ -689,8 +694,7 @@ describe('spf.net.resource', function() {
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
       expect(getStyleEls()[0].href).toEqual(newCanonical);
-      // TODO(nicksay): Update DOM attributes to match internal status.
-      // expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
+      expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(CSS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(CSS, newName)).toEqual(newCanonical);
       expect(spf.net.resource.name.get(CSS, canonical)).toEqual(undefined);
@@ -722,8 +726,7 @@ describe('spf.net.resource', function() {
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
       expect(getScriptEls()[0].src).toEqual(newCanonical);
-      // TODO(nicksay): Update DOM attributes to match internal status.
-      // expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
+      expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(JS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(JS, newName)).toEqual(newCanonical);
       expect(spf.net.resource.name.get(JS, canonical)).toEqual(undefined);
@@ -755,8 +758,7 @@ describe('spf.net.resource', function() {
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
       expect(getStyleEls()[0].href).toEqual(newCanonical);
-      // TODO(nicksay): Update DOM attributes to match internal status.
-      // expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
+      expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(CSS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(CSS, newName)).toEqual(newCanonical);
       expect(spf.net.resource.name.get(CSS, canonical)).toEqual(undefined);
@@ -790,8 +792,7 @@ describe('spf.net.resource', function() {
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
       expect(getScriptEls()[0].src).toEqual(newCanonical);
-      // TODO(nicksay): Update DOM attributes to match internal status.
-      // expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
+      expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(JS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(JS, newName)).toEqual(newCanonical);
       expect(spf.net.resource.name.get(JS, canonical)).toEqual(undefined);
@@ -825,8 +826,7 @@ describe('spf.net.resource', function() {
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
       expect(getStyleEls()[0].href).toEqual(newCanonical);
-      // TODO(nicksay): Update DOM attributes to match internal status.
-      // expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
+      expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(CSS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(CSS, newName)).toEqual(newCanonical);
       expect(spf.net.resource.name.get(CSS, canonical)).toEqual(undefined);
@@ -858,8 +858,7 @@ describe('spf.net.resource', function() {
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
       expect(getScriptEls()[0].src).toEqual(newCanonical);
-      // TODO(nicksay): Update DOM attributes to match internal status.
-      // expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
+      expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(JS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(JS, newName)).toEqual(newCanonical);
       expect(spf.net.resource.name.get(JS, canonical)).toEqual(undefined);
@@ -891,8 +890,7 @@ describe('spf.net.resource', function() {
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
       expect(getStyleEls()[0].href).toEqual(newCanonical);
-      // TODO(nicksay): Update DOM attributes to match internal status.
-      // expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
+      expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(CSS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(CSS, newName)).toEqual(newCanonical);
       expect(spf.net.resource.name.get(CSS, canonical)).toEqual(undefined);
