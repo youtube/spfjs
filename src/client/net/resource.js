@@ -48,19 +48,6 @@ spf.net.resource.load = function(type, url, name, opt_fn) {
   spf.debug.debug('resource.load', type, url, name);
   var isJS = type == spf.net.resource.Type.JS;
 
-  // TODO(nicksay): Remove error-checking code before 2.0.0 release.
-  // Previous versions of the API accepted an array of URLs.  If an array is
-  // passed, throw a non-blocking error and only load the first.
-  if (!SPF_BOOTLOADER && spf.array.isArray(url)) {
-    var urls = url;
-    setTimeout(function() {
-      var msg = type + ' load for "' + name + '" called with too many urls ' +
-          urls + '; pass only one string';
-      throw new Error(msg);
-    }, 0);
-    url = url[0];
-  }
-
   url = spf.net.resource.canonicalize(type, url);
 
   // Calling load without a name or with an empty string for a name isn't
@@ -82,10 +69,7 @@ spf.net.resource.load = function(type, url, name, opt_fn) {
     if (prevUrl && url != prevUrl) {
       var evt = isJS ? spf.EventName.JS_BEFORE_UNLOAD :
                        spf.EventName.CSS_BEFORE_UNLOAD;
-      // TODO(nicksay): Remove compatibility code before 2.0.0 release.
-      // For compatibility with previous versions, which used the 'urls' key
-      // and an array, temporarily dispatch the event with both keys.
-      spf.dispatch(evt, {'name': name, 'urls': [prevUrl], 'url': prevUrl});
+      spf.dispatch(evt, {'name': name, 'url': prevUrl});
       spf.net.resource.unloadPrepare_(type, name, prevUrl);
       // Wait until the new resource has finished loading before destroying
       // the previous one to avoid flashes of unstyled content w/ CSS.
@@ -179,10 +163,7 @@ spf.net.resource.unloadComplete_ = function(type, name, url) {
     spf.debug.debug('  > resource.unloadComplete_', type, url);
     var evt = isJS ? spf.EventName.JS_UNLOAD :
                      spf.EventName.CSS_UNLOAD;
-    // TODO(nicksay): Remove compatibility code before 2.0.0 release.
-    // For compatibility with previous versions, which used the 'urls' key
-    // and an array, temporarily dispatch the event with both keys.
-    spf.dispatch(evt, {'name': name, 'urls': [url], 'url': url});
+    spf.dispatch(evt, {'name': name, 'url': url});
     spf.net.resource.destroy(type, url);
   }
 };
@@ -726,13 +707,6 @@ spf.net.resource.url.set = function(type, name, url) {
 spf.net.resource.url.get = function(type, name) {
   var key = spf.net.resource.key(type, name);
   var url = spf.net.resource.url_[key];
-  // TODO(nicksay): Remove compatibility code before 2.0.0 release.
-  // For compatibility with previous versions where the spf.net.resource.url_
-  // object stored in state contained arrays of URLs, only return the first.
-  // Since these arrays should all have length = 1, this is safe.
-  if (spf.array.isArray(url)) {
-    url = url[0];
-  }
   return url;
 };
 

@@ -343,18 +343,6 @@ spf.EventDetail.prototype.url;
 
 
 /**
- * The list of URLs of the scripts or stylesheets that will be unloaded; defined
- * for "spfjsbeforeunload", "spfjsunload", "spfcssbeforeunload", and
- * "spfcssunload" events.
- * @type {Array.<string>|undefined}
- * @deprecated Use {@link #url} instead. This will always be a single item
- *   array containing the URL and the property will be removed in the next
- *   release.
- */
-spf.EventDetail.prototype.urls;
-
-
-/**
  * Definition of the Scheduler API which can be used by the application to
  * control execution of tasks.
  * @interface
