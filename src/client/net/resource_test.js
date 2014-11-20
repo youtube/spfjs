@@ -905,6 +905,31 @@ describe('spf.net.resource', function() {
           {name: newName, urls: [canonical], url: canonical});
     });
 
+    it('switches to new url in-place ' +
+       'for same name after loaded (style)', function() {
+      var name = 'a';
+      var url = 'url-a.css';
+      var name2 = 'b';
+      var url2 = 'url-b.css';
+      var newUrl2 = 'url-b2.css';
+      var name3 = 'c';
+      var url3 = 'url-c.css';
+      var canonical = spf.net.resource.canonicalize(CSS, url);
+      var newCanonical = spf.net.resource.canonicalize(CSS, newUrl2);
+      // Load.
+      spf.net.resource.load(CSS, url, name);
+      spf.net.resource.load(CSS, url2, name2);
+      spf.net.resource.load(CSS, url3, name3);
+      jasmine.Clock.tick(1); // Finish loading.
+      // Switch to new url for same name.
+      spf.net.resource.load(CSS, newUrl2, name2);
+      jasmine.Clock.tick(1); // Finish loading.
+      expect(getStyleEls().length).toEqual(3);
+      // TODO(rviscomi): Reload styles of the same name in-place.
+      //expect(getStyleEls()[1].href).toEqual(newCanonical);
+      //expect(getStyleEls()[1].getAttribute('name')).toEqual(name2);
+    });
+
   });
 
 
