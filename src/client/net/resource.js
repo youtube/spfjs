@@ -780,9 +780,7 @@ spf.net.resource.url.clear = function(type, name) {
  */
 spf.net.resource.url.loaded = function(type, name) {
   var url = spf.net.resource.url.get(type, name);
-  // TODO(nicksay): Fix use of the empty string as a "loaded" value.
-  return name == '' || (
-      url != undefined && spf.net.resource.status.loaded(type, url));
+  return url != undefined && spf.net.resource.status.loaded(type, url);
 };
 
 
