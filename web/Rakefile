@@ -14,9 +14,11 @@ LOCAL_WSK = "assets/vendor"
 LOCAL_IMAGES = "#{LOCAL_WSK}/images"
 LOCAL_STYLES = "#{LOCAL_WSK}/styles"
 
-WSK = "../vendor/web-starter-kit/app"
-WSK_IMAGES = "#{WSK}/images"
-WSK_STYLES = "#{WSK}/styles"
+WSK = "../vendor/web-starter-kit"
+WSK_IMAGES = "#{WSK}/app/images"
+WSK_STYLES = "#{WSK}/app/styles"
+
+OCTICONS = "../vendor/octicons"
 
 AUTOPREFIXER_BROWSERS = [
   'ie >= 10',
@@ -36,33 +38,53 @@ AUTOPREFIXER_BROWSERS = [
 wsk_url = "https://github.com/google/web-starter-kit/archive/43823c998e90567d9b365336af4041e07b6d6d10.tar.gz"
 wsk_tgz = "../vendor/web-starter-kit/web-starter-kit-43823c998e90567d9b365336af4041e07b6d6d10.zip"
 wsk_dir = File.dirname(wsk_tgz)
+wsk_ready = "#{WSK}/README.md"  # Track extraction via the README.
 file wsk_tgz do
   FileUtils.mkdir_p(wsk_dir) unless File.directory?(wsk_dir)
   cmd = "curl -L #{wsk_url} -o #{wsk_tgz}"
   puts(cmd) if verbose
   system(cmd)
 end
-file WSK => wsk_tgz do
+file wsk_ready => wsk_tgz do
   cmd = "tar -xmz -f #{wsk_tgz} --strip-components 1 -C #{wsk_dir}"
   puts(cmd) if verbose
   system(cmd)
 end
 
 
+# The Octicons files might need to be downloaded.
+# Octicons @v2.1.2
+octicons_url = "https://github.com/github/octicons/releases/download/v2.1.2/octicons.zip"
+octicons_zip = "../vendor/octicons/octicons-v2.1.2.zip"
+octicons_dir = File.dirname(octicons_zip)
+octicons_ready = "#{OCTICONS}/README.md"  # Track extraction via the README.
+file octicons_zip do
+  FileUtils.mkdir_p(octicons_dir) unless File.directory?(octicons_dir)
+  cmd = "curl -L #{octicons_url} -o #{octicons_zip}"
+  puts(cmd) if verbose
+  system(cmd)
+end
+file octicons_ready => octicons_zip do
+  cmd = "unzip -o #{octicons_zip} -d #{octicons_dir}"
+  puts(cmd) if verbose
+  system(cmd)
+end
+
+
 # The local WSK css file depends on all the WSK inputs.
-CSS_OUT = "#{LOCAL_STYLES}/wsk.css"
+CSS_OUT_WSK = "#{LOCAL_STYLES}/wsk.css"
 wsk_css_files = [
   "#{WSK_STYLES}/h5bp.css",
   "#{WSK_STYLES}/components/components.css",
   "#{WSK_STYLES}/main.css",
 ]
 wsk_css_files.each do |src|
-  file src => WSK
-  file CSS_OUT => src
+  file src => wsk_ready
+  file CSS_OUT_WSK => src
 end
-file CSS_OUT do
+file CSS_OUT_WSK do
   css = ""
-  # Fix WSK paths.
+  # Concatenate WSK files.
   wsk_css_files.each do |wsk_css_file|
     css += File.read(wsk_css_file)
   end
@@ -78,28 +100,53 @@ file CSS_OUT do
   })
   compressed = sass_engine.render
   # Output.
-  cssdir = File.dirname(CSS_OUT)
+  cssdir = File.dirname(CSS_OUT_WSK)
   FileUtils.mkdir_p(cssdir) unless File.directory?(cssdir)
-  File.write(CSS_OUT, compressed)
+  File.write(CSS_OUT_WSK, compressed)
 end
+
+# The local WSK css file depends on all the WSK inputs.
+CSS_OUT_OCTICONS = "#{LOCAL_STYLES}/octicons.css"
+octicon_css_file = "#{OCTICONS}/octicons.css"
+file octicon_css_file => octicons_ready
+file CSS_OUT_OCTICONS => octicon_css_file do
+  css = File.read(octicon_css_file)
+  # Fix Octions path.
+  css = css.gsub("url('octicons", "url('../images/octicons")
+  # Prefix rules.
+  prefixed = AutoprefixerRails.process(css, browsers: AUTOPREFIXER_BROWSERS)
+  # Compress.
+  sass_engine = Sass::Engine.new(prefixed.css, {
+    :style => :compressed,
+    :cache => false,
+    :syntax => :scss,
+  })
+  compressed = sass_engine.render
+  # Output.
+  cssdir = File.dirname(CSS_OUT_OCTICONS)
+  FileUtils.mkdir_p(cssdir) unless File.directory?(cssdir)
+  File.write(CSS_OUT_OCTICONS, compressed)
+end
+
+CSS_OUTS = [
+  CSS_OUT_WSK,
+  CSS_OUT_OCTICONS,
+]
 
 # Note: WSK font files are not used and instead fonts are linked directly from
 # Google Fonts, but they may be installed locally during development if desired.
 
-# Each local WSK icon file depends on its WSK counterpart.
+# Each local icon file depends on its Octicons counterpart.
 IMG_OUTS = []
-wsk_icon_files = [
-  "#{WSK_IMAGES}/icons/icons-hinted.ttf",
-  "#{WSK_IMAGES}/icons/icons.eot",
-  "#{WSK_IMAGES}/icons/icons.svg",
-  "#{WSK_IMAGES}/icons/icons.ttf",
-  "#{WSK_IMAGES}/icons/icons.woff",
-  "#{WSK_IMAGES}/icons/icons.woff2",
-  "#{WSK_IMAGES}/hamburger.svg",
+octicons_files = [
+  "#{OCTICONS}/octicons.eot",
+  "#{OCTICONS}/octicons.svg",
+  "#{OCTICONS}/octicons.ttf",
+  "#{OCTICONS}/octicons.woff",
 ]
-wsk_icon_files.each do |src|
-  file src => WSK
-  dst = src.sub(WSK_IMAGES, LOCAL_IMAGES)
+octicons_files.each do |src|
+  file src => octicons_ready
+  dst = src.sub(OCTICONS, LOCAL_IMAGES)
   IMG_OUTS.push(dst)
   file dst => src do
     dstdir = File.dirname(dst)
@@ -111,7 +158,7 @@ end
 
 
 # Tasks.
-task :css => [CSS_OUT]
+task :css => CSS_OUTS
 task :img => IMG_OUTS
 task :assets => [:css, :img]
 
