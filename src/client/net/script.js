@@ -238,14 +238,6 @@ spf.net.script.require = function(names, opt_fn) {
     spf.array.each(names, function(name) {
       if (name) {
         var url = spf.net.script.url_[name] || name;
-        // TODO(nicksay): Remove compatibility code before 2.0.0 release.
-        // For compatibility with previous versions where the
-        // spf.net.script.url_ object stored in state contained arrays of URLs,
-        // only return the first. Since these arrays should all have length = 1,
-        // this is safe.
-        if (spf.array.isArray(url)) {
-          url = url[0];
-        }
         url = spf.net.resource.canonicalize(type, url);
         var previous = spf.net.resource.url.get(type, name);
         if (previous && url != previous) {
@@ -272,13 +264,6 @@ spf.net.script.require_ = function(names) {
   spf.array.each(names, function(name) {
     var deps = spf.net.script.deps_[name];
     var url = spf.net.script.url_[name] || name;
-    // TODO(nicksay): Remove compatibility code before 2.0.0 release.
-    // For compatibility with previous versions where the spf.net.script.url_
-    // object stored in state contained arrays of URLs, only return the first.
-    // Since these arrays should all have length = 1, this is safe.
-    if (spf.array.isArray(url)) {
-      url = url[0];
-    }
     var next = function() {
       spf.net.script.load(url, name);
     };

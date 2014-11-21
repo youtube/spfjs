@@ -464,10 +464,10 @@ describe('spf.net.resource', function() {
       expect(spf.net.resource.status.loaded(JS, newCanonical)).toBe(true);
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.JS_BEFORE_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.JS_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
     });
 
     it('switches to new url for same name after loaded (style)', function() {
@@ -489,10 +489,10 @@ describe('spf.net.resource', function() {
       expect(spf.net.resource.status.loaded(CSS, newCanonical)).toBe(true);
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.CSS_BEFORE_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.CSS_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
     });
 
     it('switches to new url for same name while loading (script)', function() {
@@ -513,10 +513,10 @@ describe('spf.net.resource', function() {
       expect(spf.net.resource.status.loaded(JS, newCanonical)).toBe(true);
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.JS_BEFORE_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.JS_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
     });
 
     it('switches to new url for same name while loading (style)', function() {
@@ -537,10 +537,10 @@ describe('spf.net.resource', function() {
       expect(spf.net.resource.status.loaded(CSS, newCanonical)).toBe(true);
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.CSS_BEFORE_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.CSS_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
     });
 
     it('cancels previous callbacks when ' +
@@ -669,10 +669,10 @@ describe('spf.net.resource', function() {
       expect(spf.net.resource.status.loaded(JS, newCanonical)).toBe(true);
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.JS_BEFORE_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.JS_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
     });
 
     it('switches to new url for same name, then ' +
@@ -703,10 +703,10 @@ describe('spf.net.resource', function() {
       expect(spf.net.resource.status.loaded(CSS, newCanonical)).toBe(true);
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.CSS_BEFORE_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.CSS_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
     });
 
     it('switches to new url for same name, then ' +
@@ -735,10 +735,10 @@ describe('spf.net.resource', function() {
       expect(spf.net.resource.status.loaded(JS, newCanonical)).toBe(true);
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.JS_BEFORE_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.JS_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
     });
 
     it('switches to new url for same name, then ' +
@@ -767,10 +767,10 @@ describe('spf.net.resource', function() {
       expect(spf.net.resource.status.loaded(CSS, newCanonical)).toBe(true);
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.CSS_BEFORE_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.CSS_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
     });
 
     it('switches to new name for same url, then ' +
@@ -801,10 +801,10 @@ describe('spf.net.resource', function() {
       expect(spf.net.resource.status.loaded(JS, newCanonical)).toBe(true);
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.JS_BEFORE_UNLOAD,
-          {name: newName, urls: [canonical], url: canonical});
+          {name: newName, url: canonical});
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.JS_UNLOAD,
-          {name: newName, urls: [canonical], url: canonical});
+          {name: newName, url: canonical});
     });
 
     it('switches to new name for same url, then ' +
@@ -835,10 +835,10 @@ describe('spf.net.resource', function() {
       expect(spf.net.resource.status.loaded(CSS, newCanonical)).toBe(true);
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.CSS_BEFORE_UNLOAD,
-          {name: newName, urls: [canonical], url: canonical});
+          {name: newName, url: canonical});
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.CSS_UNLOAD,
-          {name: newName, urls: [canonical], url: canonical});
+          {name: newName, url: canonical});
     });
 
     it('switches to new name for same url, then ' +
@@ -867,10 +867,10 @@ describe('spf.net.resource', function() {
       expect(spf.net.resource.status.loaded(JS, newCanonical)).toBe(true);
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.JS_BEFORE_UNLOAD,
-          {name: newName, urls: [canonical], url: canonical});
+          {name: newName, url: canonical});
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.JS_UNLOAD,
-          {name: newName, urls: [canonical], url: canonical});
+          {name: newName, url: canonical});
     });
 
     it('switches to new name for same url, then ' +
@@ -899,10 +899,10 @@ describe('spf.net.resource', function() {
       expect(spf.net.resource.status.loaded(CSS, newCanonical)).toBe(true);
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.CSS_BEFORE_UNLOAD,
-          {name: newName, urls: [canonical], url: canonical});
+          {name: newName, url: canonical});
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.CSS_UNLOAD,
-          {name: newName, urls: [canonical], url: canonical});
+          {name: newName, url: canonical});
     });
 
     it('switches to new url in-place ' +
@@ -949,7 +949,7 @@ describe('spf.net.resource', function() {
       expect(getScriptUrls()).not.toContain(canonical);
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.JS_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
     });
 
     it('unloads after loaded (style)', function() {
@@ -966,7 +966,7 @@ describe('spf.net.resource', function() {
       expect(getStyleUrls()).not.toContain(canonical);
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.CSS_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
     });
 
     it('unloads while loading (script)', function() {
@@ -981,7 +981,7 @@ describe('spf.net.resource', function() {
       expect(getScriptUrls()).not.toContain(canonical);
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.JS_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
     });
 
     it('unloads while loading (style)', function() {
@@ -996,7 +996,7 @@ describe('spf.net.resource', function() {
       expect(getStyleUrls()).not.toContain(canonical);
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.CSS_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
     });
 
     it('does nothing for repeated calls (script)', function() {
@@ -1016,7 +1016,7 @@ describe('spf.net.resource', function() {
       expect(getScriptUrls()).not.toContain(canonical);
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.JS_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
       expect(spf.dispatch.calls.length).toEqual(1);
       // Repated calls should be no-ops.
       spf.net.resource.unload(JS, name);
@@ -1044,7 +1044,7 @@ describe('spf.net.resource', function() {
       expect(getStyleUrls()).not.toContain(canonical);
       expect(spf.dispatch).toHaveBeenCalledWith(
           spf.EventName.CSS_UNLOAD,
-          {name: name, urls: [canonical], url: canonical});
+          {name: name, url: canonical});
       expect(spf.dispatch.calls.length).toEqual(1);
       // Repated calls should be no-ops.
       spf.net.resource.unload(CSS, name);
