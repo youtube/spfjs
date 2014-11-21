@@ -68,6 +68,7 @@ spf.net.resource.load = function(type, url, name, opt_fn) {
   // the resource to load and fire the callback.
   var pseudonym = name || '^' + url;
   var topic = spf.net.resource.key(type, pseudonym);
+  var prevUrl;
 
   // If a name is provided with a different URL, then also unload the previous
   // version after the resource is loaded.
@@ -78,7 +79,7 @@ spf.net.resource.load = function(type, url, name, opt_fn) {
   // unloading of scripts is primarily intended for navigation between versions.
   if (name && !SPF_BOOTLOADER) {
     // If loading a new resource for a name, handle unloading the previous one.
-    var prevUrl = spf.net.resource.url.get(type, name);
+    prevUrl = spf.net.resource.url.get(type, name);
     if (prevUrl && url != prevUrl) {
       var evt = isJS ? spf.EventName.JS_BEFORE_UNLOAD :
                        spf.EventName.CSS_BEFORE_UNLOAD;
@@ -128,7 +129,11 @@ spf.net.resource.load = function(type, url, name, opt_fn) {
     }
     check();
   } else {
-    var el = spf.net.resource.create(type, url, check);
+    // If prevUrl is defined and the type is CSS, the styleshet will be loaded
+    // in-place. This works because previous elements aren't destroyed until
+    // loading is complete.
+    var el = spf.net.resource.create(type, url, check, undefined, undefined,
+        prevUrl);
     if (el && name) {
       el.setAttribute('name', name);
     }
@@ -237,10 +242,13 @@ spf.net.resource.check = function(type) {
  * @param {Function=} opt_callback Callback for when the resource has loaded.
  * @param {Document=} opt_document Optional document to use.
  * @param {string=} opt_statusGroup Optional group to use in status tracking.
+ * @param {string=} opt_prevUrl Optional URL of the previous version of this
+ *     resource. Used for stylesheets to load new versions in-place to prevent
+*      changing the order of the cascade.
  * @return {Element} The dynamically created element.
  */
 spf.net.resource.create = function(type, url, opt_callback, opt_document,
-    opt_statusGroup) {
+    opt_statusGroup, opt_prevUrl) {
   spf.debug.debug('resource.create', type, url, 'loading');
   // When built for the bootloader, always assume JS is being loaded.
   var isJS = SPF_BOOTLOADER || type == spf.net.resource.Type.JS;
@@ -307,8 +315,12 @@ spf.net.resource.create = function(type, url, opt_callback, opt_document,
   } else {
     el.rel = 'stylesheet';
     el.href = url;
-    // Use appendChild for CSS to preserve order.
-    head.appendChild(el);
+    // If this stylesheet already exists under a different URL,
+    // reload it in-place to prevent changing the order of the cascade.
+    var prevEl = opt_prevUrl && spf.net.resource.find(type, opt_prevUrl,
+        opt_document);
+    // If prevEl is not defined, el is appended to the head.
+    head.insertBefore(el, prevEl);
   }
   return el;
 };

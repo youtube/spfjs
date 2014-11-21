@@ -72,8 +72,10 @@ describe('spf.net.resource', function() {
       }
     },
     resource: {
-      create: function(type, url, opt_callback) {
-        var el = reals.resource.create(type, url, opt_callback, fakes.doc);
+      create: function(type, url, opt_callback, opt_document,
+          opt_statusGroup, opt_prevUrl) {
+        var el = reals.resource.create(type, url, opt_callback, fakes.doc,
+            undefined, opt_prevUrl);
         setTimeout(el.onload, 0);
         return el;
       },
@@ -89,6 +91,7 @@ describe('spf.net.resource', function() {
     this.onload = function() {};
     // Fake parentNode reference to allow "el.parentNode.removeChild" calls.
     this.parentNode = this;
+    this.firstChild = null;
   };
   FakeElement.prototype.getAttribute = function(name) {
     return this.attributes[name];
@@ -97,7 +100,20 @@ describe('spf.net.resource', function() {
     this.attributes[name] = value;
   };
   FakeElement.prototype.insertBefore = function(el, ref) {
-    nodes.unshift(el);
+    if (ref === null) {
+      // ref is null when attempting to insert an element before another
+      // element's firstChild (see the constructor above). Prepend if so.
+      // TODO(rviscomi): Clean up by implementing a FakeElement firstChild.
+      return nodes.unshift(el);
+    } else if (!ref) {
+      // Browsers append when no ref is provided.
+      return nodes.push(el);
+    }
+    // When ref is an element, insert the new element before it.
+    var idx = spf.array.indexOf(nodes, ref);
+    if (idx != -1) {
+      nodes.splice(idx, 0, el);
+    }
   };
   FakeElement.prototype.appendChild = function(el) {
     nodes.push(el);
@@ -925,9 +941,8 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(CSS, newUrl2, name2);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(3);
-      // TODO(rviscomi): Reload styles of the same name in-place.
-      //expect(getStyleEls()[1].href).toEqual(newCanonical);
-      //expect(getStyleEls()[1].getAttribute('name')).toEqual(name2);
+      expect(getStyleEls()[1].href).toEqual(newCanonical);
+      expect(getStyleEls()[1].getAttribute('name')).toEqual(name2);
     });
 
   });
