@@ -16,12 +16,12 @@
 
 
 // Library imports.
+var fs = require('q-io/fs');
 var minimist = require('minimist');
 var path = require('path');
 var q = require('q');
-var fs = require('q-io/fs');
-var wordwrap = require('wordwrap');
 var util = require('util');
+var wordwrap = require('wordwrap');
 
 
 /**
@@ -445,7 +445,7 @@ var cli = {};
 
 /**
  * Parses the command line arguments for flags and values.
- * @return {object}
+ * @return {Object}
  */
 cli.parse = function() {
   return minimist(process.argv.slice(2), {

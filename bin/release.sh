@@ -46,8 +46,7 @@ branch=$(git symbolic-ref --short HEAD)
 git checkout -q $commit
 
 # Validate the version.
-ver_js="require('semver').valid(require('./package.json').version) || ''"
-version=$(node -pe "$ver_js")
+version=$(bin/name.js --semver)
 if [[ $version == "" ]]; then
   echo "A valid version is needed for the release."
   git checkout -q $branch
