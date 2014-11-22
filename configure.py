@@ -170,6 +170,7 @@ def write_header(ninja):
 
 
 def write_variables(ninja):
+  ninja.variable('bindir', 'bin')
   ninja.variable('builddir', 'build')
   ninja.variable('distdir', 'dist')
   ninja.variable('jscompiler_jar', 'vendor/closure-compiler/compiler.jar')
@@ -563,8 +564,8 @@ def write_targets(ninja):
               variables=[('flags', '$dev_jsflags')],
               implicit=[jscompiler_jar, license_js])
 
-  version_cmd = 'v=$$(node -pe \'require("$package_json").version\')'
-  dist_filter_cmd = '(%s; sed "2 s/SPF/SPF $$v/")' % version_cmd
+  version_cmd = 'name_and_ver=$$(bin/name.js)'
+  dist_filter_cmd = '(%s; sed "2 s/SPF/$$name_and_ver/")' % version_cmd
 
   ninja.newline()
   ninja.comment('Tests.')
