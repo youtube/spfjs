@@ -3,7 +3,7 @@ title: SPF
 layout: home
 ---
 
-## A lightweight framework that handles navigation and updates of page sections.
+## A lightweight JS framework for fast navigation from YouTube.
 
 
 Using progressive enhancement and HTML5, SPF seamlessly updates pages with
