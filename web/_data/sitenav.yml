@@ -3,7 +3,7 @@
 # Use of this source code is governed by The MIT License.
 # See the LICENSE file for details.
 
-# This data file is used by the nav plugin to build a tree for navigation.
+# This data file is used by the sitenav plugin to build a site navigation tree.
 #
 # Required:
 #   path - the path component of the nav item

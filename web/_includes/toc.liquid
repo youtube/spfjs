@@ -1,5 +1,5 @@
 {% if include.path %}
-  {% assign toc__top = site.data.navindex[include.path] %}
+  {% assign toc__top = site.data.sitenav_index[include.path] %}
   {% assign toc__list = toc__top.sub %}
   {% if include.title %}
     <p class="toc__title">
@@ -7,7 +7,7 @@
     </p>
   {% endif %}
 {% else %}
-  {% assign toc__list = site.data.nav %}
+  {% assign toc__list = site.data.sitenav %}
 {% endif %}
 <ol class="toc__list list-links">
   {% for toc__item in toc__list %}
