@@ -9,6 +9,7 @@ require 'autoprefixer-rails'
 
 
 SITE = "_site"
+STAGING_AREA = "../../spfjs-gh-pages"
 
 LOCAL_WSK = "assets/vendor"
 LOCAL_IMAGES = "#{LOCAL_WSK}/images"
@@ -172,6 +173,13 @@ end
 
 task :serve => [:assets] do
   cmd = "bundle exec jekyll serve --watch --trace"
+  puts(cmd) if verbose
+  system(cmd)
+end
+
+
+task :stage => [:clean, :assets] do
+  cmd = "bundle exec jekyll build --trace --destination #{STAGING_AREA}"
   puts(cmd) if verbose
   system(cmd)
 end
