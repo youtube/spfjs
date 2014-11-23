@@ -137,8 +137,30 @@ CSS_OUTS = [
 # Note: WSK font files are not used and instead fonts are linked directly from
 # Google Fonts, but they may be installed locally during development if desired.
 
-# Each local icon file depends on its Octicons counterpart.
-IMG_OUTS = []
+# The local WSK icon files depends on the WSK counterparts.
+IMG_OUTS_WSK = []
+wsk_icon_files = [
+  "#{WSK_IMAGES}/icons/icons-hinted.ttf",
+  "#{WSK_IMAGES}/icons/icons.eot",
+  "#{WSK_IMAGES}/icons/icons.svg",
+  "#{WSK_IMAGES}/icons/icons.ttf",
+  "#{WSK_IMAGES}/icons/icons.woff",
+  "#{WSK_IMAGES}/icons/icons.woff2",
+]
+wsk_icon_files.each do |src|
+  file src => WSK
+  dst = src.sub(WSK_IMAGES, LOCAL_IMAGES)
+  IMG_OUTS_WSK.push(dst)
+  file dst => src do
+    dstdir = File.dirname(dst)
+    FileUtils.mkdir_p(dstdir) unless File.directory?(dstdir)
+    puts("cp #{src} #{dst}") if verbose
+    FileUtils.cp(src, dst)
+  end
+end
+
+# The local WSK icon files depends on the WSK counterparts.
+IMG_OUTS_OCTICONS = []
 octicons_files = [
   "#{OCTICONS}/octicons.eot",
   "#{OCTICONS}/octicons.svg",
@@ -148,7 +170,7 @@ octicons_files = [
 octicons_files.each do |src|
   file src => octicons_ready
   dst = src.sub(OCTICONS, LOCAL_IMAGES)
-  IMG_OUTS.push(dst)
+  IMG_OUTS_OCTICONS.push(dst)
   file dst => src do
     dstdir = File.dirname(dst)
     FileUtils.mkdir_p(dstdir) unless File.directory?(dstdir)
@@ -156,6 +178,8 @@ octicons_files.each do |src|
     FileUtils.cp(src, dst)
   end
 end
+
+IMG_OUTS = IMG_OUTS_WSK + IMG_OUTS_OCTICONS
 
 
 # Tasks.
