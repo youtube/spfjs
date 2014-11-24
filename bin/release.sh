@@ -55,7 +55,7 @@ fi
 
 # Confirm the release.
 while true; do
-  read -p "Release $commit as v$version? [y/n] " answer
+  read -p "Release commit $commit as v$version? [y/n] " answer
   case $answer in
     [Yy]* )
       break;;
@@ -93,37 +93,10 @@ done
 git commit -m "v$version"
 
 # Tag the commit as the release.
-git tag "v$version"
+git tag -a "v$version" -m "v$version"
 
 # Push the tag.
 git push --tags
-
-# Publish to npm.
-npm_user=$(npm whoami 2> /dev/null)
-npm_publish="false"
-if [[ $npm_user == "" ]]; then
-  echo 'Skipping "npm publish" because npm credentials were not found.'
-  echo "To get credentials on this machine, run the following:"
-  echo "    npm login"
-else
-  npm_owner=$(npm owner ls | grep "$npm_user")
-  if [[ $npm_owner == "" ]]; then
-    echo 'Skipping "npm publish" because npm ownership was not found.'
-    echo "The current list of npm owners is:"
-    npm owner ls | sed 's/^/    /'
-    echo "To get ownership, have an existing owner run the following:"
-    echo "    npm owner add $npm_user"
-  else
-    npm_publish="true"
-  fi
-fi
-if [[ $npm_publish == "false" ]]; then
-  echo "To publish this release to npm later, run the following:"
-  echo "    git checkout v$version"
-  echo "    npm publish"
-else
-  npm publish
-fi
 
 # Return to the original branch.
 git checkout $branch
