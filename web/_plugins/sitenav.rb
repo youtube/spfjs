@@ -3,7 +3,7 @@
 # Use of this source code is governed by The MIT License.
 # See the LICENSE file for details.
 
-# Jekyll plugin to build site navigation tree from directory layout.
+# Jekyll plugin to build a site navigation tree from directory layout.
 #
 # Author:: nicksay@google.com (Alex Nicksay)
 
@@ -11,7 +11,7 @@
 module Jekyll
 
 
-  class NavIndexPage < Page
+  class SiteNavIndexPage < Page
 
     def initialize(site, base, dir, item)
       @site = site
@@ -39,22 +39,22 @@ module Jekyll
   end
 
 
-  class NavGenerator < Generator
+  class SiteNavGenerator < Generator
 
-    def link(nav, pages, index, prefix, site)
-      nav.each do |item|
+    def link(sitenav, pages, index, prefix, site)
+      sitenav.each do |item|
         url = [prefix, item['path']].join('/').gsub('//', '/')
         item['url'] = url
-        # For navigation directories, create empty index pages if needed.
+        # For directories, create empty index pages if needed.
         if url.end_with?('/') and not pages.has_key?(url)
-          index_page = NavIndexPage.new(site, site.source, url, item)
+          index_page = SiteNavIndexPage.new(site, site.source, url, item)
           site.pages << index_page
           pages[url] = index_page
           index_page.data['original_layout'] = index_page.data['layout']
         end
-        # Link nav item -> page.
+        # Link item -> page.
         item['page'] = pages[url]
-        # Link url -> nav item.
+        # Link url -> item.
         index[url] = item
         if item.key?('sub')
           self.link(item['sub'], pages, index, url, site)
@@ -70,8 +70,8 @@ module Jekyll
         page.data['original_layout'] = page.data['layout']
       end
       index = {}
-      self.link(site.data['nav'], pages, index, '', site)
-      site.data['navindex'] = index
+      self.link(site.data['sitenav'], pages, index, '', site)
+      site.data['sitenav_index'] = index
     end
 
   end

@@ -20,7 +20,7 @@ layout: base
         {% endif %}
       </header>
       {% assign guide__path = page.url | replace:'index.html','' %}
-      {% assign guide__list = site.data.navindex[guide__path].sub %}
+      {% assign guide__list = site.data.sitenav_index[guide__path].sub %}
       <ol class="guides-list container">
         {% for guide__item in guide__list %}
           <li class="guides-list__item g-wide--half theme--spf">
