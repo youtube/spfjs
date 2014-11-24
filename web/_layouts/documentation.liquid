@@ -23,7 +23,7 @@ layout: base
       {% assign guide__list = site.data.navindex[guide__path].sub %}
       <ol class="guides-list container">
         {% for guide__item in guide__list %}
-          <li class="guides-list__item g--half theme--spf">
+          <li class="guides-list__item g-wide--half theme--spf">
             <div class="primary-content">
               <h3 class="xlarge"><a href="{{ site.baseurl }}{{ guide__item.page.url | replace:'index.html','' }}">{{ guide__item.page.title }}</a></h3>
                {% if guide__item.page.description %}

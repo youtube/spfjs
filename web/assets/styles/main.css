@@ -401,6 +401,12 @@ footer {
 main nav {
   margin-top: 0;
 }
+/* hide the toc sidebar on narrow viewports */
+@media all and (max-width: 619px) {
+  main nav {
+    display: none;
+  }
+}
 
 .toc__title a {
   text-decoration: none;
