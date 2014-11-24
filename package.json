@@ -11,10 +11,6 @@
   "bugs": {
     "url": "https://github.com/youtube/spfjs/issues"
   },
-  "scripts": {
-    "dist": "make dist",
-    "prepublish": "npm run dist"
-  },
   "devDependencies": {
     "minimist": "^1.1.0",
     "q": "^1.0.1",
