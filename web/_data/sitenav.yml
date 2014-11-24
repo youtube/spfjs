@@ -31,14 +31,9 @@
 - path: documentation/
   sub:
     - path: start/
-    - path: basics/
-      description: Learn the basics of integrating SPF on your site.
-      sub:
-        - path: client/
-        - path: server/
-        - path: processing/
-    - path: advanced/
-      description: Apply advanced techniques using SPF to enable high performance.
+    - path: responses/
+    - path: features/
+      description: Learn about SPF features to enable high performance.
       sub:
         - path: caching/
         - path: multipart/
