@@ -301,7 +301,11 @@ spf.net.resource.create = function(type, url, opt_callback, opt_document,
     var prevEl = opt_prevUrl && spf.net.resource.find(type, opt_prevUrl,
         opt_document);
     // If prevEl is not defined, el is appended to the head.
-    head.insertBefore(el, prevEl);
+    if (prevEl) {
+      head.insertBefore(el, prevEl);
+    } else {
+      head.appendChild(el);
+    }
   }
   return el;
 };
