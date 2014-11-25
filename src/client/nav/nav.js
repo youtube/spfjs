@@ -266,6 +266,7 @@ spf.nav.handleClick_ = function(evt) {
   if (!url) {
     return;
   }
+  url = spf.url.appendPersistentParameters(url);
   // Ignore clicks if the URL is not allowed (e.g. cross-domain).
   if (!spf.nav.isAllowed_(url)) {
     return;
@@ -338,6 +339,8 @@ spf.nav.handleHistory_ = function(url, opt_state) {
     return;
   }
   // Navigate to the URL.
+  // NOTE: The persistent parameters are not appended here because they should
+  // already be set on the URL if necessary.
   spf.nav.navigate_(url, null, current, referer, true, reverse);
 };
 
@@ -362,6 +365,7 @@ spf.nav.navigate = function(url, opt_options) {
   if (!url) {
     return;
   }
+  url = spf.url.appendPersistentParameters(url);
   // Reload if the URL is not allowed (e.g. cross-domain).
   if (!spf.nav.isAllowed_(url)) {
     spf.nav.reload(url, spf.nav.ReloadReason.FORBIDDEN);
@@ -878,6 +882,7 @@ spf.nav.reload = function(url, reason, opt_err) {
  * @param {spf.RequestOptions=} opt_options Optional request options object.
  */
 spf.nav.load = function(url, opt_options) {
+  url = spf.url.appendPersistentParameters(url);
   spf.nav.load_(url, opt_options);
 };
 
@@ -936,6 +941,7 @@ spf.nav.load_ = function(url, opt_options, opt_original) {
  * @param {spf.RequestOptions=} opt_options Optional request options object.
  */
 spf.nav.prefetch = function(url, opt_options) {
+  url = spf.url.appendPersistentParameters(url);
   spf.nav.prefetch_(url, opt_options);
 };
 
