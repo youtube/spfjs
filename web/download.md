@@ -4,28 +4,56 @@ description: Get the code.
 layout: download
 ---
 
-> **Note:** Stable releases are coming soon.  Until then, you can download
-> the latest development version.
+The most recent release is **SPF 20 (v2.0.0)**.
+
+You can get the code in several ways:
+
+
+## Download a release
+
+Download just the minified JS files:
+**[spfjs-2.0.0-dist.zip](https://github.com/youtube/spfjs/releases/download/v2.0.0/spfjs-2.0.0-dist.zip)**
+
+```sh
+$ curl -LO https://github.com/youtube/spfjs/releases/download/v2.0.0/spfjs-2.0.0-dist.zip
+$ unzip spfjs-2.0.0-dist.zip
+```
+
+Or, download the minified files and complete source code:
+**[v2.0.0.zip](https://github.com/youtube/spfjs/archive/v2.0.0.zip)**
+
+```sh
+$ curl -LO https://github.com/youtube/spfjs/archive/v2.0.0.zip
+$ unzip v2.0.0.zip
+```
 
 
 ## Clone with Git
 
-The easiest way to get the code is to clone the project from GitHub:
-
+Clone the project from GitHub and checkout the release:
 
 ```sh
 $ git clone https://github.com/youtube/spfjs.git
+$ cd spfjs
+$ git checkout v2.0.0
 ```
 
 
-## Download and Unzip
+## Install with npm
 
-
-Alternatively, [download the latest archive][zip] and unpack it.
+Install the npm package:
 
 ```sh
-$ curl -LO https://github.com/youtube/spfjs/archive/master.zip
-$ unzip master.zip
+$ npm install spf
+```
+
+
+## Install with Bower
+
+Install the Bower package:
+
+```sh
+$ bower install spf
 ```
 
 
@@ -34,5 +62,4 @@ $ unzip master.zip
 After you've grabbed the code, **[get started][start]**.
 
 
-[zip]: https://github.com/youtube/spfjs/archive/master.zip
 [start]: ../documentation/start/
