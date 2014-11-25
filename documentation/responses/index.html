@@ -5,10 +5,10 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>SPF - Server Integration</title>
-<meta name="description" content="Make the changes needed to return SPF responses.">
+<title>SPF - Responses</title>
+<meta name="description" content="An overview of SPF responses and how they are processed.">
 
-<link rel="canonical" href="http://youtube.github.io/spfjs/documentation/basics/server/">
+<link rel="canonical" href="http://youtube.github.io/spfjs/documentation/responses/">
 
 <!-- Add to homescreen for Chrome on Android -->
 <meta name="mobile-web-app-capable" content="yes">
@@ -88,7 +88,14 @@
   
     <li>
       
-        <a href="/spfjs/documentation/basics/">Basics</a>
+        <a href="/spfjs/documentation/responses/">Responses</a>
+      
+      
+    </li>
+  
+    <li>
+      
+        <a href="/spfjs/documentation/features/">Features</a>
       
       
         
@@ -100,59 +107,21 @@
   
     <li>
       
-        <a href="/spfjs/documentation/basics/client/">Client Integration</a>
+        <a href="/spfjs/documentation/features/caching/">Caching</a>
       
       
     </li>
   
     <li>
       
-        <a href="/spfjs/documentation/basics/server/">Server Integration</a>
+        <a href="/spfjs/documentation/features/multipart/">Multipart Responses</a>
       
       
     </li>
   
     <li>
       
-        <a href="/spfjs/documentation/basics/processing/">Response Processing</a>
-      
-      
-    </li>
-  
-</ol>
-
-      
-    </li>
-  
-    <li>
-      
-        <a href="/spfjs/documentation/advanced/">Advanced</a>
-      
-      
-        
-  
-  
-  
-
-<ol class="toc__list list-links">
-  
-    <li>
-      
-        <a href="/spfjs/documentation/advanced/caching/">Caching</a>
-      
-      
-    </li>
-  
-    <li>
-      
-        <a href="/spfjs/documentation/advanced/multipart/">Multipart Responses</a>
-      
-      
-    </li>
-  
-    <li>
-      
-        <a href="/spfjs/documentation/advanced/prefetching/">Prefetching</a>
+        <a href="/spfjs/documentation/features/prefetching/">Prefetching</a>
       
       
     </li>
@@ -170,46 +139,65 @@
 
     <article class="g-wide--3 g-wide--last g-medium--2 g-medium--last">
       <header class="page-header container">
-        <h2 class="xxlarge text-divider">Server Integration</h2>
+        <h2 class="xxlarge text-divider">Responses</h2>
         
           <p class="page-header__excerpt g-wide--push-1 g-wide--pull-1">
-            Make the changes needed to return SPF responses.
+            An overview of SPF responses and how they are processed.
           </p>
         
       </header>
       <div class="container">
-        <p>In static navigation, an entire HTML page is sent.  In dynamic navigation, only
-fragments are sent, using JSON as transport.  When SPF sends a request to the
-server, it appends a configurable identifier to the URL so that you can properly
-handle the request.  (By default, this will be <code>?spf=navigate</code>.)</p>
+        <p>In dynamic navigation, SPF updates the page with content from the response.
+SPF will do this processing in the following order:</p>
 
-<p>In the following example, a common layout of upper masthead, middle content, and
-lower footer is used.  In dynamic navigation, only the fragment for the middle
-content is sent, since the masthead and footer don&#39;t change.</p>
+<ol>
+<li><code>title</code> — Update document title</li>
+<li><code>url</code> — Update document url</li>
+<li><code>head</code> — Install early page-wide JS and CSS</li>
+<li><code>attr</code> — Set element attributes</li>
+<li><code>body</code> — Set element content and install element-level JS and CSS</li>
+<li><code>foot</code> — Install late page-wide JS and CSS</li>
+</ol>
 
-<p>Static Navigation:  <code>GET /destination</code></p>
-<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;html&gt;</span>
- <span class="nt">&lt;head&gt;</span>
-  <span class="c">&lt;!-- Styles --&gt;</span>
- <span class="nt">&lt;/head&gt;</span>
- <span class="nt">&lt;body&gt;</span>
-  <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;masthead&quot;</span><span class="nt">&gt;</span>...<span class="nt">&lt;/div&gt;</span>
-  <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;content&quot;</span><span class="nt">&gt;</span>
-    <span class="c">&lt;!-- Content --&gt;</span>
-  <span class="nt">&lt;/div&gt;</span>
-  <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;footer&quot;</span><span class="nt">&gt;</span>...<span class="nt">&lt;/div&gt;</span>
-  <span class="c">&lt;!-- Scripts --&gt;</span>
- <span class="nt">&lt;/body&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
-</code></pre></div>
-<p>Dynamic Navigation:  <code>GET /destination?spf=navigate</code></p>
+<blockquote>
+<p><strong>Note:</strong> All fields are optional and the commonly needed response values are
+<code>title</code>, <code>head</code>, <code>body</code>, and <code>foot</code>.</p>
+</blockquote>
+
+<p>A response is typically in the following format:</p>
 <div class="highlight"><pre><code class="language-json" data-lang="json"><span class="p">{</span>
- <span class="nt">&quot;head&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;!-- Styles --&gt;&quot;</span><span class="p">,</span>
- <span class="nt">&quot;body&quot;</span><span class="p">:</span> <span class="p">{</span>
-  <span class="nt">&quot;content&quot;</span><span class="p">:</span>
-    <span class="s2">&quot;&lt;!-- Content --&gt;&quot;</span><span class="p">,</span>
- <span class="p">},</span>
- <span class="nt">&quot;foot&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;!-- Scripts --&gt;&quot;</span>
+  <span class="nt">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Page Title&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;head&quot;</span><span class="p">:</span>
+      <span class="s2">&quot;&lt;style&gt;CSS Text&lt;/style&gt;</span>
+<span class="s2">       &lt;!-- and/or --&gt;</span>
+<span class="s2">       &lt;link href=\&quot;CSS URL\&quot; rel=\&quot;stylesheet\&quot;&gt;</span>
+<span class="s2">       ...&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;body&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;DOM ID 1&quot;</span><span class="p">:</span> <span class="s2">&quot;HTML Text...&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;DOM ID 2&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span>
+  <span class="p">},</span>
+  <span class="nt">&quot;foot&quot;</span><span class="p">:</span>
+      <span class="s2">&quot;&lt;script&gt;JS Text&lt;/script&gt;</span>
+<span class="s2">       &lt;!-- and/or --&gt;</span>
+<span class="s2">       &lt;script src=\&quot;JS URL\&quot;&gt;&lt;/script&gt;</span>
+<span class="s2">       ...&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>This pattern follows the general good practice of &quot;styles in the head, scripts
+at the end of the body&quot;.  The &quot;foot&quot; field represents the &quot;end of the body&quot;
+section without requiring developers to create an explicit element.</p>
+
+<p>To update specific element attributes, the response format is as follows:</p>
+<div class="highlight"><pre><code class="language-json" data-lang="json"><span class="p">{</span>
+  <span class="nt">&quot;attr&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;DOM ID 1&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&quot;Name 1&quot;</span><span class="p">:</span> <span class="s2">&quot;Value 1&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;Name 2&quot;</span><span class="p">:</span> <span class="s2">&quot;Value 2&quot;</span>
+    <span class="p">},</span>
+    <span class="nt">&quot;DOM ID 2&quot;</span><span class="p">:</span>  <span class="p">{</span>
+      <span class="nt">&quot;...&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
       </div>

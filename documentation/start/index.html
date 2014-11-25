@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>SPF - Get Started</title>
-<meta name="description" content="Start here.  Learn how to check out and build SPF for the first time.">
+<meta name="description" content="Use SPF on your site: send requests, return responses.">
 
 <link rel="canonical" href="http://youtube.github.io/spfjs/documentation/start/">
 
@@ -88,7 +88,14 @@
   
     <li>
       
-        <a href="/spfjs/documentation/basics/">Basics</a>
+        <a href="/spfjs/documentation/responses/">Responses</a>
+      
+      
+    </li>
+  
+    <li>
+      
+        <a href="/spfjs/documentation/features/">Features</a>
       
       
         
@@ -100,59 +107,21 @@
   
     <li>
       
-        <a href="/spfjs/documentation/basics/client/">Client Integration</a>
+        <a href="/spfjs/documentation/features/caching/">Caching</a>
       
       
     </li>
   
     <li>
       
-        <a href="/spfjs/documentation/basics/server/">Server Integration</a>
+        <a href="/spfjs/documentation/features/multipart/">Multipart Responses</a>
       
       
     </li>
   
     <li>
       
-        <a href="/spfjs/documentation/basics/processing/">Response Processing</a>
-      
-      
-    </li>
-  
-</ol>
-
-      
-    </li>
-  
-    <li>
-      
-        <a href="/spfjs/documentation/advanced/">Advanced</a>
-      
-      
-        
-  
-  
-  
-
-<ol class="toc__list list-links">
-  
-    <li>
-      
-        <a href="/spfjs/documentation/advanced/caching/">Caching</a>
-      
-      
-    </li>
-  
-    <li>
-      
-        <a href="/spfjs/documentation/advanced/multipart/">Multipart Responses</a>
-      
-      
-    </li>
-  
-    <li>
-      
-        <a href="/spfjs/documentation/advanced/prefetching/">Prefetching</a>
+        <a href="/spfjs/documentation/features/prefetching/">Prefetching</a>
       
       
     </li>
@@ -173,17 +142,20 @@
         <h2 class="xxlarge text-divider">Get Started</h2>
         
           <p class="page-header__excerpt g-wide--push-1 g-wide--pull-1">
-            Start here.  Learn how to check out and build SPF for the first time.
+            Use SPF on your site: send requests, return responses.
           </p>
         
       </header>
       <div class="container">
-        <h2>Test out the demo</h2>
+        <h2>Get the code</h2>
 
-<p>To get started, first <strong><a href="../../download/">download the project</a></strong>.</p>
+<p>Before getting started, first <strong><a href="../../download/">download the code</a></strong>.</p>
 
-<p>Next, build the included demo application to see how everything works together
-and test out the framework:</p>
+<h2><em>Optional:</em> Run the demo</h2>
+
+<p>If you cloned the project from GitHub or downloaded the source code, you can run
+the included demo application to see how everything works together in order to
+test out the framework:</p>
 <div class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">$ </span><span class="nb">cd </span>spfjs
 <span class="nv">$ </span>make demo
 </code></pre></div>
@@ -193,20 +165,77 @@ and test out the framework:</p>
 <p><strong>Note:</strong> You will need Python and Java installed.</p>
 </blockquote>
 
-<p>You can then open <a href="http://localhost:8080/">http://localhost:8080/</a> in your browser and check out the demo.</p>
+<p>You can then open <a href="http://localhost:8080/">http://localhost:8080/</a> in your browser and check out the
+demo.</p>
 
-<h2>Add SPF to your site</h2>
+<h2>Enable SPF</h2>
 
-<p>To add SPF to your site, build the main SPF JS file, and copy it to where
-you serve JS files for your site:</p>
+<p>To add SPF to your site, you need to include the JS file and run <code>spf.init()</code>
+to enable the new functionality.</p>
+
+<p>If you cloned the project from GitHub or downloaded the source code, build the
+main SPF JS file, and copy it to where you serve JS files for your site:</p>
 <div class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">$ </span>make
-<span class="nv">$ </span>cp build/spf.js YOUR_JS_DIR/
+<span class="nv">$ </span>cp build/spf.js PATH-TO-YOUR-JS/
 </code></pre></div>
 <p>Then, add the script to your page and initialize SPF:</p>
-<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;YOUR_JS_DIR/spf.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;PATH-TO-YOUR-JS/spf.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
 <span class="nt">&lt;script&gt;</span>
   <span class="nx">spf</span><span class="p">.</span><span class="nx">init</span><span class="p">();</span>
 <span class="nt">&lt;/script&gt;</span>
+</code></pre></div>
+<h2>Send requests</h2>
+
+<p>SPF does not change your site&#39;s navigation automatically and instead uses
+progressive enhancement to enable dynamic navigation for certain links.  Just
+add a <code>spf-link</code> class to an <code>&lt;a&gt;</code> tag to activate SPF.</p>
+
+<p>Go from static navigation:</p>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">&quot;/destination&quot;</span><span class="nt">&gt;</span>Go!<span class="nt">&lt;/a&gt;</span>
+</code></pre></div>
+<p>to dynamic navigation:</p>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="c">&lt;!-- Link enabled: a SPF request will be sent --&gt;</span>
+<span class="nt">&lt;a</span> <span class="na">class=</span><span class="s">&quot;spf-link&quot;</span> <span class="na">href=</span><span class="s">&quot;/destination&quot;</span><span class="nt">&gt;</span>Go!<span class="nt">&lt;/a&gt;</span>
+</code></pre></div>
+<h2>Return responses</h2>
+
+<p>In static navigation, an entire HTML page is sent.  In dynamic navigation, only
+fragments are sent, using JSON as transport.  When SPF sends a request to the
+server, it appends a configurable identifier to the URL so that your server can
+properly handle the request.  (By default, this will be <code>?spf=navigate</code>.)</p>
+
+<p>In the following example, a common layout of upper masthead, middle content, and
+lower footer is used.  In dynamic navigation, only the fragment for the middle
+content is sent, since the masthead and footer don&#39;t change.</p>
+
+<p>Go from static navigation:</p>
+
+<p><code>GET /destination</code></p>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;html&gt;</span>
+  <span class="nt">&lt;head&gt;</span>
+    <span class="c">&lt;!-- Styles --&gt;</span>
+  <span class="nt">&lt;/head&gt;</span>
+  <span class="nt">&lt;body&gt;</span>
+    <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;masthead&quot;</span><span class="nt">&gt;</span>...<span class="nt">&lt;/div&gt;</span>
+    <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;content&quot;</span><span class="nt">&gt;</span>
+      <span class="c">&lt;!-- Content --&gt;</span>
+    <span class="nt">&lt;/div&gt;</span>
+    <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;footer&quot;</span><span class="nt">&gt;</span>...<span class="nt">&lt;/div&gt;</span>
+    <span class="c">&lt;!-- Scripts --&gt;</span>
+  <span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre></div>
+<p>to dynamic navigation:</p>
+
+<p><code>GET /destination?spf=navigate</code></p>
+<div class="highlight"><pre><code class="language-json" data-lang="json"><span class="p">{</span>
+  <span class="nt">&quot;head&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;!-- Styles --&gt;&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;body&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;content&quot;</span><span class="p">:</span>
+        <span class="s2">&quot;&lt;!-- Content --&gt;&quot;</span><span class="p">,</span>
+  <span class="p">},</span>
+  <span class="nt">&quot;foot&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;!-- Scripts --&gt;&quot;</span>
+<span class="p">}</span>
 </code></pre></div>
       </div>
     </article>

@@ -30,12 +30,24 @@ a:hover {
   border-color: #4E5A92;
   color: #FFFFFF;
 }
+.button--secondary,
+.button--secondary:visited {
+  color: #4E5A92;
+}
 .button--primary:hover,
 .button--primary:focus,
-.button--primary:active {
+.button--primary:active,
+.button--secondary:hover,
+.button--secondary:focus,
+.button--secondary:active {
   background-color: #6271B6;
   border-color: #4E5A92;
   color: #FFFFFF;
+}
+
+.button--primary .icon,
+.button--secondary .icon {
+  margin: 0 0.2em;
 }
 
 .theme--spf .themed--background {
@@ -433,6 +445,10 @@ main nav {
 .download-promo {
   margin-top: 26px;
   margin-bottom: 52px;
+}
+.download-promo span {
+  min-width: 8em;
+  display: inline-block;
 }
 
 .feedback {
