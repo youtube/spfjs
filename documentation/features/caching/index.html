@@ -5,10 +5,10 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>SPF - Client Integration</title>
-<meta name="description" content="Make the changes needed to send SPF requests.">
+<title>SPF - Caching</title>
+<meta name="description" content="A JavaScript framework for navigation and page updates from YouTube.">
 
-<link rel="canonical" href="http://youtube.github.io/spfjs/documentation/basics/client/">
+<link rel="canonical" href="http://youtube.github.io/spfjs/documentation/features/caching/">
 
 <!-- Add to homescreen for Chrome on Android -->
 <meta name="mobile-web-app-capable" content="yes">
@@ -88,7 +88,14 @@
   
     <li>
       
-        <a href="/spfjs/documentation/basics/">Basics</a>
+        <a href="/spfjs/documentation/responses/">Responses</a>
+      
+      
+    </li>
+  
+    <li>
+      
+        <a href="/spfjs/documentation/features/">Features</a>
       
       
         
@@ -100,59 +107,21 @@
   
     <li>
       
-        <a href="/spfjs/documentation/basics/client/">Client Integration</a>
+        <a href="/spfjs/documentation/features/caching/">Caching</a>
       
       
     </li>
   
     <li>
       
-        <a href="/spfjs/documentation/basics/server/">Server Integration</a>
+        <a href="/spfjs/documentation/features/multipart/">Multipart Responses</a>
       
       
     </li>
   
     <li>
       
-        <a href="/spfjs/documentation/basics/processing/">Response Processing</a>
-      
-      
-    </li>
-  
-</ol>
-
-      
-    </li>
-  
-    <li>
-      
-        <a href="/spfjs/documentation/advanced/">Advanced</a>
-      
-      
-        
-  
-  
-  
-
-<ol class="toc__list list-links">
-  
-    <li>
-      
-        <a href="/spfjs/documentation/advanced/caching/">Caching</a>
-      
-      
-    </li>
-  
-    <li>
-      
-        <a href="/spfjs/documentation/advanced/multipart/">Multipart Responses</a>
-      
-      
-    </li>
-  
-    <li>
-      
-        <a href="/spfjs/documentation/advanced/prefetching/">Prefetching</a>
+        <a href="/spfjs/documentation/features/prefetching/">Prefetching</a>
       
       
     </li>
@@ -170,36 +139,15 @@
 
     <article class="g-wide--3 g-wide--last g-medium--2 g-medium--last">
       <header class="page-header container">
-        <h2 class="xxlarge text-divider">Client Integration</h2>
-        
-          <p class="page-header__excerpt g-wide--push-1 g-wide--pull-1">
-            Make the changes needed to send SPF requests.
-          </p>
+        <h2 class="xxlarge text-divider">Caching</h2>
         
       </header>
       <div class="container">
-        <p>SPF does not change your site&#39;s navigation automatically and instead uses
-progressive enhancement to enable dynamic navigation for certain links.  Just
-add a <code>spf-link</code> class to <code>&lt;a&gt;</code> tags or their containers to activate SPF:</p>
-
-<p>Static Navigation:</p>
-<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">&quot;/destination&quot;</span><span class="nt">&gt;</span>Go!<span class="nt">&lt;/a&gt;</span>
-
-<span class="nt">&lt;ul&gt;</span>
-  <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;/option/one&quot;</span><span class="nt">&gt;</span>Menu item 1<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;/option/two&quot;</span><span class="nt">&gt;</span>Menu item 2<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
-<span class="nt">&lt;/ul&gt;</span>
-</code></pre></div>
-<p>Dynamic Navigation:</p>
-<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;a</span> <span class="na">class=</span><span class="s">&quot;spf-link&quot;</span> <span class="na">href=</span><span class="s">&quot;/destination&quot;</span><span class="nt">&gt;</span>Go!<span class="nt">&lt;/a&gt;</span>
-
-<span class="nt">&lt;ul</span> <span class="na">class=</span><span class="s">&quot;spf-link&quot;</span><span class="nt">&gt;</span>
-  <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;/option/one&quot;</span><span class="nt">&gt;</span>Menu item 1<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;/option/two&quot;</span><span class="nt">&gt;</span>Menu item 2<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
-<span class="nt">&lt;/ul&gt;</span>
-</code></pre></div>
-<p>When an enabled link is clicked, SPF will handle the history and request the
-fragments for the destination link.</p>
+        <blockquote>
+<p>We will be adding documentation and code samples to explain and demonstrate
+this functionality in coming weeks.  In the meantime, please
+<a href="../../start/">get started</a> with SPF.</p>
+</blockquote>
 
       </div>
     </article>

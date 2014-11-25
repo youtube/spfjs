@@ -79,32 +79,61 @@
   <section class="download-promo">
     <div class="container">
       <ul class="list-centered list--reset clear">
-        <li class="g-medium--half g-wide--2">
-          <a class="button--primary" href="https://github.com/youtube/spfjs/">View on GitHub</a>
+        <li>
+          <a class="button--primary" href="https://github.com/youtube/spfjs/releases/download/v2.0.0/spfjs-2.0.0-dist.zip">
+            <i class="icon mega-octicon octicon-cloud-download"></i>
+            <span>Download SPF</span>
+          </a>
         </li>
-        <li class="g-medium--half g-medium--last g-wide--2 g-wide--last">
-          <a class="button--primary" href="https://github.com/youtube/spfjs/archive/master.zip">Download Latest</a>
+        <li>
+          <a class="button--secondary" href="https://github.com/youtube/spfjs/archive/v2.0.0.zip">
+            <i class="icon mega-octicon octicon-code"></i>
+            <span>Download source</span>
+          </a>
+        </li>
+        <li>
+          <a class="button--secondary" href="https://github.com/youtube/spfjs">
+           <i class="icon mega-octicon octicon-mark-github"></i>
+           <span>View on GitHub</span>
+          </a>
         </li>
       </ul>
     </div>
   </section>
 
   <div class="container">
-    <blockquote>
-<p><strong>Note:</strong> Stable releases are coming soon.  Until then, you can download
-the latest development version.</p>
-</blockquote>
+    <p>The most recent release is <strong>SPF 20 (v2.0.0)</strong>.</p>
 
+<p>You can get the code in several ways:</p>
+
+<h2>Download a release</h2>
+
+<p>Download just the minified JS files:
+<strong><a href="https://github.com/youtube/spfjs/releases/download/v2.0.0/spfjs-2.0.0-dist.zip">spfjs-2.0.0-dist.zip</a></strong></p>
+<div class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">$ </span>curl -LO https://github.com/youtube/spfjs/releases/download/v2.0.0/spfjs-2.0.0-dist.zip
+<span class="nv">$ </span>unzip spfjs-2.0.0-dist.zip
+</code></pre></div>
+<p>Or, download the minified files and complete source code:
+<strong><a href="https://github.com/youtube/spfjs/archive/v2.0.0.zip">v2.0.0.zip</a></strong></p>
+<div class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">$ </span>curl -LO https://github.com/youtube/spfjs/archive/v2.0.0.zip
+<span class="nv">$ </span>unzip v2.0.0.zip
+</code></pre></div>
 <h2>Clone with Git</h2>
 
-<p>The easiest way to get the code is to clone the project from GitHub:</p>
+<p>Clone the project from GitHub and checkout the release:</p>
 <div class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">$ </span>git clone https://github.com/youtube/spfjs.git
+<span class="nv">$ </span><span class="nb">cd </span>spfjs
+<span class="nv">$ </span>git checkout v2.0.0
 </code></pre></div>
-<h2>Download and Unzip</h2>
+<h2>Install with npm</h2>
 
-<p>Alternatively, <a href="https://github.com/youtube/spfjs/archive/master.zip">download the latest archive</a> and unpack it.</p>
-<div class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">$ </span>curl -LO https://github.com/youtube/spfjs/archive/master.zip
-<span class="nv">$ </span>unzip master.zip
+<p>Install the npm package:</p>
+<div class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">$ </span>npm install spf
+</code></pre></div>
+<h2>Install with Bower</h2>
+
+<p>Install the Bower package:</p>
+<div class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">$ </span>bower install spf
 </code></pre></div>
 <h2>Get Started</h2>
 
