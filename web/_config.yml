@@ -9,6 +9,9 @@ baseurl: /spfjs
 title: SPF
 description: A JavaScript framework for navigation and page updates from YouTube.
 
+release: SPF 20 (v2.0.0)
+version: 2.0.0
+
 exclude:
   - Gemfile
   - Gemfile.lock
