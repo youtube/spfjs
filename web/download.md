@@ -4,7 +4,7 @@ description: Get the code.
 layout: download
 ---
 
-The most recent release is **SPF 20 (v2.0.0)**.
+The most recent release is **{{ site.release }}**.
 
 You can get the code in several ways:
 
@@ -12,19 +12,19 @@ You can get the code in several ways:
 ## Download a release
 
 Download just the minified JS files:
-**[spfjs-2.0.0-dist.zip](https://github.com/youtube/spfjs/releases/download/v2.0.0/spfjs-2.0.0-dist.zip)**
+**[spfjs-{{ site.version }}-dist.zip](https://github.com/youtube/spfjs/releases/download/v{{ site.version }}/spfjs-{{ site.version }}-dist.zip)**
 
 ```sh
-$ curl -LO https://github.com/youtube/spfjs/releases/download/v2.0.0/spfjs-2.0.0-dist.zip
-$ unzip spfjs-2.0.0-dist.zip
+$ curl -LO https://github.com/youtube/spfjs/releases/download/v{{ site.version }}/spfjs-{{ site.version }}-dist.zip
+$ unzip spfjs-{{ site.version }}-dist.zip
 ```
 
 Or, download the minified files and complete source code:
-**[v2.0.0.zip](https://github.com/youtube/spfjs/archive/v2.0.0.zip)**
+**[v{{ site.version }}.zip](https://github.com/youtube/spfjs/archive/v{{ site.version }}.zip)**
 
 ```sh
-$ curl -LO https://github.com/youtube/spfjs/archive/v2.0.0.zip
-$ unzip v2.0.0.zip
+$ curl -LO https://github.com/youtube/spfjs/archive/v{{ site.version }}.zip
+$ unzip v{{ site.version }}.zip
 ```
 
 
@@ -35,7 +35,7 @@ Clone the project from GitHub and checkout the release:
 ```sh
 $ git clone https://github.com/youtube/spfjs.git
 $ cd spfjs
-$ git checkout v2.0.0
+$ git checkout v{{ site.version }}
 ```
 
 
