@@ -131,7 +131,7 @@ def find_js_sources():
 
 
 def find_js_tests():
-  tests = []
+  tests = ['src/client/testing/dom.js']
   for root, dirs, files in os.walk('src/client'):
     for file in files:
       if file.endswith('test.js'):

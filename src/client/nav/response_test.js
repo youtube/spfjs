@@ -12,6 +12,7 @@ goog.require('spf.dom');
 goog.require('spf.history');
 goog.require('spf.nav.response');
 goog.require('spf.string');
+goog.require('spf.testing.dom');
 
 
 describe('spf.nav.response', function() {
@@ -516,40 +517,20 @@ describe('spf.nav.response', function() {
   describe('process', function() {
 
     var currentUrl = 'http://www.youtube.com/watch?v=1';
-    var elements = {};
-
-    var FakeElement = function(initialHTML, initialAttributes) {
-      this.attributes = {};
-      this.className = '';
-      this.innerHTML = initialHTML || '';
-      if (initialAttributes) {
-        spf.dom.setAttributes(this, initialAttributes);
-      }
-    };
-    FakeElement.prototype.getAttribute = function(name) {
-      return this.attributes[name];
-    };
-    FakeElement.prototype.setAttribute = function(name, value) {
-      this.attributes[name] = value;
-    };
 
     beforeEach(function() {
       spyOn(spf.nav.response, 'getCurrentUrl_').andReturn(currentUrl);
       spyOn(spf.history, 'replace');
-      spyOn(document, 'getElementById').andCallFake(function(id) {
-        return elements[id];
-      });
     });
 
     afterEach(function() {
-      elements = {};
+      spf.testing.dom.removeAllElements();
     });
 
     it('sets attributes from "attr" field', function() {
-      elements = {
-        'foo': new FakeElement({'class': 'first'}),
-        'bar': new FakeElement({'dir': 'ltr'})
-      };
+      var foo = spf.testing.dom.createElement('foo', undefined,
+          {'class': 'first'});
+      var bar = spf.testing.dom.createElement('bar', undefined, {'dir': 'ltr'});
 
       var response = {
         'attr': {
@@ -559,17 +540,15 @@ describe('spf.nav.response', function() {
       };
 
       spf.nav.response.process('/page', response, null, true);
-      expect(elements['foo'].className).toEqual('last');
-      expect(elements['foo'].attributes['dir']).toEqual('rtl');
-      expect(elements['bar'].className).toEqual('last');
-      expect(elements['bar'].attributes['dir']).toEqual('rtl');
+      expect(foo.className).toEqual('last');
+      expect(foo.getAttribute('dir')).toEqual('rtl');
+      expect(bar.className).toEqual('last');
+      expect(bar.getAttribute('dir')).toEqual('rtl');
     });
 
     it('sets html from "body" field', function() {
-      elements = {
-        'foo': new FakeElement('one'),
-        'bar': new FakeElement()
-      };
+      var foo = spf.testing.dom.createElement('foo', 'one');
+      var bar = spf.testing.dom.createElement('bar');
 
       var response = {
         'body': {
@@ -579,8 +558,8 @@ describe('spf.nav.response', function() {
       };
 
       spf.nav.response.process('/page', response, null, true);
-      expect(elements['foo'].innerHTML).toEqual('two');
-      expect(elements['foo'].innerHTML).toEqual('two');
+      expect(foo.innerHTML).toEqual('two');
+      expect(bar.innerHTML).toEqual('two');
     });
 
     it('updates history for navigate with redirect url', function() {
