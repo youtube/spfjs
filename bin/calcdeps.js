@@ -292,7 +292,7 @@ deps.Info.prototype.toString = function() {
  * @return {deps.Info}
  */
 deps.create = function(path) {
-  var content = $.fs.readFileSync(path);
+  var content = $.fs.readFileSync(path, {encoding: 'utf8'});
   return new deps.Info(path, content);
 };
 
@@ -451,6 +451,14 @@ var cli = {};
 
 
 /**
+ * Whether the script is being executed via command line.
+ *
+ * @type {boolean}
+ */
+cli.active = !module.parent;
+
+
+/**
  * Parses the command line arguments for flags and values.
  * @return {Object}
  */
@@ -488,34 +496,65 @@ cli.help = function() {
 
 
 /**
- * The main CLI program execution function.
+ * The main execution function.
  */
-function main() {
-
-  var opts = cli.parse();
-  var args = opts._;
-
-  if (args.length < 1 || opts.help) {
-    cli.help();
-    process.exit();
+function main(args, opts) {
+  if (cli.active) {
+    // If this is a command-line invocation, parse the args and opts.  If the
+    // args are missing or the help opt is given, print the help and exit.
+    opts = cli.parse();
+    args = opts._;
+    if (args.length < 1 || opts.help) {
+      cli.help();
+      process.exit();
+    }
+  } else {
+    // Create defaults for options if not provided.
+    opts = opts || {};
+    for (var d in DEFAULTS) {
+      if (!(d in opts)) {
+        opts[d] = DEFAULTS[d];
+      }
+    }
   }
 
+  // Get all files specified.
   var paths = files.find(opts.path);
   var inputs = files.find(args);
 
+  // Calculate the dependencies.
   var infos = deps.calculate(paths, inputs);
 
+  // Format output.
+  var output;
   if (opts.mode == 'list') {
-    var output = infos.map(function(info) { return info.path; });
-    $.util.puts.apply(null, output);
+    output = infos.map(function(info) { return info.path; });
   } else if (opts.mode == 'concat') {
-    var output = infos.map(function(info) { return info.content; });
-    $.util.puts.apply(null, output);
+    output = infos.map(function(info) { return info.content; }).join('\n');
   } else {
     $.util.error('Unknown output mode');
     process.exit(1);
   }
+
+  // Print the output to stdout, if needed (for the command-line).
+  if (cli.active) {
+    if ($.util.isArray(output)) {
+      $.util.puts(output.join('\n'));
+    } else {
+      $.util.puts(output);
+    }
+  }
+
+  // Return the output (for the module).
+  return output;
 }
 
 
-main();
+// Provide a module function.
+module.exports = main;
+
+
+// Automatically execute if called directly.
+if (cli.active) {
+  main();
+}
