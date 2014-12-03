@@ -16,12 +16,14 @@
 
 
 // Library imports.
-var fs = require('q-io/fs');
-var minimist = require('minimist');
-var path = require('path');
-var q = require('q');
-var util = require('util');
-var wordwrap = require('wordwrap');
+var $ = {
+  glob: require('glob'),
+  fs: require('fs'),
+  minimist: require('minimist'),
+  path: require('path'),
+  util: require('util'),
+  wordwrap: require('wordwrap')
+};
 
 
 /**
@@ -58,6 +60,15 @@ var NAMESPACE_REGEX = /^ns:((\w+\.)*(\w+))$/;
  * @const
  */
 var JSFILE_REGEX = /\.js$/i;
+
+
+/**
+ * Globbing pattern used to recursively find JS files in a directory.
+ *
+ * @type {string}
+ * @const
+ */
+var JSFILE_GLOB = '**/*.js';
 
 
 /**
@@ -144,7 +155,7 @@ var arrays = {};
  * @return {Array} A new, flattened 1-level array.
  */
 arrays.flatten = function(arr) {
-  if (!util.isArray(arr)) {
+  if (!$.util.isArray(arr)) {
     return [arr];
   }
   return arr.reduce(function(prev, cur) {
@@ -188,57 +199,56 @@ var files = {};
 
 
 /**
- * Returns a promise for a list of all JS files in a directory and all
- * subdirectories it contains.  Namespaces (e.g. those provided by command-line
- * argument are returned as-is.)
+ * Returns a list of all JS files in a directory and all subdirectories it
+ * contains.  Namespaces (e.g. those provided by command-line argument are
+ * returned as-is.)
  *
- * @param {string} path String of a file or directory path, or a namespace.
- * @return {Promise.<Array.<string>>}
+ * @param {string} path String of a file/directory path, or a namespace.
+ * @return {Array.<string>}
  */
 files.tree = function(path) {
   if (!path) {
-    return q.fcall(function() { return []; });
+   return [];
   }
-  if (tests.isNS(path)) {
-    return q.fcall(function() { return [path]; });
+  if (tests.isNS(path) || tests.isJS(path)) {
+    return [path];
   }
-  return fs.listTree(path, tests.isJS);
+  return $.glob.sync($.path.join(path, JSFILE_GLOB));
 };
 
 
 /**
- * Returns a promise for a list of lists of JS files or namespaces.  One list
- * is returned, where each item might be JS file or namespace, or it might be
- * an array of JS files or namespaces (meaning a 1-level or 2-level array is
- * returned).  See {@link files.tree}.
+ * Returns a list of lists of JS files or namespaces.  One list is returned,
+ * where each item might be JS file or namespace, or it might be an array of JS
+ * files or namespaces (meaning a 1-level or 2-level array is returned).
+ * See {@link files.tree}.
  *
  * @param {string|Array.<string>} paths One or more strings of file paths,
  *     directory paths, or namespaces.
- * @return {Promise.<Array.<Array|string>>}
+ * @return {Array.<Array|string>}
  */
 files.list = function(paths) {
-  if (util.isArray(paths)) {
-    return q.all(paths.map(files.find));
+  if ($.util.isArray(paths)) {
+    return paths.map(files.find);
   }
   return files.tree(paths);
 };
 
 
 /**
- * Returns a promise for a list of all JS files or namespaces specified by
- * by one or more paths (meaning a 1-level array with all duplicates removed is
- * returned).  The paths may be files, directories, or namespaces themselves.
- * If a given path is a directory, all JS files in the directory or any
- * subdirectory are returned.  See {@link files.list} and {@link files.tree}.
+ * Returns a list of all JS files or namespaces specified by by one or more
+ * paths (meaning a 1-level array with all duplicates removed is returned).
+ * The paths may be files, directories, or namespaces themselves.  If a given
+ * path is a directory, all JS files in the directory or any subdirectory are
+ * returned.  See {@link files.list} and {@link files.tree}.
  *
  * @param {string|Array.<string>} paths One or more strings of file paths,
  *     directory paths, or namespaces.
- * @return {Promise.<Array.<string>>}
+ * @return {Array.<string>}
  */
 files.find = function(paths) {
-  return files.list(paths)
-      .then(arrays.flatten)
-      .then(arrays.unique);
+  var list = files.list(paths);
+  return arrays.unique(arrays.flatten(list));
 };
 
 
@@ -246,7 +256,6 @@ files.find = function(paths) {
  * Namespace for functions to handle dependencies.
  */
 var deps = {};
-
 
 
 /**
@@ -270,36 +279,35 @@ deps.Info = function(path, content) {
  * @override
  */
 deps.Info.prototype.toString = function() {
-  return util.format('%s (provides: %s) (requires: %s)',
+  return $.util.format('%s (provides: %s) (requires: %s)',
                      this.path, this.provides, this.requires);
 };
 
 
 /**
- * Returns a promise to read a JS source file's contents and create an
- * unpopulated dependency information object for it.  See {@link deps.Info}.
+ * Returns an unpopulated dependency information object for a JS source file.
+ * See {@link deps.Info}.
  *
  * @param {string} path The path to the JS source file.
- * @return {Promise.<deps.Info>}
+ * @return {deps.Info}
  */
 deps.create = function(path) {
-  return fs.read(path).then(function(content) {
-    return new deps.Info(path, content);
-  });
+  var content = $.fs.readFileSync(path);
+  return new deps.Info(path, content);
 };
 
 
 /**
- * Returns a promise to return an array of unpopulated dependency information
- * objects, one for every JS source file path in the array provided.
+ * Returns an array of unpopulated dependency information objects, one for
+ * every JS source file path in the array provided.
  * A new array object will be returned.  See {@link deps.create}.
  *
  * @param {Array.<string>} paths Array of strings of file paths.
- * @return {Promise.<Array.<deps.Info>>}
+ * @return {Array.<deps.Info>}
  */
 deps.read = function(paths) {
   paths = arrays.unique(arrays.filterJS(paths));
-  return q.all(paths.map(deps.create));
+  return paths.map(deps.create);
 };
 
 
@@ -341,7 +349,7 @@ deps.build = function(infos) {
     // Add each provided namespace from that file to the map.
     info.provides.forEach(function(ns) {
       if (ns in hash) {
-        util.error(util.format(
+        $.util.error($.util.format(
             'Duplicate provide for "%s" in %s and %s.',
             ns, info.path, hash[ns].path));
         process.exit(1);
@@ -369,7 +377,7 @@ deps.build = function(infos) {
 deps.resolve = function(info, hash, ordered, seen) {
   info.requires.forEach(function(ns) {
     if (!(ns in hash)) {
-      util.error(util.format(
+      $.util.error($.util.format(
           'Missing provide for "%s" required by %s.',
           ns, info.path));
       process.exit(1);
@@ -401,13 +409,13 @@ deps.order = function(hash, inputs) {
     if (tests.isNS(input)) {
       var ns = NAMESPACE_REGEX.exec(input)[1];
       if (!(ns in hash)) {
-        util.error(util.format('Missing input namespace "%s".', ns));
+        $.util.error($.util.format('Missing input namespace "%s".', ns));
         process.exit(1);
       }
       info = hash[ns];
     } else {
       if (!(input in hash)) {
-        util.error(util.format('Missing input file "%s".', input));
+        $.util.error($.util.format('Missing input file "%s".', input));
         process.exit(1);
       }
       info = hash[input];
@@ -420,20 +428,19 @@ deps.order = function(hash, inputs) {
 
 
 /**
- * Returns a promise to return a list of ordered dependency information objects.
+ * Returns a list of ordered dependency information objects.
  *
  * @param {Array.<string>} paths Array of file paths or namespaces to read and
  *     parse for dependecies.
  * @param {Array.<string>} inputs Array of file paths or namespaces to use as
  *     the "start" when creating the ordered dependencies.
- * @return {Promise.<Array.<deps.Info>>}
+ * @return {Array.<deps.Info>}
  */
 deps.calculate = function(paths, inputs) {
   var combined = paths.concat(inputs);
-  return deps.read(combined)
-      .then(deps.extract)
-      .then(deps.build)
-      .then(function(hash) { return deps.order(hash, inputs); });
+  var infos = deps.read(combined);
+  var hash = deps.build(deps.extract(infos));
+  return deps.order(hash, inputs);
 };
 
 
@@ -448,7 +455,7 @@ var cli = {};
  * @return {Object}
  */
 cli.parse = function() {
-  return minimist(process.argv.slice(2), {
+  return $.minimist(process.argv.slice(2), {
     alias: FLAGS,
     default: DEFAULTS
   });
@@ -459,29 +466,29 @@ cli.parse = function() {
  * Prints the help information for the command line interface.
  */
 cli.help = function() {
-  var program = path.basename(process.argv[1]);
-  util.puts(util.format(
+  var program = $.path.basename(process.argv[1]);
+  $.util.puts($.util.format(
       'Usage: %s [options] argument [arguments]', program));
-  util.puts('');
-  var wrap = wordwrap(78);
-  util.puts('Arguments:');
-  util.puts(wrap('The inputs to calculate dependencies for: files, ' +
+  $.util.puts('');
+  var wrap = $.wordwrap(78);
+  $.util.puts('Arguments:');
+  $.util.puts(wrap('The inputs to calculate dependencies for: files, ' +
                  'directories, or namespaces (e.g. "ns:my.project").'));
-  util.puts('');
-  wrap = wordwrap(8, 78);
-  util.puts('Options:');
+  $.util.puts('');
+  wrap = $.wordwrap(8, 78);
+  $.util.puts('Options:');
   for (var flag in FLAGS) {
-    util.puts(util.format('--%s, -%s', flag, FLAGS[flag]));
-    util.puts(wrap(DESCRIPTIONS[flag]));
+    $.util.puts($.util.format('--%s, -%s', flag, FLAGS[flag]));
+    $.util.puts(wrap(DESCRIPTIONS[flag]));
     if (flag in DEFAULTS) {
-      util.puts(wrap('Default: ' + DEFAULTS[flag]));
+      $.util.puts(wrap('Default: ' + DEFAULTS[flag]));
     }
   }
 };
 
 
 /**
- * The main program execution function.
+ * The main CLI program execution function.
  */
 function main() {
 
@@ -493,24 +500,21 @@ function main() {
     process.exit();
   }
 
-  files.find(opts.path).then(function(paths) {
-    files.find(args).then(function(inputs) {
-      deps.calculate(paths, inputs).then(function(infos) {
-        if (opts.mode == 'list') {
-          util.puts.apply(null, infos.map(function(info) {
-            return info.path;
-          }));
-        } else if (opts.mode == 'concat') {
-          util.puts.apply(null, infos.map(function(info) {
-            return info.content;
-          }));
-        } else {
-          util.error('Unknown output mode');
-          process.exit(1);
-        }
-      });
-    });
-  });
+  var paths = files.find(opts.path);
+  var inputs = files.find(args);
+
+  var infos = deps.calculate(paths, inputs);
+
+  if (opts.mode == 'list') {
+    var output = infos.map(function(info) { return info.path; });
+    $.util.puts.apply(null, output);
+  } else if (opts.mode == 'concat') {
+    var output = infos.map(function(info) { return info.content; });
+    $.util.puts.apply(null, output);
+  } else {
+    $.util.error('Unknown output mode');
+    process.exit(1);
+  }
 }
 
 

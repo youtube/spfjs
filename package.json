@@ -12,9 +12,8 @@
     "url": "https://github.com/youtube/spfjs/issues"
   },
   "devDependencies": {
+    "glob": "^4.3.1",
     "minimist": "^1.1.0",
-    "q": "^1.0.1",
-    "q-io": "^1.11.4",
     "semver": "^4.1.0",
     "wordwrap": "0.0.2"
   }
