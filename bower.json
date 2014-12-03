@@ -13,5 +13,8 @@
     "**/.*",
     "bower_components",
     "node_modules"
-  ]
+  ],
+  "devDependencies": {
+    "closure-compiler": "http://dl.google.com/closure-compiler/compiler-20140625.zip"
+  }
 }
