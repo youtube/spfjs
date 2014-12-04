@@ -108,6 +108,63 @@ describe('spf.url', function() {
 
   });
 
+  describe('appendPersistentParameters', function() {
+
+    it('does nothing without a config', function() {
+      var url = '/page';
+      expect(spf.url.appendPersistentParameters(url)).toEqual('/page');
+    });
+
+    it('appends params with a config', function() {
+      var url = '/page';
+      spf.config.set('advanced-persistent-parameters', 'abc=def');
+      expect(spf.url.appendPersistentParameters(url)).toEqual('/page?abc=def');
+
+      url = '/page?param=123';
+      expect(spf.url.appendPersistentParameters(url)).toEqual(
+          '/page?param=123&abc=def');
+
+      url = '/page';
+      spf.config.set('advanced-persistent-parameters', 'abc=def&foo=bar');
+      expect(spf.url.appendPersistentParameters(url)).toEqual(
+          '/page?abc=def&foo=bar');
+
+      url = '/page?param=123';
+      expect(spf.url.appendPersistentParameters(url)).toEqual(
+          '/page?param=123&abc=def&foo=bar');
+    });
+
+    it('supports partial params', function() {
+      var url = '/page';
+      spf.config.set('advanced-persistent-parameters', 'abc');
+      expect(spf.url.appendPersistentParameters(url)).toEqual('/page?abc');
+
+      spf.config.set('advanced-persistent-parameters', 'abc=def&foo');
+      expect(spf.url.appendPersistentParameters(url)).toEqual(
+          '/page?abc=def&foo');
+    });
+
+    it('supports duplicate params', function() {
+      var url = '/page';
+      spf.config.set('advanced-persistent-parameters', 'abc=def&abc=ghi');
+      expect(spf.url.appendPersistentParameters(url)).toEqual(
+          '/page?abc=def&abc=ghi');
+    });
+
+    it('respects hashes', function() {
+      var url = '/page#frag';
+      spf.config.set('advanced-persistent-parameters', 'abc=def');
+      expect(spf.url.appendPersistentParameters(url)).toEqual(
+          '/page?abc=def#frag');
+
+      url = '/page?param=123#frag';
+      spf.config.set('advanced-persistent-parameters', 'abc=def');
+      expect(spf.url.appendPersistentParameters(url)).toEqual(
+          '/page?param=123&abc=def#frag');
+    });
+
+  });
+
   describe('unprotocol', function() {
 
     it('absolute', function() {

@@ -193,6 +193,25 @@ spf.url.removeParameters = function(url, parameters) {
 
 
 /**
+ * Appends a configurable set of parameters that should persist across URLs.
+ *
+ * @param {string} url A URL.
+ * @return {string} A new URL with the persistent parameters included.
+ */
+spf.url.appendPersistentParameters = function(url) {
+  // Get the param config of the form "abc=def&foo=bar"
+  var parameterConfig = spf.config.get('advanced-persistent-parameters') || '';
+  var result = spf.string.partition(url, '#');
+  url = result[0];
+  var delim = spf.string.contains(url, '?') ? '&' : '?';
+  // Append the persistent parameters to the URL.
+  url += parameterConfig ? delim + parameterConfig : '';
+  // Reattach the hash.
+  return url + result[1] + result[2];
+};
+
+
+/**
  * Converts an absolute URL to protocol-relative (e.g. no http: or https:).
  * Has no effect on relative URLs.
  *
