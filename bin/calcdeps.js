@@ -498,7 +498,7 @@ cli.help = function() {
 /**
  * The main execution function.
  */
-function main(args, opts) {
+function main(opts, args) {
   if (cli.active) {
     // If this is a command-line invocation, parse the args and opts.  If the
     // args are missing or the help opt is given, print the help and exit.

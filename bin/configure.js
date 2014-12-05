@@ -181,8 +181,8 @@ function targets(ninja) {
   // Find source files.
   var opts = {path: ['src/client/', 'third-party/']};
   var srcs = {
-    main: $.calcdeps('ns:spf.main', opts),
-    bootloader: $.calcdeps('ns:spf.bootloader', opts)
+    main: $.calcdeps(opts, 'ns:spf.main'),
+    bootloader: $.calcdeps(opts, 'ns:spf.bootloader')
   };
   // Prepend the stub file since Closure Library isn't used.
   srcs.main.unshift('src/client/stub.js');
