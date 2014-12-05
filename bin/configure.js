@@ -15,6 +15,7 @@
 
 // Library imports.
 var $ = {
+  glob: require('glob'),
   calcdeps: require('./calcdeps'),
   path: require('path'),
   ninjaBuildGen: require('ninja-build-gen'),
@@ -148,47 +149,75 @@ function variables(ninja) {
 
 
 function rules(ninja) {
-  // Generate the build file.
+  var cmds = {
+    configure: 'bin/configure.js',
+    jscompile: [
+          'cat $license_js > $out',
+          '&& (',
+          '  [[ "$preamble_file" ]] &&',
+          '  head -n $preamble_length $preamble_file >> $out',
+          '  || true',
+          ') ',
+          '&& java -jar $jscompiler_jar $flags $in >> $out',
+          '|| (rm $out; false)'
+        ].join(' '),
+    manifest: [
+          'echo $in',
+          '| tr " " "\\n"',
+          '| sed "s,^,document.write(\'<script src=\\"$prefix,g"',
+          '| sed "s,$$,\\"></script>\');,g"',
+          '> $out'
+        ].join(' '),
+    symlink: 'ln -sf $prefix$in $out'
+  };
+
+  // configure: Generate the build file.
   ninja.rule('configure')
-      .run('./bin/configure.js')
+      .run(cmds.configure)
       .description('configure')
       .generator(true);
 
-  // Build JS files.
-  var jscompilecmd = [
-    'cat $license_js > $out',
-    '&& (',
-    '  [[ "$preamble_file" ]] &&',
-    '  head -n $preamble_length $preamble_file >> $out',
-    '  || true;',
-    ')',
-    '&& java -jar $jscompiler_jar $flags $in >> $out',
-    '|| (rm $out; false)'
-  ].join(' ');
+  // jscompile: Compile JS output.
   ninja.rule('jscompile')
-      .run(jscompilecmd)
+      .run(cmds.jscompile)
       .description('jscompile $out');
+
+  // manifest: Generate the test manifest.
+  ninja.rule('manifest')
+      .run(cmds.manifest)
+      .description('manifest $out');
+
+  // symlink: Symlink files.
+  ninja.rule('symlink')
+      .run(cmds.symlink)
+      .description('symlink $prefix$in -> $out');
 }
 
 
 function targets(ninja) {
+  // Define special files used in both rules and targets.
   var files = {
     jscompiler: '$jscompiler_jar',
     license: '$license_js',
     preamble: 'third-party/tracing-framework/shims/wtf-trace-closure.js',
     wrapper: '$wrapper_js'
   };
+
   // Find source files.
   var opts = {path: ['src/client/', 'third-party/']};
   var srcs = {
     main: $.calcdeps(opts, 'ns:spf.main'),
     bootloader: $.calcdeps(opts, 'ns:spf.bootloader')
   };
+  // Find test files.
+  var tests = $.calcdeps(opts, $.glob.sync('src/client/**/*_test.js'));
   // Prepend the stub file since Closure Library isn't used.
   srcs.main.unshift('src/client/stub.js');
   srcs.bootloader.unshift('src/client/stub.js');
-  // Use a complete set for monitoring when this file needs to be updated.
-  srcs.all = arrays.unique(srcs.main.concat(srcs.bootloader));
+  tests.unshift('src/client/stub.js');
+
+  // Use all files for monitoring when the build file needs to be updated.
+  var all = arrays.unique(srcs.main.concat(srcs.bootloader).concat(tests));
 
   // Main.
   ninja.edge('$builddir/spf.js')
@@ -237,10 +266,42 @@ function targets(ninja) {
       .need(files.jscompiler, files.license)
       .assign('flags', '$dev_jsflags');
 
+  // Tests.
+  ninja.edge('$builddir/test/manifest.js')
+      .using('manifest')
+      .from(tests)
+      .assign('prefix', '../../');
+
+  ninja.edge('$builddir/test/jasmine.css')
+      .using('symlink')
+      .from('bower_components/jasmine/lib/jasmine-1.3.1/jasmine.css')
+      .assign('prefix', '../../');
+
+  ninja.edge('$builddir/test/jasmine.js')
+      .using('symlink')
+      .from('bower_components/jasmine/lib/jasmine-1.3.1/jasmine.js')
+      .assign('prefix', '../../');
+
+  ninja.edge('$builddir/test/jasmine-html.js')
+      .using('symlink')
+      .from('bower_components/jasmine/lib/jasmine-1.3.1/jasmine-html.js')
+      .assign('prefix', '../../');
+
+  ninja.edge('$builddir/test/runner.html')
+      .using('symlink')
+      .from('src/client/testing/runner.html')
+      .need(tests.concat([
+            '$builddir/test/manifest.js',
+            '$builddir/test/jasmine.css',
+            '$builddir/test/jasmine.js',
+            '$builddir/test/jasmine-html.js'
+          ]))
+      .assign('prefix', '../../');
+
   // Build file updates.
   ninja.edge('build.ninja')
       .using('configure')
-      .need(srcs.all.concat(['./bin/configure.js']));
+      .need(all.concat(['bin/configure.js']));
 }
 
 
