@@ -16,11 +16,13 @@
 // Library imports.
 var $ = {
   calcdeps: require('./calcdeps'),
+  childProcess: require('child_process'),
   name: require('./name'),
   glob: require('glob'),
   ninjaBuildGen: require('ninja-build-gen'),
   path: require('path'),
   phantomjs: require('phantomjs'),
+  semver: require('semver'),
   util: require('util')
 };
 
@@ -43,6 +45,35 @@ arrays.unique = function(arr) {
     return arr.indexOf(val) == idx;
   });
 };
+
+
+function requirements() {
+  // Closure Compiler after v20131014 requires Java 7.
+  var required = $.semver('1.7.0');
+  $.childProcess.exec('java -version', function(error, stdout, stderr) {
+    if (error || !stderr) {
+      $.util.error([
+            'Unable to get java version.',
+            'Please install java before building.',
+          ].join('\n'));
+      process.exit(1);
+    }
+    var version;
+    var installed;
+    try {
+      version = stderr.split('\n')[0].split(' ').slice(-1)[0].replace(/"/g, '');
+      // Replace underscores to make Java's version string semver-compatible.
+      installed = $.semver.parse(version.replace('_', '-'));
+    } catch (ex) {}
+    if (!installed || installed < required) {
+      $.util.error($.util.format([
+            'Installed java version "%s" is less than the required "%s".',
+            'Please upgrade java before building.'
+          ].join('\n'), installed, required));
+      process.exit(1);
+    }
+  });
+}
 
 
 function header(ninja) {
@@ -378,6 +409,7 @@ function aliases(ninja) {
  * The main program execution function.
  */
 function main() {
+  requirements();
   var ninja = $.ninjaBuildGen('1.4');
   header(ninja);
   variables(ninja);
