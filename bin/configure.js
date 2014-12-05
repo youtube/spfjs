@@ -15,10 +15,11 @@
 
 // Library imports.
 var $ = {
-  glob: require('glob'),
   calcdeps: require('./calcdeps'),
-  path: require('path'),
+  glob: require('glob'),
   ninjaBuildGen: require('ninja-build-gen'),
+  path: require('path'),
+  phantomjs: require('phantomjs'),
   util: require('util')
 };
 
@@ -64,6 +65,8 @@ function variables(ninja) {
   // Tools.
   ninja.assign('jscompiler_jar',
                'bower_components/closure-compiler/compiler.jar');
+  ninja.assign('jasmine_js',
+               'third-party/phantomjs/examples/run-jasmine.js');
   ninja.assign('license_js', 'src/license.js');
   ninja.assign('preamble_file', '');
   ninja.assign('preamble_length', '6');
@@ -151,6 +154,7 @@ function variables(ninja) {
 function rules(ninja) {
   var cmds = {
     configure: 'bin/configure.js',
+    jasmine: $.phantomjs.path + ' $jasmine_js $in',
     jscompile: [
           'cat $license_js > $out',
           '&& (',
@@ -176,6 +180,11 @@ function rules(ninja) {
       .run(cmds.configure)
       .description('configure')
       .generator(true);
+
+  // jasmine: Run JS tests.
+  ninja.rule('jasmine')
+      .run(cmds.jasmine)
+      .description('jasmine $in');
 
   // jscompile: Compile JS output.
   ninja.rule('jscompile')
@@ -302,6 +311,24 @@ function targets(ninja) {
   ninja.edge('build.ninja')
       .using('configure')
       .need(all.concat(['bin/configure.js']));
+
+
+function aliases(ninja) {
+  // Define special files used in both rules and targets.
+  var files = {
+    jasmine: '$jasmine_js',
+  };
+
+  // Tools.
+  ninja.edge('test')
+      .using('jasmine')
+      .from('$builddir/test/runner.html')
+      .need(files.jasmine);
+
+  // Shortcuts.
+  ninja.edge('tests')
+      .using('phony')
+      .from('$builddir/test/runner.html');
 }
 
 
@@ -314,6 +341,7 @@ function main() {
   variables(ninja);
   rules(ninja);
   targets(ninja);
+  aliases(ninja);
   ninja.save('build.ninja');
   $.util.puts('Wrote build.ninja');
 }
