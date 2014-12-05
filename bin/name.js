@@ -14,12 +14,14 @@
 
 
 // Library imports.
-var fs = require('fs');
-var minimist = require('minimist');
-var path = require('path');
-var semver = require('semver');
-var util = require('util');
-var wordwrap = require('wordwrap');
+var $ = {
+  fs: require('fs'),
+  minimist: require('minimist'),
+  path: require('path'),
+  semver: require('semver'),
+  util: require('util'),
+  wordwrap: require('wordwrap')
+};
 
 
 /**
@@ -66,11 +68,19 @@ var cli = {};
 
 
 /**
+ * Whether the script is being executed via command line.
+ *
+ * @type {boolean}
+ */
+cli.active = !module.parent;
+
+
+/**
  * Parses the command line arguments for flags and values.
  * @return {Object}
  */
 cli.parse = function() {
-  return minimist(process.argv.slice(2), {
+  return $.minimist(process.argv.slice(2), {
     alias: FLAGS,
     default: DEFAULTS
   });
@@ -81,47 +91,76 @@ cli.parse = function() {
  * Prints the help information for the command line interface.
  */
 cli.help = function() {
-  var program = path.basename(process.argv[1]);
-  util.puts(util.format(
+  var program = $.path.basename(process.argv[1]);
+  $.util.puts($.util.format(
       'Usage: %s [options]', program));
-  util.puts('');
-  wrap = wordwrap(8, 78);
-  util.puts('Options:');
+  $.util.puts('');
+  wrap = $.wordwrap(8, 78);
+  $.util.puts('Options:');
   for (var flag in FLAGS) {
-    util.puts(util.format('--%s, -%s', flag, FLAGS[flag]));
-    util.puts(wrap(DESCRIPTIONS[flag]));
+    $.util.puts($.util.format('--%s, -%s', flag, FLAGS[flag]));
+    $.util.puts(wrap(DESCRIPTIONS[flag]));
     if (flag in DEFAULTS) {
-      util.puts(wrap('Default: ' + DEFAULTS[flag]));
+      $.util.puts(wrap('Default: ' + DEFAULTS[flag]));
     }
   }
 };
 
 
 /**
- * The main program execution function.
+ * The main execution function.
  */
-function main() {
-
-  var opts = cli.parse();
-  var args = opts._;
-
-  if (opts.help) {
-    cli.help();
-    process.exit();
+function main(opts, args) {
+  if (cli.active) {
+    // If this is a command-line invocation, parse the args and opts.  If the
+    // help opt is given, print the help and exit.
+    opts = cli.parse();
+    args = opts._;
+    if (opts.help) {
+      cli.help();
+      process.exit();
+    }
+  } else {
+    // Create defaults for options if not provided.
+    opts = opts || {};
+    for (var d in DEFAULTS) {
+      if (!(d in opts)) {
+        opts[d] = DEFAULTS[d];
+      }
+    }
   }
 
-  var manifest = JSON.parse(fs.readFileSync(opts.path, 'utf8'));
-  var version = semver.valid(manifest.version) || '';
+  // Parse the manifest file.
+  var manifest = JSON.parse($.fs.readFileSync(opts.path, 'utf8'));
 
+  // Extract and validate the version.
+  var version = $.semver.valid(manifest.version) || '';
+
+  // Format the output.
+  var output;
   if (opts.semver) {
-    util.puts(version);
-    process.exit();
+    output = version;
+  } else {
+    var name = version.split('.').slice(0, 2).join('');
+    var fmt = (version && name) ? 'SPF %s (v%s)' : 'SPF';
+    output = $.util.format(fmt, name, version);
   }
 
-  var name = version.split('.').slice(0, 2).join('');
-  var fmt = (version && name) ? 'SPF %s (v%s)' : 'SPF';
-  util.puts(util.format(fmt, name, version));
+  // Print the output to stdout, if needed (for the command-line).
+  if (cli.active) {
+    $.util.puts(output);
+  }
+
+  // Return the output (for the module).
+  return output;
 }
 
 
-main();
+// Provide a module function.
+module.exports = main;
+
+
+// Automatically execute if called directly.
+if (cli.active) {
+  main();
+}
