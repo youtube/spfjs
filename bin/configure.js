@@ -16,6 +16,7 @@
 // Library imports.
 var $ = {
   calcdeps: require('./calcdeps'),
+  name: require('./name'),
   glob: require('glob'),
   ninjaBuildGen: require('ninja-build-gen'),
   path: require('path'),
@@ -54,7 +55,7 @@ function header(ninja) {
     '# This generated file is used to build SPF.',
     '# To update, run ' + $.path.basename(__filename)
   ];
-  ninja.header(lines.join('\n'))
+  ninja.header(lines.join('\n'));
 }
 
 
@@ -71,8 +72,7 @@ function variables(ninja) {
   ninja.assign('preamble_file', '');
   ninja.assign('preamble_length', '6');
   ninja.assign('wrapper_js', 'src/wrapper.js');
-  ninja.assign('package_json', './package.json');
-  ninja.assign('filter_cmd', 'cat');
+  ninja.assign('name_and_ver', $.name());
   // Flags.
   var common = [
     '--compilation_level ADVANCED_OPTIMIZATIONS',
@@ -142,12 +142,12 @@ function variables(ninja) {
     '--closure_entry_point spf.bootloader',
     '--output_wrapper "(function(){%output%})();"'
   ];
-  ninja.assign('prod_jsflags', prod.join(' '))
-  ninja.assign('debug_jsflags', debug.join(' '))
-  ninja.assign('trace_jsflags', trace.join(' '))
-  ninja.assign('dev_jsflags', dev.join(' '))
-  ninja.assign('main_jsflags', main.join(' '))
-  ninja.assign('bootloader_jsflags', bootloader.join(' '))
+  ninja.assign('prod_jsflags', prod.join(' '));
+  ninja.assign('debug_jsflags', debug.join(' '));
+  ninja.assign('trace_jsflags', trace.join(' '));
+  ninja.assign('dev_jsflags', dev.join(' '));
+  ninja.assign('main_jsflags', main.join(' '));
+  ninja.assign('bootloader_jsflags', bootloader.join(' '));
 }
 
 
@@ -165,6 +165,7 @@ function rules(ninja) {
           '&& java -jar $jscompiler_jar $flags $in >> $out',
           '|| (rm $out; false)'
         ].join(' '),
+    jsdist: 'cat $in | sed "2 s/SPF/$name_and_ver/" > $out',
     manifest: [
           'echo $in',
           '| tr " " "\\n"',
@@ -190,6 +191,11 @@ function rules(ninja) {
   ninja.rule('jscompile')
       .run(cmds.jscompile)
       .description('jscompile $out');
+
+  // jsdist: Update JS output with release name/version.
+  ninja.rule('jsdist')
+      .run(cmds.jsdist)
+      .description('jsdist $out');
 
   // manifest: Generate the test manifest.
   ninja.rule('manifest')
@@ -307,16 +313,42 @@ function targets(ninja) {
           ]))
       .assign('prefix', '../../');
 
+  // Distribution.
+  ninja.edge('$distdir/spf.js')
+      .using('jsdist')
+      .from('$builddir/spf.js');
+
+  ninja.edge('$distdir/spf-debug.js')
+      .using('jsdist')
+      .from('$builddir/spf-debug.js');
+
+  ninja.edge('$distdir/spf-trace.js')
+      .using('jsdist')
+      .from('$builddir/spf-trace.js');
+
+  ninja.edge('$distdir/boot.js')
+      .using('jsdist')
+      .from('$builddir/boot.js');
+
+  ninja.edge('$distdir/boot-debug.js')
+      .using('jsdist')
+      .from('$builddir/boot-debug.js');
+
+  ninja.edge('$distdir/boot-trace.js')
+      .using('jsdist')
+      .from('$builddir/boot-trace.js');
+
   // Build file updates.
   ninja.edge('build.ninja')
       .using('configure')
-      .need(all.concat(['bin/configure.js']));
+      .need(all.concat(['bin/configure.js', 'package.json']));
+}
 
 
 function aliases(ninja) {
   // Define special files used in both rules and targets.
   var files = {
-    jasmine: '$jasmine_js',
+    jasmine: '$jasmine_js'
   };
 
   // Tools.
@@ -326,6 +358,16 @@ function aliases(ninja) {
       .need(files.jasmine);
 
   // Shortcuts.
+  ninja.edge('dist')
+      .using('phony')
+      .from([
+            '$distdir/spf.js',
+            '$distdir/spf-debug.js',
+            '$distdir/spf-trace.js',
+            '$distdir/boot.js',
+            '$distdir/boot-debug.js',
+            '$distdir/boot-trace.js'
+          ]);
   ninja.edge('tests')
       .using('phony')
       .from('$builddir/test/runner.html');
