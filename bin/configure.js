@@ -47,6 +47,28 @@ arrays.unique = function(arr) {
 };
 
 
+/**
+ * Namespace for functions to handle strings.
+ */
+var strings = {};
+
+
+/**
+ * Repeats a string a given number of times.
+ *
+ * @param {string} str The string to repeat
+ * @param {number} count The number of times to repeat.
+ * @return {string}
+ */
+strings.repeat = function(str, count) {
+  var s = '';
+  for (var i = 0; i < count; i++) {
+    s += str;
+  }
+  return s;
+};
+
+
 function requirements() {
   // Closure Compiler after v20131014 requires Java 7.
   var required = $.semver('1.7.0');
@@ -249,21 +271,34 @@ function targets(ninja) {
     wrapper: '$wrapper_js'
   };
 
+  var globs = {
+    tests: 'src/client/**/*_test.js',
+    demo: 'src/server/demo/**/*.*',
+    webpy: 'bower_components/webpy/web/**/*.py'
+  };
+
+  var libs = {
+    webpy: $.glob.sync(globs.webpy)
+  };
+
   // Find source files.
   var opts = {path: ['src/client/', 'third-party/']};
-  var srcs = {
-    main: $.calcdeps(opts, 'ns:spf.main'),
-    bootloader: $.calcdeps(opts, 'ns:spf.bootloader')
-  };
-  // Find test files.
-  var tests = $.calcdeps(opts, $.glob.sync('src/client/**/*_test.js'));
   // Prepend the stub file since Closure Library isn't used.
-  srcs.main.unshift('src/client/stub.js');
-  srcs.bootloader.unshift('src/client/stub.js');
-  tests.unshift('src/client/stub.js');
+  var stub = 'src/client/stub.js';
+  var srcs = {
+    main: $.calcdeps(opts, [stub, 'ns:spf.main']),
+    bootloader: $.calcdeps(opts, [stub, 'ns:spf.bootloader']),
+    tests: $.calcdeps(opts, [stub].concat($.glob.sync(globs.tests))),
+    demo: $.glob.sync(globs.demo)
+  };
 
   // Use all files for monitoring when the build file needs to be updated.
-  var all = arrays.unique(srcs.main.concat(srcs.bootloader).concat(tests));
+  var all = arrays.unique(['bin/configure.js', 'package.json']
+      .concat(srcs.main)
+      .concat(srcs.bootloader)
+      .concat(srcs.tests)
+      .concat(srcs.demo)
+      );
 
   // Main.
   ninja.edge('$builddir/spf.js')
@@ -315,7 +350,7 @@ function targets(ninja) {
   // Tests.
   ninja.edge('$builddir/test/manifest.js')
       .using('manifest')
-      .from(tests)
+      .from(srcs.tests)
       .assign('prefix', '../../');
 
   ninja.edge('$builddir/test/jasmine.css')
@@ -336,7 +371,7 @@ function targets(ninja) {
   ninja.edge('$builddir/test/runner.html')
       .using('symlink')
       .from('src/client/testing/runner.html')
-      .need(tests.concat([
+      .need(srcs.tests.concat([
             '$builddir/test/manifest.js',
             '$builddir/test/jasmine.css',
             '$builddir/test/jasmine.js',
@@ -369,10 +404,44 @@ function targets(ninja) {
       .using('jsdist')
       .from('$builddir/boot-trace.js');
 
+  // Demo.
+  var outs = {demo: []};
+
+  // Remove the app.py file from the sources list, as it depends on the others.
+  srcs.demo.splice(srcs.demo.indexOf('src/server/demo/app.py'), 1);
+
+  // Symlink each demo source and library file into the build directory.
+  (srcs.demo.concat(libs.webpy)).forEach(function(src) {
+    var out = src.replace('src/server/demo/', '$builddir/demo/')
+        .replace('bower_components/webpy/', '$builddir/demo/');
+    var depth = (out.match(/\//g) || []).length;
+    ninja.edge(out)
+        .using('symlink')
+        .from(src)
+        .assign('prefix', strings.repeat('../', depth));
+    outs.demo.push(out);
+  });
+
+  // Include the development file.
+  ninja.edge('$builddir/demo/static/dev-spf-bundle.js')
+      .using('symlink')
+      .from('$builddir/dev-spf-bundle.js')
+      .assign('prefix', '../../../');
+
+  // Finally, symlink the app.py file as well, declaring the deps.
+  ninja.edge('$builddir/demo/app.py')
+      .using('symlink')
+      .from('src/server/demo/app.py')
+      .need(outs.demo.concat([
+            'bower_components/webpy/web',
+            '$builddir/demo/static/dev-spf-bundle.js'
+          ]))
+      .assign('prefix', '../../');
+
   // Build file updates.
   ninja.edge('build.ninja')
       .using('configure')
-      .need(all.concat(['bin/configure.js', 'package.json']));
+      .need(all);
 }
 
 
