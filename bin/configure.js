@@ -489,6 +489,42 @@ function aliases(ninja) {
       .assign('flags', '--recurse');
 
   // Shortcuts.
+  ninja.edge('spf')
+      .using('phony')
+      .from('$builddir/spf.js');
+
+  ninja.edge('spf-debug')
+      .using('phony')
+      .from('$builddir/spf-debug.js');
+
+  ninja.edge('spf-trace')
+      .using('phony')
+      .from('$builddir/spf-trace.js');
+
+  ninja.edge('boot')
+      .using('phony')
+      .from('$builddir/boot.js');
+
+  ninja.edge('boot-debug')
+      .using('phony')
+      .from('$builddir/boot-debug.js');
+
+  ninja.edge('boot-trace')
+      .using('phony')
+      .from('$builddir/boot-trace.js');
+
+  ninja.edge('dev')
+      .using('phony')
+      .from('$builddir/dev-spf-bundle.js');
+
+  ninja.edge('tests')
+      .using('phony')
+      .from('$builddir/test/runner.html');
+
+  ninja.edge('demo')
+      .using('phony')
+      .from('$builddir/demo/app.py');
+
   ninja.edge('dist')
       .using('phony')
       .from([
@@ -499,9 +535,24 @@ function aliases(ninja) {
             '$distdir/boot-debug.js',
             '$distdir/boot-trace.js'
           ]);
-  ninja.edge('tests')
+
+  // The "all" shortcut does not include the distribution files.
+  ninja.edge('all')
       .using('phony')
-      .from('$builddir/test/runner.html');
+      .from([
+            '$builddir/spf.js',
+            '$builddir/spf-debug.js',
+            '$builddir/spf-trace.js',
+            '$builddir/boot.js',
+            '$builddir/boot-debug.js',
+            '$builddir/boot-trace.js',
+            '$builddir/dev-spf-bundle.js',
+            '$builddir/test/runner.html',
+            '$builddir/demo/app.py'
+          ]);
+
+  // Default.
+  ninja.byDefault('spf');
 }
 
 
