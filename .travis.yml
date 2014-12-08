@@ -1,11 +1,9 @@
-language: python
-python:
-  - "2.7"
+language: node_js
+  - 0.10
 install:
-  - easy_install http://closure-linter.googlecode.com/files/closure_linter-latest.tar.gz
+  - npm install
 before_script:
-  - make
-  - make tests
-  - make lint
+  - npm run build
+  - npm run lint
 script:
-  phantomjs build/test/run-jasmine.js build/test/runner.html
+  - npm test

@@ -11,7 +11,25 @@
   "bugs": {
     "url": "https://github.com/youtube/spfjs/issues"
   },
+  "scripts": {
+    "prepublish": "bower install && bin/configure.js",
+    "build": "ninja",
+    "build-all": "ninja all",
+    "build-spf": "ninja spf spf-debug spf-trace",
+    "build-boot": "ninja boot boot-debug boot-trace",
+    "build-dev": "ninja dev",
+    "build-tests": "ninja tests",
+    "build-demo": "ninja demo",
+    "dist": "ninja dist",
+    "test": "ninja test",
+    "lint": "ninja lint",
+    "fix": "ninja fix",
+    "start": "ninja demo && cd build/demo && python -m app",
+    "clean": "rm -rf build build.ninja dist",
+    "reset": "npm run clean; rm -rf bower_components node_modules vendor"
+  },
   "devDependencies": {
+    "bower": "^1.3.12",
     "closure-linter-wrapper": "^0.2.9",
     "glob": "^4.3.1",
     "minimist": "^1.1.0",
