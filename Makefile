@@ -4,82 +4,99 @@
 # See the LICENSE file for details.
 
 MAKEFLAGS = -j 1
-NINJA = $(shell command -v ninja || echo vendor/ninja/ninja)
-PYTHON = $(shell command -v python || echo _missing_python_)
+NPM = $(shell command -v npm || echo _missing_npm_)
 
 
 # Always execute targets.
 .PHONY: default all tests demo lint fix clean reset
 .PHONY: spf spf-debug spf-trace
 .PHONY: boot boot-debug boot-trace
+.PHONY: deprecated
 
+# Require npm and show deprecation warning
+default all tests demo lint fix dist: deprecated $(NPM)
+spf spf-debug spf-trace: deprecated $(NPM)
+boot boot-debug boot-trace: deprecated $(NPM)
+clean reset: deprecated $(NPM)
 
-# Require Ninja.
-default all tests demo lint fix dist: $(NINJA)
-spf spf-debug spf-trace: $(NINJA)
-boot boot-debug boot-trace: $(NINJA)
+# Deprecation warning.
+deprecated:
+	@echo "Warning: make is deprecated; npm is now required."
+	@echo
 
-
-# Pass off builds to Ninja.
+# Pass off builds to npm.
 default:
-	@$(NINJA)
+	@echo "Running the following npm command:"
+	@echo "    npm run build"
+	@echo "Please switch to calling npm directly."
+	@echo
+	@$(NPM) install && $(NPM) run build
 all:
-	@$(NINJA) all
-spf:
-	@$(NINJA) spf
-spf-debug:
-	@$(NINJA) spf-debug
-spf-trace:
-	@$(NINJA) spf-trace
-boot:
-	@$(NINJA) boot
-boot-debug:
-	@$(NINJA) boot-debug
-boot-trace:
-	@$(NINJA) boot-trace
+	@echo "Running the following npm command:"
+	@echo "    npm run build-all"
+	@echo "Please switch to calling npm directly."
+	@echo
+	@$(NPM) install && $(NPM) run build-all
+spf spf-debug spf-trace:
+	@echo "Running the following npm command:"
+	@echo "    npm run build-spf"
+	@echo "Please switch to calling npm directly."
+	@echo
+	@$(NPM) install && $(NPM) run build-spf
+boot boot-debug boot-trace:
+	@echo "Running the following npm command:"
+	@echo "    npm run build-boot"
+	@echo "Please switch to calling npm directly."
+	@echo
+	@$(NPM) install && $(NPM) run build-boot
 tests:
-	@$(NINJA) tests
-	@if [[ $$(command -v phantomjs) ]]; then \
-			echo "Open build/test/runner.html in your browser for interactive testing."; \
-			echo "Running tests..."; \
-			phantomjs build/test/run-jasmine.js build/test/runner.html; \
-		elif [[ $$(command -v open) ]]; then \
-			echo "Opening build/test/runner.html in your browser..."; \
-			open build/test/runner.html; \
-		else \
-			echo "Open build/test/runner.html in your browser."; \
-		fi
+	@echo "Running the following npm command:"
+	@echo "    npm test"
+	@echo "Please switch to calling npm directly."
+	@echo
+	@$(NPM) install && $(NPM) test
 demo:
-	@$(NINJA) demo
-	@echo "Running demo..."
-	@cd build/demo && $(PYTHON) -m app
+	@echo "Running the following npm command:"
+	@echo "    npm start"
+	@echo "Please switch to calling npm directly."
+	@echo
+	@$(NPM) install && $(NPM) start
 lint:
-	@$(NINJA) lint
+	@echo "Running the following npm command:"
+	@echo "    npm run lint"
+	@echo "Please switch to calling npm directly."
+	@echo
+	@$(NPM) install && $(NPM) run lint
 fix:
-	@$(NINJA) fix
+	@echo "Running the following npm command:"
+	@echo "    npm run fix"
+	@echo "Please switch to calling npm directly."
+	@echo
+	@$(NPM) install && $(NPM) run fix
 dist:
-	@$(NINJA) dist
+	@echo "Running the following npm command:"
+	@echo "    npm run dist"
+	@echo "Please switch to calling npm directly."
+	@echo
+	@$(NPM) install && $(NPM) run dist
 
 # Remove build output and files
 clean:
-	@rm -rf build build.ninja dist
+	@echo "Running the following npm command:"
+	@echo "    npm run clean"
+	@echo "Please switch to calling npm directly."
+	@echo
+	@$(NPM) install && $(NPM) run clean
 # Get back to a newly-cloned state.
 reset: clean
-	@rm -rf vendor
+	@echo "Running the following npm command:"
+	@echo "    npm run reset"
+	@echo "Please switch to calling npm directly."
+	@echo
+	@$(NPM) install && $(NPM) run reset
 
-
-# Ensure a build file exists before running Ninja.
-# Output a status message when Ninja is run.
-$(NINJA) vendor/ninja/ninja: build.ninja
-	@echo "Running Ninja..."
-
-# The configure script generates the build file and handles dependencies.
-build.ninja: $(PYTHON)
-	@$(PYTHON) ./configure.py
-
-
-# Python is required to run the configure script.
-_missing_python_:
-	@echo "ERROR: Unable to find python."
-	@echo "Please install python and try again."
+# npm is required.
+_missing_npm_:
+	@echo "ERROR: Unable to find npm."
+	@echo "Please install npm and try again."
 	@exit 1

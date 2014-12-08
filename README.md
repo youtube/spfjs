@@ -66,18 +66,15 @@ on-the-fly processing.  This speeds up navigation by starting rendering early.
 SPF has no dependencies and is a single standalone file.  It is only ~9K when
 minified and gzipped, and it may be asynchronously delay-loaded.
 
-To get started, clone the project, build the main SPF file, and copy it where
-you serve JS files for your site:
+To get started, clone the project, checkout the latest release, and copy the
+SPF release file where you serve JS files for your site:
 
 ```shell
-$ git clone https://github.com/youtube/spfjs.git
-$ cd spfjs
-$ make
-$ cp build/spf.js YOUR_JS_DIR/
+git clone https://github.com/youtube/spfjs.git
+cd spfjs
+git checkout `git tag --list | tail -n 1`
+cp dist/spf.js YOUR_JS_DIR/
 ```
-
-Running `make` will download needed packages.  You will need Python and Java
-installed to build and compile.
 
 Then, add the script to your page and initialize SPF:
 
@@ -87,15 +84,6 @@ Then, add the script to your page and initialize SPF:
   spf.init();
 </script>
 ```
-
-You can build the included demo application to see examples of both
-client-side and server-side implementation and test out the framework:
-
-```shell
-$ make demo
-```
-
-Then, open `http://0.0.0.0:8080/` in your browser.
 
 
 ## Client-Side Implementation
