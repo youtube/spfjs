@@ -121,6 +121,11 @@ function variables(ninja) {
                'bower_components/closure-compiler/compiler.jar');
   ninja.assign('jasmine_js',
                'third-party/phantomjs/examples/run-jasmine.js');
+  ninja.assign('gjslint_py',
+               'node_modules/closure-linter-wrapper/tools/gjslint.py')
+  ninja.assign('fixjsstyle_py',
+               'node_modules/closure-linter-wrapper/tools/fixjsstyle.py')
+  // Files.
   ninja.assign('license_js', 'src/license.js');
   ninja.assign('preamble_file', '');
   ninja.assign('preamble_length', '6');
@@ -219,6 +224,8 @@ function rules(ninja) {
           '|| (rm $out; false)'
         ].join(' '),
     jsdist: 'cat $in | sed "2 s/SPF/$name_and_ver/" > $out',
+    jslint: 'python $gjslint_py $flags $in',
+    jsfix: 'python $fixjsstyle_py $flags $in',
     manifest: [
           'echo $in',
           '| tr " " "\\n"',
@@ -249,6 +256,16 @@ function rules(ninja) {
   ninja.rule('jsdist')
       .run(cmds.jsdist)
       .description('jsdist $out');
+
+  // jslint: Check JS files for style issues.
+  ninja.rule('jslint')
+      .run(cmds.jslint)
+      .description('jslint $in');
+
+  // jsfix: Automatically fix JS files for style issues.
+  ninja.rule('jsfix')
+      .run(cmds.jsfix)
+      .description('jsfix $in');
 
   // manifest: Generate the test manifest.
   ninja.rule('manifest')
@@ -448,6 +465,8 @@ function targets(ninja) {
 function aliases(ninja) {
   // Define special files used in both rules and targets.
   var files = {
+    fixjsstyle: '$fixjsstyle_py',
+    gjslint: '$gjslint_py',
     jasmine: '$jasmine_js'
   };
 
@@ -456,6 +475,18 @@ function aliases(ninja) {
       .using('jasmine')
       .from('$builddir/test/runner.html')
       .need(files.jasmine);
+
+  ninja.edge('lint')
+      .using('jslint')
+      .from('src/client')
+      .need(files.gjslint)
+      .assign('flags', '--recurse');
+
+  ninja.edge('fix')
+      .using('jsfix')
+      .from('src/client')
+      .need(files.fixjsstyle)
+      .assign('flags', '--recurse');
 
   // Shortcuts.
   ninja.edge('dist')
