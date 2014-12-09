@@ -69,7 +69,8 @@ done
 git checkout -b release-$commit-$version
 
 # Build the release files.
-make dist
+echo "Building release files..."
+npm run dist
 
 # Add the files to be released.
 git add -f dist/*

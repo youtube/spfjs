@@ -92,18 +92,20 @@ if [[ $npm_publish == "false" ]]; then
   echo "    npm publish"
 else
   npm publish
+  echo "Published to npm."
 fi
 
 # Build a distribution archive for upload to GitHub and CDNs.
+echo "Building distribution archive..."
 mkdir -p build/spfjs-$version-dist/
 cp dist/* build/spfjs-$version-dist/
 cd build
 zip spfjs-$version-dist.zip spfjs-$version-dist/*
 cd ..
-echo "A distribution archive is availabe at:"
-echo "    build/spfjs-$version-dist.zip"
 echo "The archive contents are:"
 unzip -l build/spfjs-$version-dist.zip
+echo "The distribution archive has been created at:"
+echo "    build/spfjs-$version-dist.zip"
 
 # Return to the original branch.
 git checkout $branch
