@@ -15,16 +15,26 @@ the included demo application to see how everything works together in order to
 test out the framework:
 
 ```sh
-$ cd spfjs
-$ make demo
+cd spfjs
+npm install
+npm start
 ```
-
-Running `make` will download the needed packages and compile the code.
-
-> **Note:** You will need Python and Java installed.
 
 You can then open <http://localhost:8080/> in your browser and check out the
 demo.
+
+> **Note:** You will need `npm` to install the development dependencies and
+> `python` to run the demo application.  You can check if they are installed by
+> running the following:
+>
+> ```sh
+> npm --version
+> python --version
+> ```
+>
+> If you need to install `npm`, go to <https://nodejs.org/> and click "Install"
+> to get the installer.  If you need to install `python`, go to
+> <https://www.python.org/> and go to "Downloads" to get the installer.
 
 
 ## Enable SPF
@@ -32,15 +42,8 @@ demo.
 To add SPF to your site, you need to include the JS file and run `spf.init()`
 to enable the new functionality.
 
-If you cloned the project from GitHub or downloaded the source code, build the
-main SPF JS file, and copy it to where you serve JS files for your site:
-
-```sh
-$ make
-$ cp build/spf.js PATH-TO-YOUR-JS/
-```
-
-Then, add the script to your page and initialize SPF:
+After [downloading][download] the code, copy the `spf.js` file to where you
+serve JS files for your site, add the script to your page, and initialize SPF:
 
 ```html
 <script src="PATH-TO-YOUR-JS/spf.js"></script>
@@ -115,7 +118,6 @@ to dynamic navigation:
   "foot": "<!-- Scripts -->"
 }
 ```
-
 
 
 [download]: ../../download/
