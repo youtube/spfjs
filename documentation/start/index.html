@@ -156,29 +156,32 @@
 <p>If you cloned the project from GitHub or downloaded the source code, you can run
 the included demo application to see how everything works together in order to
 test out the framework:</p>
-<div class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">$ </span><span class="nb">cd </span>spfjs
-<span class="nv">$ </span>make demo
+<div class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nb">cd </span>spfjs
+npm install
+npm start
 </code></pre></div>
-<p>Running <code>make</code> will download the needed packages and compile the code.</p>
-
-<blockquote>
-<p><strong>Note:</strong> You will need Python and Java installed.</p>
-</blockquote>
-
 <p>You can then open <a href="http://localhost:8080/">http://localhost:8080/</a> in your browser and check out the
 demo.</p>
+
+<blockquote>
+<p><strong>Note:</strong> You will need <code>npm</code> to install the development dependencies and
+<code>python</code> to run the demo application.  You can check if they are installed by
+running the following:</p>
+<div class="highlight"><pre><code class="language-sh" data-lang="sh">npm --version
+python --version
+</code></pre></div>
+<p>If you need to install <code>npm</code>, go to <a href="https://nodejs.org/">https://nodejs.org/</a> and click &quot;Install&quot;
+to get the installer.  If you need to install <code>python</code>, go to
+<a href="https://www.python.org/">https://www.python.org/</a> and go to &quot;Downloads&quot; to get the installer.</p>
+</blockquote>
 
 <h2>Enable SPF</h2>
 
 <p>To add SPF to your site, you need to include the JS file and run <code>spf.init()</code>
 to enable the new functionality.</p>
 
-<p>If you cloned the project from GitHub or downloaded the source code, build the
-main SPF JS file, and copy it to where you serve JS files for your site:</p>
-<div class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">$ </span>make
-<span class="nv">$ </span>cp build/spf.js PATH-TO-YOUR-JS/
-</code></pre></div>
-<p>Then, add the script to your page and initialize SPF:</p>
+<p>After <a href="../../download/">downloading</a> the code, copy the <code>spf.js</code> file to where you
+serve JS files for your site, add the script to your page, and initialize SPF:</p>
 <div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;PATH-TO-YOUR-JS/spf.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
 <span class="nt">&lt;script&gt;</span>
   <span class="nx">spf</span><span class="p">.</span><span class="nx">init</span><span class="p">();</span>
