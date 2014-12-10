@@ -290,6 +290,7 @@ function targets(ninja) {
 
   var globs = {
     tests: 'src/client/**/*_test.js',
+    server: 'src/server/python/**/*.*',
     demo: 'src/server/demo/**/*.*',
     webpy: 'bower_components/webpy/web/**/*.py'
   };
@@ -306,6 +307,7 @@ function targets(ninja) {
     main: $.calcdeps(opts, [stub, 'ns:spf.main']),
     bootloader: $.calcdeps(opts, [stub, 'ns:spf.bootloader']),
     tests: $.calcdeps(opts, [stub].concat($.glob.sync(globs.tests))),
+    server: $.glob.sync(globs.server),
     demo: $.glob.sync(globs.demo)
   };
 
@@ -314,6 +316,7 @@ function targets(ninja) {
       .concat(srcs.main)
       .concat(srcs.bootloader)
       .concat(srcs.tests)
+      .concat(srcs.server)
       .concat(srcs.demo)
       );
 
@@ -428,8 +431,9 @@ function targets(ninja) {
   srcs.demo.splice(srcs.demo.indexOf('src/server/demo/app.py'), 1);
 
   // Symlink each demo source and library file into the build directory.
-  (srcs.demo.concat(libs.webpy)).forEach(function(src) {
+  (srcs.demo.concat(srcs.server).concat(libs.webpy)).forEach(function(src) {
     var out = src.replace('src/server/demo/', '$builddir/demo/')
+        .replace('src/server/python/', '$builddir/demo/')
         .replace('bower_components/webpy/', '$builddir/demo/');
     var depth = (out.match(/\//g) || []).length;
     ninja.edge(out)
