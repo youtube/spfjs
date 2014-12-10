@@ -15,11 +15,11 @@ LOCAL_WSK = "assets/vendor"
 LOCAL_IMAGES = "#{LOCAL_WSK}/images"
 LOCAL_STYLES = "#{LOCAL_WSK}/styles"
 
-WSK = "../vendor/web-starter-kit"
+WSK = "../bower_components/web-starter-kit"
 WSK_IMAGES = "#{WSK}/app/images"
 WSK_STYLES = "#{WSK}/app/styles"
 
-OCTICONS = "../vendor/octicons"
+OCTICONS = "../bower_components/octicons/octicons"
 
 AUTOPREFIXER_BROWSERS = [
   'ie >= 10',
@@ -34,44 +34,6 @@ AUTOPREFIXER_BROWSERS = [
 ]
 
 
-# The WSK files might need to be downloaded.
-# WSK @43823c9.
-wsk_url = "https://github.com/google/web-starter-kit/archive/43823c998e90567d9b365336af4041e07b6d6d10.tar.gz"
-wsk_tgz = "../vendor/web-starter-kit/web-starter-kit-43823c998e90567d9b365336af4041e07b6d6d10.zip"
-wsk_dir = File.dirname(wsk_tgz)
-wsk_ready = "#{WSK}/README.md"  # Track extraction via the README.
-file wsk_tgz do
-  FileUtils.mkdir_p(wsk_dir) unless File.directory?(wsk_dir)
-  cmd = "curl -L #{wsk_url} -o #{wsk_tgz}"
-  puts(cmd) if verbose
-  system(cmd)
-end
-file wsk_ready => wsk_tgz do
-  cmd = "tar -xmz -f #{wsk_tgz} --strip-components 1 -C #{wsk_dir}"
-  puts(cmd) if verbose
-  system(cmd)
-end
-
-
-# The Octicons files might need to be downloaded.
-# Octicons @v2.1.2
-octicons_url = "https://github.com/github/octicons/releases/download/v2.1.2/octicons.zip"
-octicons_zip = "../vendor/octicons/octicons-v2.1.2.zip"
-octicons_dir = File.dirname(octicons_zip)
-octicons_ready = "#{OCTICONS}/README.md"  # Track extraction via the README.
-file octicons_zip do
-  FileUtils.mkdir_p(octicons_dir) unless File.directory?(octicons_dir)
-  cmd = "curl -L #{octicons_url} -o #{octicons_zip}"
-  puts(cmd) if verbose
-  system(cmd)
-end
-file octicons_ready => octicons_zip do
-  cmd = "unzip -o #{octicons_zip} -d #{octicons_dir}"
-  puts(cmd) if verbose
-  system(cmd)
-end
-
-
 # The local WSK css file depends on all the WSK inputs.
 CSS_OUT_WSK = "#{LOCAL_STYLES}/wsk.css"
 wsk_css_files = [
@@ -80,7 +42,6 @@ wsk_css_files = [
   "#{WSK_STYLES}/main.css",
 ]
 wsk_css_files.each do |src|
-  file src => wsk_ready
   file CSS_OUT_WSK => src
 end
 file CSS_OUT_WSK do
@@ -109,7 +70,6 @@ end
 # The local WSK css file depends on all the WSK inputs.
 CSS_OUT_OCTICONS = "#{LOCAL_STYLES}/octicons.css"
 octicon_css_file = "#{OCTICONS}/octicons.css"
-file octicon_css_file => octicons_ready
 file CSS_OUT_OCTICONS => octicon_css_file do
   css = File.read(octicon_css_file)
   # Fix Octions path.
@@ -168,7 +128,6 @@ octicons_files = [
   "#{OCTICONS}/octicons.woff",
 ]
 octicons_files.each do |src|
-  file src => octicons_ready
   dst = src.sub(OCTICONS, LOCAL_IMAGES)
   IMG_OUTS_OCTICONS.push(dst)
   file dst => src do

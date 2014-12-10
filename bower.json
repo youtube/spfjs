@@ -17,6 +17,8 @@
   "devDependencies": {
     "closure-compiler": "http://dl.google.com/closure-compiler/compiler-20140625.zip",
     "jasmine": "https://github.com/pivotal/jasmine/raw/ea76a30d85218954625d4685b246218d9ca2dfe1/dist/jasmine-standalone-1.3.1.zip",
-    "webpy": "https://github.com/webpy/webpy/archive/73f1119649ffe54ba26ddaf6a612aaf1dab79b7f.zip"
+    "webpy": "https://github.com/webpy/webpy/archive/73f1119649ffe54ba26ddaf6a612aaf1dab79b7f.zip",
+    "web-starter-kit": "~0.4.0",
+    "octicons": "~2.1.2"
   }
 }
