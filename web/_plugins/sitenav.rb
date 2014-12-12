@@ -19,7 +19,7 @@ module Jekyll
       @dir = dir
       @name = 'index.html'
 
-      self.process(@name)
+      process(@name)
 
       @data = {}
       @data.default_proc = proc do |hash, key|
@@ -41,6 +41,9 @@ module Jekyll
 
   class SiteNavGenerator < Generator
 
+    safe true
+    priority :normal
+
     def link(sitenav, pages, index, prefix, site)
       sitenav.each do |item|
         url = [prefix, item['path']].join('/').gsub('//', '/')
@@ -57,7 +60,7 @@ module Jekyll
         # Link url -> item.
         index[url] = item
         if item.key?('sub')
-          self.link(item['sub'], pages, index, url, site)
+          link(item['sub'], pages, index, url, site)
         end
       end
     end
@@ -70,7 +73,7 @@ module Jekyll
         page.data['original_layout'] = page.data['layout']
       end
       index = {}
-      self.link(site.data['sitenav'], pages, index, '', site)
+      link(site.data['sitenav'], pages, index, '', site)
       site.data['sitenav_index'] = index
     end
 
