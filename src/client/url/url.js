@@ -111,7 +111,7 @@ spf.url.origin = function(url) {
 
 
 /**
- * Appends the SPF identifier to a URL, to be used in requests.  If the
+ * Adds the SPF identifier to a URL, to be used in requests.  If the
  * identifier contains {@code __type__} then that value will be replaced
  * with the value of {@code opt_type}.
  *
@@ -124,17 +124,62 @@ spf.url.identify = function(url, opt_type) {
   if (ident) {
     var type = opt_type || '';
     ident = ident.replace('__type__', type);
-    var result = spf.string.partition(url, '#');
-    url = result[0];
 
-    // The identifier may not be a parameter, but an extension.
-    if (spf.string.startsWith(ident, '?') &&
-        spf.string.contains(url, '?')) {
-      ident = ident.replace('?', '&');
+    // Split the URL.
+    var hashParts = spf.string.partition(url, '#');
+    var queryParts = spf.string.partition(hashParts[0], '?');
+    var path = queryParts[0];
+    var querySep = queryParts[1];
+    var queryVal = queryParts[2];
+    var hashSep = hashParts[1];
+    var hashVal = hashParts[2];
+
+    // Inject the identifier.
+    if (spf.string.startsWith(ident, '?')) {
+      // If using a query-based identifier, append the identifier to the
+      // existing query string.
+      // For "?ident":
+      //     /path -> path?ident
+      //     /path?query -> path?query&ident
+      if (querySep) {
+        ident = ident.replace('?', '&');
+      }
+      queryVal += ident;
+    } else if (spf.string.startsWith(ident, '.')) {
+      // If using an extension-based identifier, replace the existing
+      // extension with the identifier.  If no extension exists, the
+      // identifier is appended.  However, if the URL specifies a directory
+      // (i.e. it ends with "/"), then append "index" to the URL first.
+      // For ".ident":
+      //     /path -> /path.ident
+      //     /path.ext -> /path.ident
+      //     /path/ -> /path/index.ident
+      if (spf.string.endsWith(path, '/')) {
+        ident = 'index' + ident;
+      } else {
+        var ext = path.lastIndexOf('.');
+        if (ext > -1) {
+          path = path.substring(0, ext);
+        }
+      }
+      path += ident;
+    } else {
+      // Finally, if using any other identifier, just append the identifier,
+      // preventing duplicate "/" in the URL.
+      // For "/ident":
+      //     /path -> /path/ident
+      //     /path/ -> /path/ident
+      // For "_ident":
+      //     /path -> /path_ident
+      //     /path/ -> /path/_ident
+      if (spf.string.endsWith(path, '/') && spf.string.startsWith(ident, '/')) {
+        ident = ident.substring(1);
+      }
+      path += ident;
     }
 
-    // Inject the idenitifier and re-add the hash.
-    url += ident + result[1] + result[2];
+    // Re-assemble the URL.
+    url = path + querySep + queryVal + hashSep + hashVal;
   }
   return url;
 };
