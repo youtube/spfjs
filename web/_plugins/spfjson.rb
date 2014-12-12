@@ -34,21 +34,28 @@ module Jekyll
       html = @output
 
       title_regex = /<title>(.*)<\/title>/m
-      title = title_regex.match(html).captures[0]
       head_regex = /<!-- begin spf head -->(.*)<!-- end spf head -->/m
-      head = head_regex.match(html).captures[0]
+      body_regex = /<!-- begin spf body: (\w+) -->(.*)<!-- end spf body: \1 -->/m
       foot_regex = /<!-- begin spf foot -->(.*)<!-- end spf foot -->/m
-      foot = foot_regex.match(html).captures[0]
-      main_regex = /<main[^>]*>(.*)<\/main>/m
-      main = main_regex.match(html).captures[0]
-      body_class_regex = /<body class="([^"]*)">/
-      body_class = body_class_regex.match(html).captures[0]
+      attr_body_class_regex = /<body[^>]* class="([^"]*)"/
+
+      title = html.match(title_regex)[1]
+      head = html.match(head_regex)[1]
+      body = {}
+      html.scan(body_regex).each do |group|
+        body[group[0]] = group[1]
+      end
+      foot = html.match(foot_regex)[1]
+      attr_body_class = html.match(attr_body_class_regex)[1]
+      attrs = {
+        'body' => {'class' => attr_body_class}
+      }
 
       response = {
         'title' => title,
         'head' => head,
-        'body' => {'main' => main},
-        'attr' => {'body' => {'class' => body_class}},
+        'body' => body,
+        'attr' => attrs,
         'foot' => foot,
       }
       @output = response.to_json
