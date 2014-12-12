@@ -27,14 +27,63 @@ describe('spf.url', function() {
       expect(spf.url.identify(url, 'test')).toEqual('/page');
     });
 
-    it('appends a static identifier directly', function() {
-      spf.config.set('url-identifier', '.spf.json');
-      var url = '/page.html';
-      expect(spf.url.identify(url)).toEqual('/page.html.spf.json');
-      expect(spf.url.identify(url, 'test')).toEqual('/page.html.spf.json');
+    it('appends an identifier correctly', function() {
+      spf.config.set('url-identifier', '/spf');
+      var url = '/page';
+      expect(spf.url.identify(url)).toEqual('/page/spf');
+      expect(spf.url.identify(url, 'test')).toEqual('/page/spf');
+      url = '/page?arg=1';
+      expect(spf.url.identify(url)).toEqual('/page/spf?arg=1');
+      expect(spf.url.identify(url, 'test')).toEqual('/page/spf?arg=1');
+      url = '/page#target';
+      expect(spf.url.identify(url)).toEqual('/page/spf#target');
+      expect(spf.url.identify(url, 'test')).toEqual('/page/spf#target');
+      url = '/';
+      expect(spf.url.identify(url)).toEqual('/spf');
+      expect(spf.url.identify(url, 'test')).toEqual('/spf');
+      url = '/?arg=1';
+      expect(spf.url.identify(url)).toEqual('/spf?arg=1');
+      expect(spf.url.identify(url, 'test')).toEqual('/spf?arg=1');
+      url = '/#target';
+      expect(spf.url.identify(url)).toEqual('/spf#target');
+      expect(spf.url.identify(url, 'test')).toEqual('/spf#target');
     });
 
-    it('appends dynamic identifier as a parameter', function() {
+    it('appends an extension identifier correctly', function() {
+      spf.config.set('url-identifier', '.spf.json');
+      var url = '/page';
+      expect(spf.url.identify(url)).toEqual('/page.spf.json');
+      expect(spf.url.identify(url, 'test')).toEqual('/page.spf.json');
+      url = '/page';
+      expect(spf.url.identify(url)).toEqual('/page.spf.json');
+      expect(spf.url.identify(url, 'test')).toEqual('/page.spf.json');
+      url = '/page?arg=1';
+      expect(spf.url.identify(url)).toEqual('/page.spf.json?arg=1');
+      expect(spf.url.identify(url, 'test')).toEqual('/page.spf.json?arg=1');
+      url = '/page#target';
+      expect(spf.url.identify(url)).toEqual('/page.spf.json#target');
+      expect(spf.url.identify(url, 'test')).toEqual('/page.spf.json#target');
+      url = '/page.html';
+      expect(spf.url.identify(url)).toEqual('/page.spf.json');
+      expect(spf.url.identify(url, 'test')).toEqual('/page.spf.json');
+      url = '/page.html?arg=1';
+      expect(spf.url.identify(url)).toEqual('/page.spf.json?arg=1');
+      expect(spf.url.identify(url, 'test')).toEqual('/page.spf.json?arg=1');
+      url = '/page.html#target';
+      expect(spf.url.identify(url)).toEqual('/page.spf.json#target');
+      expect(spf.url.identify(url, 'test')).toEqual('/page.spf.json#target');
+      url = '/';
+      expect(spf.url.identify(url)).toEqual('/index.spf.json');
+      expect(spf.url.identify(url, 'test')).toEqual('/index.spf.json');
+      url = '/?arg=1';
+      expect(spf.url.identify(url)).toEqual('/index.spf.json?arg=1');
+      expect(spf.url.identify(url, 'test')).toEqual('/index.spf.json?arg=1');
+      url = '/#target';
+      expect(spf.url.identify(url)).toEqual('/index.spf.json#target');
+      expect(spf.url.identify(url, 'test')).toEqual('/index.spf.json#target');
+    });
+
+    it('appends a query identifier correctly', function() {
       spf.config.set('url-identifier', '?spf=__type__');
       var url = '/page';
       expect(spf.url.identify(url)).toEqual('/page?spf=');
@@ -42,6 +91,9 @@ describe('spf.url', function() {
       url = '/page?arg=1';
       expect(spf.url.identify(url)).toEqual('/page?arg=1&spf=');
       expect(spf.url.identify(url, 'test')).toEqual('/page?arg=1&spf=test');
+      url = '/page#target';
+      expect(spf.url.identify(url)).toEqual('/page?spf=#target');
+      expect(spf.url.identify(url, 'test')).toEqual('/page?spf=test#target');
     });
 
   });
