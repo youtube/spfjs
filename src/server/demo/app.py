@@ -14,38 +14,14 @@ import os
 import random
 import time
 
+import spf
 import web
-
-
-def Hashcode(s):
-  """A string hash function for compatibility with spf.string.hashCode.
-
-  This function is similar to java.lang.String.hashCode().
-  The hash code for a string is computed as
-  s[0] * 31 ^ (n - 1) + s[1] * 31 ^ (n - 2) + ... + s[n - 1],
-  where s[i] is the ith character of the string and n is the length of
-  the string. We mod the result to make it between 0 (inclusive) and 2^32
-  (exclusive).
-
-  Args:
-    s: A string.
-
-  Returns:
-    Integer hash value for the string, between 0 (inclusive) and 2^32
-    (exclusive).  The empty string returns 0.
-  """
-  result = 0
-  max_value = 2**32
-  for char in s:
-    result = (31 * result) + ord(char)
-    result %= max_value
-  return result
 
 
 # Set up the basic app config.
 templates = web.template.render('templates/',
                                 globals={'randint': random.randint,
-                                         'hashcode': Hashcode,
+                                         'hashcode': spf.hashcode,
                                          'json_encode': json.dumps})
 
 urls = (
@@ -79,18 +55,16 @@ class Servlet(object):
     web.header('Content-Type', 'application/javascript')
 
   def _SetSPFMultipartHeaders(self):
-    web.header('X-SPF-Response-Type', 'multipart')
+    web.header(spf.HeaderOut.RESPONSE_TYPE, spf.ResponseType.MULTIPART)
 
   def IsSPFRequest(self):
     """Gets whether the current request is for SPF."""
-    req = web.input(spf=None)
-    has_spf_header = bool(web.ctx.env.get('HTTP_X_SPF_REQUEST'))
-    has_spf_param = bool(req.spf)
-    return has_spf_header or has_spf_param
+    req = web.input(**{spf.UrlIdentifier.KEY: None})
+    return bool(req[spf.UrlIdentifier.KEY])
 
   def GetReferer(self):
     """Gets the referer, preferring the custom SPF version."""
-    referer = web.ctx.env.get('HTTP_X_SPF_REFERER')
+    referer = web.ctx.env.get(spf.HeaderIn.REFERER.cgi_env_var())
     if not referer:
       referer = web.ctx.env.get('HTTP_REFERER')
     return referer
@@ -105,17 +79,8 @@ class Servlet(object):
   def CreateSPFResponse(self, content, fragments=None):
     """Creates an SPF response object for template.
 
-    The object has the basic following format:
-    1. title - Update document title
-    2. url - Update document url
-    3. head - Install early page-wide styles
-    4. attr - Set element attributes
-    5. body - Set element content and install element-level scripts
-              (styles handled by browser)
-    6. foot - Install late page-wide scripts
-
-    All fields are optional and the commonly needed response values are
-    title, head, body, and foot.
+    See http://youtube.github.io/spfjs/documentation/responses/ for an overview
+    of respones, how they are processed, and formatting.
 
     Args:
       content: The content template instanace to render.
@@ -128,24 +93,24 @@ class Servlet(object):
     response = {}
     head = str(getattr(content, 'stylesheet', ''))
     if head:
-      response['head'] = head
+      response[spf.ResponseKey.HEAD] = head
     foot = str(getattr(content, 'javascript', ''))
     if foot:
-      response['foot'] = foot
+      response[spf.ResponseKey.FOOT] = foot
     title = str(getattr(content, 'title', ''))
     if title:
-      response['title'] = title
+      response[spf.ResponseKey.TITLE] = title
     attr = json.loads(str(getattr(content, 'attributes', '{}')))
     if attr:
-      response['attr'] = attr
+      response[spf.ResponseKey.ATTR] = attr
     if fragments:
-      response['body'] = {}
+      body = response[spf.ResponseKey.BODY] = {}
       for frag_id in fragments:
-        response['body'][frag_id] = getattr(content, fragments[frag_id])
+        body[frag_id] = getattr(content, fragments[frag_id])
     else:
       content_str = str(content)
       if content_str:
-        response['body'] = {'content': content_str}
+        response[spf.ResponseKey.BODY] = {'content': content_str}
     return response
 
   def RenderSPF(self, content, fragments=None):
@@ -184,27 +149,23 @@ class Servlet(object):
     self._SetChunkedHeaders()
     self._SetJSONHeaders()
     self._SetSPFMultipartHeaders()
-    # For clarity, use variables for the structure of a multipart response.
-    multipart_begin = '[\r\n'
-    multipart_delim = ',\r\n'
-    multipart_end = ']\r\n'
     resp = self.CreateSPFResponse(content, fragments=fragments)
     first_chunk = {}
-    if 'head' in resp:
-      first_chunk['head'] = resp.pop('head')
-    if 'title' in resp:
-      first_chunk['title'] = resp.pop('title')
+    if spf.ResponseKey.HEAD in resp:
+      first_chunk[spf.ResponseKey.HEAD] = resp.pop(spf.ResponseKey.HEAD)
+    if spf.ResponseKey.TITLE in resp:
+      first_chunk[spf.ResponseKey.TITLE] = resp.pop(spf.ResponseKey.TITLE)
     # Begin the multipart response.
-    yield multipart_begin
+    yield spf.MultipartToken.BEGIN
     # Send part 1.
     yield self.EncodeJSON(first_chunk)
-    yield multipart_delim
+    yield spf.MultipartToken.DELIMITER
     # Simulate real work being done.
     time.sleep(0.25)
     if not truncate:
       # Send part 2.
       yield self.EncodeJSON(resp)
-      yield multipart_end
+      yield spf.MultipartToken.END
 
   def RenderHtml(self, content):
     """Returns a rendered HTML response.
@@ -266,7 +227,7 @@ class Servlet(object):
   def Redirect(self, url):
     """Redirects to a given URL."""
     if self.IsSPFRequest():
-      response = {'redirect': url}
+      response = {spf.ResponseKey.REDIRECT: url}
       return self.EncodeJSON(response)
     else:
       raise web.seeother(url)
@@ -371,27 +332,24 @@ class ChunkedSampleMultipart(_ChunkedSample):
     self._SetJSONHeaders()
     if not self.no_multipart_header:
       self._SetSPFMultipartHeaders()
-    # For clarity, use variables for the structure of a multipart response.
-    multipart_begin = '[\r\n'
-    multipart_delim = ',\r\n'
-    multipart_end = ']\r\n'
+    # Create a sample 3 part response.
     alpha = range(ord('a'), ord('z') + 1)
     group_1 = dict((chr(l), l) for l in alpha if l < ord('i'))
     group_2 = dict((chr(l), l) for l in alpha if l >= ord('i') and l < ord('q'))
     group_3 = dict((chr(l), l) for l in alpha if l >= ord('q'))
     # Begin the multipart response.
-    res = multipart_begin
+    res = spf.MultipartToken.BEGIN
     # Add the parts.
     for group in [group_1, group_2, group_3]:
       if self.add_parse_error and group == group_2:
         res += '__parse_error__'
-      res += self.EncodeJSON(group) + multipart_delim
+      res += self.EncodeJSON(group) + spf.MultipartToken.DELIMITER
     # End the multipart response.
     res += 'null'  # Avoid trailing commas in JSON arrays.
     if self.no_final_delimiter:
-      res += ']'
+      res += ']'  # Send a bad end token if requested for testing.
     else:
-      res += multipart_end
+      res += spf.MultipartToken.END
     # Send across multiple chunks.
     for chunk in self._IterChunks(res, self.num_chunks):
       time.sleep(self.delay_time)
@@ -404,6 +362,7 @@ class ChunkedSampleSingle(_ChunkedSample):
     # Set headers.
     self._SetChunkedHeaders()
     self._SetJSONHeaders()
+    # Create a sample 1 part response.
     alpha = range(ord('a'), ord('z') + 1)
     group = dict((chr(l), l) for l in alpha)
     res = self.EncodeJSON(group)
