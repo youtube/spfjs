@@ -1,4 +1,4 @@
-# [![SPF](https://youtube.github.io/spfjs/assets/images/banner-728x388.jpg)](https://youtube.github.io/spfjs/)
+# [![SPF](https://youtube.github.io/spfjs/assets/images/banner-728x388.jpg)](http://youtube.github.io/spfjs/)
 [![NPM Version](https://badge.fury.io/js/spf.svg)](http://badge.fury.io/js/spf)
 [![Build Status](https://secure.travis-ci.org/youtube/spfjs.svg?branch=master)](http://travis-ci.org/youtube/spfjs)
 
