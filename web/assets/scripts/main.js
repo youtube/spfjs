@@ -12,6 +12,19 @@
   var appbar = document.getElementById('app-bar');
   var menu = document.getElementById('menu');
   var content = document.getElementById('content');
+  var progress = document.getElementById('progress');
+
+  var previous = -1;
+  var timer = -1;
+
+  var animation = {
+    // Most progress waiting for response.
+    REQUEST: [100, 95, 'waiting'],
+    // Finish during short processing time.
+    PROCESS: [10, 101, 'waiting'],
+    // Fade it out slowly.
+    DONE: [100, 101, 'done']
+  };
 
   html.className = html.className.replace('no-js', '');
   if (!('ontouchstart' in window)) {
@@ -30,13 +43,38 @@
     nav.classList.toggle('open');
   }
 
+  function setProgress(anim) {
+    clearTimeout(timer);
+    progress.className = '';
+    var ps = progress.style;
+    ps.transitionDuration = ps.webkitTransitionDuration = anim[0] + 'ms';
+    ps.width = anim[1] + '%';
+    if (anim[2] == 'done') {
+      progress.className = anim[2];
+      timer = setTimeout(function() {
+        ps.width = '0%';  // Reset bar to beginning after done.
+      }, anim[0]);
+    } else {
+      timer = setTimeout(function() {
+        progress.className = anim[2];
+      }, anim[0]);
+    }
+  }
+
+  function clearProgress() {
+    clearTimeout(timer);
+    progress.className = '';
+    var ps = progress.style;
+    ps.transitionDuration = ps.webkitTransitionDuration = '0ms';
+    ps.width = '0%';
+  }
+
   function handleNavClick(event) {
     if (event.target.nodeName === 'A' || event.target.nodeName === 'LI') {
       closeMenu();
     }
   }
 
-  var previous = -1;
   function handleScroll(event) {
     var current = body.scrollTop;
     if (current >= 80 && previous < 80) {
@@ -47,12 +85,23 @@
     previous = current;
   }
 
-  function handleNavigateDone(event) {
+  function handleRequest(event) {
+    setProgress(animation.REQUEST);
+  }
+
+  function handleProcess(event) {
+    setProgress(animation.PROCESS);
+  }
+
+  function handleDone(event) {
+    setProgress(animation.DONE);
     window.scroll(0,0);
     handleScroll();
   }
 
-  function handleScriptUnload(event) {
+  function handleScriptBeforeUnload(event) {
+    // If this script is going to be replaced with a new version,
+    // dispose before the new one is loaded.
     if (event.detail.name == 'main') {
       dispose();
     }
@@ -68,8 +117,10 @@
       'cache-unified': true,
       'url-identifier': '.spf.json'
     });
-    document.addEventListener('spfdone', handleNavigateDone);
-    document.addEventListener('spfjsbeforeunload', handleScriptUnload);
+    document.addEventListener('spfrequest', handleRequest);
+    document.addEventListener('spfprocess', handleProcess);
+    document.addEventListener('spfdone', handleDone);
+    document.addEventListener('spfjsbeforeunload', handleScriptBeforeUnload);
   }
 
   function dispose() {
@@ -79,8 +130,12 @@
     window.removeEventListener('scroll', handleScroll);
 
     spf.dispose();
-    document.removeEventListener('spfdone', handleNavigateDone);
-    document.removeEventListener('spfjsbeforeunload', handleScriptUnload);
+    document.removeEventListener('spfprocess', handleRequest);
+    document.removeEventListener('spfrequest', handleProcess);
+    document.removeEventListener('spfdone', handleDone);
+    document.removeEventListener('spfjsbeforeunload', handleScriptBeforeUnload);
+
+    clearProgress();
   }
 
   init();
