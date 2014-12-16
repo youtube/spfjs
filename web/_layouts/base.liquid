@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" class="no-js">
+<html lang="en" class="spf-link no-js">
 <head>
 {% include meta.liquid %}
 <!-- begin spf head -->
 {% include styles.liquid %}
 <!-- end spf head -->
 </head>
-<body class="{{ page.original_layout }}">
+<body id="body" class="{{ page.original_layout }}">
 
 <header id="app-bar" class="app-bar promote-layer">
   <div class="app-bar-container">
@@ -25,7 +25,11 @@
   </nav>
 </div>
 
+<div id="content">
+<!-- begin spf body: content -->
 {{ content }}
+<!-- end spf body: content -->
+</div>
 
 <footer>
   <div class="container">

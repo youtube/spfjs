@@ -11,7 +11,7 @@
   var nav = document.getElementById('nav');
   var appbar = document.getElementById('app-bar');
   var menu = document.getElementById('menu');
-  var main = document.getElementsByTagName('main')[0];
+  var content = document.getElementById('content');
 
   html.className = html.className.replace('no-js', '');
   if (!('ontouchstart' in window)) {
@@ -47,9 +47,41 @@
     previous = current;
   }
 
-  // Menu
-  main.addEventListener('click', closeMenu);
-  menu.addEventListener('click', toggleMenu);
-  nav.addEventListener('click', handleNavClick);
-  window.addEventListener('scroll', handleScroll);
+  function handleNavigateDone(event) {
+    window.scroll(0,0);
+    handleScroll();
+  }
+
+  function handleScriptUnload(event) {
+    if (event.detail.name == 'main') {
+      dispose();
+    }
+  }
+
+  function init() {
+    content.addEventListener('click', closeMenu);
+    menu.addEventListener('click', toggleMenu);
+    nav.addEventListener('click', handleNavClick);
+    window.addEventListener('scroll', handleScroll);
+
+    spf.init({
+      'cache-unified': true,
+      'url-identifier': '.spf.json'
+    });
+    document.addEventListener('spfdone', handleNavigateDone);
+    document.addEventListener('spfjsbeforeunload', handleScriptUnload);
+  }
+
+  function dispose() {
+    content.removeEventListener('click', closeMenu);
+    menu.removeEventListener('click', toggleMenu);
+    nav.removeEventListener('click', handleNavClick);
+    window.removeEventListener('scroll', handleScroll);
+
+    spf.dispose();
+    document.removeEventListener('spfdone', handleNavigateDone);
+    document.removeEventListener('spfjsbeforeunload', handleScriptUnload);
+  }
+
+  init();
 })();
