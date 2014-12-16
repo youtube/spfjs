@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="no-js">
+<html lang="en" class="spf-link no-js">
 <head>
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -23,13 +23,15 @@
 <meta name="msapplication-TileImage" content="/spfjs/images/touch/ms-touch-icon-144x144-precomposed.png">
 <meta name="msapplication-TileColor" content="#3372DF">
 
-<link rel="stylesheet" href="/spfjs/assets/vendor/styles/wsk.css">
-<link rel="stylesheet" href="/spfjs/assets/vendor/styles/octicons.css">
-<link rel="stylesheet" href="/spfjs/assets/styles/main.css">
-<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,600,900|Roboto+Condensed:300,300italic,400,700">
+<!-- begin spf head -->
+<link rel="stylesheet" name="roboto" href="//fonts.googleapis.com/css?family=Roboto:300,600,900|Roboto+Condensed:300,300italic,400,700">
+<link rel="stylesheet" name="wsk" href="/spfjs/assets/vendor/wsk/0.4.0/styles/wsk.css">
+<link rel="stylesheet" name="octicons" href="/spfjs/assets/vendor/octicons/2.1.2/octicons.css">
+<link rel="stylesheet" name="main" href="/spfjs/assets/styles/main.css?t=2014-12-16T16%3A51%3A42-05%3A00">
 
+<!-- end spf head -->
 </head>
-<body class="documentation">
+<body id="body" class="documentation">
 
 <header id="app-bar" class="app-bar promote-layer">
   <div class="app-bar-container">
@@ -65,6 +67,8 @@
   </nav>
 </div>
 
+<div id="content">
+<!-- begin spf body: content -->
 <main class="clear">
 
   <nav class="toc g-wide--1 g-medium--1">
@@ -221,6 +225,8 @@ section without requiring developers to create an explicit element.</p>
 
 </main>
 
+<!-- end spf body: content -->
+</div>
 
 <footer>
   <div class="container">
@@ -232,18 +238,25 @@ section without requiring developers to create an explicit element.</p>
   </div>
 </footer>
 
-<script src="/spfjs/assets/scripts/main.js"></script>
+<div id="progress"><dt></dt><dd></dd></div>
 
-<script>
+<!-- begin spf foot -->
+<script name="spf" src="/spfjs/assets/vendor/spf/2.1.1/spf.js"></script>
+<script name="main" src="/spfjs/assets/scripts/main.js?t=2014-12-16T16%3A51%3A42-05%3A00"></script>
+
+<script name="analytics">
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
   })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+</script>
+<script>
   if (window.location.hostname == 'youtube.github.io') {
     ga('create', 'UA-52278317-1', 'auto');
     ga('send', 'pageview');
   }
 </script>
 
+<!-- end spf foot -->
 </body>
 </html>

@@ -257,6 +257,70 @@ footer {
 }
 
 
+/*** progress ***/
+
+@-webkit-keyframes pulse {
+   30% { opacity: 0.6; }
+   60% { opacity: 0; }
+  100% { opacity: 0.6; }
+}
+@keyframes pulse {
+   30% { opacity: 0.6; }
+   60% { opacity: 0; }
+  100% { opacity: 0.6; }
+}
+
+#progress {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  left: -6px;
+  width: 0%;
+  height: 2px;
+  background: #AEAEBF;
+  border-radius: 1px;
+  /* the following transition times are overridden by JS */
+  -webkit-transition: width 150ms ease-out, opacity 150ms linear;
+  transition: width 150ms ease-out, opacity 150ms linear;
+}
+#progress.done {
+  opacity: 0;
+}
+
+#progress dd,
+#progress dt {
+  position: absolute;
+  top: 0;
+  height: 2px;
+  box-shadow: #9591AC 1px 0 6px 1px;
+  border-radius: 100%;
+}
+#progress dd {
+  opacity: 0.6;
+  width: 20px;
+  right: 0;
+  clip: rect(-6px, 22px, 14px, 10px);
+}
+#progress dt {
+  opacity: 0.6;
+  width: 180px;
+  right: -80px;
+  clip: rect(-6px, 90px, 14px, -6px);
+}
+
+#progress.waiting dd,
+#progress.waiting dt {
+  -webkit-animation: pulse 2s ease-out 0s infinite;
+  animation: pulse 2s ease-out 0s infinite;
+}
+
+.scrolled #progress,
+.scrolled #progress dd,
+.scrolled #progress dt {
+  background: #4E5A92;
+}
+
+
 /*** home ***/
 
 .stage {
