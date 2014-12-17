@@ -49,9 +49,6 @@ spf.dispose = function() {};
  * second URL is navigated to while a first is still pending, the first will be
  * cancelled.
  *
- * NOTE: Currently, the optional {@code onSuccess} and {@code onError}
- * callbacks are ignored in this function.  This will be fixed shortly.
- *
  * @param {string} url The URL to navigate to, without the SPF identifier.
  * @param {(Object|spf.RequestOptions)=} opt_options Optional request options.
  */
@@ -63,10 +60,7 @@ spf.navigate = function(url, opt_options) {};
  *
  * Similar to {@link spf.navigate}, but intended for traditional content
  * updates, not page navigation.  Not subject to restrictions on the number of
- * simultaneous requests.  The content is first requested.  If the response is
- * successfully parsed, it is processed and the URL and response object are
- * passed to the optional {@code onSuccess} callback.  If not, the URL is passed
- * to the optional {@code onError} callback.
+ * simultaneous requests.
  *
  * @param {string} url The URL to load, without the SPF identifier.
  * @param {(Object|spf.RequestOptions)=} opt_options Optional request options.
@@ -91,13 +85,8 @@ spf.process = function(response, opt_callback) {};
  * Prefetches a URL.
  *
  * Use to prime the SPF request cache with the content and the browser cache
- * with script and stylesheet URLs.
- *
- * The content is first requested.  If the response is successfully parsed, it
- * is preprocessed to prefetch scripts and stylesheets, and the URL and
- * response object are then passed to the optional {@code onSuccess}
- * callback. If not, the URL is passed to the optional {@code onError}
- * callback.
+ * with script and stylesheet URLs.  If the response is successfully parsed, it
+ * is preprocessed to prefetch scripts and stylesheets as well.
  *
  * @param {string} url The URL to prefetch, without the SPF identifier.
  * @param {(Object|spf.RequestOptions)=} opt_options Optional request options.
