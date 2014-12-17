@@ -19,7 +19,7 @@ goog.require('spf');
  *
  * @param {string} str The string to test.
  * @param {string} substr The substring to test for.
- * @return {boolean} True if {@code str} contains {@code substr}.
+ * @return {boolean} True if `str` contains `substr`.
  */
 spf.string.contains = function(str, substr) {
   return str.indexOf(substr) != -1;
@@ -30,9 +30,9 @@ spf.string.contains = function(str, substr) {
  * Fast prefix-checker.
  *
  * @param {string} str The string to check.
- * @param {string} prefix A string to look for at the start of {@code str}.
+ * @param {string} prefix A string to look for at the start of `str`.
  * @param {number=} opt_offset Offset from index 0 at which to check.
- * @return {boolean} True if {@code str} begins with {@code prefix}.
+ * @return {boolean} True if `str` begins with `prefix`.
  */
 spf.string.startsWith = function(str, prefix, opt_offset) {
   var idx = opt_offset || 0;
@@ -44,8 +44,8 @@ spf.string.startsWith = function(str, prefix, opt_offset) {
  * Fast suffix-checker.
  *
  * @param {string} str The string to check.
- * @param {string} suffix A string to look for at the end of {@code str}.
- * @return {boolean} True if {@code str} ends with {@code suffix}.
+ * @param {string} suffix A string to look for at the end of `str`.
+ * @return {boolean} True if `str` ends with `suffix`.
  */
 spf.string.endsWith = function(str, suffix) {
   var l = str.length - suffix.length;
@@ -119,7 +119,7 @@ spf.string.partition = function(str, sep) {
  * (exclusive).
  *
  * @param {string} str A string.
- * @return {number} Hash value for {@code str}, between 0 (inclusive) and 2^32
+ * @return {number} Hash value for `str`, between 0 (inclusive) and 2^32
  *  (exclusive). The empty string returns 0.
  */
 spf.string.hashcode = function(str) {

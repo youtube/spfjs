@@ -28,7 +28,7 @@ goog.require('spf.url');
 
 
 /**
- * Parses text for an SPF response.  If {@code opt_multipart} is true, attempts
+ * Parses text for an SPF response.  If `opt_multipart` is true, attempts
  * to parse the text for one or more (in)complete multipart SPF responses.
  *
  * @param {string} text Text to parse.
@@ -36,9 +36,9 @@ goog.require('spf.url');
  *     one or more multipart SPF response sections.
  * @param {boolean=} opt_lastDitch Whether to parse the text as the final
  *     one, potentially handling malformed but valid responses.  Requires
- *     {@code opt_multipart} to be true.
- * @throws {Error} If the {@code text} contains invalid JSON, or when
- *     {@code opt_multipart} is true, if a section of a multipart response
+ *     `opt_multipart` to be true.
+ * @throws {Error} If the `text` contains invalid JSON, or when
+ *     `opt_multipart` is true, if a section of a multipart response
  *     contains invalid JSON.
  * @return {{parts: Array.<spf.SingleResponse>, extra: string}}
  */
@@ -113,8 +113,8 @@ spf.nav.response.parse = function(text, opt_multipart, opt_lastDitch) {
  * @param {string} url The URL of the response being processed.
  * @param {spf.SingleResponse} response The SPF response object to process.
  * @param {function(string, spf.SingleResponse)=} opt_callback Function to
- *     execute when processing is done; the first argument is {@code url},
- *     the second argument is {@code response}.
+ *     execute when processing is done; the first argument is `url`,
+ *     the second argument is `response`.
  * @param {boolean=} opt_navigate Whether this is a navigation request. Only
  *     navigation requests will process history changes.
  * @param {boolean=} opt_reverse Whether this is "backwards" navigation. True
@@ -390,8 +390,8 @@ spf.nav.response.process = function(url, response, opt_callback, opt_navigate,
  * @param {string} url The URL of the response being preprocessed.
  * @param {spf.SingleResponse} response The SPF response object to preprocess.
  * @param {function(string, spf.SingleResponse)=} opt_callback Function to
- *     execute when preprocessing is done; the first argument is {@code url},
- *     the second argument is {@code response}.
+ *     execute when preprocessing is done; the first argument is `url`,
+ *     the second argument is `response`.
  */
 spf.nav.response.preprocess = function(url, response, opt_callback) {
   spf.debug.info('nav.response.preprocess ', response);

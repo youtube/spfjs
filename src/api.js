@@ -82,7 +82,7 @@ spf.load = function(url, opt_options) {};
  *     object to process.
  * @param {function((spf.SingleResponse|spf.MultipartResponse))=} opt_callback
  *     Function to execute when processing is done; the argument is
- *     the {@code response}.
+ *     the `response`.
  */
 spf.process = function(response, opt_callback) {};
 
@@ -570,7 +570,7 @@ spf.script.ignore = function(names, fn) {};
 
 
 /**
- * Notifies any waiting callbacks that {@code name} has completed loading.
+ * Notifies any waiting callbacks that `name` has completed loading.
  * Use with {@link spf.script.ready} for arbitrary readiness not directly tied
  * to scripts.
  *

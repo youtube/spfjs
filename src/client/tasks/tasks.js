@@ -65,10 +65,10 @@ spf.tasks.run = function(key, opt_sync) {
  * See {@link #resume}.
  *
  * Queue execution is controlled by values similar to POSIX Semaphores.  Each
- * {@code suspend} decrements a value, and each {@code resume} increments it.
+ * `suspend` decrements a value, and each `resume` increments it.
  * Queue execution only continues when the values are positive, so while
- * {@code suspend} may be called multiple times, it must be matched by an equal
- * number of {@code resume} calls.
+ * `suspend` may be called multiple times, it must be matched by an equal
+ * number of `resume` calls.
  *
  * @param {string} key The key to identify the task queue.
  */
@@ -85,10 +85,10 @@ spf.tasks.suspend = function(key) {
  * See {@link #suspend}.
  *
  * Queue execution is controlled by values similar to POSIX Semaphores.  Each
- * {@code suspend} decrements a value, and each {@code resume} increments it.
+ * `suspend` decrements a value, and each `resume` increments it.
  * Queue execution only continues when the values are positive, so while
- * {@code suspend} may be called multiple times, it much be matched by an equal
- * number of {@code resume} calls.
+ * `suspend` may be called multiple times, it much be matched by an equal
+ * number of `resume` calls.
  *
  * @param {string} key The key to identify the task queue.
  * @param {boolean=} opt_sync Whether to execute the queued tasks synchronously;

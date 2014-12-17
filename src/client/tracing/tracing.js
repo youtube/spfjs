@@ -7,7 +7,7 @@
  * @fileoverview Provides a mechanism for adding tracing points into compiled
  * code to use various tools for profiling/tuning the application.
  * Most of the APIs are designed for use with the Web Tracing Framework, though
- * the core methods have fallbacks to the native {@code console} API.
+ * the core methods have fallbacks to the native `console` API.
  *
  * Use discretion when adding tracing methods - tracing can easily suffer under
  * the tragedy of the commons, with too many tracing calls making the traces
@@ -131,7 +131,7 @@ spf.tracing.USE_WTF_ =
 
 
 /**
- * Whether to fallback to the {@code console} APIs when WTF is not present.
+ * Whether to fallback to the `console` APIs when WTF is not present.
  * @private {boolean}
  * @const
  */
@@ -192,14 +192,14 @@ spf.tracing.initializeDomEventProperties = spf.tracing.USE_WTF_ ?
  * Created events should be cached and reused - do *not* redefine events.
  *
  * Events are defined by a signature that can be a simple string such as
- * {@code 'myEvent'} or a reference string like {@code 'namespace.Type#method'}
+ * `"myEvent"` or a reference string like `"namespace.Type#method"`
  * and can optionally include typed parameters like
- * {@code 'myEvent(uint32 a, ascii b)'}.
+ * `"myEvent(uint32 a, ascii b)"`.
  *
  * For more information on this API, see:
  * https://github.com/google/tracing-framework/blob/master/docs/api.md
  *
- * When tracing is disabled {@code spf.tracing.nullFunction} will be returned
+ * When tracing is disabled {@link spf.tracing.nullFunction} will be returned
  * for all events.
  *
  * Example:
@@ -244,13 +244,13 @@ spf.tracing.createAppendScopeDataEvent = function(signature) {
  * Created events should be cached and reused - do *not* redefine events.
  *
  * Events are defined by a signature that can be a simple string such as
- * {@code 'myEvent'} or a reference string like {@code 'namespace.Type#method'}
+ * `"myEvent"` or a reference string like `"namespace.Type#method"`
  * and can optionally include typed parameters like
- * {@code 'myEvent(uint32 a, ascii b)'}.
+ * `"myEvent(uint32 a, ascii b)"`.
  *
  * For more information on this API, see:
  *
- * When tracing is disabled {@code spf.tracing.nullFunction} will be returned
+ * When tracing is disabled {@link spf.tracing.nullFunction} will be returned
  * for all events.
  *
  * Example:
@@ -322,7 +322,7 @@ spf.tracing.enterScope = spf.tracing.USE_WTF_ ?
  *
  * @param {WTF.trace.Scope} scope Scope to leave.
  * @param {T=} opt_result Optional result to chain.
- * @return {T|undefined} The value of the {@code opt_result} parameter.
+ * @return {T|undefined} The value of the `opt_result` parameter.
  * @template T
  */
 spf.tracing.leaveScope = spf.tracing.USE_WTF_ ?
@@ -384,7 +384,7 @@ spf.tracing.markTimeline = spf.tracing.USE_WTF_ ?
 
 /**
  * Adds a time stamp to the timeline, indicating the occurrence of an event.
- * This is equivalent to the {@code console.timeStamp} method.
+ * This is equivalent to the `console.timeStamp` method.
  * If you'd like a higher-performance variant or additional typed data, create
  * an instance event with {@see #createInstanceEvent}.
  *
@@ -458,10 +458,10 @@ spf.tracing.endTimeRange = spf.tracing.USE_WTF_ ?
  * @param {string=} opt_namePrefix String to prepend to the name.
  * @param {(function(Function, Function):Function)=} opt_generator
  *     A custom function generator that is responsible for taking the given
- *     {@code value} and returning a wrapped function that emits the given
+ *     `value` and returning a wrapped function that emits the given
  *     event type.
  * @param {(function())=} opt_pre Code to execute before the scope is entered.
- *     This is only called if {@code opt_generator} is not provided.
+ *     This is only called if `opt_generator` is not provided.
  * @return {T} The instrumented input value.
  * @template T
  */

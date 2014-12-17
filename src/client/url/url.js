@@ -112,8 +112,8 @@ spf.url.origin = function(url) {
 
 /**
  * Adds the SPF identifier to a URL, to be used in requests.  If the
- * identifier contains {@code __type__} then that value will be replaced
- * with the value of {@code opt_type}.
+ * identifier contains `__type__` then that value will be replaced
+ * with the value of `opt_type`.
  *
  * @param {string} url A URL.
  * @param {string=} opt_type An optional type for identification.
