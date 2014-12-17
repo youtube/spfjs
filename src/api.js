@@ -5,6 +5,9 @@
 
 /**
  * @fileoverview Definition of the external SPF API.
+ *
+ * @version SPF 21 (v2.1.1)
+ *
  * @externs
  * @author nicksay@google.com (Alex Nicksay)
  */
@@ -12,10 +15,95 @@
 
 /**
  * The top-level SPF namespace.
+ * @namespace
  * @suppress {duplicate}
  * @noalias
  */
 var spf = {};
+
+
+/**
+ * Initializes SPF.
+ *
+ * @param {Object=} opt_config Optional global configuration object.
+ * @return {boolean} Whether SPF was successfully initialized.  If the HTML5
+ *     history modification API is not supported, returns false.
+ */
+spf.init = function(opt_config) {};
+
+
+/**
+ * Disposes SPF.
+ */
+spf.dispose = function() {};
+
+
+/**
+ * Navigates to a URL.
+ *
+ * A pushState history entry is added for the URL, and if successful, the
+ * navigation is performed.  If not, the browser is redirected to the URL.
+ * During the navigation, first the content is requested.  If the reponse is
+ * sucessfully parsed, it is processed.  If not, the browser is redirected to
+ * the URL.  Only a single navigation request can be in flight at once.  If a
+ * second URL is navigated to while a first is still pending, the first will be
+ * cancelled.
+ *
+ * NOTE: Currently, the optional {@code onSuccess} and {@code onError}
+ * callbacks are ignored in this function.  This will be fixed shortly.
+ *
+ * @param {string} url The URL to navigate to, without the SPF identifier.
+ * @param {(Object|spf.RequestOptions)=} opt_options Optional request options.
+ */
+spf.navigate = function(url, opt_options) {};
+
+
+/**
+ * Loads a URL.
+ *
+ * Similar to {@link spf.navigate}, but intended for traditional content
+ * updates, not page navigation.  Not subject to restrictions on the number of
+ * simultaneous requests.  The content is first requested.  If the response is
+ * successfully parsed, it is processed and the URL and response object are
+ * passed to the optional {@code onSuccess} callback.  If not, the URL is passed
+ * to the optional {@code onError} callback.
+ *
+ * @param {string} url The URL to load, without the SPF identifier.
+ * @param {(Object|spf.RequestOptions)=} opt_options Optional request options.
+ * @return {XMLHttpRequest} The XHR of the current request.
+ */
+spf.load = function(url, opt_options) {};
+
+
+/**
+ * Process a SPF response on the current page outside of a navigation flow.
+ *
+ * @param {spf.SingleResponse|spf.MultipartResponse} response The SPF response
+ *     object to process.
+ * @param {function((spf.SingleResponse|spf.MultipartResponse))=} opt_callback
+ *     Function to execute when processing is done; the argument is
+ *     the {@code response}.
+ */
+spf.process = function(response, opt_callback) {};
+
+
+/**
+ * Prefetches a URL.
+ *
+ * Use to prime the SPF request cache with the content and the browser cache
+ * with script and stylesheet URLs.
+ *
+ * The content is first requested.  If the response is successfully parsed, it
+ * is preprocessed to prefetch scripts and stylesheets, and the URL and
+ * response object are then passed to the optional {@code onSuccess}
+ * callback. If not, the URL is passed to the optional {@code onError}
+ * callback.
+ *
+ * @param {string} url The URL to prefetch, without the SPF identifier.
+ * @param {(Object|spf.RequestOptions)=} opt_options Optional request options.
+ * @return {XMLHttpRequest} The XHR of the current request.
+ */
+spf.prefetch = function(url, opt_options) {};
 
 
 /**
@@ -169,7 +257,7 @@ spf.RequestOptions.prototype.method;
 
 /**
  * Optional callback to execute if the request fails. The argument to the
- * callback will be an object that conforms to the {@code spf.EventDetail}
+ * callback will be an object that conforms to the {@link spf.EventDetail}
  * interface for "spferror" events (see {@link spf.Event}).
  * @type {function(spf.EventDetail)|undefined}
  */
@@ -179,7 +267,7 @@ spf.RequestOptions.prototype.onError;
 /**
  * Optional callback to execute before sending a SPF request. The argument
  * to the callback will be an object that conforms to the
- * {@code spf.EventDetail} interface for "spfrequest" events (see
+ * {@link spf.EventDetail} interface for "spfrequest" events (see
  * {@link spf.Event}).
  * @type {function(spf.EventDetail)|undefined}
  */
@@ -193,7 +281,7 @@ spf.RequestOptions.prototype.onRequest;
  * single responses. If valid "X-SPF-Response-Type: multipart" and
  * "Transfer-Encoding: chunked" headers are sent, then this callback will be
  * executed on-the-fly as chunks are received.  The argument to the
- * callback will be an object that conforms to the {@code spf.EventDetail}
+ * callback will be an object that conforms to the {@link spf.EventDetail}
  * interface for "spfpartprocess" events (see {@link spf.Event}).
  * @type {function(spf.EventDetail)|undefined}
  */
@@ -207,7 +295,7 @@ spf.RequestOptions.prototype.onPartProcess;
  * "X-SPF-Response-Type: multipart" and "Transfer-Encoding: chunked"
  * headers are sent, then this callback will be executed on-the-fly as
  * chunks are received. The argument to the callback will be an object
- * that conforms to the {@code spf.EventDetail} interface for
+ * that conforms to the {@link spf.EventDetail} interface for
  * "spfpartdone" events (see {@link spf.Event}).
  * @type {function(spf.EventDetail)|undefined}
  */
@@ -218,7 +306,7 @@ spf.RequestOptions.prototype.onPartDone;
  * Optional callback to execute upon receiving a single SPF response (see
  * {@link spf.SingleResponse}). Called before the response is processed;
  * never called for multipart responses. The argument to the callback will
- * be an object that conforms to the {@code spf.EventDetail} interface for
+ * be an object that conforms to the {@link spf.EventDetail} interface for
  * "spfprocess" events (see {@link spf.Event}).
  * @type {function(spf.EventDetail)|undefined}
  */
@@ -230,7 +318,7 @@ spf.RequestOptions.prototype.onProcess;
  * Called once as the last event for both single and multipart responses (see
  * {@link spf.SingleResponse} and {@link spf.MultipartResponse}).  The argument
  * to the callback will be an object that conforms to the
- * {@code spf.EventDetail} interface for "spfdone" events (see
+ * {@link spf.EventDetail} interface for "spfdone" events (see
  * {@link spf.Event}).
  * @type {function(spf.EventDetail)|undefined}
  */
@@ -261,7 +349,7 @@ spf.Event.prototype.detail;
 
 /**
  * Definition of the CustomEvent "detail" attribute (see {@link spf.Event}),
- * also used as an argument to callbacks in {@code spf.RequestOptions} objects.
+ * also used as an argument to callbacks in {@link spf.RequestOptions} objects.
  * @interface
  */
 spf.EventDetail;
@@ -369,91 +457,8 @@ spf.TaskScheduler.prototype.cancelTask = function(id) {};
 
 
 /**
- * Initializes SPF.
- *
- * @param {Object=} opt_config Optional global configuration object.
- * @return {boolean} Whether SPF was successfully initialized.  If the HTML5
- *     history modification API is not supported, returns false.
- */
-spf.init = function(opt_config) {};
-
-
-/**
- * Disposes SPF.
- */
-spf.dispose = function() {};
-
-
-/**
- * Navigates to a URL.
- *
- * A pushState history entry is added for the URL, and if successful, the
- * navigation is performed.  If not, the browser is redirected to the URL.
- * During the navigation, first the content is requested.  If the reponse is
- * sucessfully parsed, it is processed.  If not, the browser is redirected to
- * the URL.  Only a single navigation request can be in flight at once.  If a
- * second URL is navigated to while a first is still pending, the first will be
- * cancelled.
- *
- * NOTE: Currently, the optional {@code onSuccess} and {@code onError}
- * callbacks are ignored in this function.  This will be fixed shortly.
- *
- * @param {string} url The URL to navigate to, without the SPF identifier.
- * @param {(Object|spf.RequestOptions)=} opt_options Optional request options.
- */
-spf.navigate = function(url, opt_options) {};
-
-
-/**
- * Loads a URL.
- *
- * Similar to {@link spf.navigate}, but intended for traditional content
- * updates, not page navigation.  Not subject to restrictions on the number of
- * simultaneous requests.  The content is first requested.  If the response is
- * successfully parsed, it is processed and the URL and response object are
- * passed to the optional {@code onSuccess} callback.  If not, the URL is passed
- * to the optional {@code onError} callback.
- *
- * @param {string} url The URL to load, without the SPF identifier.
- * @param {(Object|spf.RequestOptions)=} opt_options Optional request options.
- * @return {XMLHttpRequest} The XHR of the current request.
- */
-spf.load = function(url, opt_options) {};
-
-
-/**
- * Process a SPF response on the current page outside of a navigation flow.
- *
- * @param {spf.SingleResponse|spf.MultipartResponse} response The SPF response
- *     object to process.
- * @param {function(spf.SingleResponse|spf.MultipartResponse)=} opt_callback
- *     Function to execute when processing is done; the argument is
- *     the {@code response}.
- */
-spf.process = function(response, opt_callback) {};
-
-
-/**
- * Prefetches a URL.
- *
- * Use to prime the SPF request cache with the content and the browser cache
- * with script and stylesheet URLs.
- *
- * The content is first requested.  If the response is successfully parsed, it
- * is preprocessed to prefetch scripts and stylesheets, and the URL and
- * response object are then passed to the optional {@code onSuccess}
- * callback. If not, the URL is passed to the optional {@code onError}
- * callback.
- *
- * @param {string} url The URL to prefetch, without the SPF identifier.
- * @param {(Object|spf.RequestOptions)=} opt_options Optional request options.
- * @return {XMLHttpRequest} The XHR of the current request.
- */
-spf.prefetch = function(url, opt_options) {};
-
-
-/**
  * Namespace for cache handling functions.
+ * @namespace
  */
 spf.cache = {};
 
@@ -480,18 +485,20 @@ spf.cache.clear = function() {};
 
 /**
  * Namespace for script-loading functions.
+ * @namespace
  */
 spf.script = {};
 
 
 /**
  * Loads a script asynchronously and defines a name to use for dependency
- * management and unloading.  See {@link #ready} to wait for named scripts to
- * be loaded and {@link #unload} to remove previously loaded scripts.
+ * management and unloading.  See {@link spf.script.ready} to wait for named
+ * scripts to be loaded and {@link spf.script.unload} to remove previously
+ * loaded scripts.
  *
  * - Subsequent calls to load the same URL will not reload the script.  To
- *   reload a script, unload it first with {@link #unload}.  To unconditionally
- *   load a script, see {@link #get}.
+ *   reload a script, unload it first with {@link spf.script.unload}.  To
+ *   unconditionally load a script, see {@link spf.script.get}.
  *
  * - A name must be specified to identify the same script at different URLs.
  *   (For example, "main-A.js" and "main-B.js" are both "main".)  When a name
@@ -511,7 +518,7 @@ spf.script.load = function(url, name, opt_fn) {};
 
 
 /**
- * Unloads a script identified by name.  See {@link #load}.
+ * Unloads a script identified by name.  See {@link spf.script.load}.
  *
  * NOTE: Unloading a script will prevent execution of ALL pending callbacks
  * but is NOT guaranteed to stop the browser loading a pending URL.
@@ -525,7 +532,7 @@ spf.script.unload = function(name) {};
  * Unconditionally loads a script by dynamically creating an element and
  * appending it to the document without regard for dependencies or whether it
  * has been loaded before.  A script directly loaded by this method cannot
- * be unloaded by name.  Compare to {@link #load}.
+ * be unloaded by name.  Compare to {@link spf.script.load}.
  *
  * @param {string} url The URL of the script to load.
  * @param {Function=} opt_fn Function to execute when loaded.
@@ -535,7 +542,8 @@ spf.script.get = function(url, opt_fn) {};
 
 /**
  * Waits for one or more scripts identified by name to be loaded and executes
- * the callback function.  See {@link #load} or {@link #done} to define names.
+ * the callback function.  See {@link spf.script.load} or
+ * {@link spf.script.done} to define names.
  *
  * @param {string|Array.<string>} names One or more names.
  * @param {Function=} opt_fn Callback function to execute when the
@@ -551,9 +559,9 @@ spf.script.ready = function(names, opt_fn, opt_require) {};
  *
  * Stops waiting for one or more scripts identified by name to be loaded and
  * cancels the pending callback execution.  The callback must have been
- * registered by {@link #load} or {@link #ready}.  If the callback was
- * registered by {@link #ready} and more than one name was provided, the same
- * names must be used here.
+ * registered by {@link spf.script.load} or {@link spf.script.ready}.  If the
+ * callback was registered by {@link spf.script.ready} and more than one name
+ * was provided, the same names must be used here.
  *
  * @param {string|Array.<string>} names One or more names.
  * @param {Function} fn Callback function to cancel.
@@ -563,7 +571,8 @@ spf.script.ignore = function(names, fn) {};
 
 /**
  * Notifies any waiting callbacks that {@code name} has completed loading.
- * Use with {@link #ready} for arbitrary readiness not directly tied to scripts.
+ * Use with {@link spf.script.ready} for arbitrary readiness not directly tied
+ * to scripts.
  *
  * @param {string} name The ready name.
  */
@@ -572,7 +581,8 @@ spf.script.done = function(name) {};
 
 /**
  * Recursively loads scripts identified by name, first loading
- * any dependendent scripts.  Use {@link #declare} to define dependencies.
+ * any dependendent scripts.  Use {@link spf.script.declare} to define
+ * dependencies.
  *
  * @param {string|Array.<string>} names One or more names.
  * @param {Function=} opt_fn Callback function to execute when the
@@ -583,7 +593,8 @@ spf.script.require = function(names, opt_fn) {};
 
 /**
  * Recursively unloads scripts identified by name, first unloading
- * any dependendent scripts.  Use {@link #declare} to define dependencies.
+ * any dependendent scripts.  Use {@link spf.script.declare} to define
+ * dependencies.
  *
  * @param {string|Array.<string>} names One or more names.
  */
@@ -592,7 +603,7 @@ spf.script.unrequire = function(names) {};
 
 /**
  * Sets the dependency map and optional URL map used when requiring scripts.
- * See {@link #require}.
+ * See {@link spf.script.require}.
  *
  * @param {Object.<(string|Array.<string>)>} deps The dependency map.
  * @param {Object.<string>=} opt_urls The optional URL map.
@@ -613,7 +624,7 @@ spf.script.path = function(paths) {};
 /**
  * Prefetchs one or more scripts; the scripts will be requested but not loaded.
  * Use to prime the browser cache and avoid needing to request the script when
- * subsequently loaded.  See {@link #load}.
+ * subsequently loaded.  See {@link spf.script.load}.
  *
  * @param {string|Array.<string>} urls One or more URLs of scripts to prefetch.
  */
@@ -622,18 +633,19 @@ spf.script.prefetch = function(urls) {};
 
 /**
  * Namespace for stylesheet-loading functions.
+ * @namespace
  */
 spf.style = {};
 
 
 /**
  * Loads a stylesheet asynchronously and defines a name to use for dependency
- * management and unloading.  See {@link #unload} to remove previously loaded
- * stylesheets.
+ * management and unloading.  See {@link spf.script.unload} to remove previously
+ * loaded stylesheets.
  *
  * - Subsequent calls to load the same URL will not reload the stylesheet.  To
- *   reload a stylesheet, unload it first with {@link #unload}.  To
- *   unconditionally load a stylesheet, see {@link #get}.
+ *   reload a stylesheet, unload it first with {@link spf.script.unload}.  To
+ *   unconditionally load a stylesheet, see {@link spf.script.get}.
  *
  * - A name must be specified to identify the same stylesheet at different URLs.
  *   (For example, "main-A.css" and "main-B.css" are both "main".)  When a name
@@ -656,7 +668,7 @@ spf.style.load = function(url, name, opt_fn) {};
 
 
 /**
- * Unloads a stylesheet identified by name.  See {@link #load}.
+ * Unloads a stylesheet identified by name.  See {@link spf.script.load}.
  *
  * @param {string} name Name of the stylesheet.
  */
@@ -667,7 +679,7 @@ spf.style.unload = function(name) {};
  * Unconditionally loads a stylesheet by dynamically creating an element and
  * appending it to the document without regard for whether it has been loaded
  * before. A stylesheet directly loaded by this method cannot be unloaded by
- * name.  Compare to {@link #load}.
+ * name.  Compare to {@link spf.script.load}.
  *
  * @param {string} url URL of the stylesheet to load.
  */
@@ -687,7 +699,7 @@ spf.style.path = function(paths) {};
 /**
  * Prefetchs one or more stylesheets; the stylesheets will be requested but not
  * loaded. Use to prime the browser cache and avoid needing to request the
- * stylesheet when subsequently loaded.  See {@link #load}.
+ * stylesheet when subsequently loaded.  See {@link spf.script.load}.
  *
  * @param {string|Array.<string>} urls One or more stylesheet URLs to prefetch.
  */
