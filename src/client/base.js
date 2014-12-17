@@ -43,7 +43,7 @@ var SPF_TRACING = false;
 
 
 /**
- * Creates a new function that, when called, has its {@code this} set to the
+ * Creates a new function that, when called, has its `this` set to the
  * provided value, with a given sequence of arguments preceding any provided
  * when the new function is called.
  *

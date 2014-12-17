@@ -181,7 +181,7 @@ spf.net.script.ready = function(names, opt_fn, opt_require) {
 
 
 /**
- * Notifies any waiting callbacks that {@code name} has completed loading.
+ * Notifies any waiting callbacks that `name` has completed loading.
  * Use with {@link #ready} for arbitrary readiness not directly tied to scripts.
  *
  * @param {string} name The ready name.

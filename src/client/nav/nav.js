@@ -804,7 +804,7 @@ spf.nav.cancel = function() {
 
 /**
  * Executes an external callback and checks whether the callback was canceled
- * with an explicit return value of {@code false}.
+ * with an explicit return value of `false`.
  *
  * @param {Function|undefined} fn Callback function to be executed.
  * @param {...*} var_args Arguments to apply to the function.
@@ -1198,7 +1198,7 @@ spf.nav.handleLoadRedirect_ = function(isPrefetch, options, original,
  *     object to process.
  * @param {function((spf.SingleResponse|spf.MultipartResponse))=} opt_callback
  *     Function to execute when processing is done; the argument is
- *     the {@code response}.
+ *     the `response`.
  */
 spf.nav.process = function(response, opt_callback) {
   var url = window.location.href;

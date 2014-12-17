@@ -119,7 +119,7 @@ var tests = {};
 
 
 /**
- * See {@code NAMESPACE_REGEX}.
+ * See {@link NAMESPACE_REGEX}.
  *
  * @param {string} str String to test.
  * @return {boolean} Whether the string matches a command line argument for
@@ -131,7 +131,7 @@ tests.isNS = function(str) {
 
 
 /**
- * See {@code JSFILE_REGEX}.
+ * See {@link JSFILE_REGEX}.
  *
  * @param {string} str String to test.
  * @return {boolean} Whether the string matches a JS file (and not namespace).
@@ -314,7 +314,7 @@ deps.read = function(paths) {
 /**
  * Extracts and populates provide and require information for every dependency
  * information object in the array provided.  A new array object will be
- * returned.  See {@code PROVIDES_REGEX} and {@code REQUIRES_REGEX}.
+ * returned.  See {@link PROVIDES_REGEX} and {@link REQUIRES_REGEX}.
  *
  * @param {Array.<deps.Info>} infos Array of dependency information objects.
  * @return {Array.<deps.Info>}

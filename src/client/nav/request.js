@@ -67,10 +67,10 @@ spf.nav.request.Options;
 /**
  * Requests a URL using the SPF protocol and parses the response.  If
  * successful, the URL and response object are passed to the optional
- * {@code onSuccess} callback.  If not, the URL is passed to the optional
- * {@code onError} callback.  If chunked response are being used, the
+ * `onSuccess` callback.  If not, the URL is passed to the optional
+ * `onError` callback.  If chunked response are being used, the
  * URL and each partial response object will be passed to the optional
- * {@code onPart} callback as they are received.
+ * `onPart` callback as they are received.
  *
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {spf.nav.request.Options=} opt_options Configuration options.

@@ -25,7 +25,7 @@ goog.require('spf.state');
  * @param {string} topic Topic to subscribe to. Passing an empty string does
  *     nothing.
  * @param {Function|undefined} fn Function to be invoked when a message is
- *     published to the given topic. Passing {@code null} or {@code undefined}
+ *     published to the given topic. Passing `null` or `undefined`
  *     does nothing.
  */
 spf.pubsub.subscribe = function(topic, fn) {
@@ -43,8 +43,8 @@ spf.pubsub.subscribe = function(topic, fn) {
  *
  * @param {string} topic Topic to unsubscribe from. Passing an empty string does
  *     nothing.
- * @param {Function|undefined} fn Function to unsubscribe. Passing {@code null}
- *     or {@code undefined} does nothing.
+ * @param {Function|undefined} fn Function to unsubscribe. Passing `null`
+ *     or `undefined` does nothing.
  */
 spf.pubsub.unsubscribe = function(topic, fn) {
   if (topic in spf.pubsub.subscriptions && fn) {
