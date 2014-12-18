@@ -16,10 +16,10 @@ indent_style = space
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-# Markdown:
+# Markdown and Mustache (when rendering Markdown):
 #   - indents must be 4 spaces
 #   - trailing whitespace is significant
-[*.md]
+[*.{md,mustache}]
 indent_size = 4
 trim_trailing_whitespace = false
 
