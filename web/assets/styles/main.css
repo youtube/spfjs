@@ -487,9 +487,14 @@ main nav {
 .toc__title a {
   text-decoration: none;
 }
+.toc ul,
+.toc ol,
 .toc__list {
+  padding-top: 0;
   padding-left: 0;
 }
+.toc ul ul,
+.toc ol ol,
 .toc__list .toc__list {
   border-bottom: none;
   padding-bottom: 0;
@@ -528,6 +533,22 @@ main nav {
 }
 .feedback p {
   font-size: 16px;
+}
+
+.api hr {
+  margin-top: 60px;
+}
+.api h2,
+.api h3 {
+  padding-top: 60px;
+}
+.api .container p,
+.api .container ul,
+.api .container ol {
+  padding-top: 0.40625em;
+}
+.api .container li p {
+  padding-top: 0;
 }
 
 

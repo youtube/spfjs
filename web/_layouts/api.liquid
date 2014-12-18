@@ -1,0 +1,27 @@
+---
+layout: base
+---
+
+<main class="clear">
+
+  <nav class="toc g-wide--1 g-medium--1">
+    {% capture markdown_include %}{% include apitoc.md %}{% endcapture %}
+    {{ markdown_include | markdownify }}
+  </nav>
+
+  <article class="g-wide--3 g-wide--last g-medium--2 g-medium--last">
+    <header class="page-header container">
+      <h2 class="xxlarge text-divider">{{ page.title }}</h2>
+      {% if page.description %}
+        <p class="page-header__excerpt g-wide--push-1 g-wide--pull-1">
+          {{ page.description }}
+        </p>
+      {% endif %}
+    </header>
+    <div class="container">
+      {{ content }}
+    </div>
+  </article>
+
+</main>
+
