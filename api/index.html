@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en" class="spf-link no-js">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>SPF - API</title>
+<meta name="description" content="The JS API reference.">
+
+<link rel="canonical" href="http://youtube.github.io/spfjs/api/">
+
+<!-- Add to homescreen for Chrome on Android -->
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" sizes="196x196" href="/spfjs/images/touch/chrome-touch-icon-196x196.png">
+
+<!-- Add to homescreen for Safari on iOS -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="SPF">
+
+<!-- Tile icon for Win8 (144x144 + tile color) -->
+<meta name="msapplication-TileImage" content="/spfjs/images/touch/ms-touch-icon-144x144-precomposed.png">
+<meta name="msapplication-TileColor" content="#3372DF">
+
+<!-- begin spf head -->
+<link rel="stylesheet" name="roboto" href="//fonts.googleapis.com/css?family=Roboto:300,600,900|Roboto+Condensed:300,300italic,400,700">
+<link rel="stylesheet" name="wsk" href="/spfjs/assets/vendor/wsk/0.4.0/styles/wsk.css">
+<link rel="stylesheet" name="octicons" href="/spfjs/assets/vendor/octicons/2.1.2/octicons.css">
+<link rel="stylesheet" name="main" href="/spfjs/assets/styles/main.css?t=2014-12-18T15%3A15%3A28-05%3A00">
+
+<!-- end spf head -->
+</head>
+<body id="body" class="api">
+
+<header id="app-bar" class="app-bar promote-layer">
+  <div class="app-bar-container">
+    <button id="menu" class="menu" title="Menu"></button>
+    <h1 class="logo"><a href="/spfjs/">SPF</a></h1>
+    <section class="app-bar-actions">
+      <a href="#"><i class="icon octicon octicon-chevron-up"></i> Top</a>
+    </section>
+  </div>
+</header>
+
+<div class="navdrawer">
+  <nav id="nav" class="navdrawer-container promote-layer">
+    <h4>Navigation</h4>
+    
+<ul>
+  
+    <li class="index">
+      <a href="/spfjs/">SPF</a>
+    </li>
+  
+    <li >
+      <a href="/spfjs/documentation/">Documentation</a>
+    </li>
+  
+    <li >
+      <a href="/spfjs/api/">API</a>
+    </li>
+  
+    <li >
+      <a href="/spfjs/download/">Download</a>
+    </li>
+  
+  <li><a href="https://github.com/youtube/spfjs">GitHub</a></li>
+</ul>
+
+  </nav>
+</div>
+
+<div id="content">
+<!-- begin spf body: content -->
+<main class="clear">
+
+  <nav class="toc g-wide--1 g-medium--1">
+    
+    <p>Functions</p>
+
+<ul>
+<li><a href="#spf.init">spf.init</a></li>
+<li><a href="#spf.dispose">spf.dispose</a></li>
+<li><a href="#spf.navigate">spf.navigate</a></li>
+<li><a href="#spf.load">spf.load</a></li>
+<li><a href="#spf.process">spf.process</a></li>
+<li><a href="#spf.prefetch">spf.prefetch</a></li>
+<li><a href="#spf.cache.remove">spf.cache.remove</a></li>
+<li><a href="#spf.cache.clear">spf.cache.clear</a></li>
+<li><a href="#spf.script.load">spf.script.load</a></li>
+<li><a href="#spf.script.unload">spf.script.unload</a></li>
+<li><a href="#spf.script.get">spf.script.get</a></li>
+<li><a href="#spf.script.ready">spf.script.ready</a></li>
+<li><a href="#spf.script.ignore">spf.script.ignore</a></li>
+<li><a href="#spf.script.done">spf.script.done</a></li>
+<li><a href="#spf.script.require">spf.script.require</a></li>
+<li><a href="#spf.script.unrequire">spf.script.unrequire</a></li>
+<li><a href="#spf.script.declare">spf.script.declare</a></li>
+<li><a href="#spf.script.path">spf.script.path</a></li>
+<li><a href="#spf.script.prefetch">spf.script.prefetch</a></li>
+<li><a href="#spf.style.load">spf.style.load</a></li>
+<li><a href="#spf.style.unload">spf.style.unload</a></li>
+<li><a href="#spf.style.get">spf.style.get</a></li>
+<li><a href="#spf.style.path">spf.style.path</a></li>
+<li><a href="#spf.style.prefetch">spf.style.prefetch</a></li>
+</ul>
+
+<p>Classes</p>
+
+<ul>
+<li><a href="#spf.singleresponse">spf.SingleResponse</a></li>
+<li><a href="#spf.multipartresponse">spf.MultipartResponse</a></li>
+<li><a href="#spf.requestoptions">spf.RequestOptions</a></li>
+<li><a href="#spf.event">spf.Event</a></li>
+<li><a href="#spf.eventdetail">spf.EventDetail</a></li>
+<li><a href="#spf.taskscheduler">spf.TaskScheduler</a></li>
+</ul>
+
+  </nav>
+
+  <article class="g-wide--3 g-wide--last g-medium--2 g-medium--last">
+    <header class="page-header container">
+      <h2 class="xxlarge text-divider">API</h2>
+      
+        <p class="page-header__excerpt g-wide--push-1 g-wide--pull-1">
+          The JS API reference.
+        </p>
+      
+    </header>
+    <div class="container">
+      <p>The following API reference is for <strong>SPF 21 (v2.1.1)</strong>.</p>
+
+<hr>
+
+<h2 id="spf">spf</h2>
+
+<p>The top-level SPF namespace.</p>
+
+<h3 id="spf.init">spf.init</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.init(opt_config)</code><br>
+Initializes SPF.</p>
+
+<p><strong>Parameters</strong><br>
+<code>opt_config: Object</code><br>
+Optional global configuration object.  </p>
+
+<p><strong>Returns</strong><br>
+<code>boolean</code><br>
+Whether SPF was successfully initialized.  If the HTML5
+    history modification API is not supported, returns false.  </p>
+
+<h3 id="spf.dispose">spf.dispose</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.dispose()</code><br>
+Disposes SPF.</p>
+
+<h3 id="spf.navigate">spf.navigate</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.navigate(url, opt_options)</code><br>
+Navigates to a URL.</p>
+
+<p>A pushState history entry is added for the URL, and if successful, the
+navigation is performed.  If not, the browser is redirected to the URL.
+During the navigation, first the content is requested.  If the reponse is
+sucessfully parsed, it is processed.  If not, the browser is redirected to
+the URL.  Only a single navigation request can be in flight at once.  If a
+second URL is navigated to while a first is still pending, the first will be
+cancelled.</p>
+
+<p><strong>Parameters</strong><br>
+<code>url: string</code><br>
+The URL to navigate to, without the SPF identifier.<br>
+<code>opt_options: Object | spf.RequestOptions</code><br>
+Optional request options.  </p>
+
+<h3 id="spf.load">spf.load</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.load(url, opt_options)</code><br>
+Loads a URL.</p>
+
+<p>Similar to <a href="#spf.navigate">spf.navigate</a>, but intended for traditional content
+updates, not page navigation.  Not subject to restrictions on the number of
+simultaneous requests.</p>
+
+<p><strong>Parameters</strong><br>
+<code>url: string</code><br>
+The URL to load, without the SPF identifier.<br>
+<code>opt_options: Object | spf.RequestOptions</code><br>
+Optional request options.  </p>
+
+<p><strong>Returns</strong><br>
+<code>XMLHttpRequest</code><br>
+The XHR of the current request.  </p>
+
+<h3 id="spf.process">spf.process</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.process(response, opt_callback)</code><br>
+Process a SPF response on the current page outside of a navigation flow.</p>
+
+<p><strong>Parameters</strong><br>
+<code>response: spf.SingleResponse | spf.MultipartResponse</code><br>
+The SPF response
+    object to process.<br>
+<code>opt_callback: function</code><br>
+Function to execute when processing is done; the argument is
+    the <code>response</code>.  </p>
+
+<h3 id="spf.prefetch">spf.prefetch</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.prefetch(url, opt_options)</code><br>
+Prefetches a URL.</p>
+
+<p>Use to prime the SPF request cache with the content and the browser cache
+with script and stylesheet URLs.  If the response is successfully parsed, it
+is preprocessed to prefetch scripts and stylesheets as well.</p>
+
+<p><strong>Parameters</strong><br>
+<code>url: string</code><br>
+The URL to prefetch, without the SPF identifier.<br>
+<code>opt_options: Object | spf.RequestOptions</code><br>
+Optional request options.  </p>
+
+<p><strong>Returns</strong><br>
+<code>XMLHttpRequest</code><br>
+The XHR of the current request.  </p>
+
+<h3 id="spf.singleresponse">spf.SingleResponse</h3>
+
+<p><strong>Class</strong><br>
+Definition for a single SPF response object.</p>
+
+<p><strong>Attributes</strong><br>
+<code>attr: Object.&lt;string, Object.&lt;string, string&gt;&gt; | undefined</code><br>
+Map of Element IDs to maps of attibute names to values for the Elements.<br>
+<code>body: Object.&lt;string, string&gt; | undefined</code><br>
+Map of Element IDs to HTML strings containing content of the Elements.  The
+content may contain script and/or style tags to be executed or installed.<br>
+<code>cacheKey: string | undefined</code><br>
+String of the cache key used to store this response.<br>
+<code>cacheType: string | undefined</code><br>
+String of the type of caching to use for this response.<br>
+<code>data: * | undefined</code><br>
+Reserved for client data of any type.<br>
+<code>head: string | undefined</code><br>
+HTML string containing CSS and/or JS tags to execute or install.<br>
+<code>foot: string | undefined</code><br>
+HTML string containing JS and/or CSS tags to execute or install.<br>
+<code>redirect: string | undefined</code><br>
+String of a URL to request instead.<br>
+<code>reload: boolean | undefined</code><br>
+Boolean to indicate the page should be reloaded.<br>
+<code>timing: Object.&lt;(number|string|boolean)&gt; | undefined</code><br>
+Map of timing attributes to timestamp numbers.<br>
+<code>title: string | undefined</code><br>
+String of the new Document title.<br>
+<code>url: string | undefined</code><br>
+String of the correct URL for the current request. This will replace the
+current URL in history.  </p>
+
+<h3 id="spf.multipartresponse">spf.MultipartResponse</h3>
+
+<p><strong>Class</strong><br>
+Definition for a multipart SPF response object.</p>
+
+<p><strong>Attributes</strong><br>
+<code>cacheKey: string | undefined</code><br>
+String of the key used to cache this response.<br>
+<code>cacheType: string | undefined</code><br>
+String of the type of caching to use for this response.<br>
+<code>parts: Array.&lt;spf.SingleResponse&gt; | undefined</code><br>
+List of response objects.<br>
+<code>timing: Object.&lt;string, number&gt; | undefined</code><br>
+Map of timing attributes to timestamp numbers.<br>
+<code>type: string</code><br>
+The string &quot;multipart&quot;.  </p>
+
+<h3 id="spf.requestoptions">spf.RequestOptions</h3>
+
+<p><strong>Class</strong><br>
+Definition for options when requesting a URL.</p>
+
+<p><strong>Attributes</strong><br>
+<code>method: string | undefined</code><br>
+Optional method with which to send the request; defaults to &quot;GET&quot;.<br>
+<code>onError: function | undefined</code><br>
+Optional callback to execute if the request fails. The argument to the
+callback will be an object that conforms to the <a href="#spf.eventdetail">spf.EventDetail</a>
+interface for &quot;spferror&quot; events (see <a href="#spf.event">spf.Event</a>).<br>
+<code>onRequest: function | undefined</code><br>
+Optional callback to execute before sending a SPF request. The argument
+to the callback will be an object that conforms to the
+<a href="#spf.eventdetail">spf.EventDetail</a> interface for &quot;spfrequest&quot; events (see
+<a href="#spf.event">spf.Event</a>).<br>
+<code>onPartProcess: function | undefined</code><br>
+Optional callback to execute upon receiving a part of a multipart SPF
+response (see <a href="#spf.multipartresponse">spf.MultipartResponse</a>).  Called before the part is
+processed, once per part of multipart responses; never called for
+single responses. If valid &quot;X-SPF-Response-Type: multipart&quot; and
+&quot;Transfer-Encoding: chunked&quot; headers are sent, then this callback will be
+executed on-the-fly as chunks are received.  The argument to the
+callback will be an object that conforms to the <a href="#spf.eventdetail">spf.EventDetail</a>
+interface for &quot;spfpartprocess&quot; events (see <a href="#spf.event">spf.Event</a>).<br>
+<code>onPartDone: function | undefined</code><br>
+Optional callback to execute after processing a part of a multipart SPF
+response (see <a href="#spf.multipartresponse">spf.MultipartResponse</a>). Called once per part of
+multipart responses; never called for single responses. If valid
+&quot;X-SPF-Response-Type: multipart&quot; and &quot;Transfer-Encoding: chunked&quot;
+headers are sent, then this callback will be executed on-the-fly as
+chunks are received. The argument to the callback will be an object
+that conforms to the <a href="#spf.eventdetail">spf.EventDetail</a> interface for
+&quot;spfpartdone&quot; events (see <a href="#spf.event">spf.Event</a>).<br>
+<code>onProcess: function | undefined</code><br>
+Optional callback to execute upon receiving a single SPF response (see
+<a href="#spf.singleresponse">spf.SingleResponse</a>). Called before the response is processed;
+never called for multipart responses. The argument to the callback will
+be an object that conforms to the <a href="#spf.eventdetail">spf.EventDetail</a> interface for
+&quot;spfprocess&quot; events (see <a href="#spf.event">spf.Event</a>).<br>
+<code>onDone: function | undefined</code><br>
+Optional callback to execute when the response is done being processed.
+Called once as the last event for both single and multipart responses (see
+<a href="#spf.singleresponse">spf.SingleResponse</a> and <a href="#spf.multipartresponse">spf.MultipartResponse</a>).  The argument
+to the callback will be an object that conforms to the
+<a href="#spf.eventdetail">spf.EventDetail</a> interface for &quot;spfdone&quot; events (see
+<a href="#spf.event">spf.Event</a>).<br>
+<code>postData: ArrayBuffer | Blob | Document | FormData | null | string | undefined</code><br>
+Optional data to send with the request.  Only used if the method is &quot;POST&quot;.  </p>
+
+<h3 id="spf.event">spf.Event</h3>
+
+<p><strong>Class</strong><br>
+Definition of CustomEvents dispatched by SPF.</p>
+
+<p><strong>Attributes</strong><br>
+<code>detail: spf.EventDetail</code><br>
+Optional detail object of the custom event.  </p>
+
+<h3 id="spf.eventdetail">spf.EventDetail</h3>
+
+<p><strong>Class</strong><br>
+Definition of the CustomEvent &quot;detail&quot; attribute (see <a href="#spf.event">spf.Event</a>),
+also used as an argument to callbacks in <a href="#spf.requestoptions">spf.RequestOptions</a> objects.</p>
+
+<p><strong>Attributes</strong><br>
+<code>err: Error | undefined</code><br>
+The Error that occurred; defined for &quot;spferror&quot; events,<br>
+<code>name: string | undefined</code><br>
+The name of the scripts or stylesheets that will be unloaded; defined for
+&quot;spfjsbeforeunload&quot;, &quot;spfjsunload&quot;, &quot;spfcssbeforeunload&quot;, and
+&quot;spfcssunload&quot; events.<br>
+<code>part: spf.SingleResponse | undefined</code><br>
+One part of a multipart SPF response (see <a href="#spf.multipartresponse">spf.MultipartResponse</a>);
+defined for &quot;spfpartprocess&quot; and &quot;spfpartdone&quot; events.<br>
+<code>previous: string | undefined</code><br>
+The URL of the previous page; defined for &quot;spfhistory&quot; and
+&quot;spfrequest&quot; events.<br>
+<code>reason:</code><br>
+A string containing a reason code and a text explanation (debug only);
+defined for the &quot;spfreload&quot; event.<br>
+<code>referer: string | undefined</code><br>
+The URL of the previous page; defined for &quot;spfhistory&quot; and
+&quot;spfrequest&quot; events.<br>
+<code>response: spf.SingleResponse | spf.MultipartResponse | undefined</code><br>
+A complete SPF response; defined for &quot;spfprocess&quot; events as a single
+response and for &quot;spfdone&quot; events as either a single or multipart
+response (see <a href="#spf.singleresponse">spf.SingleResponse</a> and <a href="#spf.multipartresponse">spf.MultipartResponse</a>.<br>
+<code>target: Element | undefined</code><br>
+The target element of a click; defined for &quot;spfclick&quot; events.<br>
+<code>url: string | undefined</code><br>
+The URL of the request; defined for &quot;spferror&quot;, &quot;spfreload&quot;, &quot;spfclick&quot;,
+&quot;spfhistory&quot;, &quot;spfrequest&quot;, &quot;spfpartprocess&quot;, &quot;spfpartdone&quot;, &quot;spfprocess&quot;,
+and &quot;spfdone&quot; events - or - the URL of the script or stylesheet that will
+be unloaded; defined for &quot;spfjsbeforeunload&quot;, &quot;spfjsunload&quot;,
+&quot;spfcssbeforeunload&quot;, and &quot;spfcssunload&quot; events.  </p>
+
+<h3 id="spf.taskscheduler">spf.TaskScheduler</h3>
+
+<p><strong>Class</strong><br>
+Definition of the Scheduler API which can be used by the application to
+control execution of tasks.</p>
+
+<h3 id="spf.taskscheduler#addtask">spf.TaskScheduler#addTask</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.TaskScheduler#addTask(task)</code><br>
+Adds a task to the scheduler, it is expected to be executed asynchronously as
+determined by the scheduler.</p>
+
+<p><strong>Parameters</strong><br>
+<code>task: function</code><br>
+The task to execute.  </p>
+
+<p><strong>Returns</strong><br>
+<code>number</code><br>
+The ID identifying the task.  </p>
+
+<h3 id="spf.taskscheduler#canceltask">spf.TaskScheduler#cancelTask</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.TaskScheduler#cancelTask(id)</code><br>
+Cancels a task if it has not been executed yet.</p>
+
+<p><strong>Parameters</strong><br>
+<code>id: number</code><br>
+The ID of the task to cancel.  </p>
+
+<hr>
+
+<h2 id="spf.cache">spf.cache</h2>
+
+<p>Namespace for cache handling functions.</p>
+
+<h3 id="spf.cache.remove">spf.cache.remove</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.cache.remove(key)</code><br>
+Removes an entry from cache.</p>
+
+<p>Removed entries will be completely removed from cache, affecting both normal
+navigations as well as those triggered by a history change.</p>
+
+<p><strong>Parameters</strong><br>
+<code>key: string</code><br>
+The key to remove from cache.  </p>
+
+<h3 id="spf.cache.clear">spf.cache.clear</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.cache.clear()</code><br>
+Clear all entries from cache.</p>
+
+<p>Removed entries will be completely removed from cache, affecting both normal
+navigations as well as those triggered by a history change.</p>
+
+<hr>
+
+<h2 id="spf.script">spf.script</h2>
+
+<p>Namespace for script-loading functions.</p>
+
+<h3 id="spf.script.load">spf.script.load</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.script.load(url, name, opt_fn)</code><br>
+Loads a script asynchronously and defines a name to use for dependency
+management and unloading.  See <a href="#spf.script.ready">spf.script.ready</a> to wait for named
+scripts to be loaded and <a href="#spf.script.unload">spf.script.unload</a> to remove previously
+loaded scripts.</p>
+
+<ul>
+<li><p>Subsequent calls to load the same URL will not reload the script.  To
+reload a script, unload it first with <a href="#spf.script.unload">spf.script.unload</a>.  To
+unconditionally load a script, see <a href="#spf.script.get">spf.script.get</a>.</p></li>
+<li><p>A name must be specified to identify the same script at different URLs.
+(For example, &quot;main-A.js&quot; and &quot;main-B.js&quot; are both &quot;main&quot;.)  When a name
+is specified, all other scripts with the same name will be unloaded
+before the callback is executed.  This allows switching between
+versions of the same script at different URLs.</p></li>
+<li><p>A callback can be specified to execute once the script has loaded.  The
+callback will be executed each time, even if the script is not reloaded.</p></li>
+</ul>
+
+<p><strong>Parameters</strong><br>
+<code>url: string</code><br>
+URL of the script to load.<br>
+<code>name: string</code><br>
+Name to identify the script.<br>
+<code>opt_fn: function</code><br>
+Optional callback function to execute when the
+    script is loaded.  </p>
+
+<h3 id="spf.script.unload">spf.script.unload</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.script.unload(name)</code><br>
+Unloads a script identified by name.  See <a href="#spf.script.load">spf.script.load</a>.</p>
+
+<p>NOTE: Unloading a script will prevent execution of ALL pending callbacks
+but is NOT guaranteed to stop the browser loading a pending URL.</p>
+
+<p><strong>Parameters</strong><br>
+<code>name: string</code><br>
+The name of the script(s).  </p>
+
+<h3 id="spf.script.get">spf.script.get</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.script.get(url, opt_fn)</code><br>
+Unconditionally loads a script by dynamically creating an element and
+appending it to the document without regard for dependencies or whether it
+has been loaded before.  A script directly loaded by this method cannot
+be unloaded by name.  Compare to <a href="#spf.script.load">spf.script.load</a>.</p>
+
+<p><strong>Parameters</strong><br>
+<code>url: string</code><br>
+The URL of the script to load.<br>
+<code>opt_fn: function</code><br>
+Function to execute when loaded.  </p>
+
+<h3 id="spf.script.ready">spf.script.ready</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.script.ready(names, opt_fn, opt_require)</code><br>
+Waits for one or more scripts identified by name to be loaded and executes
+the callback function.  See <a href="#spf.script.load">spf.script.load</a> or
+<a href="#spf.script.done">spf.script.done</a> to define names.</p>
+
+<p><strong>Parameters</strong><br>
+<code>names: string | Array.&lt;string&gt;</code><br>
+One or more names.<br>
+<code>opt_fn: function</code><br>
+Callback function to execute when the
+    scripts have loaded.<br>
+<code>opt_require: function</code><br>
+Callback function to execute if names
+    are specified that have not yet been defined/loaded.  </p>
+
+<h3 id="spf.script.ignore">spf.script.ignore</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.script.ignore(names, fn)</code><br>
+&quot;Ignores&quot; a script load by canceling execution of a pending callback.</p>
+
+<p>Stops waiting for one or more scripts identified by name to be loaded and
+cancels the pending callback execution.  The callback must have been
+registered by <a href="#spf.script.load">spf.script.load</a> or <a href="#spf.script.ready">spf.script.ready</a>.  If the
+callback was registered by <a href="#spf.script.ready">spf.script.ready</a> and more than one name
+was provided, the same names must be used here.</p>
+
+<p><strong>Parameters</strong><br>
+<code>names: string | Array.&lt;string&gt;</code><br>
+One or more names.<br>
+<code>fn: function</code><br>
+Callback function to cancel.  </p>
+
+<h3 id="spf.script.done">spf.script.done</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.script.done(name)</code><br>
+Notifies any waiting callbacks that <code>name</code> has completed loading.
+Use with <a href="#spf.script.ready">spf.script.ready</a> for arbitrary readiness not directly tied
+to scripts.</p>
+
+<p><strong>Parameters</strong><br>
+<code>name: string</code><br>
+The ready name.  </p>
+
+<h3 id="spf.script.require">spf.script.require</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.script.require(names, opt_fn)</code><br>
+Recursively loads scripts identified by name, first loading
+any dependendent scripts.  Use <a href="#spf.script.declare">spf.script.declare</a> to define
+dependencies.</p>
+
+<p><strong>Parameters</strong><br>
+<code>names: string | Array.&lt;string&gt;</code><br>
+One or more names.<br>
+<code>opt_fn: function</code><br>
+Callback function to execute when the
+    scripts have loaded.  </p>
+
+<h3 id="spf.script.unrequire">spf.script.unrequire</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.script.unrequire(names)</code><br>
+Recursively unloads scripts identified by name, first unloading
+any dependendent scripts.  Use <a href="#spf.script.declare">spf.script.declare</a> to define
+dependencies.</p>
+
+<p><strong>Parameters</strong><br>
+<code>names: string | Array.&lt;string&gt;</code><br>
+One or more names.  </p>
+
+<h3 id="spf.script.declare">spf.script.declare</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.script.declare(deps, opt_urls)</code><br>
+Sets the dependency map and optional URL map used when requiring scripts.
+See <a href="#spf.script.require">spf.script.require</a>.</p>
+
+<p><strong>Parameters</strong><br>
+<code>deps: Object.&lt;(string|Array.&lt;string&gt;)&gt;</code><br>
+The dependency map.<br>
+<code>opt_urls: Object.&lt;string&gt;</code><br>
+The optional URL map.  </p>
+
+<h3 id="spf.script.path">spf.script.path</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.script.path(paths)</code><br>
+Sets the path prefix or replacement map to use when resolving relative URLs.</p>
+
+<p>Note: The order in which replacements are made is not guaranteed.</p>
+
+<p><strong>Parameters</strong><br>
+<code>paths: string | Object.&lt;string&gt;</code><br>
+The paths.  </p>
+
+<h3 id="spf.script.prefetch">spf.script.prefetch</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.script.prefetch(urls)</code><br>
+Prefetchs one or more scripts; the scripts will be requested but not loaded.
+Use to prime the browser cache and avoid needing to request the script when
+subsequently loaded.  See <a href="#spf.script.load">spf.script.load</a>.</p>
+
+<p><strong>Parameters</strong><br>
+<code>urls: string | Array.&lt;string&gt;</code><br>
+One or more URLs of scripts to prefetch.  </p>
+
+<hr>
+
+<h2 id="spf.style">spf.style</h2>
+
+<p>Namespace for stylesheet-loading functions.</p>
+
+<h3 id="spf.style.load">spf.style.load</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.style.load(url, name, opt_fn)</code><br>
+Loads a stylesheet asynchronously and defines a name to use for dependency
+management and unloading.  See <a href="#spf.script.unload">spf.script.unload</a> to remove previously
+loaded stylesheets.</p>
+
+<ul>
+<li><p>Subsequent calls to load the same URL will not reload the stylesheet.  To
+reload a stylesheet, unload it first with <a href="#spf.script.unload">spf.script.unload</a>.  To
+unconditionally load a stylesheet, see <a href="#spf.script.get">spf.script.get</a>.</p></li>
+<li><p>A name must be specified to identify the same stylesheet at different URLs.
+(For example, &quot;main-A.css&quot; and &quot;main-B.css&quot; are both &quot;main&quot;.)  When a name
+is specified, all other stylesheets with the same name will be unloaded.
+This allows switching between versions of the same stylesheet at different
+URLs.</p></li>
+<li><p>A callback can be specified to execute once the stylesheet has loaded.  The
+callback will be executed each time, even if the stylesheet is not
+reloaded.  NOTE: Unlike scripts, this callback is best effort and is
+supported in the following browser versions: IE 6, Chrome 19, Firefox 9,
+Safari 6.</p></li>
+</ul>
+
+<p><strong>Parameters</strong><br>
+<code>url: string</code><br>
+URL of the stylesheet to load.<br>
+<code>name: string</code><br>
+Name to identify the stylesheet.<br>
+<code>opt_fn: function</code><br>
+Optional callback function to execute when the
+    stylesheet is loaded.  </p>
+
+<h3 id="spf.style.unload">spf.style.unload</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.style.unload(name)</code><br>
+Unloads a stylesheet identified by name.  See <a href="#spf.script.load">spf.script.load</a>.</p>
+
+<p><strong>Parameters</strong><br>
+<code>name: string</code><br>
+Name of the stylesheet.  </p>
+
+<h3 id="spf.style.get">spf.style.get</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.style.get(url)</code><br>
+Unconditionally loads a stylesheet by dynamically creating an element and
+appending it to the document without regard for whether it has been loaded
+before. A stylesheet directly loaded by this method cannot be unloaded by
+name.  Compare to <a href="#spf.script.load">spf.script.load</a>.</p>
+
+<p><strong>Parameters</strong><br>
+<code>url: string</code><br>
+URL of the stylesheet to load.  </p>
+
+<h3 id="spf.style.path">spf.style.path</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.style.path(paths)</code><br>
+Sets the path prefix or replacement map to use when resolving relative URLs.</p>
+
+<p>Note: The order in which replacements are made is not guaranteed.</p>
+
+<p><strong>Parameters</strong><br>
+<code>paths: string | Object.&lt;string&gt;</code><br>
+The paths.  </p>
+
+<h3 id="spf.style.prefetch">spf.style.prefetch</h3>
+
+<p><strong>Function</strong><br>
+<code>spf.style.prefetch(urls)</code><br>
+Prefetchs one or more stylesheets; the stylesheets will be requested but not
+loaded. Use to prime the browser cache and avoid needing to request the
+stylesheet when subsequently loaded.  See <a href="#spf.script.load">spf.script.load</a>.</p>
+
+<p><strong>Parameters</strong><br>
+<code>urls: string | Array.&lt;string&gt;</code><br>
+One or more stylesheet URLs to prefetch.  </p>
+
+    </div>
+  </article>
+
+</main>
+
+
+<!-- end spf body: content -->
+</div>
+
+<footer>
+  <div class="container">
+    <p class="small">
+      &copy; 2014 Google.
+      Code licensed under <a href="https://github.com/youtube/spfjs/blob/master/LICENSE">MIT</a>.
+      Documentation licensed under <a href="http://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
+    </p>
+  </div>
+</footer>
+
+<div id="progress"><dt></dt><dd></dd></div>
+
+<!-- begin spf foot -->
+<script name="spf" src="/spfjs/assets/vendor/spf/2.1.1/spf.js"></script>
+<script name="main" src="/spfjs/assets/scripts/main.js?t=2014-12-18T15%3A15%3A28-05%3A00"></script>
+
+<script name="analytics">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+</script>
+<script>
+  if (window.location.hostname == 'youtube.github.io') {
+    ga('create', 'UA-52278317-1', 'auto');
+    ga('send', 'pageview');
+  }
+</script>
+
+<!-- end spf foot -->
+</body>
+</html>
