@@ -38,4 +38,5 @@
         - path: caching/
         - path: multipart/
         - path: prefetching/
+- path: api/
 - path: download/

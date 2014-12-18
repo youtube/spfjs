@@ -1,0 +1,36 @@
+Functions
+
+* [spf.init](#spf.init)
+* [spf.dispose](#spf.dispose)
+* [spf.navigate](#spf.navigate)
+* [spf.load](#spf.load)
+* [spf.process](#spf.process)
+* [spf.prefetch](#spf.prefetch)
+* [spf.cache.remove](#spf.cache.remove)
+* [spf.cache.clear](#spf.cache.clear)
+* [spf.script.load](#spf.script.load)
+* [spf.script.unload](#spf.script.unload)
+* [spf.script.get](#spf.script.get)
+* [spf.script.ready](#spf.script.ready)
+* [spf.script.ignore](#spf.script.ignore)
+* [spf.script.done](#spf.script.done)
+* [spf.script.require](#spf.script.require)
+* [spf.script.unrequire](#spf.script.unrequire)
+* [spf.script.declare](#spf.script.declare)
+* [spf.script.path](#spf.script.path)
+* [spf.script.prefetch](#spf.script.prefetch)
+* [spf.style.load](#spf.style.load)
+* [spf.style.unload](#spf.style.unload)
+* [spf.style.get](#spf.style.get)
+* [spf.style.path](#spf.style.path)
+* [spf.style.prefetch](#spf.style.prefetch)
+
+
+Classes
+
+* [spf.SingleResponse](#spf.singleresponse)
+* [spf.MultipartResponse](#spf.multipartresponse)
+* [spf.RequestOptions](#spf.requestoptions)
+* [spf.Event](#spf.event)
+* [spf.EventDetail](#spf.eventdetail)
+* [spf.TaskScheduler](#spf.taskscheduler)
