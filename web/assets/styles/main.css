@@ -442,10 +442,13 @@ footer {
 .home main ol li {
   padding: 84px 0 1.5em 0;
 }
-@media screen and (min-width: 620px) {
+.home main ol li img {
+  margin-top: 0.5em;
+}
+@media all and (min-width: 620px) {
   .home main ol li {
     float: left;
-    width: 25%;
+    width: 50%;
     padding-bottom: 0;
   }
 }
