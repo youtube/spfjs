@@ -34,31 +34,22 @@ gaining the performance and user experience benefits of dynamic page loads:
 
 ## Download
 
-The most recent release is **SPF 21 (v2.1.1)**.
-
-> [Download SPF](https://github.com/youtube/spfjs/releases/download/v2.1.1/spfjs-2.1.1-dist.zip)
-
-Link to the minified JS from a CDN:
-
-```html
-<script src="https://ajax.googleapis.com/ajax/libs/spf/2.1.1/spf.js">
-</script>
-```
-
-Or, install with [npm](https://www.npmjs.com/) or [Bower](http://bower.io/):
-
+Install with [npm](https://www.npmjs.com/):
 
 ```sh
-npm install spf@2.1.1
+npm install spf
 ```
+
+Install with [Bower](http://bower.io/):
 
 ```sh
-bower install spf#2.1.1
+bower install spf
 ```
 
-See [the download page](http://youtube.github.io/spfjs/download/) for more
-options.
+Or, see [the download page](http://youtube.github.io/spfjs/download/) for
+options to download the latest release and link to minified JS from a CDN:
 
+> [Download SPF](http://youtube.github.io/spfjs/download/)
 
 
 ## Get Started

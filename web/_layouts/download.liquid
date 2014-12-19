@@ -6,11 +6,13 @@ layout: base
 
   <header class="page-header container">
     <h2 class="xxlarge text-divider">{{ page.title }}</h2>
-    {% if page.description %}
-      <p class="page-header__excerpt g-wide--push-1 g-wide--pull-1">
+    <p class="page-header__excerpt g-wide--push-1 g-wide--pull-1">
+      {% if page.description %}
         {{ page.description }}
-      </p>
-    {% endif %}
+        <br>
+      {% endif %}
+      <strong>{{ site.release }}</strong>
+    </p>
   </header>
 
   <section class="download-promo">
