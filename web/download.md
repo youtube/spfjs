@@ -4,9 +4,20 @@ description: Get the code.
 layout: download
 ---
 
-The most recent release is **{{ site.release }}**.
 
-You can get the code in several ways:
+## Install with npm or Bower
+
+Install the [npm][npm] package:
+
+```sh
+npm install spf
+```
+
+Install the [Bower][bower] package:
+
+```sh
+bower install spf
+```
 
 
 ## Link to a CDN
@@ -53,22 +64,6 @@ git checkout v{{ site.version }}
 ```
 
 
-## Install with npm
-
-Install the [npm][npm] package:
-
-```sh
-npm install spf@{{ site.version }}
-```
-
-
-## Install with Bower
-
-Install the [Bower][bower] package:
-
-```sh
-bower install spf#{{ site.version }}
-```
 
 
 ## Get Started
