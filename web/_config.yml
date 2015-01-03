@@ -22,7 +22,7 @@ permalink: pretty
 
 markdown: redcarpet
 redcarpet:
-    extensions: [with_toc_data]
+    extensions: [tables, with_toc_data]
 
 analytics:
   id: UA-52278317-1
