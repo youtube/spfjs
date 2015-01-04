@@ -44,8 +44,8 @@ module Jekyll
     safe true
     priority :normal
 
-    def link(sitenav, pages, index, prefix, site)
-      sitenav.each do |item|
+    def link(siblings, parent, pages, sitenav_index, prefix, site)
+      siblings.each_with_index do |item, index|
         url = [prefix, item['path']].join('/').gsub('//', '/')
         item['url'] = url
         # For directories, create empty index pages if needed.
@@ -58,9 +58,19 @@ module Jekyll
         # Link item -> page.
         item['page'] = pages[url]
         # Link url -> item.
-        index[url] = item
-        if item.key?('sub')
-          link(item['sub'], pages, index, url, site)
+        sitenav_index[url] = item
+        # Link item -> parent, prev/next, children.
+        item['parent'] = parent
+        item['prev'] = siblings[index - 1] unless item == siblings.first
+        item['next'] = siblings[index + 1] unless item == siblings.last
+        if item.key?('children')
+          link(item['children'], item, pages, sitenav_index, url, site)
+          # Update prev/next to link into and out of children.
+          item['children'].first['prev'] = item
+          unless item['children'].last.key?('children')
+            item['children'].last['next'] = item['next']
+          end
+          item['next'] = item['children'].first
         end
       end
     end
@@ -72,9 +82,9 @@ module Jekyll
         pages[url] = page
         page.data['original_layout'] = page.data['layout']
       end
-      index = {}
-      link(site.data['sitenav'], pages, index, '', site)
-      site.data['sitenav_index'] = index
+      sitenav_index = {}
+      link(site.data['sitenav'], nil, pages, sitenav_index, '', site)
+      site.data['sitenav_index'] = sitenav_index
     end
 
   end
