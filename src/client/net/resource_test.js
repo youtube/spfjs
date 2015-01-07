@@ -25,41 +25,16 @@ describe('spf.net.resource', function() {
   var CSS = spf.net.resource.Type.CSS;
   var LOADING = spf.net.resource.State.LOADING;
   var LOADED = spf.net.resource.State.LOADED;
-  var nodes;
   var callbacks;
+  var iframe;
   var reals = {
-    dom: {
-      query: spf.dom.query
-    },
     resource: {
       create: spf.net.resource.create,
-      destroy: spf.net.resource.destroy
+      destroy: spf.net.resource.destroy,
+      find: spf.net.resource.find
     }
   };
   var fakes = {
-    doc: {
-      createElement: function(tagName) {
-        return new FakeElement(tagName);
-      },
-      getElementsByTagName: function(tagName) {
-        tagName = tagName.toUpperCase();
-        return spf.array.filter(nodes, function(n) {
-          return n.tagName == tagName;
-        });
-      },
-      querySelectorAll: function(selector) {
-        // Only class matching is supported here.
-        var className = selector.substring(1);
-        return spf.array.filter(nodes, function(n) {
-          return n.className == className;
-        });
-      }
-    },
-    dom: {
-      query: function(selector, opt_document) {
-        return reals.dom.query(selector, fakes.doc);
-      }
-    },
     url: {
       absolute: function(relative) {
         if (relative.indexOf('//') > -1) {
@@ -81,70 +56,37 @@ describe('spf.net.resource', function() {
       },
       destroy: function(type, url) {
         reals.resource.destroy(type, url, fakes.doc);
+      },
+      find: function(type, url) {
+        return reals.resource.find(type, url, fakes.doc);
       }
     }
-  };
-
-  var FakeElement = function(tagName) {
-    this.tagName = tagName.toUpperCase();
-    this.attributes = {};
-    this.onload = function() {};
-    // Fake parentNode reference to allow "el.parentNode.removeChild" calls.
-    this.parentNode = this;
-    this.firstChild = null;
-  };
-  FakeElement.prototype.getAttribute = function(name) {
-    return this.attributes[name];
-  };
-  FakeElement.prototype.setAttribute = function(name, value) {
-    this.attributes[name] = value;
-  };
-  FakeElement.prototype.insertBefore = function(el, ref) {
-    if (ref === null) {
-      // ref is null when attempting to insert an element before another
-      // element's firstChild (see the constructor above). Prepend if so.
-      // TODO(rviscomi): Clean up by implementing a FakeElement firstChild.
-      return nodes.unshift(el);
-    } else if (!ref) {
-      // Browsers append when no ref is provided.
-      return nodes.push(el);
-    }
-    // When ref is an element, insert the new element before it.
-    var idx = spf.array.indexOf(nodes, ref);
-    if (idx != -1) {
-      nodes.splice(idx, 0, el);
-    }
-  };
-  FakeElement.prototype.appendChild = function(el) {
-    nodes.push(el);
-  };
-  FakeElement.prototype.removeChild = function(el) {
-    var idx = -1;
-    spf.array.every(nodes, function(n, i, arr) {
-      if (n == el) {
-        idx = i;
-        return false;
-      }
-      return true;
-    });
-    nodes.splice(idx, 1);
   };
 
   var getScriptEls = function() {
     return fakes.doc.getElementsByTagName('script');
   };
   var getScriptUrls = function() {
-    return spf.array.map(getScriptEls(), function(a) { return a.src; });
+    return spf.array.map(getScriptEls(), function(a) {
+      return a.getAttribute('src');
+    });
   };
   var getStyleEls = function() {
     return fakes.doc.getElementsByTagName('link');
   };
   var getStyleUrls = function() {
-    return spf.array.map(getStyleEls(), function(a) { return a.href; });
+    return spf.array.map(getStyleEls(), function(a) {
+      return a.getAttribute('href');
+    });
   };
 
 
   beforeEach(function() {
+    // Test resources in an iframe. Use that as the document for all tests.
+    iframe = document.createElement('iframe');
+    document.body.appendChild(iframe);
+    fakes.doc = iframe.contentWindow.document;
+
     jasmine.Clock.useMock();
 
     spf.state.values_ = {};
@@ -153,7 +95,6 @@ describe('spf.net.resource', function() {
     spf.net.resource.url_ = {};
     spf.net.resource.status_ = {};
 
-    nodes = [new FakeElement('head')];
     callbacks = {
       one: jasmine.createSpy('one'),
       two: jasmine.createSpy('two'),
@@ -162,10 +103,14 @@ describe('spf.net.resource', function() {
     };
 
     spyOn(spf, 'dispatch');
-    spyOn(spf.dom, 'query').andCallFake(fakes.dom.query);
     spyOn(spf.url, 'absolute').andCallFake(fakes.url.absolute);
     spyOn(spf.net.resource, 'create').andCallFake(fakes.resource.create);
     spyOn(spf.net.resource, 'destroy').andCallFake(fakes.resource.destroy);
+    spyOn(spf.net.resource, 'find').andCallFake(fakes.resource.find);
+  });
+
+  afterEach(function() {
+    iframe.parentNode.removeChild(iframe);
   });
 
 
@@ -179,7 +124,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(JS, url);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      expect(getScriptEls()[0].src).toEqual(canonical);
+      expect(getScriptEls()[0].getAttribute('src')).toEqual(canonical);
     });
 
     it('loads with no name (style)', function() {
@@ -190,7 +135,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(CSS, url);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
-      expect(getStyleEls()[0].href).toEqual(canonical);
+      expect(getStyleEls()[0].getAttribute('href')).toEqual(canonical);
     });
 
     it('executes callbacks with no name (script)', function() {
@@ -223,14 +168,14 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(JS, url);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      expect(getScriptEls()[0].src).toEqual(canonical);
+      expect(getScriptEls()[0].getAttribute('src')).toEqual(canonical);
       var el = getScriptEls()[0];
       spf.net.resource.load(JS, url);
       jasmine.Clock.tick(1); // Finish loading.
       spf.net.resource.load(JS, url);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      expect(getScriptEls()[0].src).toEqual(canonical);
+      expect(getScriptEls()[0].getAttribute('src')).toEqual(canonical);
       expect(getScriptEls()[0]).toBe(el);
     });
 
@@ -242,14 +187,14 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(CSS, url);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
-      expect(getStyleEls()[0].href).toEqual(canonical);
+      expect(getStyleEls()[0].getAttribute('href')).toEqual(canonical);
       var el = getStyleEls()[0];
       spf.net.resource.load(CSS, url);
       jasmine.Clock.tick(1); // Finish loading.
       spf.net.resource.load(CSS, url);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
-      expect(getStyleEls()[0].href).toEqual(canonical);
+      expect(getStyleEls()[0].getAttribute('href')).toEqual(canonical);
       expect(getStyleEls()[0]).toBe(el);
     });
 
@@ -296,7 +241,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(JS, url, name);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      expect(getScriptEls()[0].src).toEqual(canonical);
+      expect(getScriptEls()[0].getAttribute('src')).toEqual(canonical);
       expect(getScriptEls()[0].getAttribute('name')).toEqual(name);
     });
 
@@ -307,7 +252,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(CSS, url, name);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
-      expect(getStyleEls()[0].href).toEqual(canonical);
+      expect(getStyleEls()[0].getAttribute('href')).toEqual(canonical);
       expect(getStyleEls()[0].getAttribute('name')).toEqual(name);
     });
 
@@ -336,7 +281,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(JS, url, name);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      expect(getScriptEls()[0].src).toEqual(canonical);
+      expect(getScriptEls()[0].getAttribute('src')).toEqual(canonical);
       expect(getScriptEls()[0].getAttribute('name')).toEqual(name);
       var el = getScriptEls()[0];
       spf.net.resource.load(JS, url, name);
@@ -344,7 +289,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(JS, url, name);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      expect(getScriptEls()[0].src).toEqual(canonical);
+      expect(getScriptEls()[0].getAttribute('src')).toEqual(canonical);
       expect(getScriptEls()[0].getAttribute('name')).toEqual(name);
       expect(getScriptEls()[0]).toBe(el);
       expect(spf.dispatch).not.toHaveBeenCalled();
@@ -357,7 +302,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(CSS, url, name);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
-      expect(getStyleEls()[0].href).toEqual(canonical);
+      expect(getStyleEls()[0].getAttribute('href')).toEqual(canonical);
       expect(getStyleEls()[0].getAttribute('name')).toEqual(name);
       var el = getStyleEls()[0];
       spf.net.resource.load(CSS, url, name);
@@ -365,7 +310,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(CSS, url, name);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
-      expect(getStyleEls()[0].href).toEqual(canonical);
+      expect(getStyleEls()[0].getAttribute('href')).toEqual(canonical);
       expect(getStyleEls()[0].getAttribute('name')).toEqual(name);
       expect(getStyleEls()[0]).toBe(el);
       expect(spf.dispatch).not.toHaveBeenCalled();
@@ -381,7 +326,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(JS, url, name);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      expect(getScriptEls()[0].src).toEqual(canonical);
+      expect(getScriptEls()[0].getAttribute('src')).toEqual(canonical);
       expect(getScriptEls()[0].getAttribute('name')).toEqual(name);
       expect(getScriptEls()[0]).toBe(el);
       expect(spf.dispatch).not.toHaveBeenCalled();
@@ -397,7 +342,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(CSS, url, name);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
-      expect(getStyleEls()[0].href).toEqual(canonical);
+      expect(getStyleEls()[0].getAttribute('href')).toEqual(canonical);
       expect(getStyleEls()[0].getAttribute('name')).toEqual(name);
       expect(getStyleEls()[0]).toBe(el);
       expect(spf.dispatch).not.toHaveBeenCalled();
@@ -472,7 +417,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(JS, newUrl, name);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      expect(getScriptEls()[0].src).toEqual(newCanonical);
+      expect(getScriptEls()[0].getAttribute('src')).toEqual(newCanonical);
       expect(getScriptEls()[0].getAttribute('name')).toEqual(name);
       expect(spf.net.resource.url.get(JS, name)).toEqual(newCanonical);
       expect(spf.net.resource.name.get(JS, newCanonical)).toEqual(name);
@@ -497,7 +442,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(CSS, newUrl, name);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
-      expect(getStyleEls()[0].href).toEqual(newCanonical);
+      expect(getStyleEls()[0].getAttribute('href')).toEqual(newCanonical);
       expect(getStyleEls()[0].getAttribute('name')).toEqual(name);
       expect(spf.net.resource.url.get(CSS, name)).toEqual(newCanonical);
       expect(spf.net.resource.name.get(CSS, newCanonical)).toEqual(name);
@@ -521,7 +466,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(JS, newUrl, name);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      expect(getScriptEls()[0].src).toEqual(newCanonical);
+      expect(getScriptEls()[0].getAttribute('src')).toEqual(newCanonical);
       expect(getScriptEls()[0].getAttribute('name')).toEqual(name);
       expect(spf.net.resource.url.get(JS, name)).toEqual(newCanonical);
       expect(spf.net.resource.name.get(JS, newCanonical)).toEqual(name);
@@ -545,7 +490,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(CSS, newUrl, name);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
-      expect(getStyleEls()[0].href).toEqual(newCanonical);
+      expect(getStyleEls()[0].getAttribute('href')).toEqual(newCanonical);
       expect(getStyleEls()[0].getAttribute('name')).toEqual(name);
       expect(spf.net.resource.url.get(CSS, name)).toEqual(newCanonical);
       expect(spf.net.resource.name.get(CSS, newCanonical)).toEqual(name);
@@ -593,7 +538,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(JS, url, newName);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      expect(getScriptEls()[0].src).toEqual(canonical);
+      expect(getScriptEls()[0].getAttribute('src')).toEqual(canonical);
       expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(JS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(JS, newName)).toEqual(canonical);
@@ -612,7 +557,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(CSS, url, newName);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
-      expect(getStyleEls()[0].href).toEqual(canonical);
+      expect(getStyleEls()[0].getAttribute('href')).toEqual(canonical);
       expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(CSS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(CSS, newName)).toEqual(canonical);
@@ -630,7 +575,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(JS, url, newName);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      expect(getScriptEls()[0].src).toEqual(canonical);
+      expect(getScriptEls()[0].getAttribute('src')).toEqual(canonical);
       expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(JS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(JS, newName)).toEqual(canonical);
@@ -648,7 +593,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(CSS, url, newName);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
-      expect(getStyleEls()[0].href).toEqual(canonical);
+      expect(getStyleEls()[0].getAttribute('href')).toEqual(canonical);
       expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(CSS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(CSS, newName)).toEqual(canonical);
@@ -675,7 +620,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(JS, newUrl, newName);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      expect(getScriptEls()[0].src).toEqual(newCanonical);
+      expect(getScriptEls()[0].getAttribute('src')).toEqual(newCanonical);
       expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(JS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(JS, newName)).toEqual(newCanonical);
@@ -709,7 +654,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(CSS, newUrl, newName);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
-      expect(getStyleEls()[0].href).toEqual(newCanonical);
+      expect(getStyleEls()[0].getAttribute('href')).toEqual(newCanonical);
       expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(CSS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(CSS, newName)).toEqual(newCanonical);
@@ -741,7 +686,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(JS, newUrl, newName);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      expect(getScriptEls()[0].src).toEqual(newCanonical);
+      expect(getScriptEls()[0].getAttribute('src')).toEqual(newCanonical);
       expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(JS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(JS, newName)).toEqual(newCanonical);
@@ -773,7 +718,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(CSS, newUrl, newName);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
-      expect(getStyleEls()[0].href).toEqual(newCanonical);
+      expect(getStyleEls()[0].getAttribute('href')).toEqual(newCanonical);
       expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(CSS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(CSS, newName)).toEqual(newCanonical);
@@ -807,7 +752,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(JS, newUrl, newName);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      expect(getScriptEls()[0].src).toEqual(newCanonical);
+      expect(getScriptEls()[0].getAttribute('src')).toEqual(newCanonical);
       expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(JS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(JS, newName)).toEqual(newCanonical);
@@ -841,7 +786,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(CSS, newUrl, newName);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
-      expect(getStyleEls()[0].href).toEqual(newCanonical);
+      expect(getStyleEls()[0].getAttribute('href')).toEqual(newCanonical);
       expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(CSS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(CSS, newName)).toEqual(newCanonical);
@@ -873,7 +818,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(JS, newUrl, newName);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getScriptEls().length).toEqual(1);
-      expect(getScriptEls()[0].src).toEqual(newCanonical);
+      expect(getScriptEls()[0].getAttribute('src')).toEqual(newCanonical);
       expect(getScriptEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(JS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(JS, newName)).toEqual(newCanonical);
@@ -905,7 +850,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(CSS, newUrl, newName);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(1);
-      expect(getStyleEls()[0].href).toEqual(newCanonical);
+      expect(getStyleEls()[0].getAttribute('href')).toEqual(newCanonical);
       expect(getStyleEls()[0].getAttribute('name')).toEqual(newName);
       expect(spf.net.resource.url.get(CSS, name)).toBe(undefined);
       expect(spf.net.resource.url.get(CSS, newName)).toEqual(newCanonical);
@@ -941,7 +886,7 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(CSS, newUrl2, name2);
       jasmine.Clock.tick(1); // Finish loading.
       expect(getStyleEls().length).toEqual(3);
-      expect(getStyleEls()[1].href).toEqual(newCanonical);
+      expect(getStyleEls()[1].getAttribute('href')).toEqual(newCanonical);
       expect(getStyleEls()[1].getAttribute('name')).toEqual(name2);
     });
 
@@ -1112,8 +1057,8 @@ describe('spf.net.resource', function() {
       spf.net.resource.create(JS, 'url-b.js');
       jasmine.Clock.tick(1);
       expect(getScriptEls().length).toEqual(2);
-      expect(getScriptEls()[0].src).toEqual('//test/url-b.js');
-      expect(getScriptEls()[1].src).toEqual('//test/url-a.js');
+      expect(getScriptEls()[0].getAttribute('src')).toEqual('//test/url-b.js');
+      expect(getScriptEls()[1].getAttribute('src')).toEqual('//test/url-a.js');
     });
 
     it('appends nodes to preserve order (style)', function() {
@@ -1121,8 +1066,8 @@ describe('spf.net.resource', function() {
       spf.net.resource.load(CSS, 'url-b.css');
       jasmine.Clock.tick(1);
       expect(getStyleEls().length).toEqual(2);
-      expect(getStyleEls()[0].href).toEqual('//test/url-a.css');
-      expect(getStyleEls()[1].href).toEqual('//test/url-b.css');
+      expect(getStyleEls()[0].getAttribute('href')).toEqual('//test/url-a.css');
+      expect(getStyleEls()[1].getAttribute('href')).toEqual('//test/url-b.css');
     });
 
   });
