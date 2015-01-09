@@ -1,0 +1,33 @@
+{% assign nextprev__item = site.data.sitenav_index[include.path] %}
+{% if include.top %}
+  {% assign nextprev__top = include.top %}
+{% else %}
+  {% assign nextprev__top = "/" %}
+{% endif %}
+{% capture nextprev__top_length %}{{ nextprev__top | size }}{% endcapture %}
+{% assign nextprev__prev = nextprev__item.prev %}
+{% assign nextprev__next = nextprev__item.next %}
+{% capture nextprev__next_prefix %}{{ nextprev__next.url | truncate:nextprev__top_length,'' }}{% endcapture %}
+{% capture nextprev__prev_prefix %}{{ nextprev__prev.url | truncate:nextprev__top_length,'' }}{% endcapture %}
+<nav class="article-nav">
+  {% if nextprev__prev and nextprev__prev_prefix == nextprev__top %}
+    <a href="{{ site.baseurl }}{{ nextprev__prev.page.url | replace:'index.html','' }}" class="article-nav-link article-nav-link--prev">
+      <p class="article-nav-count">{{ nextprev__prev.page.title }}</p>
+      {% if nextprev__prev.page.description %}
+        <p class="article-nav-description">{{ nextprev__prev.page.description }}</p>
+      {% endif %}
+    </a>
+  {% else %}
+    <span class="article-nav-link"></span>
+  {% endif %}
+  {% if nextprev__next and nextprev__next_prefix == nextprev__top %}
+    <a href="{{ site.baseurl }}{{ nextprev__next.url | replace:'index.html','' }}" class="article-nav-link article-nav-link--next">
+      <p class="article-nav-count">{{ nextprev__next.page.title }}</p>
+      {% if nextprev__next.page.description %}
+        <p class="article-nav-description">{{ nextprev__next.page.description }}</p>
+      {% endif %}
+    </a>
+  {% else %}
+    <span class="article-nav-link"></span>
+  {% endif %}
+</nav>

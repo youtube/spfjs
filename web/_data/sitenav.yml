@@ -9,7 +9,7 @@
 #   path - the path component of the nav item
 #
 # Optional:
-#   sub - the list of nav items below this one
+#   children - the list of nav items below this one
 #
 # Provided automatically:
 #   url - full path hierachy of the nav item
@@ -29,12 +29,12 @@
 
 - path: /
 - path: documentation/
-  sub:
+  children:
     - path: start/
     - path: responses/
     - path: features/
       description: Learn about SPF features to enable high performance.
-      sub:
+      children:
         - path: caching/
         - path: multipart/
         - path: prefetching/

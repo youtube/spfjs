@@ -5,8 +5,11 @@ layout: base
 <main class="clear">
 
   <nav class="toc g-wide--1 g-medium--1">
-    {% include toc.liquid path="/documentation/" title=true %}
+    {% include toc.liquid top="/documentation/" title=true %}
   </nav>
+
+  {% assign page__url = page.url | replace:'index.html','' %}
+  {% assign sitenav_item = site.data.sitenav_index[page__url] %}
 
   {% if page.index %}
 
@@ -19,8 +22,7 @@ layout: base
           </p>
         {% endif %}
       </header>
-      {% assign guide__path = page.url | replace:'index.html','' %}
-      {% assign guide__list = site.data.sitenav_index[guide__path].sub %}
+      {% assign guide__list = sitenav_item.children %}
       <ol class="guides-list container">
         {% for guide__item in guide__list %}
           <li class="guides-list__item g-wide--half theme--spf">
@@ -31,10 +33,10 @@ layout: base
               {% endif %}
             </div>
             <div class="secondary-content">
-              {% if guide__item.sub %}
+              {% if guide__item.children %}
                 <span class="icon-circle themed--background"><i class="icon icon-lessons"></i></span>
                 <ol class="list-links list-links--secondary">
-                  {% for guide__subitem in guide__item.sub %}
+                  {% for guide__subitem in guide__item.children %}
                     <li>
                       <a href="{{ site.baseurl }}{{ guide__subitem.page.url | replace:'index.html','' }}">{{ guide__subitem.page.title }}</a>
                     </li>
@@ -46,6 +48,9 @@ layout: base
         {% endfor %}
       </ol>
     </section>
+    <article class="g-wide--3 g-wide--push-1 g-wide--last g-medium--2 g-medium--push-1 g-medium--last">
+      {% include nextprev.liquid top="/documentation/" path=sitenav_item.url %}
+    </article>
 
   {% else %}
 
@@ -61,9 +66,11 @@ layout: base
       <div class="container">
         {{ content }}
       </div>
+      {% include nextprev.liquid top="/documentation/" path=sitenav_item.url %}
     </article>
 
   {% endif %}
+
 
   <section class="feedback">
     <footer class="container"><div class="container">
