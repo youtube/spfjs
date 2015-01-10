@@ -20,6 +20,12 @@ rendered normally.  This is _static_ navigation.  But when going to the next
 page, only document fragments are sent, and the changed sections are updated
 accordingly. This is _dynamic_ navigation.
 
+1. Static: render everything.  
+   ![Static Navigation](assets/images/animation-static-340x178.gif)
+
+2. Dynamic: only render new fragments.  
+   ![Dynamic Navigation](assets/images/animation-dynamic-340x178.gif)
+
 
 ## Overview
 
@@ -44,7 +50,6 @@ gaining the performance and user experience benefits of dynamic page loads:
 >
 > -  Use any server-side language and template system.  
 > -  Be productive by using the same code for static and dynamic rendering.  
-
 
 
 ## Features
