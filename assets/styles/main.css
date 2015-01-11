@@ -54,6 +54,20 @@ a:hover {
   background-color: #4E5A92;
 }
 
+@media screen and (min-width: 620px) {
+  .article-nav-link::before,
+  .article-nav-link:visited::before {
+    background-color: #4E5A92;
+    color: #FFFFFF;
+  }
+  .article-nav-link:hover::before,
+  .article-nav-link:focus::before,
+  .article-nav-link:active::before {
+    background-color: #6271B6;
+    color: #FFFFFF;
+  }
+}
+
 blockquote {
   padding-left: 2em;
   padding-bottom: 1em;
@@ -184,7 +198,7 @@ footer {
   margin: 0 auto;
 }
 
-@media all and (min-width: 990px) {
+@media screen and (min-width: 990px) {
   .app-bar,
   .navdrawer {
     position: fixed;
@@ -345,7 +359,7 @@ footer {
 .stage h1 span {
   display: none;
 }
-@media all and (min-width: 990px) {
+@media screen and (min-width: 990px) {
   .stage {
     height: 585px;
     background: #4E5A92 url(../images/bg-1600x585.jpg) no-repeat center center;
@@ -393,13 +407,13 @@ footer {
   font-weight: 300;
   padding-top: 0;
 }
-@media all and (min-width: 620px) {
+@media screen and (min-width: 620px) {
   .home main h2 {
     padding-left: 15%;
     padding-right: 15%;
   }
 }
-@media all and (min-width: 990px) {
+@media screen and (min-width: 990px) {
   .home main h2 {
     padding-top: 2.5em;
   }
@@ -428,10 +442,13 @@ footer {
 .home main ol li {
   padding: 84px 0 1.5em 0;
 }
+.home main ol li img {
+  margin-top: 0.5em;
+}
 @media all and (min-width: 620px) {
   .home main ol li {
     float: left;
-    width: 25%;
+    width: 50%;
     padding-bottom: 0;
   }
 }
@@ -443,7 +460,7 @@ footer {
   margin: 0 auto;
   padding: 0 0 1.5em 0;
 }
-@media all and (min-width: 620px) {
+@media screen and (min-width: 620px) {
   .home main blockquote {
     float: left;
     width: 33.3333%;
@@ -478,8 +495,8 @@ main nav {
   margin-top: 0;
 }
 /* hide the toc sidebar on narrow viewports */
-@media all and (max-width: 619px) {
-  main nav {
+@media screen and (max-width: 619px) {
+  main > nav {
     display: none;
   }
 }
@@ -506,6 +523,13 @@ main nav {
 
 .guides-list__item {
   margin-right: auto; /* left-align the flex boxes */
+}
+
+.article-nav {
+  margin-top: 4em;
+}
+.article-nav-description {
+  font-size: 16px;
 }
 
 .download .page-header__excerpt:last-child {
