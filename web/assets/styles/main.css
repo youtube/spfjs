@@ -10,6 +10,8 @@ See the LICENSE file for details.
  *
  * link:  4E5A92  (78,90,146)
  * hover: 6271B6  (98,113,182)
+ *
+ * progress: 45C2FF  (69,194,255);
  ***/
 
 
@@ -291,11 +293,11 @@ footer {
   left: -6px;
   width: 0%;
   height: 2px;
-  background: #AEAEBF;
+  background: #45C2FF;
   border-radius: 1px;
   /* the following transition times are overridden by JS */
-  -webkit-transition: width 150ms ease-out, opacity 150ms linear;
-  transition: width 150ms ease-out, opacity 150ms linear;
+  -webkit-transition: width 150ms ease-out, opacity 150ms ease-out;
+  transition: width 150ms ease-out, opacity 150ms ease-out;
 }
 #progress.done {
   opacity: 0;
@@ -306,7 +308,7 @@ footer {
   position: absolute;
   top: 0;
   height: 2px;
-  box-shadow: #9591AC 1px 0 6px 1px;
+  box-shadow: #45C2FF 1px 0 6px 1px;
   border-radius: 100%;
 }
 #progress dd {
@@ -326,12 +328,6 @@ footer {
 #progress.waiting dt {
   -webkit-animation: pulse 2s ease-out 0s infinite;
   animation: pulse 2s ease-out 0s infinite;
-}
-
-.scrolled #progress,
-.scrolled #progress dd,
-.scrolled #progress dt {
-  background: #4E5A92;
 }
 
 
