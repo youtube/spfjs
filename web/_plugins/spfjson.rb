@@ -58,7 +58,9 @@ module Jekyll
         'attr' => attrs,
         'foot' => foot,
       }
-      @output = response.to_json
+      # Use JSON.pretty_generate instead of response.to_json or JSON.generate
+      # to reduce diff sizes during updates, since the files are checked in.
+      @output = JSON.pretty_generate(response)
     end
 
     # Output a .json file.
