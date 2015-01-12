@@ -14,16 +14,19 @@
   var content = document.getElementById('content');
   var progress = document.getElementById('progress');
 
-  var previous = -1;
+  var position = -1;
+  var start = -1;
   var timer = -1;
 
+  // Animation states: start time, duration, progress complete, and css class.
   var animation = {
-    // Most progress waiting for response.
-    REQUEST: [100, 95, 'waiting'],
+    // Most progress waiting for response; duration is 3x expected to
+    // accommodate slow networks and will be short-circuited by next step.
+    REQUEST: [0, 300, '95%', 'waiting'],
     // Finish during short processing time.
-    PROCESS: [10, 101, 'waiting'],
+    PROCESS: [100, 25, '101%', 'waiting'],
     // Fade it out slowly.
-    DONE: [100, 101, 'done']
+    DONE: [125, 150, '101%', 'done']
   };
 
   html.className = html.className.replace('no-js', '');
@@ -45,19 +48,39 @@
 
   function setProgress(anim) {
     clearTimeout(timer);
+    var elapsed = (new Date()).getTime() - start;
+    var scheduled = anim[0];
+    var duration = anim[1];
+    var percentage = anim[2];
+    var classes = anim[3];
+    var wait = scheduled - elapsed;
+    // Since navigation can often be faster than the animation,
+    // wait for the last scheduled step of the progress bar to complete
+    // before finishing.
+    if (classes == 'done' && wait > 0) {
+      timer = setTimeout(function() {
+        setProgress(anim);
+      }, wait);
+      return;
+    }
     progress.className = '';
     var ps = progress.style;
-    ps.transitionDuration = ps.webkitTransitionDuration = anim[0] + 'ms';
-    ps.width = anim[1] + '%';
-    if (anim[2] == 'done') {
-      progress.className = anim[2];
+    ps.transitionDuration = ps.webkitTransitionDuration = duration + 'ms';
+    ps.width = percentage;
+    if (classes == 'done') {
+      // If done, set the class now to start the fade-out and wait until
+      // the duration is over (i.e. the fade is complete) to reset the bar
+      // to the beginning.
+      progress.className = classes;
       timer = setTimeout(function() {
-        ps.width = '0%';  // Reset bar to beginning after done.
-      }, anim[0]);
+        ps.width = '0%';
+      }, duration);
     } else {
+      // If waiting, set the class after the duration is over (i.e. the
+      // bar has finished moving) to set the class and start the pulse.
       timer = setTimeout(function() {
-        progress.className = anim[2];
-      }, anim[0]);
+        progress.className = classes;
+      }, duration);
     }
   }
 
@@ -77,15 +100,16 @@
 
   function handleScroll(event) {
     var current = body.scrollTop;
-    if (current >= 80 && previous < 80) {
+    if (current >= 80 && position < 80) {
       body.className = body.className + ' scrolled';
-    } else if (current < 80 && previous >= 80) {
+    } else if (current < 80 && position >= 80) {
       body.className = body.className.replace(' scrolled', '');
     }
-    previous = current;
+    position = current;
   }
 
   function handleRequest(event) {
+    start = (new Date()).getTime();
     setProgress(animation.REQUEST);
   }
 
