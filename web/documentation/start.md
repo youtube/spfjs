@@ -3,6 +3,7 @@ title: Get Started
 description: "Use SPF on your site: send requests, return responses."
 ---
 
+
 ## Get the code
 
 Before getting started, first **[download the code][download]**.
@@ -118,6 +119,7 @@ to dynamic navigation:
   "foot": "<!-- Scripts -->"
 }
 ```
+
 
 
 [download]: ../../download/

@@ -3,6 +3,7 @@ title: Responses
 description: An overview of SPF responses and how they are processed.
 ---
 
+
 In dynamic navigation, SPF updates the page with content from the response.
 SPF will do this processing in the following order:
 

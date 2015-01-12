@@ -3,14 +3,15 @@ title: SPF
 layout: home
 ---
 
+
 ## A lightweight JS framework for fast navigation and page updates from YouTube
 
 
-Using progressive enhancement and HTML5, SPF integrates with your site to enable
-a faster, more fluid user experience by updating just the sections of the page
-that change during navigation, not the whole page.  SPF provides a response
-format for sending document fragments, a robust system for script and style
-management, an in-memory cache, on-the-fly processing, and more.
+Using progressive enhancement and HTML5, SPF integrates with your site to
+enable a faster, more fluid user experience by updating just the sections of
+the page that change during navigation, not the whole page.  SPF provides a
+response format for sending document fragments, a robust system for script and
+style management, an in-memory cache, on-the-fly processing, and more.
 
 
 ## Navigation
@@ -70,5 +71,5 @@ gaining the performance and user experience benefits of dynamic page loads:
 
 > **On-the-Fly Processing**
 >
-> SPF supports streaming multipart responses in chunks to enable
-> on-the-fly processing.  This speeds up navigation by starting rendering early.
+> SPF supports streaming multipart responses in chunks to enable on-the-fly
+> processing.  This speeds up navigation by starting rendering early.
