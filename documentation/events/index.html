@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en" class="spf-link no-js">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>SPF - Events</title>
+<meta name="description" content="Handle SPF events and the navigation life cycle.">
+
+<link rel="canonical" href="http://youtube.github.io/spfjs/documentation/events/">
+
+<!-- Add to homescreen for Chrome on Android -->
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" sizes="196x196" href="/spfjs/images/touch/chrome-touch-icon-196x196.png">
+
+<!-- Add to homescreen for Safari on iOS -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="SPF">
+
+<!-- Tile icon for Win8 (144x144 + tile color) -->
+<meta name="msapplication-TileImage" content="/spfjs/images/touch/ms-touch-icon-144x144-precomposed.png">
+<meta name="msapplication-TileColor" content="#3372DF">
+
+<!-- begin spf head -->
+<link rel="stylesheet" name="roboto" href="//fonts.googleapis.com/css?family=Roboto:300,600,900|Roboto+Condensed:300,300italic,400,700">
+<link rel="stylesheet" name="wsk" href="/spfjs/assets/vendor/wsk/0.4.0/styles/wsk.css">
+<link rel="stylesheet" name="octicons" href="/spfjs/assets/vendor/octicons/2.1.2/octicons.css">
+<link rel="stylesheet" name="main" href="/spfjs/assets/styles/main.css?t=2015-01-12T13%3A57%3A00-05%3A00">
+
+<!-- end spf head -->
+</head>
+<body id="body" class="documentation">
+
+<header id="app-bar" class="app-bar promote-layer">
+  <div class="app-bar-container">
+    <button id="menu" class="menu" title="Menu"></button>
+    <h1 class="logo"><a href="/spfjs/">SPF</a></h1>
+    <section class="app-bar-actions">
+      <a href="#"><i class="icon octicon octicon-chevron-up"></i> Top</a>
+    </section>
+  </div>
+</header>
+
+<div class="navdrawer">
+  <nav id="nav" class="navdrawer-container promote-layer">
+    <h4>Navigation</h4>
+    
+<ul>
+  
+    <li class="index">
+      <a href="/spfjs/">SPF</a>
+    </li>
+  
+    <li >
+      <a href="/spfjs/documentation/">Documentation</a>
+    </li>
+  
+    <li >
+      <a href="/spfjs/api/">API</a>
+    </li>
+  
+    <li >
+      <a href="/spfjs/download/">Download</a>
+    </li>
+  
+  <li><a href="https://github.com/youtube/spfjs">GitHub</a></li>
+</ul>
+
+  </nav>
+</div>
+
+<div id="content">
+<!-- begin spf body: content -->
+<main class="clear">
+
+  <nav class="toc g-wide--1 g-medium--1">
+    
+  
+  
+  
+    <p class="toc__title">
+      <a href="/spfjs/documentation/">Documentation</a>
+    </p>
+  
+
+<ol class="toc__list list-links">
+  
+    <li>
+      
+        <a href="/spfjs/documentation/start/">Get Started</a>
+      
+      
+    </li>
+  
+    <li>
+      
+        <a href="/spfjs/documentation/responses/">Responses</a>
+      
+      
+    </li>
+  
+    <li>
+      
+        <a href="/spfjs/documentation/events/">Events</a>
+      
+      
+    </li>
+  
+    <li>
+      
+        <a href="/spfjs/documentation/features/">Features</a>
+      
+      
+        
+  
+  
+  
+
+<ol class="toc__list list-links">
+  
+    <li>
+      
+        <a href="/spfjs/documentation/features/caching/">Caching</a>
+      
+      
+    </li>
+  
+    <li>
+      
+        <a href="/spfjs/documentation/features/multipart/">Multipart Responses</a>
+      
+      
+    </li>
+  
+    <li>
+      
+        <a href="/spfjs/documentation/features/prefetching/">Prefetching</a>
+      
+      
+    </li>
+  
+</ol>
+
+      
+    </li>
+  
+</ol>
+
+  </nav>
+
+  
+  
+
+  
+
+    <article class="g-wide--3 g-wide--last g-medium--2 g-medium--last">
+      <header class="page-header container">
+        <h2 class="xxlarge text-divider">Events</h2>
+        
+          <p class="page-header__excerpt g-wide--push-1 g-wide--pull-1">
+            Handle SPF events and the navigation life cycle.
+          </p>
+        
+      </header>
+      <div class="container">
+        <p>SPF is designed to give developers enough flexibility during navigation to
+both control application logic and provide UI updates for things like progress
+bars.</p>
+
+<h2 id="navigation-life-cycle">Navigation Life Cycle</h2>
+
+<p>A basic event flow diagram follows and a more detailed explanation is below:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">       Navigation Life Cycle            Event Dispatched
+                    +                                   
+                    |                                   
+                    |                                   
+                    +----------------------&gt;[ spfready ]
+                    |                                   
+                    |                                   
++-------------------+                                   
+|                   |                                   
+|                   |                                   
+|     +----------------------------+                    
+|     |             |              |                    
+|  api|navigate  dom|click  history|popstate            
+|     |             |              |                    
+|     |             +------+-------+                    
+|     |                    |           +---&gt;[ spfclick ]
+|     |                    +-----------+                
+|     |                    |           +-&gt;[ spfhistory ]
+|     +-------------+------+                            
+|                   |                                   
+|                   |                                   
+|                   +--------------------&gt;[ spfrequest ]
+|                   |                                   
+|               send|request                            
+|                   |                                   
+|                   +--------------+                    
+|                   |              |                    
+|                   |       history|pushstate           
+|                   |              |                    
+|                   +--------------+                    
+|                   |                                   
+|                   |                                   
+|            receive|response                           
+|                   |                                   
+|                   +--------------------&gt;[ spfprocess ]
+|                   |                                   
+|                   |                                   
+|            process|response                           
+|                   |                                   
+|                   +-----------------------&gt;[ spfdone ]
+|                   |                                   
+|                   |                                   
++-------------------+                                   
+                    |                                   
+                    |                                   
+                    v                                   
+</code></pre></div>
+<h2 id="event-descriptions">Event Descriptions</h2>
+
+<p>All events in the <a href="../../api/">API</a> are defined as <a href="../../api/#spf.event">spf.Event</a> objects.  A list of
+the events and their descriptions follows:</p>
+
+<p><strong><code>spfclick</code></strong><br>
+Fired when handling a click on a valid link (e.g. one with a valid <code>spf-link</code>
+class or parent element).  Use as an early indication that navigation will
+happen or to provide element-level UI feedback.</p>
+
+<p><strong><code>spfhistory</code></strong><br>
+Fired when handling a <code>popstate</code> history event, indicating the user has gone
+backward or forward; similar to <code>spfclick</code>.</p>
+
+<p><strong><code>spfrequest</code></strong><br>
+Fired before a request for navigation is sent.  Use to handle the beginning of
+navigation and provide global-level UI feedback (i.e. start a progress bar).
+This event is fired before a request is sent for all types of navigation:
+clicks, back/forward, and API calls.  (Note that this event is fired even if a
+response is fetched from cache and no actual network request is made.)</p>
+
+<p><strong><code>spfprocess</code></strong><br>
+Fired when a response has been received, either from the network or from
+cache, before it is processed.  Use to update UI feedback (i.e. advance a
+progress bar) and dispose event listeners before content is updated.</p>
+
+<p><strong><code>spfdone</code></strong><br>
+Fired after response processing is done.  Use to finalize UI feedback (i.e.
+complete a progress bar) and initialize event listeners after content is
+updated.</p>
+
+<h2 id="callbacks-and-cancellations">Callbacks and Cancellations</h2>
+
+<p>If manually starting navigation with <a href="../../api/#spf.navigate">spf.navigate</a>, then instead of
+handling events you may pass callbacks in an object that conforms to the
+<a href="../../api/#spf.requestoptions">spf.RequestOptions</a> interface. Almost all events and callbacks can be
+canceled by calling <code>preventDefault</code> or returning <code>false</code>, respectively.  A
+list of the events, their corresponding callbacks, and their cancel action
+follows:</p>
+
+<table><thead>
+<tr>
+<th style="text-align: left">Event</th>
+<th style="text-align: left">Callback</th>
+<th style="text-align: left">State</th>
+<th style="text-align: left">Cancel</th>
+</tr>
+</thead><tbody>
+<tr>
+<td style="text-align: left"><code>spfclick</code></td>
+<td style="text-align: left"></td>
+<td style="text-align: left">Link Clicked</td>
+<td style="text-align: left">Ignore</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>spfhistory</code></td>
+<td style="text-align: left"></td>
+<td style="text-align: left">Back/Forward Clicked</td>
+<td style="text-align: left">Ignore</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>spfrequest</code></td>
+<td style="text-align: left"><code>onRequest</code></td>
+<td style="text-align: left">Started; Sending Request</td>
+<td style="text-align: left">Reload</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>spfprocess</code></td>
+<td style="text-align: left"><code>onProcess</code></td>
+<td style="text-align: left">Processing; Response Received</td>
+<td style="text-align: left">Reload</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>spfdone</code></td>
+<td style="text-align: left"><code>onDone</code></td>
+<td style="text-align: left">Done</td>
+<td style="text-align: left"></td>
+</tr>
+</tbody></table>
+
+      </div>
+      
+
+  
+
+
+
+
+
+
+<nav class="article-nav">
+  
+    <a href="/spfjs/documentation/responses/" class="article-nav-link article-nav-link--prev">
+      <p class="article-nav-count">Responses</p>
+      
+        <p class="article-nav-description">An overview of SPF responses and how they are processed.</p>
+      
+    </a>
+  
+  
+    <a href="/spfjs/documentation/features/" class="article-nav-link article-nav-link--next">
+      <p class="article-nav-count">Features</p>
+      
+        <p class="article-nav-description">Learn about SPF features to enable high performance.</p>
+      
+    </a>
+  
+</nav>
+
+    </article>
+
+  
+
+
+  <section class="feedback">
+    <footer class="container"><div class="container">
+      <p>
+        If you have feedback, comments, or questions about SPF, please send them
+        to <a href="mailto:spfjs@googlegroups.com">spfjs@googlegroups.com</a>.
+        If you have bugs or feature requests, please file them on
+        <a href="https://github.com/youtube/spfjs/issues">GitHub</a>. Join our
+        <a href="https://groups.google.com/group/spfjs">mailing list</a> and
+        follow <a href="https://twitter.com/spfjs">@spfjs</a> on Twitter for
+        updates.
+      </p>
+    </div></footer>
+  </section>
+
+</main>
+
+<!-- end spf body: content -->
+</div>
+
+<footer>
+  <div class="container">
+    <p class="small">
+      &copy; 2014 Google.
+      Code licensed under <a href="https://github.com/youtube/spfjs/blob/master/LICENSE">MIT</a>.
+      Documentation licensed under <a href="http://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
+    </p>
+  </div>
+</footer>
+
+<div id="progress"><dt></dt><dd></dd></div>
+
+<!-- begin spf foot -->
+<script name="spf" src="/spfjs/assets/vendor/spf/2.1.1/spf.js"></script>
+<script name="main" src="/spfjs/assets/scripts/main.js?t=2015-01-12T13%3A57%3A00-05%3A00"></script>
+
+<script name="analytics">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+</script>
+<script>
+  if (window.location.hostname == 'youtube.github.io') {
+    ga('create', 'UA-52278317-1', 'auto');
+    ga('send', 'pageview');
+  }
+</script>
+
+<!-- end spf foot -->
+</body>
+</html>
