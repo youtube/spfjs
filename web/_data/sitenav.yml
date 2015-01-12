@@ -32,6 +32,7 @@
   children:
     - path: start/
     - path: responses/
+    - path: events/
     - path: features/
       description: Learn about SPF features to enable high performance.
       children:
