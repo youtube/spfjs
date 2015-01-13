@@ -29,6 +29,14 @@ OCTICONS = "#{VENDOR}/octicons/octicons"
 OCTICONS_VERSION = BOWER_INFO["octicons"]["pkgMeta"]["_release"]
 LOCAL_OCTICONS = "#{LOCAL}/octicons/#{OCTICONS_VERSION}"
 
+JSDOX = "../node_modules/jsdox/bin/jsdox"
+API_SRC = "../src/api.js"
+API_OUT_DIR = "."
+API_OUT = "#{API_OUT_DIR}/api.md"
+API_TMPL_DIR = "_api"
+API_TMPL = Dir.glob("#{API_TMPL_DIR}/*.mustache")
+API_TOC = "_includes/apitoc.md"
+
 AUTOPREFIXER_BROWSERS = [
   "ie >= 10",
   "ie_mob >= 10",
@@ -79,7 +87,7 @@ all_to_copy.each do |dst, src|
   file dst => src do
     dstdir = File.dirname(dst)
     FileUtils.mkdir_p(dstdir) unless File.directory?(dstdir)
-    puts("cp #{src} #{dst}") if verbose
+    puts("cp #{src} #{dst}") if verbose == true
     FileUtils.cp(src, dst)
   end
 end
@@ -105,42 +113,60 @@ css_to_build.each do |dst, srcs|
     # Output.
     dstdir = File.dirname(dst)
     FileUtils.mkdir_p(dstdir) unless File.directory?(dstdir)
-    puts("scss #{srcs} > #{dst}") if verbose
+    puts("scss #{srcs} > #{dst}") if verbose == true
     File.write(dst, compressed)
   end
 end
+
+
+api_files = [API_OUT, API_TOC]
+api_srcs = API_TMPL.concat([API_SRC])
+file API_OUT => api_srcs do
+  api_toc_base = File.join(File.dirname(API_TOC), File.basename(API_TOC, '.*'))
+  cmd = "#{JSDOX} #{API_SRC} "
+  cmd += "--templateDir #{API_TMPL_DIR} "
+  cmd += "--index #{api_toc_base} "
+  cmd += "--index-sort none "
+  cmd += "--output #{API_OUT_DIR} "
+  puts(cmd) if verbose == true
+  system(cmd)
+end
+file API_TOC => API_OUT
+
 
 # Tasks.
 task :css => css_files
 task :img => img_files
 task :js => js_files
 task :assets => [:css, :img, :js]
+task :api => api_files
+task :generated => [:api]
 
 
-task :build => [:assets] do
+task :build => [:assets, :generated] do
   cmd = "bundle exec jekyll build --trace"
-  puts(cmd) if verbose
+  puts(cmd) if verbose == true
   system(cmd)
 end
 
 
-task :serve => [:assets] do
+task :serve => [:assets, :generated] do
   cmd = "bundle exec jekyll serve --watch --trace"
-  puts(cmd) if verbose
+  puts(cmd) if verbose == true
   system(cmd)
 end
 
 
-task :stage => [:clean, :assets] do
+task :stage => [:clean, :assets, :generated] do
   cmd = "bundle exec jekyll build --trace --destination #{STAGING}"
-  puts(cmd) if verbose
+  puts(cmd) if verbose == true
   system(cmd)
 end
 
 
 task :clean do
   clean_paths = [SITE, LOCAL]
-  puts("rm #{clean_paths}") if verbose
+  puts("rm #{clean_paths}") if verbose == true
   FileUtils.rm_rf(clean_paths)
 end
 
