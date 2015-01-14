@@ -115,11 +115,11 @@
 
   function handleProcess(event) {
     setProgress(animation.PROCESS);
+    window.scroll(0,0);
   }
 
   function handleDone(event) {
     setProgress(animation.DONE);
-    window.scroll(0,0);
     handleScroll();
   }
 
