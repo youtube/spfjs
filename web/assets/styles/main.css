@@ -297,8 +297,8 @@ footer {
   background: #45C2FF;
   border-radius: 1px;
   /* the following transition times are overridden by JS */
-  -webkit-transition: width 150ms ease-out, opacity 150ms ease-out;
-  transition: width 150ms ease-out, opacity 150ms ease-out;
+  -webkit-transition: width 150ms ease-out;
+  transition: width 150ms ease-out;
 }
 #progress.done {
   opacity: 0;
