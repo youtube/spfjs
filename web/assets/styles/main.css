@@ -12,6 +12,8 @@ See the LICENSE file for details.
  * hover: 6271B6  (98,113,182)
  *
  * progress: 45C2FF  (69,194,255);
+ *
+ * code background: F0F0F0;
  ***/
 
 
@@ -86,7 +88,17 @@ blockquote::before {
   margin-left: -0.5em;
   font-family: 'Roboto Condensed', Helvetica, sans-serif;
   font-weight: 700;
-  color: #f0f0f0;
+  color: #6271B6;
+}
+
+code {
+  font-family: Inconsolata, monospace;
+  font-weight: 400;
+  background-color: #F0F0F0;
+  padding: 0 0.3em;
+}
+pre code {
+  padding: 0;
 }
 
 
@@ -338,7 +350,7 @@ footer {
   height: 320px;
   background: #4E5A92 url(../images/bg-990x320.jpg) no-repeat center center;
   background-size: cover;
-  color: #fff;
+  color: #FFFFFF;
   text-align: center;
 }
 .stage h1 {
@@ -361,7 +373,7 @@ footer {
     height: 585px;
     background: #4E5A92 url(../images/bg-1600x585.jpg) no-repeat center center;
     background-size: cover;
-    color: #fff;
+    color: #FFFFFF;
     text-align: left;
   }
   .stage h1 {
@@ -618,4 +630,10 @@ main nav {
   font-style: normal;
   font-weight: 700;
   src: local('Roboto Condensed Bold'), local('RobotoCondensed-Bold');
+}
+@font-face {
+  font-family: 'Inconsolata';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Inconsolata Regular'), local('Inconsolata-Regular');
 }
