@@ -64,11 +64,10 @@ git checkout v{{ site.version }}
 ```
 
 
-
-
 ## Get Started
 
 After you've grabbed the code, **[get started][start]**.
+
 
 
 [start]: ../documentation/start/

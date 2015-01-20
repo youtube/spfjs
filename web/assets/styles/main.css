@@ -8,12 +8,11 @@ See the LICENSE file for details.
 /***
  * colors
  *
- * link:  4E5A92  (78,90,146)
- * hover: 6271B6  (98,113,182)
- *
- * progress: 45C2FF  (69,194,255);
- *
- * code background: F0F0F0;
+ * link standard:  4E5A92  (78,90,146)
+ * link hover: 6271B6  (98,113,182)
+ * progress bar: 45C2FF  (69,194,255)
+ * code background: F0F0F0  (240,240,240)
+ * ornament color: 8A94C8  (138,148,200)
  ***/
 
 
@@ -88,9 +87,12 @@ blockquote::before {
   margin-left: -0.5em;
   font-family: 'Roboto Condensed', Helvetica, sans-serif;
   font-weight: 700;
-  color: #6271B6;
+  color: #8A94C8;
 }
 
+pre {
+  line-height: 1.3;
+}
 code {
   font-family: Inconsolata, monospace;
   font-weight: 400;

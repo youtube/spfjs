@@ -3,6 +3,7 @@ title: Events
 description: Handle SPF events and the navigation life cycle.
 ---
 
+
 SPF is designed to give developers enough flexibility during navigation to
 both control application logic and provide UI updates for things like progress
 bars.
@@ -63,7 +64,7 @@ A basic event flow diagram follows and a more detailed explanation is below:
 
 ## Event Descriptions
 
-All events in the [API][] are defined as [spf.Event][] objects.  A list of
+All events in the [API][api] are defined as [spf.Event][] objects.  A list of
 the events and their descriptions follows:
 
 **`spfclick`**  
@@ -112,7 +113,7 @@ follows:
 
 
 
-[API]: ../../api/
+[api]: ../../api/
 [spf.Event]: ../../api/#spf.event
 [spf.navigate]: ../../api/#spf.navigate
 [spf.RequestOptions]: ../../api/#spf.requestoptions
