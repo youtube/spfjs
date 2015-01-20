@@ -90,11 +90,29 @@ while true; do
   esac
 done
 
+tag="v$version"
+
 # Commit the release files.
-git commit -m "v$version"
+git commit -m "$tag"
 
 # Tag the commit as the release.
-git tag -a "v$version" -m "v$version"
+git tag -a "$tag" -m "$tag"
+
+# Confirm release.
+while true; do
+  echo
+  echo "WARNING: You should not undo this next step!"
+  echo "Once $tag is pushed, it should not be changed."
+  echo
+  read -p "Push $tag to github? [y/n] " answer
+  case $answer in
+    [Yy]* )
+      break;;
+    [Nn]* )
+      git checkout -q $branch;
+      exit;;
+  esac
+done
 
 # Push the tag.
 git push --tags
@@ -102,4 +120,4 @@ git push --tags
 # Return to the original branch.
 git checkout $branch
 git branch -D release-$commit-$version
-echo "Released $version."
+echo "Released $tag."
