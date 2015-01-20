@@ -11,7 +11,7 @@
 
 # The script must be passed a git release tag to distribute.
 if [[ $# < 1 ]]; then
-  echo "Usage: $(basename $0) sha_of_commit_to_release"
+  echo "Usage: $(basename $0) tag_to_release"
   exit 1
 fi
 
@@ -52,7 +52,7 @@ if [[ $tag != "v$version" ]]; then
   exit 1
 fi
 
-# Confirm the distribution.
+# Confirm the tag.
 while true; do
   read -p "Distribute $tag? [y/n] " answer
   case $answer in
@@ -66,6 +66,34 @@ done
 
 # Create a temp branch, just in case.
 git checkout -b distribute-$tag
+
+# Build a distribution archive for upload to GitHub and CDNs.
+echo "Building distribution archive..."
+mkdir -p build/spfjs-$version-dist/
+cp dist/* build/spfjs-$version-dist/
+cd build
+zip spfjs-$version-dist.zip spfjs-$version-dist/*
+cd ..
+echo "The archive contents are:"
+unzip -l build/spfjs-$version-dist.zip
+echo "The distribution archive has been created at:"
+echo "    build/spfjs-$version-dist.zip"
+
+# Confirm publishing.
+while true; do
+  echo
+  echo "WARNING: You cannot undo this next step!"
+  echo "Once $tag is published to npm, it cannot be changed."
+  echo
+  read -p "Publish $tag to npm? [y/n] " answer
+  case $answer in
+    [Yy]* )
+      break;;
+    [Nn]* )
+      git checkout -q $branch;
+      exit;;
+  esac
+done
 
 # Publish to npm.
 npm_user=$(npm whoami 2> /dev/null)
@@ -94,18 +122,6 @@ else
   npm publish
   echo "Published to npm."
 fi
-
-# Build a distribution archive for upload to GitHub and CDNs.
-echo "Building distribution archive..."
-mkdir -p build/spfjs-$version-dist/
-cp dist/* build/spfjs-$version-dist/
-cd build
-zip spfjs-$version-dist.zip spfjs-$version-dist/*
-cd ..
-echo "The archive contents are:"
-unzip -l build/spfjs-$version-dist.zip
-echo "The distribution archive has been created at:"
-echo "    build/spfjs-$version-dist.zip"
 
 # Return to the original branch.
 git checkout $branch
