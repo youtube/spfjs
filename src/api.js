@@ -5,9 +5,6 @@
 
 /**
  * @fileoverview Definition of the external SPF API.
- *
- * @version SPF 21 (v2.1.1)
- *
  * @externs
  * @author nicksay@google.com (Alex Nicksay)
  */
