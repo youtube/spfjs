@@ -609,7 +609,7 @@ spf.nav.navigateAddHistory_ = function(url, referer, handleError) {
     // But if the new URL is the same as the current, replace instead.
     // When comparing the URLs, consider the hash too, if any.
     if (spf.url.absolute(url, true) == window.location.href) {
-      spf.history.replace(url, null, false, true);
+      spf.history.replace(url);
     } else {
       spf.history.add(url, state);
     }
@@ -777,7 +777,7 @@ spf.nav.handleNavigateRedirect_ = function(options, redirectUrl) {
   try {
     // Persist the url hash to mirror browser redirects.
     redirectUrl = redirectUrl + window.location.hash;
-    spf.history.replace(redirectUrl, null, true, true);
+    spf.history.replace(redirectUrl, null, true);
   } catch (err) {
     spf.nav.cancel();
     spf.debug.error('error caught, reloading ',

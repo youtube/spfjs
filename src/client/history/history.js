@@ -107,7 +107,8 @@ spf.history.add = function(opt_url, opt_state, opt_doCallback) {
 
 
 /**
- * Replace the current history entry.
+ * Replace the current history entry, merging any newly provided state values
+ * with existing ones.
  *
  * @param {?string=} opt_url The URL associated with this entry to display in
  *     the browser.  This can be either a relative or an absolute URL, and if
@@ -116,22 +117,31 @@ spf.history.add = function(opt_url, opt_state, opt_doCallback) {
  *     entry.  When the user returns to this entry, the "state" property of the
  *     event will contain a copy of this object.
  * @param {boolean=} opt_doCallback Whether to do the history event callback.
- * @param {boolean=} opt_retainState Whether to retain existing state if no new
- *     state is provided. Defaults to false.
  * @throws {Error} If the state object is too large. For example, Firefox will
  *     pass the object to JSON.stringify and impose a 640k character limit.
  * @throws {Error} If the URL is not in the same domain, a SECURITY_ERR
  *     (code == 18) is thrown.
  * @throws {Error} If window.history.replaceState is not a function.
  */
-spf.history.replace = function(opt_url, opt_state, opt_doCallback,
-                               opt_retainState) {
+spf.history.replace = function(opt_url, opt_state, opt_doCallback) {
+  var state = null;
+  // Set the existing state values.
   var currentState = spf.history.getCurrentState_();
-  if (opt_retainState && currentState) {
-    opt_state = opt_state || currentState;
+  if (currentState) {
+    state = state || {};
+    for (var key in currentState) {
+      state[key] = currentState[key];
+    }
+  }
+  // Update the state values with new ones.
+  if (opt_state) {
+    state = state || {};
+    for (var key in opt_state) {
+      state[key] = opt_state[key];
+    }
   }
   spf.debug.info('history.replace ', opt_url);
-  spf.history.push_(true, opt_url, opt_state, opt_doCallback);
+  spf.history.push_(true, opt_url, state, opt_doCallback);
 };
 
 
