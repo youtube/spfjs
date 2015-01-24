@@ -128,7 +128,7 @@ spf.history.replace = function(opt_url, opt_state, opt_doCallback) {
   // Set the existing state values.
   var currentState = spf.history.getCurrentState_();
   if (currentState) {
-    state = state || {};
+    state = {};
     for (var key in currentState) {
       state[key] = currentState[key];
     }
