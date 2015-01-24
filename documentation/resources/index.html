@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en" class="spf-link no-js">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>SPF - Resource Loading</title>
+<meta name="description" content="Manage script and style loading.">
+
+<link rel="canonical" href="http://youtube.github.io/spfjs/documentation/resources/">
+
+<!-- Add to homescreen for Chrome on Android -->
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" sizes="196x196" href="/spfjs/images/touch/chrome-touch-icon-196x196.png">
+
+<!-- Add to homescreen for Safari on iOS -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="SPF">
+
+<!-- Tile icon for Win8 (144x144 + tile color) -->
+<meta name="msapplication-TileImage" content="/spfjs/images/touch/ms-touch-icon-144x144-precomposed.png">
+<meta name="msapplication-TileColor" content="#3372DF">
+
+<!-- begin spf head -->
+<link rel="stylesheet" name="roboto" href="//fonts.googleapis.com/css?family=Roboto:300,600,900|Roboto+Condensed:300,300italic,400,700|Inconsolata:400">
+<link rel="stylesheet" name="wsk" href="/spfjs/assets/vendor/wsk/0.4.0/styles/wsk.css">
+<link rel="stylesheet" name="octicons" href="/spfjs/assets/vendor/octicons/2.1.2/octicons.css">
+<link rel="stylesheet" name="main" href="/spfjs/assets/styles/main.css?t=2015-01-24T14%3A27%3A06-05%3A00">
+
+<!-- end spf head -->
+</head>
+<body id="body" class="documentation">
+
+<header id="app-bar" class="app-bar promote-layer">
+  <div class="app-bar-container">
+    <button id="menu" class="menu" title="Menu"></button>
+    <h1 class="logo"><a href="/spfjs/">SPF</a></h1>
+    <section class="app-bar-actions">
+      <a href="#"><i class="icon octicon octicon-chevron-up"></i> Top</a>
+    </section>
+  </div>
+</header>
+
+<div class="navdrawer">
+  <nav id="nav" class="navdrawer-container promote-layer">
+    <h4>Navigation</h4>
+    
+<ul>
+  
+    <li class="index">
+      <a href="/spfjs/">SPF</a>
+    </li>
+  
+    <li >
+      <a href="/spfjs/documentation/">Documentation</a>
+    </li>
+  
+    <li >
+      <a href="/spfjs/api/">API</a>
+    </li>
+  
+    <li >
+      <a href="/spfjs/download/">Download</a>
+    </li>
+  
+  <li><a href="https://github.com/youtube/spfjs">GitHub</a></li>
+</ul>
+
+  </nav>
+</div>
+
+<div id="content">
+<!-- begin spf body: content -->
+<main class="clear">
+
+  <nav class="toc g-wide--1 g-medium--1">
+    
+  
+  
+  
+    <p class="toc__title">
+      <a href="/spfjs/documentation/">Documentation</a>
+    </p>
+  
+
+<ol class="toc__list list-links">
+  
+    <li>
+      
+        <a href="/spfjs/documentation/start/">Get Started</a>
+      
+      
+    </li>
+  
+    <li>
+      
+        <a href="/spfjs/documentation/responses/">Responses</a>
+      
+      
+    </li>
+  
+    <li>
+      
+        <a href="/spfjs/documentation/events/">Events</a>
+      
+      
+    </li>
+  
+    <li>
+      
+        <a href="/spfjs/documentation/resources/">Resource Loading</a>
+      
+      
+    </li>
+  
+    <li>
+      
+        <a href="/spfjs/documentation/features/">Features</a>
+      
+      
+        
+  
+  
+  
+
+<ol class="toc__list list-links">
+  
+    <li>
+      
+        <a href="/spfjs/documentation/features/caching/">Caching</a>
+      
+      
+    </li>
+  
+    <li>
+      
+        <a href="/spfjs/documentation/features/multipart/">Multipart Responses</a>
+      
+      
+    </li>
+  
+    <li>
+      
+        <a href="/spfjs/documentation/features/prefetching/">Prefetching</a>
+      
+      
+    </li>
+  
+</ol>
+
+      
+    </li>
+  
+</ol>
+
+  </nav>
+
+  
+  
+
+  
+
+    <article class="g-wide--3 g-wide--last g-medium--2 g-medium--last">
+      <header class="page-header container">
+        <h2 class="xxlarge text-divider">Resource Loading</h2>
+        
+          <p class="page-header__excerpt g-wide--push-1 g-wide--pull-1">
+            Manage script and style loading.
+          </p>
+        
+      </header>
+      <div class="container">
+        <p>As briefly mentioned in the <a href="../responses/">Responses overview</a>, when SPF
+processes a response, it will install JS and CSS from the <code>head</code> fragment, any
+of the <code>body</code> fragments, and the <code>foot</code> fragment.  However, SPF has two
+methods of handling scripts and styles: unmanaged and managed.  Both are
+detailed below.</p>
+
+<h2 id="unmanaged-resources">Unmanaged Resources</h2>
+
+<p>SPF parses each fragment for scripts and styles, extracts them, and executes
+them by appending them to the <code>&lt;head&gt;</code> of the document.  For example, given
+the following response:</p>
+<div class="highlight"><pre><code class="language-json" data-lang="json"><span class="p">{</span>
+  <span class="nt">&quot;head&quot;</span><span class="p">:</span> <span class="s2">&quot;</span>
+<span class="s2">    &lt;style&gt;.foo { color: blue }&lt;/style&gt;</span>
+<span class="s2">    &lt;link href=\&quot;file.css\&quot; rel=\&quot;stylesheet\&quot;&gt;</span>
+<span class="s2">  &quot;</span><span class="p">,</span>
+  <span class="nt">&quot;body&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;element-id-a&quot;</span><span class="p">:</span> <span class="s2">&quot;Lorem ipsum dolor sit amet&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;element-id-b&quot;</span><span class="p">:</span> <span class="s2">&quot;consectetur adipisicing elit&quot;</span>
+  <span class="p">},</span>
+  <span class="nt">&quot;foot&quot;</span><span class="p">:</span> <span class="s2">&quot;</span>
+<span class="s2">    &lt;script src=\&quot;file.js\&quot;&gt;&lt;/script&gt;</span>
+<span class="s2">    &lt;script&gt;alert(&#39;hello&#39;);&lt;/script&gt;</span>
+<span class="s2">  &quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Then, when SPF processes this response, it will do the following steps:</p>
+
+<ol>
+<li> Append <code>&lt;style&gt;.foo { color: blue }&lt;/style&gt;</code> to the document <code>&lt;head&gt;</code> to
+eval the CSS.</li>
+<li> Append <code>&lt;link href=&quot;file.css&quot; rel=&quot;stylesheet&quot;&gt;</code> to the document <code>&lt;head&gt;</code>
+to load the CSS file.</li>
+<li> Update the element with DOM id <code>element-id-a</code> with the HTML
+<code>Lorem ipsum dolor sit amet</code>.</li>
+<li> Update the element with DOM id <code>element-id-b</code> with the HTML
+<code>consectetur adipisicing elit</code>.</li>
+<li> Append <code>&lt;script src=&quot;file.js&quot;&gt;&lt;/script&gt;</code> to the document <code>&lt;head&gt;</code> to load
+the JS file <strong>and wait for it to complete before continuing</strong>.</li>
+<li> Append <code>&lt;script&gt;alert(&#39;hello&#39;);&lt;/script&gt;</code> to the document <code>&lt;head&gt;</code> to eval
+the JS.</li>
+</ol>
+
+<blockquote>
+<p><strong>Note:</strong> SPF will wait for script loading or execution to complete before
+processing.  This matches browser behavior and ensures proper script
+execution order.  (See step 4 above.)  To not wait for script execution,
+add the <code>async</code> attribute:</p>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;file.js&quot;</span> <span class="na">async</span><span class="nt">&gt;&lt;/script&gt;</span>
+</code></pre></div></blockquote>
+
+<p>As you navigate to and from the page sending this response, these steps will
+be repeated each time.</p>
+
+<h2 id="managed-resources">Managed Resources</h2>
+
+<p>However, a significant benefit of SPF is that only sections of the page
+are updated with each navigation instead of the browser performing a full
+reload.  That
+means — almost certainly — not every script and style needs to be executed or
+loaded during every navigation.</p>
+
+<p>Consider the following common pattern where two scripts are loaded
+per page: one containing common library code (e.g. jQuery) and a second
+containing page-specific code.   For example, a search page and an item page:</p>
+
+<p>Search Page:</p>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="c">&lt;!-- common-library.js provides utility functions --&gt;</span>
+<span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;common-library.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+<span class="c">&lt;!-- search-page.js provides functions for the search page --&gt;</span>
+<span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;search-page.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</code></pre></div>
+<p>Item Page:</p>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="c">&lt;!-- common-library.js provides utility functions --&gt;</span>
+<span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;common-library.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+<span class="c">&lt;!-- item-page.js provides functions for the item page --&gt;</span>
+<span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;item-page.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</code></pre></div>
+<p>As a user navigates from the search page to the item page, the
+<code>common-library.js</code> file does not need to be loaded again, as it&#39;s already
+in the page.  You can instruct SPF to manage this script by giving it a <code>name</code>
+attribute.  Then, when it encounters the script again, it will not reload it:</p>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;script </span><span class="na">name=</span><span class="s">&quot;common&quot;</span> <span class="na">src=</span><span class="s">&quot;common-library.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</code></pre></div>
+<p>By applying this to all the scripts, a user can navigate back and forth
+between the two pages and only ever load a given file once:</p>
+
+<p>Search Page:</p>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;script </span><span class="na">name=</span><span class="s">&quot;common&quot;</span> <span class="na">src=</span><span class="s">&quot;common-library.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+<span class="nt">&lt;script </span><span class="na">name=</span><span class="s">&quot;search&quot;</span> <span class="na">src=</span><span class="s">&quot;search-page.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</code></pre></div>
+<p>Item Page:</p>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;script </span><span class="na">name=</span><span class="s">&quot;common&quot;</span> <span class="na">src=</span><span class="s">&quot;common-library.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+<span class="nt">&lt;script </span><span class="na">name=</span><span class="s">&quot;item&quot;</span> <span class="na">src=</span><span class="s">&quot;item-page.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</code></pre></div>
+<p>Now, given the following navigation flow:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">[ search ]---&gt;[ item ]---&gt;[ search ]---&gt;[ item ]
+</code></pre></div>
+<p>Then, when SPF processes the responses for each page in that flow, it will do
+the following steps:</p>
+
+<ol>
+<li> <strong>Navigate to the search page.</strong></li>
+<li> Load the <code>common-library.js</code> JS file and wait for it to complete before
+continuing.</li>
+<li> Load the <code>search-page.js</code> JS file and wait for it to complete before
+continuing.</li>
+<li> <strong>Navigate to the item page.</strong></li>
+<li> <em>Skip reloading <code>common-library.js</code>.</em></li>
+<li> Load the <code>item-page.js</code> JS file and wait for it to complete before
+continuing.</li>
+<li> <strong>Navigate to the search page.</strong></li>
+<li> <em>Skip reloading <code>common-library.js</code>.</em></li>
+<li> <em>Skip reloading <code>search-page.js</code>.</em></li>
+<li><strong>Navigate to the item page.</strong></li>
+<li><em>Skip reloading <code>common-library.js</code>.</em></li>
+<li><em>Skip reloading <code>item-page.js</code>.</em></li>
+</ol>
+
+<p>Navigation between the two pages now avoids unnecessarily reloading the
+scripts.</p>
+
+<blockquote>
+<p><strong>Note:</strong> See the <a href="../events/">Events</a> documentation to properly handle
+initialization and disposal of pages during navigation to avoid memory leaks
+and outdated event listeners.</p>
+</blockquote>
+
+      </div>
+      
+
+  
+
+
+
+
+
+
+<nav class="article-nav">
+  
+    <a href="/spfjs/documentation/events/" class="article-nav-link article-nav-link--prev">
+      <p class="article-nav-count">Events</p>
+      
+        <p class="article-nav-description">Handle SPF events and the navigation life cycle.</p>
+      
+    </a>
+  
+  
+    <a href="/spfjs/documentation/features/" class="article-nav-link article-nav-link--next">
+      <p class="article-nav-count">Features</p>
+      
+        <p class="article-nav-description">Learn about SPF features to enable high performance.</p>
+      
+    </a>
+  
+</nav>
+
+    </article>
+
+  
+
+
+  <section class="feedback">
+    <footer class="container"><div class="container">
+      <p>
+        If you have feedback, comments, or questions about SPF, please send them
+        to <a href="mailto:spfjs@googlegroups.com">spfjs@googlegroups.com</a>.
+        If you have bugs or feature requests, please file them on
+        <a href="https://github.com/youtube/spfjs/issues">GitHub</a>. Join our
+        <a href="https://groups.google.com/group/spfjs">mailing list</a> and
+        follow <a href="https://twitter.com/spfjs">@spfjs</a> on Twitter for
+        updates.
+      </p>
+    </div></footer>
+  </section>
+
+</main>
+
+<!-- end spf body: content -->
+</div>
+
+<footer>
+  <div class="container">
+    <p class="small">
+      &copy; 2014 Google.
+      Code licensed under <a href="https://github.com/youtube/spfjs/blob/master/LICENSE">MIT</a>.
+      Documentation licensed under <a href="http://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
+    </p>
+  </div>
+</footer>
+
+<div id="progress"><dt></dt><dd></dd></div>
+
+<!-- begin spf foot -->
+<script name="spf" src="/spfjs/assets/vendor/spf/2.1.1/spf.js"></script>
+<script name="main" src="/spfjs/assets/scripts/main.js?t=2015-01-24T14%3A27%3A06-05%3A00"></script>
+
+<script name="analytics">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+</script>
+<script>
+  if (window.location.hostname == 'youtube.github.io') {
+    ga('create', 'UA-52278317-1', 'auto');
+    ga('send', 'pageview');
+  }
+</script>
+
+<!-- end spf foot -->
+</body>
+</html>
