@@ -1,5 +1,5 @@
 ---
-title: Resource Loading
+title: Resources
 description: Manage script and style loading.
 ---
 
@@ -153,7 +153,12 @@ reloading the scripts.
 > handle initialization and disposal of pages during navigation
 > to avoid memory leaks and outdated event listeners.
 
+> **Note:** See the [Versioning][versioning] documentation to
+> automatically switch between script and style versions for seamless
+> releases.
+
 
 
 [responses]: ../responses/
 [events]: ../events/
+[versioning]: ../versioning/
