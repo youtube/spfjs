@@ -137,6 +137,16 @@ See [the documentation](http://youtube.github.io/spfjs/documentation/) for
 complete information.
 
 
+## Browser Support
+
+To use dynamic navigation, SPF requires the HTML5 History API.  This is
+broadly supported by all current browsers, including Chrome 5+, Firefox 4+,
+and IE 10+.  See a full browser compatibility table at
+[Can I Use](http://caniuse.com/#feat=history).  Underlying functionality,
+such as AJAX-style page updates and script/style loading, is more broadly
+supported by IE 8+.
+
+
 ## Get Help
 
 Send feedback, comments, or questions about SPF to <spfjs@googlegroups.com>.
