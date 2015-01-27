@@ -317,11 +317,18 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
       // Normalize relative Resource Timing values as
       // Navigation Timing absolute values using navigationStart as base.
       var navigationStart = window.performance.timing.navigationStart;
-      for (var metric in xhr['resourceTiming']) {
-        var value = xhr['resourceTiming'][metric];
-        if (value !== undefined && (spf.string.endsWith(metric, 'Start') ||
-            spf.string.endsWith(metric, 'End') || metric == 'startTime')) {
-          timing[metric] = navigationStart + Math.round(value);
+
+      // Use resource timing data (RT) only if RT.startTime is later than
+      // the one provided by SPF when request was initiated.
+      // This is specifically affecting Chrome 40+. See http://crbug.com/375388
+      var startTime = navigationStart + xhr['resourceTiming']['startTime'];
+      if (startTime >= timing['startTime']) {
+        for (var metric in xhr['resourceTiming']) {
+          var value = xhr['resourceTiming'][metric];
+          if (value !== undefined && (spf.string.endsWith(metric, 'Start') ||
+              spf.string.endsWith(metric, 'End') || metric == 'startTime')) {
+            timing[metric] = navigationStart + Math.round(value);
+          }
         }
       }
     }
