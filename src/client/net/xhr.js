@@ -140,7 +140,9 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
       // Record Resource Timing relative timings (where available) to later be
       // converted into Navigation Timing absolute timings.
       if (window.performance && window.performance.getEntriesByName) {
-        xhr['resourceTiming'] = window.performance.getEntriesByName(url)[0];
+        // Get always the latest entry available just in case old entries were
+        // not cleared out by performance.clearResourceTimings.
+        xhr['resourceTiming'] = window.performance.getEntriesByName(url).pop();
       }
       // If processing chunks as they arrive and the state was transitioned
       // at response end to DONE without a LOADING, process the final chunk now.
