@@ -318,6 +318,7 @@ spf.nav.handleHistory_ = function(url, opt_state) {
   var reverse = !!(opt_state && opt_state['spf-back']);
   var referer = opt_state && opt_state['spf-referer'];
   var current = opt_state && opt_state['spf-current'];
+  var position = opt_state && opt_state['spf-position'];
   spf.debug.debug('nav.handleHistory ', '(url=', url, 'state=', opt_state, ')');
   // If the reload-identifier is present, remove it to prevent confusing data.
   var reloadId = /** @type {?string} */ (spf.config.get('reload-identifier'));
@@ -341,7 +342,7 @@ spf.nav.handleHistory_ = function(url, opt_state) {
   // Navigate to the URL.
   // NOTE: The persistent parameters are not appended here because they should
   // already be set on the URL if necessary.
-  spf.nav.navigate_(url, null, current, referer, true, reverse);
+  spf.nav.navigate_(url, null, current, referer, true, reverse, position);
 };
 
 
@@ -388,21 +389,25 @@ spf.nav.navigate = function(url, opt_options) {
  * @param {string} url The URL to navigate to, without the SPF identifier.
  * @param {?spf.RequestOptions=} opt_options Optional request options object.
  * @param {string=} opt_current The current page URL. This differs from the
- *     referer in that is always represents the current visible page regardless
- *     of history state.
+ *     referer in that is always represents the current visible page
+ *     regardless of history state.
  * @param {string=} opt_referer The Referrer URL, without the SPF identifier.
  *     Defaults to the current URL.
  * @param {boolean=} opt_history Whether this navigation is part of a history
  *     change. True when navigation is in response to a popState event.
- * @param {boolean=} opt_reverse Whether this is "backwards" navigation. True
- *     when the "back" button is clicked and navigation is in response to a
- *     popState event.
+ * @param {boolean=} opt_reverse Whether this navigation is going "backwards".
+ *     True when navigation is in response to a popState event and the "back"
+ *     button is clicked.
+ * @param {Array.<number>=} opt_position The window position to scroll to
+ *     after navigation is complete, in [x, y] format.  Should be defined
+ *     when navigation is in response to a popState event and a value exists
+ *     in the history state object.
  * @private.
  */
 spf.nav.navigate_ = function(url, opt_options, opt_current, opt_referer,
-                             opt_history, opt_reverse) {
+                             opt_history, opt_reverse, opt_position) {
   spf.debug.info('nav.navigate_ ', url, opt_options, opt_current,
-                 opt_referer, opt_history, opt_reverse);
+                 opt_referer, opt_history, opt_reverse, opt_position);
   // Abort previous navigation, if needed.
   spf.nav.cancel();
 
@@ -419,16 +424,21 @@ spf.nav.navigate_ = function(url, opt_options, opt_current, opt_referer,
   // always be used for history states. If it's unavailable that indicates the
   // visible page is undetermined and should not be relied upon.
   var current = opt_history ? opt_current : window.location.href;
+  // Convert from undefined and other falsey values.
+  var history = !!opt_history;
+  var reverse = !!opt_reverse;
+  var position = opt_position || null;
 
   // If the URL is not navigable, attempt to scroll to support hash navigation.
   if (!spf.nav.isNavigable_(url, current)) {
-    spf.nav.navigateScroll_(url);
-    // Add a history entry, if needed.
-    if (!opt_history) {
+    // Add a history entry beforehand to save current position, if needed.
+    if (!history) {
       var handleError = spf.bind(spf.nav.handleNavigateError_, null,
                                  options);
       spf.nav.navigateAddHistory_(url, referer, handleError);
     }
+    // Then attempt to scroll.
+    spf.nav.navigateScroll_(url, position);
     return;
   }
 
@@ -468,10 +478,10 @@ spf.nav.navigate_ = function(url, opt_options, opt_current, opt_referer,
   if (prefetchXhr && prefetchXhr.readyState != 4) {
     // Begin the prefetch promotion process.
     spf.nav.navigatePromotePrefetch_(url, options, referer,
-                                     !!opt_history, !!opt_reverse);
+                                     history, reverse);
   } else {
     spf.nav.navigateSendRequest_(url, options, current, referer,
-                                 !!opt_history, !!opt_reverse);
+                                 history, reverse, position);
   }
 };
 
@@ -521,19 +531,23 @@ spf.nav.navigatePromotePrefetch_ = function(url, options, referer, history,
  * @param {string} referer The Referrer URL, without the SPF identifier.
  * @param {boolean} history Whether this navigation is part of a history
  *     change. True when navigation is in response to a popState event.
- * @param {boolean} reverse Whether this is "backwards" navigation. True
- *     when the "back" button is clicked and navigation is in response to a
- *     popState event.
+ * @param {boolean} reverse Whether this navigation is going "backwards".
+ *     True when navigation is in response to a popState event and the "back"
+ *     button is clicked.
+ * @param {Array.<number>} position The window position to scroll to
+ *     after navigation is complete, in [x, y] format.  Should be defined
+ *     when navigation is in response to a popState event and a value exists
+ *     in the history state object.
  * @private
  */
 spf.nav.navigateSendRequest_ = function(url, options, current, referer,
-                                        history, reverse) {
+                                        history, reverse, position) {
   var handleError = spf.bind(spf.nav.handleNavigateError_, null,
                              options);
   var handlePart = spf.bind(spf.nav.handleNavigatePart_, null,
                             options, reverse);
   var handleSuccess = spf.bind(spf.nav.handleNavigateSuccess_, null,
-                               options, reverse, '');
+                               options, reverse, position, '');
 
   // Before sending a new navigation request, clear previous resource timings
   // to avoid (1) hitting buffer size limits or (2) accidentally getting timings
@@ -571,14 +585,19 @@ spf.nav.navigateSendRequest_ = function(url, options, current, referer,
  * Scrolls to a target specified by a URL hash.
  *
  * @param {string} url The requested URL, without the SPF identifier.
+ * @param {Array.<number>=} opt_position The window position to scroll to
+ *     in [x, y] format.  If present, this value is used instead of any target
+ *     in the URL hash.
  * @private
  */
-spf.nav.navigateScroll_ = function(url) {
-  var result = spf.string.partition(url, '#');
-  // Do nothing if the URL does not contain a hash.
-  if (!result[1]) {
+spf.nav.navigateScroll_ = function(url, opt_position) {
+  // If a position is defined, scroll to it.
+  if (opt_position) {
+    spf.debug.debug('    scrolling to position', opt_position);
+    window.scroll.apply(null, opt_position);
     return;
   }
+  var result = spf.string.partition(url, '#');
   // If a non-empty hash is found, attempt to scroll the element into view.
   // Otherwise, scroll to the top of the page.
   if (result[2]) {
@@ -604,14 +623,16 @@ spf.nav.navigateScroll_ = function(url) {
  */
 spf.nav.navigateAddHistory_ = function(url, referer, handleError) {
   try {
-    var state = {'spf-referer': referer};
-    // Add the URL to the history stack.
-    // But if the new URL is the same as the current, replace instead.
-    // When comparing the URLs, consider the hash too, if any.
-    if (spf.url.absolute(url, true) == window.location.href) {
-      spf.history.replace(url, null, false, true);
-    } else {
-      spf.history.add(url, state);
+    // Before adding the new history entry, update the existing one with the
+    // current scroll position (and timestamp, always done automatically).
+    var position = [window.pageXOffset, window.pageYOffset];
+    var updateState = {'spf-position': position};
+    spf.history.replace(null, updateState);
+    // Add the new history entry, unless the URL is the same as the current.
+    // (This can happen when clicking a hash-based target multiple times.)
+    if (spf.url.absolute(url, true) != window.location.href) {
+      var newState = {'spf-referer': referer};
+      spf.history.add(url, newState);
     }
   } catch (err) {
     // Abort the navigation.
@@ -696,9 +717,13 @@ spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
  * See {@link navigate}.
  *
  * @param {spf.RequestOptions} options Request options object.
- * @param {boolean} reverse Whether this is "backwards" navigation. True
- *     when the "back" button is clicked and navigation is in response to a
- *     popState event.
+ * @param {boolean} reverse Whether this navigation is going "backwards".
+ *     True when navigation is in response to a popState event and the "back"
+ *     button is clicked.
+ * @param {Array.<number>} position The window position to scroll to
+ *     after navigation is complete, in [x, y] format.  Should be defined
+ *     when navigation is in response to a popState event and a value exists
+ *     in the history state object.
  * @param {string} original The original request URL. This parameter
  *     is the empty string if the navigate request was not a promotion.
  * @param {string} url The requested URL, without the SPF identifier.
@@ -706,8 +731,8 @@ spf.nav.handleNavigatePart_ = function(options, reverse, url, partial) {
  *     object, either a complete single or multipart response object.
  * @private
  */
-spf.nav.handleNavigateSuccess_ = function(options, reverse, original,
-                                          url, response) {
+spf.nav.handleNavigateSuccess_ = function(options, reverse, position,
+                                          original, url, response) {
   spf.state.set(spf.state.Key.NAV_REQUEST, null);
 
   // If this is a navigation from a promotion, manually set the
@@ -748,7 +773,7 @@ spf.nav.handleNavigateSuccess_ = function(options, reverse, original,
     // queued after existing ones from any ongoing part prcoessing.
     var r = /** @type {spf.SingleResponse} */ (multipart ? {} : response);
     spf.nav.response.process(url, r, function() {
-      spf.nav.navigateScroll_(url);
+      spf.nav.navigateScroll_(url, position);
       spf.nav.dispatchDone_(url, response, options);
     }, true, reverse);
   } catch (err) {
@@ -777,7 +802,7 @@ spf.nav.handleNavigateRedirect_ = function(options, redirectUrl) {
   try {
     // Persist the url hash to mirror browser redirects.
     redirectUrl = redirectUrl + window.location.hash;
-    spf.history.replace(redirectUrl, null, true, true);
+    spf.history.replace(redirectUrl, null, true);
   } catch (err) {
     spf.nav.cancel();
     spf.debug.error('error caught, reloading ',
@@ -1128,8 +1153,10 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
     // been promoted, remove the task queues becuase a subsequent
     // request will hit the cache.
     if (spf.state.get(spf.state.Key.NAV_PROMOTE) == original) {
+      // TODO(nicksay): Honor scroll position during prefetch promotion in
+      // reponse to a history navigation. (This is an edge case.)
       var fn = spf.bind(spf.nav.handleNavigateSuccess_, null,
-                        options, false, original, url, response);
+                        options, false, null, original, url, response);
       spf.tasks.add(promoteKey, fn);
       spf.tasks.run(promoteKey, true);
       return;

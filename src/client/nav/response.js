@@ -150,8 +150,7 @@ spf.nav.response.process = function(url, response, opt_callback, opt_navigate,
     if (fullUrl != spf.nav.response.getCurrentUrl_()) {
       spf.debug.debug('  update history with response url');
       // Add the URL to the history stack, including hash.
-      spf.history.replace(response['url'] + window.location.hash,
-          null, false, true);
+      spf.history.replace(response['url'] + window.location.hash);
     }
   }
 

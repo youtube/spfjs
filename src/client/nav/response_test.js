@@ -566,8 +566,7 @@ describe('spf.nav.response', function() {
       var response = { 'url': 'http://www.youtube.com/watch?v=3' };
 
       spf.nav.response.process('/watch?v=2', response, null, true);
-      expect(spf.history.replace).toHaveBeenCalledWith(
-          response['url'], null, false, true);
+      expect(spf.history.replace).toHaveBeenCalledWith(response['url']);
     });
 
     it('does not update history for navigate without redirect url', function() {

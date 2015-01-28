@@ -137,25 +137,14 @@ describe('spf.history', function() {
     expect(callbacks.one).toHaveBeenCalled();
     expect(getEntry(1).state['spf-timestamp']).toBeGreaterThan(0);
     expect(getEntry(1).url).toEqual('/foo');
-    // Replace the top entry's url without maintaining state.
+    // Replace the top entry's url and maintain state.
     time.advance = 300;
     spf.history.replace('/foo', {'test': 'state'});
     time.advance = 400;
-    spf.history.replace('/bar', null, false, false);
+    spf.history.replace('/bar');
     expect(stack.length).toBe(1);
     expect(spf.history.doPushState_.calls.length).toEqual(0);
     expect(spf.history.doReplaceState_.calls.length).toEqual(5);
-    expect(getEntry(1).state['test']).toBeUndefined();
-    expect(getEntry(1).state['spf-timestamp']).toBeGreaterThan(0);
-    expect(getEntry(1).url).toEqual('/bar');
-    // Replace the top entry's url and maintain state.
-    time.advance = 500;
-    spf.history.replace('/foo', {'test': 'state'});
-    time.advance = 600;
-    spf.history.replace('/bar', null, false, true);
-    expect(stack.length).toBe(1);
-    expect(spf.history.doPushState_.calls.length).toEqual(0);
-    expect(spf.history.doReplaceState_.calls.length).toEqual(7);
     expect(getEntry(1).state['test']).toEqual('state');
     expect(getEntry(1).state['spf-timestamp']).toBeGreaterThan(0);
     expect(getEntry(1).url).toEqual('/bar');
