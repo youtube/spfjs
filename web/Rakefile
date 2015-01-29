@@ -4,6 +4,7 @@
 # See the LICENSE file for details.
 
 require "fileutils"
+require "pathname"
 require "json"
 require "sass"
 require "autoprefixer-rails"
@@ -14,22 +15,33 @@ STAGING = "../../spfjs-gh-pages"
 VENDOR = "../bower_components"
 LOCAL = "assets/vendor"
 
-BOWER_INFO = JSON.parse(`cd .. && bower --offline list --json`)["dependencies"]
+begin
+  BOWER = Pathname('../node_modules/bower/bin/bower').realpath
+  JSDOX = Pathname('../node_modules/jsdox/bin/jsdox').realpath
+rescue
+  msg = "Required tools not found; please run the following:\n"
+  msg += "    cd .. && npm install"
+  raise msg
+end
+
+BOWER_INFO = JSON.parse(`cd .. && #{BOWER} --offline list --json`)
 
 # Use an official SPF release instead of building from source.
 SPF = "#{VENDOR}/spf"
-SPF_VERSION = BOWER_INFO["spf"]["pkgMeta"]["_release"]
+SPF_INFO = BOWER_INFO["dependencies"]["spf"]["pkgMeta"]
+SPF_VERSION = SPF_INFO["version"]
 LOCAL_SPF = "#{LOCAL}/spf/#{SPF_VERSION}"
 
 WSK = "#{VENDOR}/web-starter-kit/app"
-WSK_VERSION = BOWER_INFO["web-starter-kit"]["pkgMeta"]["_release"]
+WSK_INFO = BOWER_INFO["dependencies"]["web-starter-kit"]["pkgMeta"]
+WSK_VERSION = WSK_INFO["version"]
 LOCAL_WSK = "#{LOCAL}/wsk/#{WSK_VERSION}"
 
 OCTICONS = "#{VENDOR}/octicons/octicons"
-OCTICONS_VERSION = BOWER_INFO["octicons"]["pkgMeta"]["_release"]
+OCTICONS_INFO = BOWER_INFO["dependencies"]["octicons"]["pkgMeta"]
+OCTICONS_VERSION = OCTICONS_INFO["version"]
 LOCAL_OCTICONS = "#{LOCAL}/octicons/#{OCTICONS_VERSION}"
 
-JSDOX = "../node_modules/jsdox/bin/jsdox"
 API_SRC = "../src/api.js"
 API_OUT_DIR = "."
 API_OUT = "#{API_OUT_DIR}/api.md"
