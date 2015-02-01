@@ -3,17 +3,23 @@
 # Use of this source code is governed by The MIT License.
 # See the LICENSE file for details.
 
-require "fileutils"
-require "pathname"
-require "json"
-require "sass"
 require "autoprefixer-rails"
+require "fileutils"
+require "json"
+require "pathname"
+require "sass"
+require "tmpdir"
+require "yaml"
 
 
 SITE = "_site"
 STAGING = "../../spfjs-gh-pages"
 VENDOR = "../bower_components"
 LOCAL = "assets/vendor"
+
+SITE_INFO = YAML.load_file("_config.yml")
+SITE_RELEASE = SITE_INFO["release"]
+SITE_VERSION = SITE_INFO["version"]
 
 begin
   BOWER = Pathname('../node_modules/bower/bin/bower').realpath
@@ -134,8 +140,15 @@ end
 api_files = [API_OUT, API_TOC]
 api_srcs = API_TMPL.concat([API_SRC])
 file API_OUT => api_srcs do
+  tmpdir = Dir.mktmpdir()
+  api_tmpfile = "#{tmpdir}/#{File.basename(API_SRC)}"
+  cmd = "git cat-file -p v#{SITE_VERSION}:#{API_SRC} "
+  cmd += "| sed '/@fileoverview/ a\\\n\\ * @version #{SITE_RELEASE}\n' "
+  cmd += "> #{api_tmpfile}"
+  puts(cmd) if verbose == true
+  system(cmd)
   api_toc_base = File.join(File.dirname(API_TOC), File.basename(API_TOC, '.*'))
-  cmd = "#{JSDOX} #{API_SRC} "
+  cmd = "#{JSDOX} #{api_tmpfile} "
   cmd += "--templateDir #{API_TMPL_DIR} "
   cmd += "--index #{api_toc_base} "
   cmd += "--index-sort none "
