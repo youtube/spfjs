@@ -4,7 +4,8 @@ description: The JS API reference.
 layout: api
 ---
 
-The following API reference is for **SPF 21 (v2.1.1)**.
+
+The following API reference is for **SPF 21 (v2.1.2)**.
 
 
 * * *
