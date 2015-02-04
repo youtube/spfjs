@@ -285,26 +285,27 @@ spf.net.resource.create = function(type, url, opt_callback, opt_document,
   }
   // For scripts, set the onload and onreadystatechange handlers before
   // setting the src to avoid potential IE bug where handlers are not called.
-  // Place resources in the head instead of the body to avoid errors when
-  // called from the head in the first place.
-  var head = doc.getElementsByTagName('head')[0];
+  // Prefer placing resources in the head instead of the body to avoid errors
+  // when called from the head in the first place.
+  var targetEl = doc.getElementsByTagName('head')[0] || doc.body;
   if (isJS) {
     el.async = true;
     el.src = url;
     // Use insertBefore for JS to avoid IE execution errors.
-    head.insertBefore(el, head.firstChild);
+    targetEl.insertBefore(el, targetEl.firstChild);
   } else {
     el.rel = 'stylesheet';
     el.href = url;
     // If this stylesheet already exists under a different URL,
     // reload it in-place to prevent changing the order of the cascade.
+    // It is only reloaded it in-place if it already exists in the head,
+    // otherwise the new element is appended.
     var prevEl = opt_prevUrl && spf.net.resource.find(type, opt_prevUrl,
-        opt_document);
-    // If prevEl is not defined, el is appended to the head.
+        targetEl);
     if (prevEl) {
-      head.insertBefore(el, prevEl);
+      targetEl.insertBefore(el, prevEl);
     } else {
-      head.appendChild(el);
+      targetEl.appendChild(el);
     }
   }
   return el;
@@ -341,7 +342,8 @@ spf.net.resource.destroy = function(type, url, opt_document) {
 spf.net.resource.find = function(type, url, opt_document) {
   var label = spf.net.resource.label(url);
   var cls = spf.net.resource.key(type, label);
-  var els = spf.dom.query('.' + cls, opt_document);
+  var selector = '.' + cls;
+  var els = spf.dom.query(selector, opt_document);
   return els[0];
 };
 
