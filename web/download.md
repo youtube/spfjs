@@ -7,13 +7,13 @@ layout: download
 
 ## Install with npm or Bower
 
-Install the [npm][npm] package:
+Install the [npm][] package:
 
 ```sh
 npm install spf
 ```
 
-Install the [Bower][bower] package:
+Install the [Bower][] package:
 
 ```sh
 bower install spf
@@ -24,20 +24,20 @@ bower install spf
 
 You can link to the JS files directly from several popular CDNs:
 
-- [Google Hosted Libraries][google]  
+- [Google Hosted Libraries][]  
   `https://ajax.googleapis.com/ajax/libs/spf/{{ site.version }}/spf.js`
-- [cdnjs][cdnjs]  
+- [cdnjs][]  
   `https://cdnjs.cloudflare.com/ajax/libs/spf/{{ site.version }}/spf.js`
-- [jsDelivr][jsdelivr]  
+- [jsDelivr][]  
   `https://cdn.jsdelivr.net/spf/{{ site.version }}/spf.js`
-- [OSSCDN][osscdn]  
+- [OSSCDN][]  
   `https://oss.maxcdn.com/spf/{{ site.version }}/spf.js`
 
 
 ## Download a release
 
 Download just the minified JS files:
-**[spfjs-{{ site.version }}-dist.zip](https://github.com/youtube/spfjs/releases/download/v{{ site.version }}/spfjs-{{ site.version }}-dist.zip)**
+**[spfjs-{{ site.version }}-dist.zip][]**
 
 ```sh
 curl -LO https://github.com/youtube/spfjs/releases/download/v{{ site.version }}/spfjs-{{ site.version }}-dist.zip
@@ -45,7 +45,7 @@ unzip spfjs-{{ site.version }}-dist.zip
 ```
 
 Or, download the minified files and complete source code:
-**[v{{ site.version }}.zip](https://github.com/youtube/spfjs/archive/v{{ site.version }}.zip)**
+**[v{{ site.version }}.zip][]**
 
 ```sh
 curl -LO https://github.com/youtube/spfjs/archive/v{{ site.version }}.zip
@@ -66,14 +66,16 @@ git checkout v{{ site.version }}
 
 ## Get Started
 
-After you've grabbed the code, **[get started][start]**.
+After you've grabbed the code, **[get started][]**.
 
 
 
-[start]: ../documentation/start/
+[get started]: ../documentation/start/
 [npm]: https://www.npmjs.com/
-[bower]: http://bower.io/
-[google]: https://developers.google.com/speed/libraries/devguide#spf
+[Bower]: http://bower.io/
+[Google Hosted Libraries]: https://developers.google.com/speed/libraries/devguide#spf
 [cdnjs]: https://cdnjs.com/libraries/spf
-[jsdelivr]: http://www.jsdelivr.com/#!spf
-[osscdn]: http://osscdn.com/#/spf
+[jsDelivr]: http://www.jsdelivr.com/#!spf
+[OSSCDN]: http://osscdn.com/#/spf
+[spfjs-{{ site.version }}-dist.zip]: https://github.com/youtube/spfjs/releases/download/v{{ site.version }}/spfjs-{{ site.version }}-dist.zip
+[v{{ site.version }}.zip]: https://github.com/youtube/spfjs/archive/v{{ site.version }}.zip
