@@ -318,7 +318,8 @@ describe('spf.nav', function() {
       spf.nav.handleClick_(evt);
 
       expect(evt.defaultPrevented).toEqual(true);
-      expect(spf.nav.navigate_).toHaveBeenCalledWith(evt.target.href);
+      expect(spf.nav.navigate_).toHaveBeenCalled();
+      expect(spf.nav.navigate_.calls[0].args[0]).toEqual(evt.target.href);
     });
 
 
