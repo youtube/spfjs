@@ -761,6 +761,7 @@ spf.nav.response.getCurrentUrl_ = function() {
  * @param {number} duration The animation duration.
  * @param {boolean} reverse Whether this is a "back" animation.
  * @constructor
+ * @struct
  * @private
  */
 spf.nav.response.Animation_ = function(el, html, cls, duration, reverse) {
