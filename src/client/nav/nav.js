@@ -32,23 +32,23 @@ goog.require('spf.url');
 
 /**
  * Type defininition for the data to track information about an SPF request.
- * - referer: The Referrer URL.
  * - current: The current page URL. This differs from `referer` in that is
  *       always represents the current visible page regardless of history state.
  * - history: Whether this navigation is part of a history change. True when
  *       navigation is in response to a popState event
+ * - position: The window position to scroll to during navigation, in [x, y]
+ *     format.  Should be defined when navigation is in response to a popState
+ *     event and a value exists in the history state object.
+ * - referer: The referrer page URL.
  * - reverse: Whether this navigation is going "backwards". True when navigation
  *     is in response to a popState event and the "back" button is clicked.
- * - position: The window position to scroll to after navigation is complete,
- *     in [x, y] format.  Should be defined when navigation is in response to a
- *     popState event and a value exists in the history state object.
  *
  * @typedef {{
- *   referer: string,
  *   current: string,
  *   history: boolean,
- *   reverse: boolean,
- *   position: Array.<number>
+ *   position: Array.<number>,
+ *   referer: string,
+ *   reverse: boolean
  * }}
  * @private
  */
@@ -307,7 +307,9 @@ spf.nav.handleClick_ = function(evt) {
   }
 
   // Navigate to the URL.
-  spf.nav.navigate_(url);
+  var options = spf.nav.createOptions_();
+  var info = spf.nav.createInfo_();
+  spf.nav.navigate_(url, options, info);
   // Prevent the default browser navigation to avoid reloads.
   evt.preventDefault();
 };
@@ -368,7 +370,9 @@ spf.nav.handleHistory_ = function(url, opt_state) {
   // Navigate to the URL.
   // NOTE: The persistent parameters are not appended here because they should
   // already be set on the URL if necessary.
-  spf.nav.navigate_(url, null, current, referer, true, reverse, position);
+  var options = spf.nav.createOptions_();
+  var info = spf.nav.createInfo_(current, referer, true, reverse, position);
+  spf.nav.navigate_(url, options, info);
 };
 
 
@@ -404,7 +408,9 @@ spf.nav.navigate = function(url, opt_options) {
     return;
   }
   // Navigate to the URL.
-  spf.nav.navigate_(url, opt_options);
+  var options = spf.nav.createOptions_(opt_options);
+  var info = spf.nav.createInfo_();
+  spf.nav.navigate_(url, options, info);
 };
 
 
@@ -413,46 +419,15 @@ spf.nav.navigate = function(url, opt_options) {
  * See {@link #navigate}, {@link #handleClick}, and {@link #handleHistory}.
  *
  * @param {string} url The URL to navigate to, without the SPF identifier.
- * @param {?spf.RequestOptions=} opt_options Optional request options object.
- * @param {string=} opt_current The current page URL. This differs from the
- *     referer in that is always represents the current visible page
- *     regardless of history state.
- * @param {string=} opt_referer The Referrer URL, without the SPF identifier.
- *     Defaults to the current URL.
- * @param {boolean=} opt_history Whether this navigation is part of a history
- *     change. True when navigation is in response to a popState event.
- * @param {boolean=} opt_reverse Whether this navigation is going "backwards".
- *     True when navigation is in response to a popState event and the "back"
- *     button is clicked.
- * @param {Array.<number>=} opt_position The window position to scroll to
- *     after navigation is complete, in [x, y] format.  Should be defined
- *     when navigation is in response to a popState event and a value exists
- *     in the history state object.
+ * @param {spf.RequestOptions} options The request options object.
+ * @param {spf.nav.request.Info_} info The request info object.
  * @private.
  */
-spf.nav.navigate_ = function(url, opt_options, opt_current, opt_referer,
-                             opt_history, opt_reverse, opt_position) {
-  spf.debug.info('nav.navigate_ ', url, opt_options, opt_current,
-                 opt_referer, opt_history, opt_reverse, opt_position);
+spf.nav.navigate_ = function(url, options, info) {
+  spf.debug.info('nav.navigate_ ', url, options, info);
+
   // Abort previous navigation, if needed.
   spf.nav.cancel();
-
-  var options = opt_options || /** @type {spf.RequestOptions} */ ({});
-
-  var info = /** @type {spf.nav.request.Info_} */ ({
-    // The referer, stored in the history entry state object to allow the
-    // correct value to be sent to the server during back/forward.
-    // Compare against "undefined" to allow empty referer values in history.
-    referer: (opt_referer != undefined) ? opt_referer : window.location.href,
-    // The current URL, which will have already changed for history events.
-    // For this case, the opt_current value from the history state should
-    // be used instead.
-    current: (opt_history && opt_current) ? opt_current : window.location.href,
-    // Convert from undefined and other falsey values.
-    history: !!opt_history,
-    reverse: !!opt_reverse,
-    position: opt_position || null
-  });
 
   // If the URL is not navigable, attempt to scroll to support hash navigation.
   if (!spf.nav.isNavigable_(url, info.current)) {
@@ -906,7 +881,8 @@ spf.nav.reload = function(url, reason, opt_err) {
  */
 spf.nav.load = function(url, opt_options) {
   url = spf.url.appendPersistentParameters(url);
-  spf.nav.load_(url, opt_options);
+  var options = spf.nav.createOptions_(opt_options);
+  spf.nav.load_(url, options);
 };
 
 
@@ -915,13 +891,12 @@ spf.nav.load = function(url, opt_options) {
  * See {@link #load}.
  *
  * @param {string} url The URL to load, without the SPF identifier.
- * @param {spf.RequestOptions=} opt_options Optional request options object.
+ * @param {spf.RequestOptions} options The request options object.
  * @param {string=} opt_original The original request URL.
  * @private
  */
-spf.nav.load_ = function(url, opt_options, opt_original) {
-  spf.debug.info('nav.load ', url, opt_options, opt_original);
-  var options = opt_options || /** @type {spf.RequestOptions} */ ({});
+spf.nav.load_ = function(url, options, opt_original) {
+  spf.debug.info('nav.load ', url, options, opt_original);
   var original = opt_original || url;
 
   // Abort the load if the "request" callback is canceled.
@@ -960,7 +935,8 @@ spf.nav.load_ = function(url, opt_options, opt_original) {
  */
 spf.nav.prefetch = function(url, opt_options) {
   url = spf.url.appendPersistentParameters(url);
-  spf.nav.prefetch_(url, opt_options);
+  var options = spf.nav.createOptions_(opt_options);
+  spf.nav.prefetch_(url, options);
 };
 
 
@@ -969,13 +945,12 @@ spf.nav.prefetch = function(url, opt_options) {
  * See {@link #prefetch}.
  *
  * @param {string} url The URL to prefetch, without the SPF identifier.
- * @param {spf.RequestOptions=} opt_options Optional request options object.
+ * @param {spf.RequestOptions} options The request options object.
  * @param {string=} opt_original The original request URL.
  * @private
  */
-spf.nav.prefetch_ = function(url, opt_options, opt_original) {
-  spf.debug.info('nav.prefetch ', url, opt_options, opt_original);
-  var options = opt_options || /** @type {spf.RequestOptions} */ ({});
+spf.nav.prefetch_ = function(url, options, opt_original) {
+  spf.debug.info('nav.prefetch ', url, options, opt_original);
   var original = opt_original || url;
   var current = window.location.href;
 
@@ -1078,13 +1053,7 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
     // prefetch promotion.
     // TODO(nicksay): Honor history/reverse/position during promotion in
     // reponse to a popState. (This is an edge case.)
-    var info = /** @type {spf.nav.request.Info_} */ ({
-      referer: window.location.href,
-      current: window.location.href,
-      history: false,
-      reverse: false,
-      position: null
-    });
+    var info = spf.nav.createInfo_();
     var fn = spf.bind(spf.nav.handleNavigatePart_, null,
                       options, info, url, partial);
     var promoteKey = spf.nav.promoteKey(original);
@@ -1163,15 +1132,9 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
     // been promoted, remove the task queues becuase a subsequent
     // request will hit the cache.
     if (spf.state.get(spf.state.Key.NAV_PROMOTE) == original) {
-      var info = /** @type {spf.nav.request.Info_} */ ({
-        referer: window.location.href,
-        current: window.location.href,
-        history: false,
-        reverse: false,
-        position: null
-      });
       // TODO(nicksay): Honor history/reverse/position during promotion in
       // reponse to a popState. (This is an edge case.)
+      var info = spf.nav.createInfo_();
       var fn = spf.bind(spf.nav.handleNavigateSuccess_, null,
                         options, info, original, url, response);
       spf.tasks.add(promoteKey, fn);
@@ -1607,6 +1570,55 @@ spf.nav.prefetches_ = function(opt_reqs) {
 spf.nav.isTouchCapablePlatform_ = function() {
   return ('ontouchstart' in window || window.navigator['maxTouchPoints'] > 0 ||
       window.navigator['msMaxTouchPoints'] > 0);
+};
+
+
+/**
+ * @param {spf.RequestOptions=} opt_options The request options object.
+ * @return {spf.RequestOptions}
+ * @private
+ */
+spf.nav.createOptions_ = function(opt_options) {
+  var options = opt_options || /** @type {spf.RequestOptions} */ ({});
+  return options;
+};
+
+
+/**
+ * @param {string=} opt_current The current page URL. This differs from the
+ *     `opt_referer` in that is always represents the current visible page
+ *     regardless of history state.
+ * @param {string=} opt_referer The referer page URL.
+ * @param {boolean=} opt_history Whether this navigation is part of a history
+ *     change. True when navigation is in response to a popState event.
+ * @param {boolean=} opt_reverse Whether this navigation is going "backwards".
+ *     True when navigation is in response to a popState event and the "back"
+ *     button is clicked.
+ * @param {Array.<number>=} opt_position The window position to scroll to
+ *     after navigation is complete, in [x, y] format.  Should be defined
+ *     when navigation is in response to a popState event and a value exists
+ *     in the history state object.
+ * @return {spf.nav.request.Info_}
+ * @private
+ */
+spf.nav.createInfo_ = function(opt_current, opt_referer,
+                               opt_history, opt_reverse,
+                               opt_position) {
+  var info = /** @type {spf.nav.request.Info_} */ ({
+    // The referer, stored in the history entry state object to allow the
+    // correct value to be sent to the server during back/forward.
+    // Compare against "undefined" to allow empty referer values in history.
+    referer: (opt_referer != undefined) ? opt_referer : window.location.href,
+    // The current URL, which will have already changed for history events.
+    // For this case, the opt_current value from the history state should
+    // be used instead.
+    current: (opt_history && opt_current) ? opt_current : window.location.href,
+    // Convert from undefined and other falsey values.
+    history: !!opt_history,
+    reverse: !!opt_reverse,
+    position: opt_position || null
+  });
+  return info;
 };
 
 
