@@ -415,7 +415,7 @@ spf.nav.navigate_ = function(url, options, info) {
       spf.nav.navigateAddHistory_(url, info.referer, handleError);
     }
     // Then attempt to scroll.
-    spf.nav.navigateScroll_(url, info.position);
+    spf.nav.navigateScroll_(url, info);
     return;
   }
 
@@ -544,19 +544,20 @@ spf.nav.navigateSendRequest_ = function(url, options, info) {
 
 
 /**
- * Scrolls to a target specified by a URL hash.
+ * Scrolls to a target specified by a URL hash, a position specified in the
+ * navigation info object, or the top of the page if the window has not yet
+ * been scrolled as part of this navigation.
  *
  * @param {string} url The requested URL, without the SPF identifier.
- * @param {Array.<number>=} opt_position The window position to scroll to
- *     in [x, y] format.  If present, this value is used instead of any target
- *     in the URL hash.
+ * @param {spf.nav.Info} info The navigation info object.
  * @private
  */
-spf.nav.navigateScroll_ = function(url, opt_position) {
+spf.nav.navigateScroll_ = function(url, info) {
   // If a position is defined, scroll to it.
-  if (opt_position) {
-    spf.debug.debug('    scrolling to position', opt_position);
-    window.scroll.apply(null, opt_position);
+  if (info.position) {
+    spf.debug.debug('    scrolling to position', info.position);
+    window.scroll.apply(null, info.position);
+    info.scrolled = true;
     return;
   }
   var result = spf.string.partition(url, '#');
@@ -567,10 +568,12 @@ spf.nav.navigateScroll_ = function(url, opt_position) {
     if (el) {
       spf.debug.debug('    scrolling into view', result[2]);
       el.scrollIntoView();
+      info.scrolled = true;
     }
-  } else {
+  } else if (!info.scrolled && spf.config.get('experimental-scroll-position')) {
     spf.debug.debug('    scrolling to top');
     window.scroll(0, 0);
+    info.scrolled = true;
   }
 };
 
@@ -659,9 +662,9 @@ spf.nav.handleNavigatePart_ = function(options, info, url, partial) {
   }
 
   try {
-    spf.nav.response.process(url, partial, function() {
+    spf.nav.response.process(url, partial, info, function() {
       spf.nav.dispatchPartDone_(url, partial, options);
-    }, true, info.reverse);
+    });
   } catch (err) {
     // If an exception is caught during processing, log, execute the error
     // handler, and bail.
@@ -723,10 +726,17 @@ spf.nav.handleNavigateSuccess_ = function(options, info, url, response) {
     // so an empty object is used to ensure events/callbacks are properly
     // queued after existing ones from any ongoing part prcoessing.
     var r = /** @type {spf.SingleResponse} */ (multipart ? {} : response);
-    spf.nav.response.process(url, r, function() {
-      spf.nav.navigateScroll_(url, info.position);
+    spf.nav.response.process(url, r, info, function() {
+      // If this navigation was from history, attempt to scroll to the previous
+      // position after all processing is complete.  This should not be done
+      // earlier because the prevous position might rely on page width/height
+      // that is changed during the processing.
+      // Fallback to scrolling to the top if neither a hash target nor a
+      // history position exists and the window was not previously scrolled
+      // during response processing.
+      spf.nav.navigateScroll_(url, info);
       spf.nav.dispatchDone_(url, response, options);
-    }, true, info.reverse);
+    });
   } catch (err) {
     // If an exception is caught during processing, log, execute the error
     // handler and bail.
@@ -1047,7 +1057,7 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, info, url, partial) {
   var processFn = isPrefetch ?
       spf.nav.response.preprocess :
       spf.nav.response.process;
-  processFn(url, partial, function() {
+  processFn(url, partial, info, function() {
     // Note: pass "true" to only execute callbacks and not dispatch events.
     spf.nav.dispatchPartDone_(url, partial, options, true);
   });
@@ -1131,7 +1141,7 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, info, url,
     // so an empty object is used to ensure the callback is properly
     // queued after existing ones from any ongoing part prcoessing.
     var r = /** @type {spf.SingleResponse} */ (multipart ? {} : response);
-    processFn(url, r, function() {
+    processFn(url, r, info, function() {
       // Note: pass "true" to only execute callbacks and not dispatch events.
       spf.nav.dispatchDone_(url, response, options, true);
     });
@@ -1195,12 +1205,12 @@ spf.nav.process = function(response, opt_callback) {
     var parts = response['parts'];
     for (var i = 0; i < parts.length; i++) {
       var fn = spf.bind(done, null, i, parts.length - 1);
-      spf.nav.response.process(url, parts[i], fn);
+      spf.nav.response.process(url, parts[i], null, fn);
     }
   } else {
     response = /** @type {spf.SingleResponse} */ (response);
     var fn = spf.bind(done, null, 0, 0);
-    spf.nav.response.process(url, response, fn);
+    spf.nav.response.process(url, response, null, fn);
   }
 };
 
@@ -1570,6 +1580,7 @@ spf.nav.createOptions_ = function(opt_options) {
  *   position: (Array.<number>|undefined),
  *   referer: (string|undefined),
  *   reverse: (boolean|undefined),
+ *   scrolled: (boolean|undefined),
  *   type: (string|undefined)
  * }}
  * @private
@@ -1629,6 +1640,12 @@ spf.nav.Info = function(opt_info) {
    * @type {boolean}
    */
   this.reverse = !!opt_info.reverse;
+  /**
+   * Whether the window has been scrolled to `position` or to the top during
+   * this navigation request.
+   * @type {boolean}
+   */
+  this.scrolled = !!opt_info.scrolled;
   /**
    * The type of request, one of the following: "navigate", "navigate-back",
    * "navigate-forward", "load", "prefetch".  If not yet determined (i.e. before
