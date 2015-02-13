@@ -1,6 +1,7 @@
 # Build output and files
 /build
 /build.ninja
+/npm-debug.log
 /web/_site
 
 # External libraries
