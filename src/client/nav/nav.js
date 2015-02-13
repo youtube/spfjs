@@ -36,19 +36,26 @@ goog.require('spf.url');
  *       always represents the current visible page regardless of history state.
  * - history: Whether this navigation is part of a history change. True when
  *       navigation is in response to a popState event
+ * - original: The original request URL. This may differ than the regular URL
+ *       for redirect responses.
  * - position: The window position to scroll to during navigation, in [x, y]
  *     format.  Should be defined when navigation is in response to a popState
  *     event and a value exists in the history state object.
  * - referer: The referrer page URL.
  * - reverse: Whether this navigation is going "backwards". True when navigation
  *     is in response to a popState event and the "back" button is clicked.
+ * - type: The type of request, one of the following: "navigate",
+ *     "navigate-back", "navigate-forward", "load", "prefetch".  If not yet
+ *     determined (i.e. before the request is sent), it will be an empty string.
  *
  * @typedef {{
  *   current: string,
  *   history: boolean,
+ *   original: string,
  *   position: Array.<number>,
  *   referer: string,
- *   reverse: boolean
+ *   reverse: boolean,
+ *   type: string
  * }}
  * @private
  */
@@ -343,11 +350,14 @@ spf.nav.handleMouseDown_ = function(evt) {
  * @private
  */
 spf.nav.handleHistory_ = function(url, opt_state) {
-  var reverse = !!(opt_state && opt_state['spf-back']);
-  var referer = opt_state && opt_state['spf-referer'];
-  var current = opt_state && opt_state['spf-current'];
-  var position = opt_state && opt_state['spf-position'];
   spf.debug.debug('nav.handleHistory ', '(url=', url, 'state=', opt_state, ')');
+  var info = spf.nav.createInfo_({
+    current: opt_state && opt_state['spf-current'],
+    history: true,
+    position: opt_state && opt_state['spf-position'],
+    referer: opt_state && opt_state['spf-referer'],
+    reverse: !!(opt_state && opt_state['spf-back'])
+  });
   // If the reload-identifier is present, remove it to prevent confusing data.
   var reloadId = /** @type {?string} */ (spf.config.get('reload-identifier'));
   if (reloadId) {
@@ -364,14 +374,13 @@ spf.nav.handleHistory_ = function(url, opt_state) {
     return;
   }
   // Ignore the change if the "history" event is canceled.
-  if (!spf.nav.dispatchHistory_(url, referer, current)) {
+  if (!spf.nav.dispatchHistory_(url, info.referer, info.current)) {
     return;
   }
   // Navigate to the URL.
   // NOTE: The persistent parameters are not appended here because they should
   // already be set on the URL if necessary.
   var options = spf.nav.createOptions_();
-  var info = spf.nav.createInfo_(current, referer, true, reverse, position);
   spf.nav.navigate_(url, options, info);
 };
 
@@ -527,7 +536,7 @@ spf.nav.navigateSendRequest_ = function(url, options, info) {
   var handlePart = spf.bind(spf.nav.handleNavigatePart_, null,
                             options, info);
   var handleSuccess = spf.bind(spf.nav.handleNavigateSuccess_, null,
-                               options, info, '');
+                               options, info);
 
   // Before sending a new navigation request, clear previous resource timings
   // to avoid (1) hitting buffer size limits or (2) accidentally getting timings
@@ -540,17 +549,18 @@ spf.nav.navigateSendRequest_ = function(url, options, info) {
     spf.nav.clearResourceTimings_();
   }
 
-  var requestType = 'navigate';
+  info.type = 'navigate';
   if (info.history) {
-    requestType += info.reverse ? '-back' : '-forward';
+    info.type += info.reverse ? '-back' : '-forward';
   }
+
   var xhr = spf.nav.request.send(url, {
     method: options['method'],
     onPart: handlePart,
     onError: handleError,
     onSuccess: handleSuccess,
     postData: options['postData'],
-    type: requestType,
+    type: info.type,
     current: info.current,
     referer: info.referer
   });
@@ -700,20 +710,17 @@ spf.nav.handleNavigatePart_ = function(options, info, url, partial) {
  *
  * @param {spf.RequestOptions} options The request options object.
  * @param {spf.nav.request.Info_} info The request info object.
- * @param {string} original The original request URL. This parameter
- *     is the empty string if the navigate request was not a promotion.
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {spf.SingleResponse|spf.MultipartResponse} response The response
  *     object, either a complete single or multipart response object.
  * @private
  */
-spf.nav.handleNavigateSuccess_ = function(options, info,
-                                          original, url, response) {
+spf.nav.handleNavigateSuccess_ = function(options, info, url, response) {
   spf.state.set(spf.state.Key.NAV_REQUEST, null);
 
   // If this is a navigation from a promotion, manually set the
   // navigation start time.
-  if (spf.state.get(spf.state.Key.NAV_PROMOTE) == original) {
+  if (spf.state.get(spf.state.Key.NAV_PROMOTE) == info.original) {
     var timing = response['timing'] || {};
     timing['navigationStart'] = spf.state.get(spf.state.Key.NAV_PROMOTE_TIME);
     timing['spfPrefetched'] = true;
@@ -882,7 +889,8 @@ spf.nav.reload = function(url, reason, opt_err) {
 spf.nav.load = function(url, opt_options) {
   url = spf.url.appendPersistentParameters(url);
   var options = spf.nav.createOptions_(opt_options);
-  spf.nav.load_(url, options);
+  var info = spf.nav.createInfo_();
+  spf.nav.load_(url, options, info);
 };
 
 
@@ -892,12 +900,13 @@ spf.nav.load = function(url, opt_options) {
  *
  * @param {string} url The URL to load, without the SPF identifier.
  * @param {spf.RequestOptions} options The request options object.
- * @param {string=} opt_original The original request URL.
+ * @param {spf.nav.request.Info_} info The request info object.
  * @private
  */
-spf.nav.load_ = function(url, options, opt_original) {
-  spf.debug.info('nav.load ', url, options, opt_original);
-  var original = opt_original || url;
+spf.nav.load_ = function(url, options, info) {
+  spf.debug.info('nav.load ', url, options, info);
+
+  info.original = info.original || url;
 
   // Abort the load if the "request" callback is canceled.
   // Note: pass "true" to only execute callbacks and not dispatch events.
@@ -906,11 +915,13 @@ spf.nav.load_ = function(url, options, opt_original) {
   }
 
   var handleError = spf.bind(spf.nav.handleLoadError_, null,
-                             false, options, original);
+                             false, options, info);
   var handlePart = spf.bind(spf.nav.handleLoadPart_, null,
-                            false, options, original);
+                            false, options, info);
   var handleSuccess = spf.bind(spf.nav.handleLoadSuccess_, null,
-                               false, options, original);
+                               false, options, info);
+
+  info.type = 'load';
 
   spf.nav.request.send(url, {
     method: options['method'],
@@ -918,7 +929,7 @@ spf.nav.load_ = function(url, options, opt_original) {
     onError: handleError,
     onSuccess: handleSuccess,
     postData: options['postData'],
-    type: 'load'
+    type: info.type
   });
 };
 
@@ -936,7 +947,8 @@ spf.nav.load_ = function(url, options, opt_original) {
 spf.nav.prefetch = function(url, opt_options) {
   url = spf.url.appendPersistentParameters(url);
   var options = spf.nav.createOptions_(opt_options);
-  spf.nav.prefetch_(url, options);
+  var info = spf.nav.createInfo_();
+  spf.nav.prefetch_(url, options, info);
 };
 
 
@@ -946,13 +958,12 @@ spf.nav.prefetch = function(url, opt_options) {
  *
  * @param {string} url The URL to prefetch, without the SPF identifier.
  * @param {spf.RequestOptions} options The request options object.
- * @param {string=} opt_original The original request URL.
+ * @param {spf.nav.request.Info_} info The request info object.
  * @private
  */
-spf.nav.prefetch_ = function(url, options, opt_original) {
-  spf.debug.info('nav.prefetch ', url, options, opt_original);
-  var original = opt_original || url;
-  var current = window.location.href;
+spf.nav.prefetch_ = function(url, options, info) {
+  spf.debug.info('nav.prefetch ', url, options, info);
+  info.original = info.original || url;
 
   // Abort the prefetch if the "request" callback is canceled.
   // Note: pass "true" to only execute callbacks and not dispatch events.
@@ -961,11 +972,13 @@ spf.nav.prefetch_ = function(url, options, opt_original) {
   }
 
   var handleError = spf.bind(spf.nav.handleLoadError_, null,
-                             true, options, original);
+                             true, options, info);
   var handlePart = spf.bind(spf.nav.handleLoadPart_, null,
-                            true, options, original);
+                            true, options, info);
   var handleSuccess = spf.bind(spf.nav.handleLoadSuccess_, null,
-                               true, options, original);
+                               true, options, info);
+
+  info.type = 'prefetch';
 
   var xhr = spf.nav.request.send(url, {
     method: options['method'],
@@ -973,8 +986,8 @@ spf.nav.prefetch_ = function(url, options, opt_original) {
     onError: handleError,
     onSuccess: handleSuccess,
     postData: options['postData'],
-    type: 'prefetch',
-    current: current
+    type: info.type,
+    current: info.current
   });
   spf.nav.addPrefetch(url, xhr);
 };
@@ -985,13 +998,13 @@ spf.nav.prefetch_ = function(url, options, opt_original) {
  * See {@link load} and {@link prefetch}.
  *
  * @param {boolean} isPrefetch True for prefetch; false for load.
- * @param {spf.RequestOptions} options Request options object.
- * @param {string} original The original request URL.
+ * @param {spf.RequestOptions} options The request options object.
+ * @param {spf.nav.request.Info_} info The request info object.
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {Error} err The Error object.
  * @private
  */
-spf.nav.handleLoadError_ = function(isPrefetch, options, original, url, err) {
+spf.nav.handleLoadError_ = function(isPrefetch, options, info, url, err) {
   spf.debug.warn(isPrefetch ? 'prefetch' : 'load', 'error', '(url=', url, ')');
 
   if (isPrefetch) {
@@ -1000,7 +1013,7 @@ spf.nav.handleLoadError_ = function(isPrefetch, options, original, url, err) {
 
   // If a prefetch has been promoted to a navigate, use the navigate error
   // handler.  Otherwise, execute the "error" callback.
-  if (isPrefetch && spf.state.get(spf.state.Key.NAV_PROMOTE) == original) {
+  if (isPrefetch && spf.state.get(spf.state.Key.NAV_PROMOTE) == info.original) {
     spf.nav.handleNavigateError_(options, url, err);
   } else {
     // Note: pass "true" to only execute callbacks and not dispatch events.
@@ -1014,14 +1027,13 @@ spf.nav.handleLoadError_ = function(isPrefetch, options, original, url, err) {
  * See {@link load} and {@link prefetch}.
  *
  * @param {boolean} isPrefetch True for prefetch; false for load.
- * @param {spf.RequestOptions} options Request options object.
- * @param {string} original The original request URL.
+ * @param {spf.RequestOptions} options The request options object.
+ * @param {spf.nav.request.Info_} info The request info object.
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {spf.SingleResponse} partial The partial response object.
  * @private
  */
-spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
-                                   partial) {
+spf.nav.handleLoadPart_ = function(isPrefetch, options, info, url, partial) {
   // Abort the load/prefetch if the "part process" callback is canceled.
   // Note: pass "true" to only execute callbacks and not dispatch events.
   if (!spf.nav.dispatchPartProcess_(url, partial, options, true)) {
@@ -1035,7 +1047,7 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
     if (!isPrefetch) {
       return;
     }
-    if (spf.state.get(spf.state.Key.NAV_PROMOTE) == original) {
+    if (spf.state.get(spf.state.Key.NAV_PROMOTE) == info.original) {
       spf.nav.reload(url, spf.nav.ReloadReason.RESPONSE_RECEIVED);
       return;
     }
@@ -1043,8 +1055,7 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
 
   // Check for redirect responses.
   if (partial['redirect']) {
-    spf.nav.handleLoadRedirect_(isPrefetch, options, original,
-                                partial['redirect']);
+    spf.nav.handleLoadRedirect_(isPrefetch, options, info, partial['redirect']);
     return;
   }
 
@@ -1053,14 +1064,13 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
     // prefetch promotion.
     // TODO(nicksay): Honor history/reverse/position during promotion in
     // reponse to a popState. (This is an edge case.)
-    var info = spf.nav.createInfo_();
     var fn = spf.bind(spf.nav.handleNavigatePart_, null,
                       options, info, url, partial);
-    var promoteKey = spf.nav.promoteKey(original);
+    var promoteKey = spf.nav.promoteKey(info.original);
     spf.tasks.add(promoteKey, fn);
     // If the prefetch has been promoted, run the promotion task after
     // adding it and do not perform any preprocessing.
-    if (spf.state.get(spf.state.Key.NAV_PROMOTE) == original) {
+    if (spf.state.get(spf.state.Key.NAV_PROMOTE) == info.original) {
       spf.tasks.run(promoteKey, true);
       return;
     }
@@ -1081,14 +1091,14 @@ spf.nav.handleLoadPart_ = function(isPrefetch, options, original, url,
  * See {@link load} and {@link prefetch}.
  *
  * @param {boolean} isPrefetch True for prefetch; false for load.
- * @param {spf.RequestOptions} options Request options object.
- * @param {string} original The original request URL.
+ * @param {spf.RequestOptions} options The request options object.
+ * @param {spf.nav.request.Info_} info The request info object.
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {spf.SingleResponse|spf.MultipartResponse} response The response
  *     object, either a complete single or multipart response object.
  * @private
  */
-spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
+spf.nav.handleLoadSuccess_ = function(isPrefetch, options, info, url,
                                       response) {
   // If a multipart response was received, all processing is already done,
   // so don't execute the "process" callback.
@@ -1108,7 +1118,7 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
       if (!isPrefetch) {
         return;
       }
-      if (spf.state.get(spf.state.Key.NAV_PROMOTE) == original) {
+      if (spf.state.get(spf.state.Key.NAV_PROMOTE) == info.original) {
         spf.nav.reload(url, spf.nav.ReloadReason.RESPONSE_RECEIVED);
         return;
       }
@@ -1116,13 +1126,13 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
 
     // Check for redirect responses.
     if (response['redirect']) {
-      spf.nav.handleLoadRedirect_(isPrefetch, options, original,
+      spf.nav.handleLoadRedirect_(isPrefetch, options, info,
                                   response['redirect']);
       return;
     }
   }
 
-  var promoteKey = spf.nav.promoteKey(original);
+  var promoteKey = spf.nav.promoteKey(info.original);
   if (isPrefetch) {
     // Remove the prefetch xhr from the set of currently active
     // prefetches upon successful prefetch.
@@ -1131,12 +1141,11 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
     // adding it and do not perform any preprocessing. If it has not
     // been promoted, remove the task queues becuase a subsequent
     // request will hit the cache.
-    if (spf.state.get(spf.state.Key.NAV_PROMOTE) == original) {
+    if (spf.state.get(spf.state.Key.NAV_PROMOTE) == info.original) {
       // TODO(nicksay): Honor history/reverse/position during promotion in
       // reponse to a popState. (This is an edge case.)
-      var info = spf.nav.createInfo_();
       var fn = spf.bind(spf.nav.handleNavigateSuccess_, null,
-                        options, info, original, url, response);
+                        options, info, url, response);
       spf.tasks.add(promoteKey, fn);
       spf.tasks.run(promoteKey, true);
       return;
@@ -1162,7 +1171,7 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
     // If an exception is caught during processing, log, execute the error
     // handler and bail.
     spf.debug.debug('    failed to process response', response);
-    spf.nav.handleLoadError_(isPrefetch, options, original, url, err);
+    spf.nav.handleLoadError_(isPrefetch, options, info, url, err);
     return;
   }
 };
@@ -1172,13 +1181,12 @@ spf.nav.handleLoadSuccess_ = function(isPrefetch, options, original, url,
  * Handles a redirect response on load requests.
  *
  * @param {boolean} isPrefetch True for prefetch; false for load.
- * @param {spf.RequestOptions} options Request options object.
- * @param {string} original The original request URL.
+ * @param {spf.RequestOptions} options The request options object.
+ * @param {spf.nav.request.Info_} info The request info object.
  * @param {string} redirectUrl The new URL to be redirected to.
  * @private
  */
-spf.nav.handleLoadRedirect_ = function(isPrefetch, options, original,
-                                       redirectUrl) {
+spf.nav.handleLoadRedirect_ = function(isPrefetch, options, info, redirectUrl) {
   var redirectFn = isPrefetch ? spf.nav.prefetch_ : spf.nav.load_;
   // Note that POST is not propagated with redirects.
   // Only copy callback keys to into a new object to enforce this.
@@ -1194,7 +1202,7 @@ spf.nav.handleLoadRedirect_ = function(isPrefetch, options, original,
   spf.array.each(keys, function(key) {
     redirectOpts[key] = options[key];
   });
-  redirectFn(redirectUrl, redirectOpts, original);
+  redirectFn(redirectUrl, redirectOpts, info);
 };
 
 
@@ -1585,38 +1593,29 @@ spf.nav.createOptions_ = function(opt_options) {
 
 
 /**
- * @param {string=} opt_current The current page URL. This differs from the
- *     `opt_referer` in that is always represents the current visible page
- *     regardless of history state.
- * @param {string=} opt_referer The referer page URL.
- * @param {boolean=} opt_history Whether this navigation is part of a history
- *     change. True when navigation is in response to a popState event.
- * @param {boolean=} opt_reverse Whether this navigation is going "backwards".
- *     True when navigation is in response to a popState event and the "back"
- *     button is clicked.
- * @param {Array.<number>=} opt_position The window position to scroll to
- *     after navigation is complete, in [x, y] format.  Should be defined
- *     when navigation is in response to a popState event and a value exists
- *     in the history state object.
+ * @param {(Object|spf.nav.request.Info_)=} opt_info The request info object.
  * @return {spf.nav.request.Info_}
  * @private
  */
-spf.nav.createInfo_ = function(opt_current, opt_referer,
-                               opt_history, opt_reverse,
-                               opt_position) {
+spf.nav.createInfo_ = function(opt_info) {
+  opt_info = opt_info || /** @type {spf.nav.request.Info_} */ ({});
   var info = /** @type {spf.nav.request.Info_} */ ({
     // The referer, stored in the history entry state object to allow the
     // correct value to be sent to the server during back/forward.
     // Compare against "undefined" to allow empty referer values in history.
-    referer: (opt_referer != undefined) ? opt_referer : window.location.href,
+    referer: (opt_info.referer != undefined) ?
+                 opt_info.referer : window.location.href,
     // The current URL, which will have already changed for history events.
-    // For this case, the opt_current value from the history state should
+    // For this case, the opt_info.current value from the history state should
     // be used instead.
-    current: (opt_history && opt_current) ? opt_current : window.location.href,
+    current: (opt_info.history && opt_info.current) ?
+                 opt_info.current : window.location.href,
     // Convert from undefined and other falsey values.
-    history: !!opt_history,
-    reverse: !!opt_reverse,
-    position: opt_position || null
+    history: !!opt_info.history,
+    reverse: !!opt_info.reverse,
+    original: '',
+    position: opt_info.position || null,
+    type: opt_info.type || ''
   });
   return info;
 };
