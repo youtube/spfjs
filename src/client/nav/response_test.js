@@ -532,6 +532,7 @@ describe('spf.nav.response', function() {
           {'class': 'first'});
       var bar = spf.testing.dom.createElement('bar', undefined, {'dir': 'ltr'});
 
+      var info = { type: 'navigate' };
       var response = {
         'attr': {
           'foo': { 'dir': 'rtl', 'class': 'last' },
@@ -539,7 +540,7 @@ describe('spf.nav.response', function() {
         }
       };
 
-      spf.nav.response.process('/page', response, null, true);
+      spf.nav.response.process('/page', response, info);
       expect(foo.className).toEqual('last');
       expect(foo.getAttribute('dir')).toEqual('rtl');
       expect(bar.className).toEqual('last');
@@ -550,6 +551,7 @@ describe('spf.nav.response', function() {
       var foo = spf.testing.dom.createElement('foo', 'one');
       var bar = spf.testing.dom.createElement('bar');
 
+      var info = { type: 'navigate' };
       var response = {
         'body': {
           'foo': 'two',
@@ -557,29 +559,32 @@ describe('spf.nav.response', function() {
         }
       };
 
-      spf.nav.response.process('/page', response, null, true);
+      spf.nav.response.process('/page', response, info);
       expect(foo.innerHTML).toEqual('two');
       expect(bar.innerHTML).toEqual('two');
     });
 
     it('updates history for navigate with redirect url', function() {
+      var info = { type: 'navigate' };
       var response = { 'url': 'http://www.youtube.com/watch?v=3' };
 
-      spf.nav.response.process('/watch?v=2', response, null, true);
+      spf.nav.response.process('/watch?v=2', response, info);
       expect(spf.history.replace).toHaveBeenCalledWith(response['url']);
     });
 
     it('does not update history for navigate without redirect url', function() {
+      var info = { type: 'navigate' };
       var response = {};
 
-      spf.nav.response.process('/watch?v=2', response, null, true);
+      spf.nav.response.process('/watch?v=2', response, info);
       expect(spf.history.replace).not.toHaveBeenCalled();
     });
 
     it('does not update history for load with redirect url', function() {
+      var info = { type: 'load' };
       var response = { 'url': 'http://www.youtube.com/watch?v=3' };
 
-      spf.nav.response.process('/watch?v=2', response, null, false);
+      spf.nav.response.process('/watch?v=2', response, info);
       expect(spf.history.replace).not.toHaveBeenCalled();
     });
 

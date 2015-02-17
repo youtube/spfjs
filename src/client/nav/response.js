@@ -112,18 +112,18 @@ spf.nav.response.parse = function(text, opt_multipart, opt_lastDitch) {
  *
  * @param {string} url The URL of the response being processed.
  * @param {spf.SingleResponse} response The SPF response object to process.
+ * @param {spf.nav.Info=} opt_info The navigation info object.
  * @param {function(string, spf.SingleResponse)=} opt_callback Function to
  *     execute when processing is done; the first argument is `url`,
  *     the second argument is `response`.
- * @param {boolean=} opt_navigate Whether this is a navigation request. Only
- *     navigation requests will process history changes.
- * @param {boolean=} opt_reverse Whether this is "backwards" navigation. True
- *     when the "back" button is clicked and a request is in response to a
- *     popState event.
  */
-spf.nav.response.process = function(url, response, opt_callback, opt_navigate,
-                                    opt_reverse) {
-  spf.debug.info('nav.response.process ', response, opt_reverse);
+spf.nav.response.process = function(url, response, opt_info, opt_callback) {
+  spf.debug.info('nav.response.process ', response, opt_info);
+
+  var isNavigate = opt_info && spf.string.startsWith(opt_info.type, 'navigate');
+  var isReverse = opt_info && opt_info.reverse;
+  var hasPosition = opt_info && !!opt_info.position;
+  var hasScrolled = opt_info && opt_info.scrolled;
 
   // Convert the URL to absolute, to be used for finding the task queue.
   var key = 'process ' + spf.url.absolute(url);
@@ -144,7 +144,8 @@ spf.nav.response.process = function(url, response, opt_callback, opt_navigate,
   }
 
   // Add the new history state (immediate), if needed.
-  if (opt_navigate && response['url']) {
+  // Only navigation requests should process URL changes.
+  if (isNavigate && response['url']) {
     var fullUrl = spf.url.absolute(response['url']);
     // Update the history state if the url doesn't match.
     if (fullUrl != spf.nav.response.getCurrentUrl_()) {
@@ -203,6 +204,20 @@ spf.nav.response.process = function(url, response, opt_callback, opt_navigate,
     fn = spf.bind(function(id, body, timing) {
       var el = document.getElementById(id);
       if (el) {
+        // Scroll to the top before the first content update, if needed.
+        // Only non-history navigation requests scroll to the top immediately.
+        // Other history navigation requests handle scrolling after all
+        // processing is done to avoid jumping to the top and back down to the
+        // saved position afterwards.
+        if (isNavigate && !hasPosition && !hasScrolled &&
+            spf.config.get('experimental-scroll-position')) {
+          spf.debug.debug('    scrolling to top');
+          window.scroll(0, 0);
+          hasScrolled = true;
+          if (opt_info) {
+            opt_info.scrolled = true;
+          }
+        }
         // Extract scripts and styles from the fragment.
         var extracted = spf.nav.response.extract_(body);
         var animationClass = /** @type {string} */ (
@@ -246,16 +261,16 @@ spf.nav.response.process = function(url, response, opt_callback, opt_navigate,
           var animationFn;
           var animationData = {
             extracted: extracted,
-            reverse: !!opt_reverse,
+            reverse: isReverse,
             currentEl: null,  // Set in Step 1.
             pendingEl: null,  // Set in Step 1.
             parentEl: el,
             currentClass: animationClass + '-old',
             pendingClass: animationClass + '-new',
-            startClass: !!opt_reverse ?
+            startClass: isReverse ?
                             animationClass + '-reverse-start' :
                             animationClass + '-forward-start',
-            endClass: !!opt_reverse ?
+            endClass: isReverse ?
                           animationClass + '-reverse-end' :
                           animationClass + '-forward-end'
           };
@@ -388,11 +403,12 @@ spf.nav.response.process = function(url, response, opt_callback, opt_navigate,
  *
  * @param {string} url The URL of the response being preprocessed.
  * @param {spf.SingleResponse} response The SPF response object to preprocess.
+ * @param {spf.nav.Info=} opt_info The navigation info object.
  * @param {function(string, spf.SingleResponse)=} opt_callback Function to
  *     execute when preprocessing is done; the first argument is `url`,
  *     the second argument is `response`.
  */
-spf.nav.response.preprocess = function(url, response, opt_callback) {
+spf.nav.response.preprocess = function(url, response, opt_info, opt_callback) {
   spf.debug.info('nav.response.preprocess ', response);
   // Convert the URL to absolute, to be used for finding the task queue.
   var key = 'preprocess ' + spf.url.absolute(url);
