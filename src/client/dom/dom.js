@@ -58,7 +58,7 @@ spf.dom.insertSiblingAfter = function(newNode, refNode) {
 
 
 /**
- * Flattens an element. That is, removes it and replace it with its children.
+ * Unpacks an element. That is, removes it and replace it with its children.
  * Does nothing if the element is not in the document.
  *
  * @param {Element} element The element to flatten.
@@ -66,7 +66,7 @@ spf.dom.insertSiblingAfter = function(newNode, refNode) {
  *     tree, sans children; or undefined, if the element was not in the document
  *     to begin with.
  */
-spf.dom.flattenElement = function(element) {
+spf.dom.unpackElement = function(element) {
   var child, parent = element.parentNode;
   if (parent && parent.nodeType != 11) {  // 11 = document fragment
     // Use IE DOM function (supported by Opera too) if available
@@ -85,21 +85,21 @@ spf.dom.flattenElement = function(element) {
 
 
 /**
- * Inflates an element. That is, adds a new child and places its previous
- * children inside.
+ * Packs an element. That is, adds a new child and places its previous
+ * children inside of the new one.
  *
- * @param {Element} element The element to inflate.
- * @param {Element} parent The new parent of the existing children.
+ * @param {Element} element The element to pack.
+ * @param {Element} container The new container of the existing children.
  */
-spf.dom.inflateElement = function(element, parent) {
-  if (parent) {
+spf.dom.packElement = function(element, container) {
+  if (container) {
     var child;
     // Move all children of the original node down one level.
     while ((child = element.firstChild)) {
-      parent.appendChild(child);
+      container.appendChild(child);
     }
     // Attach the new parent.
-    element.appendChild(parent);
+    element.appendChild(container);
   }
 };
 
