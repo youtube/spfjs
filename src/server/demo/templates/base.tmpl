@@ -39,7 +39,8 @@ See the LICENSE file for details.
   <div id="content" class="spf-animate">
     $:content
   </div>
-  <script src="/static/dev-spf-bundle.js" name="spf"></script>
+  <!-- include uncompiled files for development instead of spf.js -->
+  <script src="/static/dev/manifest.js"></script>
   <script src="/static/app.js" name="app"></script>
   <script>
     app.init();

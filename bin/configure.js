@@ -360,7 +360,7 @@ function targets(ninja) {
       .assign('flags', '$trace_jsflags $bootloader_jsflags')
       .assign('preamble_file', files.preamble);
 
-  // Development.
+  // Development bundle.
   ninja.edge('$builddir/dev-spf-bundle.js')
       .using('jscompile')
       .from(srcs.main)
@@ -443,20 +443,28 @@ function targets(ninja) {
     outs.demo.push(out);
   });
 
-  // Include the development file.
-  ninja.edge('$builddir/demo/static/dev-spf-bundle.js')
-      .using('symlink')
-      .from('$builddir/dev-spf-bundle.js')
-      .assign('prefix', '../../../');
+  // Include the main sources for uncompiled development.
+  srcs.main.forEach(function(src) {
+    var out = '$builddir/demo/static/dev/' + src;
+    var depth = (out.match(/\//g) || []).length;
+    ninja.edge(out)
+        .using('symlink')
+        .from(src)
+        .assign('prefix', strings.repeat('../', depth));
+    outs.demo.push(out);
+  });
+  // Create a manifest
+  ninja.edge('$builddir/demo/static/dev/manifest.js')
+      .using('manifest')
+      .from(srcs.main)
+      .assign('prefix', '/static/dev/');
+  outs.demo.push('$builddir/demo/static/dev/manifest.js');
 
   // Finally, symlink the app.py file as well, declaring the deps.
   ninja.edge('$builddir/demo/app.py')
       .using('symlink')
       .from('src/server/demo/app.py')
-      .need(outs.demo.concat([
-            'bower_components/webpy/web',
-            '$builddir/demo/static/dev-spf-bundle.js'
-          ]))
+      .need(outs.demo.concat(['bower_components/webpy/web']))
       .assign('prefix', '../../');
 
   // Build file updates.
