@@ -19,17 +19,15 @@ html, body {
   font-family: sans-serif;
   line-height: 1.4;
   min-width: 45em;
+  background: #EEE;
 }
 #masthead {
   font-size: 1.25em;
   height: 1.2em;
   line-height: 1.2;
-  padding: .4em .8em;
-  color: #FFF;
-  background: #444;
-  background-image: -moz-linear-gradient(top, #555, #333);
-  background-image: -webkit-gradient(linear, left top, left bottom, from(#555), to(#333));
-  filter: progid:DXImageTransform.Microsoft.Gradient(startColorStr=#555555, endColorStr=#333333);
+  padding: .4em 1.2em;
+  background: #FFF;
+  border-bottom: 1px solid #444;
 }
 #masthead strong {
   font-size: 1.2em;
@@ -39,38 +37,33 @@ html, body {
   float: right;
   line-height: 2em;
   font-size: .6em;
-  color: #DDD;
+  color: #333;
 }
 #app-status {
   color: #F00;
   font-weight: bold;
-  text-shadow: 0 0 .1em #000;
 }
 #app-status.enabled {
   color: #19B319;
 }
 #nav {
-  font-size: 1.2em;
-  height: 1.4em;
-  padding: 0 .8333em;
-  border-bottom: .1em solid #EEE;
-  background: #BBB;
-  background-image: -moz-linear-gradient(top, #DDD, #F3F3F3);
-  background-image: -webkit-gradient(linear, left top, left bottom, from(#DDD), to(#F3F3F3));
-  filter: progid:DXImageTransform.Microsoft.Gradient(startColorStr=#DDDDDD, endColorStr=#F3F3F3);
+  padding: 0 1em;
+  background: #FFF;
 }
 #nav ul, li {
-  display: inline;
+  display: inline-block;
   list-style: none;
   margin: 0;
   padding: 0;
   text-indent: 0;
 }
 #nav a {
-  padding: .2em .5em;
+  display: inline-block;
+  padding: .3em 0.5em;
   color: #000;
   text-decoration: none;
   -webkit-transition: background 300ms linear;
+  transition: background 300ms linear;
 }
 #nav a:hover {
   text-decoration: underline;
@@ -82,14 +75,22 @@ html, body {
 #nav.demo3 .nav-demo3 a,
 #nav.demo4 .nav-demo4 a,
 #nav.demo5 .nav-demo5 a {
-  background: rgba(0, 0, 0, .2);
+  background: #EEE;
 }
 #content {
   height: 100%;
+  position: relative;
 }
 #content .pane {
-  padding: 0 2em;
+  position: absolute;
+  top: 2em;
+  left: 5%;
+  width: 80%;
+  padding: 0 5%;
   overflow: hidden;
+  background: #FFF;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .1);
+  transform: translateZ(0);
 }
 #footer {
   border-top: 1px solid #EEE;
@@ -105,36 +106,40 @@ html, body {
 .spf-animate .spf-animate-new {
   position: absolute;
   top: 0;
+  left: 0;
   width: 100%;
-  -webkit-transition: left 400ms ease;
-  -moz-transition: left 400ms ease;
-  -ms-transition: left 400ms ease;
-  -o-transition: left 400ms ease;
-  transition: left 400ms ease;
+  height: 100%;
+  -webkit-transition: -webkit-transform 400ms ease, opacity 400ms linear;
+  transition: transform 400ms ease, opacity 400ms linear;
 }
-/* Forward transitions slide in from right to left */
-.spf-animate-forward-start .spf-animate-old {
-  left: 0%;
+/* Transitions fade-out old and fade-in new */
+.spf-animate-forward-start .spf-animate-old,
+.spf-animate-forward-end   .spf-animate-new,
+.spf-animate-reverse-start .spf-animate-old,
+.spf-animate-reverse-end   .spf-animate-new {
+  opacity: 1;
 }
-.spf-animate-forward-start .spf-animate-new {
-  left: 120%;
+.spf-animate-forward-start .spf-animate-new,
+.spf-animate-forward-end   .spf-animate-old,
+.spf-animate-reverse-start .spf-animate-new,
+.spf-animate-reverse-end   .spf-animate-old {
+  opacity: 0;
 }
-.spf-animate-forward-end .spf-animate-old {
-  left: -120%;
+/* transitions slide-out old and slide-in new */
+.spf-animate-forward-start .spf-animate-old,
+.spf-animate-forward-end   .spf-animate-new,
+.spf-animate-reverse-start .spf-animate-old,
+.spf-animate-reverse-end   .spf-animate-new {
+  -webkit-transform: translate(0%, 0%);
+  transform: translate(0%, 0%);
 }
-.spf-animate-forward-end .spf-animate-new {
-  left: 0%;
+.spf-animate-forward-start .spf-animate-new,
+.spf-animate-reverse-end   .spf-animate-old {
+  -webkit-transform: translate(150%, 0%);
+  transform: translate(150%, 0%);
 }
-/* Reverse transitions slide in from left to right */
-.spf-animate-reverse-start .spf-animate-old {
-  left: 0%;
-}
+.spf-animate-forward-end   .spf-animate-old,
 .spf-animate-reverse-start .spf-animate-new {
-  left: -120%;
-}
-.spf-animate-reverse-end .spf-animate-old {
-  left: 120%;
-}
-.spf-animate-reverse-end .spf-animate-new {
-  left: 0%;
+  -webkit-transform: translate(-150%, 0%);
+  transform: translate(-150%, 0%);
 }
