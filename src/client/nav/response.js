@@ -155,7 +155,7 @@ spf.nav.response.process = function(url, response, opt_info, opt_callback) {
     }
   }
 
-  // Install page styles (single task), if needed.
+  // Install head scripts and styles (single task), if needed.
   if (response['head']) {
     fn = spf.bind(function(head, timing) {
       // Extract scripts and styles from the fragment.
@@ -172,7 +172,8 @@ spf.nav.response.process = function(url, response, opt_info, opt_callback) {
       spf.nav.response.installScripts_(extracted, function() {
         timing['spfProcessHead'] = spf.now();
         spf.debug.debug('    head js');
-        spf.tasks.resume(key, sync);  // Resume main queue after JS.
+        // Resume main queue after JS.
+        spf.tasks.resume(key, sync);
         spf.debug.debug('  process task done: head');
       });
     }, null, response['head'], response['timing']);
@@ -220,122 +221,78 @@ spf.nav.response.process = function(url, response, opt_info, opt_callback) {
         }
         // Extract scripts and styles from the fragment.
         var extracted = spf.nav.response.extract_(body);
+        // Install styles.
+        spf.nav.response.installStyles_(extracted);
+        // Set up scripts to be installed after the html is updated.
+        var installScripts = function() {
+          // Install scripts.
+          // Suspend main queue to allow JS execution to occur sequentially.
+          // TODO(nicksay): Consider using a sub-queue for JS execution.
+          spf.tasks.suspend(key);
+          spf.nav.response.installScripts_(extracted, function() {
+            // Resume main queue after JS.
+            spf.tasks.resume(key, sync);
+            spf.debug.debug('  process task done: body', id);
+          });
+        };
+
         var animationClass = /** @type {string} */ (
             spf.config.get('animation-class'));
         var noAnimation = (!spf.nav.response.CAN_ANIMATE_ ||
                            !spf.dom.classlist.contains(el, animationClass));
         if (noAnimation) {
-          // Install styles.
-          spf.nav.response.installStyles_(extracted);
-          // Use the extracted HTML without scripts/styles to ensure they are
-          // loaded properly.
-          var installScripts = function() {
-            // Install scripts.
-            // Suspend main queue to allow JS execution to occur sequentially.
-            // TODO(nicksay): Consider using a sub-queue for JS execution.
-            spf.tasks.suspend(key);
-            spf.nav.response.installScripts_(extracted, function() {
-              spf.debug.debug('    body js', id);
-              spf.tasks.resume(key, sync);  // Resume main queue after JS.
-              spf.debug.debug('  process task done: body', id);
-            });
-          };
-          var innerHtmlHandler = /** @type {Function} */(
+          var htmlHandler = /** @type {Function} */(
               spf.config.get('experimental-html-handler'));
-          if (innerHtmlHandler) {
-            spf.tasks.suspend(key);  // Suspend for HTML handler.
-            innerHtmlHandler(extracted.html, el, function() {
+          if (htmlHandler) {
+            // Suspend main queue for the experimental HTML handler.
+            spf.tasks.suspend(key);
+            htmlHandler(extracted.html, el, function() {
               installScripts();
-              spf.tasks.resume(key, sync);  // Resume queue after handler.
+              // Resume main queue after the experimental HTML handler.
+              spf.tasks.resume(key, sync);
             });
           } else {
             el.innerHTML = extracted.html;
-            spf.debug.debug('    body update', id);
             installScripts();
           }
         } else {
-          spf.tasks.suspend(key);  // Suspend main queue for animation.
-          var animationKey = spf.tasks.key(el);
+          var animation = new spf.nav.response.Animation_(
+              el,
+              extracted.html,
+              animationClass,
+              parseInt(spf.config.get('animation-duration'), 10),
+              !!isReverse);
+          // Suspend main queue while the animation is running.
+          spf.tasks.suspend(key);
           // Finish a previous animation on this sub-queue, if needed.
-          spf.tasks.run(animationKey, true);
-          var animationFn;
-          var animationData = {
-            extracted: extracted,
-            reverse: isReverse,
-            currentEl: null,  // Set in Step 1.
-            pendingEl: null,  // Set in Step 1.
-            parentEl: el,
-            currentClass: animationClass + '-old',
-            pendingClass: animationClass + '-new',
-            startClass: isReverse ?
-                            animationClass + '-reverse-start' :
-                            animationClass + '-forward-start',
-            endClass: isReverse ?
-                          animationClass + '-reverse-end' :
-                          animationClass + '-forward-end'
-          };
-          // Animation task 1: insert new (delay = 0).
-          animationFn = spf.bind(function(data) {
-            // Install styles.
-            spf.nav.response.installStyles_(data.extracted);
-            spf.dom.classlist.add(data.parentEl, data.startClass);
-            // Reparent the existing elements.
-            data.currentEl = document.createElement('div');
-            data.currentEl.className = data.currentClass;
-            spf.dom.inflateElement(data.parentEl, data.currentEl);
-            // Add the new content.
-            data.pendingEl = document.createElement('div');
-            data.pendingEl.className = data.pendingClass;
-            // Use the extracted HTML without scripts/styles to ensure they are
-            // loaded properly.
-            data.pendingEl.innerHTML = data.extracted.html;
-            if (data.reverse) {
-              spf.dom.insertSiblingBefore(data.pendingEl, data.currentEl);
-            } else {
-              spf.dom.insertSiblingAfter(data.pendingEl, data.currentEl);
-            }
-            spf.debug.debug('  process anim done: add new', data.parentEl.id);
-          }, null, animationData);
-          spf.tasks.add(animationKey, animationFn, 0);
-          spf.debug.debug('  process anim queued: add new', id);
-          // Animation task 2: switch between old and new (delay = 0).
-          animationFn = spf.bind(function(data) {
-            // Start the switch.
-            spf.dom.classlist.remove(data.parentEl, data.startClass);
-            spf.dom.classlist.add(data.parentEl, data.endClass);
-            spf.debug.debug('  process anim done: swap', data.parentEl.id);
-          }, null, animationData);
-          spf.tasks.add(animationKey, animationFn, 0);
-          spf.debug.debug('  process anim queued: swap', id);
-          // Animation task 3: remove old (delay = config duration).
-          animationFn = spf.bind(function(data) {
-            // When done, remove the old content.
-            data.parentEl.removeChild(data.currentEl);
-            // End the switch.
-            spf.dom.classlist.remove(data.parentEl, data.endClass);
-            // Reparent the new elements.
-            spf.dom.flattenElement(data.pendingEl);
-            spf.debug.debug('    body update', data.parentEl.id);
-            // Install scripts before continuing.
-            spf.tasks.suspend(animationKey);  // Suspend sub-queue for JS.
-            spf.nav.response.installScripts_(data.extracted, function() {
-              spf.debug.debug('    body js', data.parentEl.id);
-              spf.tasks.resume(animationKey);  // Resume sub-queue after JS.
-              spf.debug.debug('  process anim done: del old', data.parentEl.id);
-            });
-          }, null, animationData);
-          spf.tasks.add(animationKey, animationFn,
-                        parseInt(spf.config.get('animation-duration'), 10));
-          spf.debug.debug('  process anim queued: del old', id);
-          // Finish the animation and move on.
-          animationFn = spf.bind(function(data, key) {
-            spf.debug.debug('  process anim done: complete', data.parentEl.id);
-            spf.tasks.resume(key);  // Resume main queue after animation.
-            spf.debug.debug('  process task done: body ', data.parentEl.id);
-          }, null, animationData, key);
-          spf.tasks.add(animationKey, animationFn);
-          spf.debug.debug('  process anim queued: complete', id);
-          spf.tasks.run(animationKey);
+          spf.tasks.run(animation.key, true);
+          // Animation task 1: insert new, delay = 0.
+          spf.tasks.add(
+              animation.key,
+              spf.bind(spf.nav.response.prepareAnimation_, null, animation),
+              0);
+          spf.debug.debug('  process queued prepare animation', id);
+          // Animation task 2: switch, delay = 17ms = 1 frame @ 60fps.
+          spf.tasks.add(
+              animation.key,
+              spf.bind(spf.nav.response.runAnimation_, null, animation),
+              17);
+          spf.debug.debug('  process queued run animation', id);
+          // Animation task 3: remove old, delay = config.
+          spf.tasks.add(
+              animation.key,
+              spf.bind(spf.nav.response.completeAnimation_, null, animation),
+              animation.duration);
+          spf.debug.debug('  process queued complete animation', id);
+          // Resume main queue after animation is done.
+          spf.tasks.add(
+              animation.key,
+              spf.bind(function() {
+                installScripts();
+                spf.tasks.resume(key, sync);
+              }, null),
+              0);
+          spf.tasks.run(animation.key);
         }
       }
     }, null, id, fragments[id], response['timing']);
@@ -345,7 +302,7 @@ spf.nav.response.process = function(url, response, opt_info, opt_callback) {
   var numAfterFragments = num;
   var numFragments = numAfterFragments - numBeforeFragments;
 
-  // Install page scripts (single task), if needed.
+  // Install foot scripts and styles (single task), if needed.
   if (response['foot']) {
     fn = spf.bind(function(foot, timing, numFragments) {
       // Use the page scripts task as a signal that the content is updated,
@@ -391,6 +348,7 @@ spf.nav.response.process = function(url, response, opt_info, opt_callback) {
     spf.debug.debug('  process task queued: callback', num);
   }
 
+  spf.debug.debug('  process run', key, sync);
   spf.tasks.run(key, sync);
 };
 
@@ -465,6 +423,56 @@ spf.nav.response.preprocess = function(url, response, opt_info, opt_callback) {
 
   // The preprocessing queue is always run async.
   spf.tasks.run(key);
+};
+
+
+/**
+ * @param {spf.nav.response.Animation_} data The animation data.
+ * @private
+ */
+spf.nav.response.prepareAnimation_ = function(data) {
+  // Add the start class to put elements in their beginning states.
+  spf.dom.classlist.add(data.element, data.startClass);
+  // Pack the existing content into a temporary container.
+  data.oldEl = document.createElement('div');
+  data.oldEl.className = data.oldClass;
+  spf.dom.packElement(data.element, data.oldEl);
+  // Place the new content into a temporary container as a sibling.
+  data.newEl = document.createElement('div');
+  data.newEl.className = data.newClass;
+  data.newEl.innerHTML = data.html;
+  if (data.reverse) {
+    spf.dom.insertSiblingBefore(data.newEl, data.oldEl);
+  } else {
+    spf.dom.insertSiblingAfter(data.newEl, data.oldEl);
+  }
+  spf.debug.debug('  process done prepare animation', data.element.id);
+};
+
+
+/**
+ * @param {spf.nav.response.Animation_} data The animation data.
+ * @private
+ */
+spf.nav.response.runAnimation_ = function(data) {
+  spf.dom.classlist.remove(data.element, data.startClass);
+  spf.dom.classlist.add(data.element, data.endClass);
+  spf.debug.debug('  process done run animation', data.element.id);
+};
+
+
+/**
+ * @param {spf.nav.response.Animation_} data The animation data.
+ * @private
+ */
+spf.nav.response.completeAnimation_ = function(data) {
+  // Remove the old content.
+  data.element.removeChild(data.oldEl);
+  // Unpack the new content from the temporary container.
+  spf.dom.unpackElement(data.newEl);
+  // Remove the end class to put elements back in normal state.
+  spf.dom.classlist.remove(data.element, data.endClass);
+  spf.debug.debug('  process done complete animation', data.element.id);
 };
 
 
@@ -738,8 +746,47 @@ spf.nav.response.getCurrentUrl_ = function() {
 
 
 /**
+ * A container for holding data during an animated content update.
+ * See {@link #process}.
+ *
+ * @param {!Element} el The element being updated.
+ * @param {string} html The new content for the element.
+ * @param {string} cls The animation class name.
+ * @param {number} duration The animation duration.
+ * @param {boolean} reverse Whether this is a "back" animation.
+ * @constructor
+ * @private
+ */
+spf.nav.response.Animation_ = function(el, html, cls, duration, reverse) {
+  /** @type {!Element} */
+  this.element = el;
+  /** @type {string} */
+  this.html = html;
+  /** @type {number} */
+  this.duration = duration;
+  /** @type {boolean} */
+  this.reverse = reverse;
+
+  /** @type {string} */
+  this.key = spf.tasks.key(el);
+  /** @type {Element} */
+  this.oldEl = null;
+  /** @type {string} */
+  this.oldClass = cls + '-old';
+  /** @type {Element} */
+  this.newEl = null;
+  /** @type {string} */
+  this.newClass = cls + '-new';
+  /** @type {string} */
+  this.startClass = cls + (reverse ? '-reverse' : '-forward') + '-start';
+  /** @type {string} */
+  this.endClass = cls + (reverse ? '-reverse' : '-forward') + '-end';
+};
+
+
+/**
  * A container for holding the results from parsing and extracting resources
- * from an HTML string.  See {@link #extract}.
+ * from an HTML string.  See {@link #extract_}.
  *
  * @constructor
  * @private
