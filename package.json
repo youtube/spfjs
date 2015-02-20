@@ -25,7 +25,7 @@
     "lint": "ninja lint",
     "fix": "ninja fix",
     "start": "ninja demo && cd build/demo && python -m app",
-    "clean": "rm -rf build build.ninja dist",
+    "clean": "rm -rf build build.ninja dist npm-debug.log",
     "clean-web": "rm -rf web/_site web/assets/vendor",
     "clean-install": "rm -rf bower_components node_modules vendor",
     "reset": "npm run clean; npm run clean-web; npm run clean-install"
