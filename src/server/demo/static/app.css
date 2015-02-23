@@ -113,33 +113,27 @@ html, body {
   transition: transform 400ms ease, opacity 400ms linear;
 }
 /* Transitions fade-out old and fade-in new */
-.spf-animate-forward-start .spf-animate-old,
-.spf-animate-forward-end   .spf-animate-new,
-.spf-animate-reverse-start .spf-animate-old,
-.spf-animate-reverse-end   .spf-animate-new {
+.spf-animate-start .spf-animate-old,
+.spf-animate-end   .spf-animate-new {
   opacity: 1;
 }
-.spf-animate-forward-start .spf-animate-new,
-.spf-animate-forward-end   .spf-animate-old,
-.spf-animate-reverse-start .spf-animate-new,
-.spf-animate-reverse-end   .spf-animate-old {
+.spf-animate-start .spf-animate-new,
+.spf-animate-end   .spf-animate-old {
   opacity: 0;
 }
 /* transitions slide-out old and slide-in new */
-.spf-animate-forward-start .spf-animate-old,
-.spf-animate-forward-end   .spf-animate-new,
-.spf-animate-reverse-start .spf-animate-old,
-.spf-animate-reverse-end   .spf-animate-new {
+.spf-animate-start .spf-animate-old,
+.spf-animate-end   .spf-animate-new {
   -webkit-transform: translate(0%, 0%);
   transform: translate(0%, 0%);
 }
-.spf-animate-forward-start .spf-animate-new,
-.spf-animate-reverse-end   .spf-animate-old {
+.spf-animate-start.spf-animate-forward .spf-animate-new,
+.spf-animate-end.spf-animate-reverse   .spf-animate-old {
   -webkit-transform: translate(150%, 0%);
   transform: translate(150%, 0%);
 }
-.spf-animate-forward-end   .spf-animate-old,
-.spf-animate-reverse-start .spf-animate-new {
+.spf-animate-end.spf-animate-forward   .spf-animate-old,
+.spf-animate-start.spf-animate-reverse .spf-animate-new {
   -webkit-transform: translate(-150%, 0%);
   transform: translate(-150%, 0%);
 }
