@@ -432,7 +432,9 @@ spf.nav.response.preprocess = function(url, response, opt_info, opt_callback) {
  */
 spf.nav.response.prepareAnimation_ = function(data) {
   // Add the start class to put elements in their beginning states.
+  spf.dom.classlist.add(data.element, data.dirClass);
   spf.dom.classlist.add(data.element, data.startClass);
+  spf.dom.classlist.add(data.element, data.startClassDeprecated);
   // Pack the existing content into a temporary container.
   data.oldEl = document.createElement('div');
   data.oldEl.className = data.oldClass;
@@ -456,7 +458,9 @@ spf.nav.response.prepareAnimation_ = function(data) {
  */
 spf.nav.response.runAnimation_ = function(data) {
   spf.dom.classlist.remove(data.element, data.startClass);
+  spf.dom.classlist.remove(data.element, data.startClassDeprecated);
   spf.dom.classlist.add(data.element, data.endClass);
+  spf.dom.classlist.add(data.element, data.endClassDeprecated);
   spf.debug.debug('  process done run animation', data.element.id);
 };
 
@@ -472,6 +476,8 @@ spf.nav.response.completeAnimation_ = function(data) {
   spf.dom.unpackElement(data.newEl);
   // Remove the end class to put elements back in normal state.
   spf.dom.classlist.remove(data.element, data.endClass);
+  spf.dom.classlist.remove(data.element, data.endClassDeprecated);
+  spf.dom.classlist.remove(data.element, data.dirClass);
   spf.debug.debug('  process done complete animation', data.element.id);
 };
 
@@ -778,9 +784,15 @@ spf.nav.response.Animation_ = function(el, html, cls, duration, reverse) {
   /** @type {string} */
   this.newClass = cls + '-new';
   /** @type {string} */
-  this.startClass = cls + (reverse ? '-reverse' : '-forward') + '-start';
+  this.dirClass = cls + (reverse ? '-reverse' : '-forward');
   /** @type {string} */
-  this.endClass = cls + (reverse ? '-reverse' : '-forward') + '-end';
+  this.startClass = cls + '-start';
+  /** @type {string} */
+  this.startClassDeprecated = this.dirClass + '-start';
+  /** @type {string} */
+  this.endClass = cls + '-end';
+  /** @type {string} */
+  this.endClassDeprecated = this.dirClass + '-end';
 };
 
 
