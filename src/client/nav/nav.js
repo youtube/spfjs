@@ -345,6 +345,22 @@ spf.nav.handleHistory_ = function(url, opt_state) {
   if (!spf.nav.dispatchHistory_(url, info.referer, info.current)) {
     return;
   }
+  // If navigating for this history change and a scroll position is set, ensure
+  // the browser doesn't scroll too early.  The browser default behavior is to
+  // scroll to the position when pushState was called just after a popState
+  // event is fired.  This is okay only if using history to move around a single
+  // page or if all content can be rendered synchronously during the popState
+  // event handling.  Since navigation content updates have at least one
+  // asynchronous break, avoid this early scroll by immediately scrolling back
+  // to the current position after the event.  The proper position will be set
+  // once content is updated.
+  if (info.position && spf.config.get('experimental-scroll-position')) {
+    var position = [window.pageXOffset, window.pageYOffset];
+    setTimeout(function() {
+      spf.debug.debug('    resetting early scroll to ', position);
+      window.scroll.apply(null, position);
+    }, 0);
+  }
   // Navigate to the URL.
   // NOTE: The persistent parameters are not appended here because they should
   // already be set on the URL if necessary.
