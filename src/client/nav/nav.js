@@ -34,18 +34,25 @@ goog.require('spf.url');
  * Initializes (enables) pushState navigation.
  */
 spf.nav.init = function() {
+  // Initialize history management.
   spf.history.init(spf.nav.handleHistory_, spf.nav.dispatchError_);
-  if (!spf.state.get(spf.state.Key.NAV_INIT) && document.addEventListener) {
-    document.addEventListener('click', spf.nav.handleClick_, false);
-    if (spf.config.get('experimental-prefetch-mousedown') &&
-        !spf.nav.isTouchCapablePlatform_()) {
-      document.addEventListener('mousedown', spf.nav.handleMouseDown_, false);
-      spf.state.set(spf.state.Key.PREFETCH_LISTENER, spf.nav.handleMouseDown_);
-    }
-    spf.state.set(spf.state.Key.NAV_INIT, true);
-    spf.state.set(spf.state.Key.NAV_INIT_TIME, spf.now());
-    spf.state.set(spf.state.Key.NAV_COUNTER, 0);
-    spf.state.set(spf.state.Key.NAV_LISTENER, spf.nav.handleClick_);
+  // If already initialized, or running in an unsupported environment, return.
+  if (spf.state.get(spf.state.Key.NAV_INIT) || !document.addEventListener) {
+    return;
+  }
+  // Set some basic state.
+  spf.state.set(spf.state.Key.NAV_INIT, true);
+  spf.state.set(spf.state.Key.NAV_INIT_TIME, spf.now());
+  spf.state.set(spf.state.Key.NAV_COUNTER, 0);
+  // Handle clicks for navigating when a spf-link element click happens.
+  document.addEventListener('click', spf.nav.handleClick_, false);
+  spf.state.set(spf.state.Key.NAV_CLICK_LISTENER, spf.nav.handleClick_);
+  // Handle mousedowns for prefetching when a spf-link element click starts.
+  if (spf.config.get('experimental-prefetch-mousedown') &&
+      !spf.nav.isTouchCapablePlatform_()) {
+    document.addEventListener('mousedown', spf.nav.handleMouseDown_, false);
+    spf.state.set(spf.state.Key.NAV_MOUSEDOWN_LISTENER,
+                  spf.nav.handleMouseDown_);
   }
 };
 
@@ -57,18 +64,18 @@ spf.nav.dispose = function() {
   spf.nav.cancel();
   if (spf.state.get(spf.state.Key.NAV_INIT)) {
     if (document.removeEventListener) {
-      document.removeEventListener('click', /** @type {function(Event)} */ (
-          spf.state.get(spf.state.Key.NAV_LISTENER)), false);
-      if (spf.config.get('experimental-prefetch-mousedown')) {
-        document.removeEventListener('mousedown',
-            /** @type {function(Event)} */ (
-                spf.state.get(spf.state.Key.PREFETCH_LISTENER)), false);
-      }
+      var handleClick = /** @type {function(Event)} */ (
+          spf.state.get(spf.state.Key.NAV_CLICK_LISTENER));
+      document.removeEventListener('click', handleClick, false);
+      var handleMouseDown = /** @type {function(Event)} */ (
+          spf.state.get(spf.state.Key.NAV_MOUSEDOWN_LISTENER));
+      document.removeEventListener('mousedown', handleMouseDown, false);
     }
+    spf.state.set(spf.state.Key.NAV_CLICK_LISTENER, null);
+    spf.state.set(spf.state.Key.NAV_MOUSEDOWN_LISTENER, null);
     spf.state.set(spf.state.Key.NAV_INIT, false);
     spf.state.set(spf.state.Key.NAV_INIT_TIME, null);
     spf.state.set(spf.state.Key.NAV_COUNTER, null);
-    spf.state.set(spf.state.Key.NAV_LISTENER, null);
   }
   spf.history.dispose();
 };
