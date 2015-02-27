@@ -55,6 +55,11 @@ spf.nav.init = function() {
     spf.state.set(spf.state.Key.NAV_MOUSEDOWN_LISTENER,
                   spf.nav.handleMouseDown_);
   }
+  // Handle scrolls for preventing early scrolling during history changes.
+  if (spf.config.get('experimental-scroll-position')) {
+    document.addEventListener('scroll', spf.nav.handleScroll_, false);
+    spf.state.set(spf.state.Key.NAV_SCROLL_LISTENER, spf.nav.handleScroll_);
+  }
 };
 
 
@@ -71,9 +76,15 @@ spf.nav.dispose = function() {
       var handleMouseDown = /** @type {function(Event)} */ (
           spf.state.get(spf.state.Key.NAV_MOUSEDOWN_LISTENER));
       document.removeEventListener('mousedown', handleMouseDown, false);
+      var handleScroll = /** @type {function(Event)} */ (
+          spf.state.get(spf.state.Key.NAV_SCROLL_LISTENER));
+      document.removeEventListener('scroll', handleScroll, false);
     }
     spf.state.set(spf.state.Key.NAV_CLICK_LISTENER, null);
     spf.state.set(spf.state.Key.NAV_MOUSEDOWN_LISTENER, null);
+    spf.state.set(spf.state.Key.NAV_SCROLL_LISTENER, null);
+    spf.state.set(spf.state.Key.NAV_SCROLL_TEMP_POSITION, null);
+    spf.state.set(spf.state.Key.NAV_SCROLL_TEMP_URL, null);
     spf.state.set(spf.state.Key.NAV_INIT, false);
     spf.state.set(spf.state.Key.NAV_INIT_TIME, null);
     spf.state.set(spf.state.Key.NAV_COUNTER, null);
@@ -319,6 +330,23 @@ spf.nav.handleMouseDown_ = function(evt) {
 
 
 /**
+ * Handles page scroll events to ensure history entry changes do not
+ * prematurally scroll the page before content is updated.
+ *
+ * @param {Event} evt The scroll event.
+ * @private
+ */
+spf.nav.handleScroll_ = function(evt) {
+  var position = spf.nav.getScrollTempPosition_();
+  spf.nav.clearScrollTempPosition_();
+  if (position) {
+    spf.debug.debug('    returning to saved scroll temp position', position);
+    window.scroll.apply(null, position);
+  }
+};
+
+
+/**
  * Handles when the active history entry changes.
  *
  * @param {string} url The URL the user is browsing to.
@@ -359,15 +387,11 @@ spf.nav.handleHistory_ = function(url, opt_state) {
   // event is fired.  This is okay only if using history to move around a single
   // page or if all content can be rendered synchronously during the popState
   // event handling.  Since navigation content updates have at least one
-  // asynchronous break, avoid this early scroll by immediately scrolling back
-  // to the current position after the event.  The proper position will be set
-  // once content is updated.
+  // asynchronous break, avoid this by saving the current page position and
+  // scrolling immediately back to it when the browser scrolls early.
+  // The proper position will be set once content is updated.
   if (info.position && spf.config.get('experimental-scroll-position')) {
-    var position = [window.pageXOffset, window.pageYOffset];
-    setTimeout(function() {
-      spf.debug.debug('    resetting early scroll to ', position);
-      window.scroll.apply(null, position);
-    }, 0);
+    spf.nav.setScrollTempPosition_();
   }
   // Navigate to the URL.
   // NOTE: The persistent parameters are not appended here because they should
@@ -432,6 +456,7 @@ spf.nav.navigate_ = function(url, options, info) {
 
   // If the URL is not navigable, attempt to scroll to support hash navigation.
   if (!spf.nav.isNavigable_(url, info.current)) {
+    spf.debug.debug('non-navigable, just scroll');
     // Add a history entry beforehand to save current position, if needed.
     if (!info.history) {
       var handleError = spf.bind(spf.nav.handleNavigateError_, null,
@@ -579,6 +604,8 @@ spf.nav.navigateSendRequest_ = function(url, options, info) {
 spf.nav.navigateScroll_ = function(url, info) {
   // If a position is defined, scroll to it.
   if (info.position) {
+    spf.debug.debug('    clearing scroll temp position');
+    spf.nav.clearScrollTempPosition_();
     spf.debug.debug('    scrolling to position', info.position);
     window.scroll.apply(null, info.position);
     info.scrolled = true;
@@ -590,11 +617,15 @@ spf.nav.navigateScroll_ = function(url, info) {
   if (result[2]) {
     var el = document.getElementById(result[2]);
     if (el) {
+      spf.debug.debug('    clearing scroll temp position');
+      spf.nav.clearScrollTempPosition_();
       spf.debug.debug('    scrolling into view', result[2]);
       el.scrollIntoView();
       info.scrolled = true;
     }
   } else if (!info.scrolled && spf.config.get('experimental-scroll-position')) {
+    spf.debug.debug('    clearing scroll temp position');
+    spf.nav.clearScrollTempPosition_();
     spf.debug.debug('    scrolling to top');
     window.scroll(0, 0);
     info.scrolled = true;
@@ -616,6 +647,7 @@ spf.nav.navigateAddHistory_ = function(url, referer, handleError) {
     // current scroll position (and timestamp, always done automatically).
     var position = [window.pageXOffset, window.pageYOffset];
     var updateState = {'spf-position': position};
+    spf.debug.debug('    updating history to scroll position', position);
     spf.history.replace(null, updateState);
     // Add the new history entry, unless the URL is the same as the current.
     // (This can happen when clicking a hash-based target multiple times.)
@@ -1578,6 +1610,44 @@ spf.nav.prefetches_ = function(opt_reqs) {
   return /** @type {!Object.<string, XMLHttpRequest>} */ (
       spf.state.get(spf.state.Key.NAV_PREFETCHES));
 };
+
+
+
+/**
+ * @return {Array.<number>} The saved scroll position.
+ * @private
+ */
+spf.nav.getScrollTempPosition_ = function() {
+  var position = /** @type {?Array.<number>} */ (
+      spf.state.get(spf.state.Key.NAV_SCROLL_TEMP_POSITION)) || null;
+  var url = /** @type {?string} */ (
+      spf.state.get(spf.state.Key.NAV_SCROLL_TEMP_URL)) || '';
+  if (position && url == window.location.href) {
+    return position;
+  }
+  return null;
+};
+
+
+/**
+ * @private
+ */
+spf.nav.setScrollTempPosition_ = function() {
+  var position = [window.pageXOffset, window.pageYOffset];
+  spf.debug.debug('    saving scroll temp position', position);
+  spf.state.set(spf.state.Key.NAV_SCROLL_TEMP_POSITION, position);
+  spf.state.set(spf.state.Key.NAV_SCROLL_TEMP_URL, window.location.href);
+};
+
+
+/**
+ * @private
+ */
+spf.nav.clearScrollTempPosition_ = function() {
+  spf.state.set(spf.state.Key.NAV_SCROLL_TEMP_POSITION, null);
+  spf.state.set(spf.state.Key.NAV_SCROLL_TEMP_URL, null);
+};
+
 
 
 /**

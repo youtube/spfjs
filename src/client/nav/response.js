@@ -227,6 +227,8 @@ spf.nav.response.process = function(url, response, opt_info, opt_callback) {
         // saved position afterwards.
         if (isNavigate && !hasPosition && !hasScrolled &&
             spf.config.get('experimental-scroll-position')) {
+          spf.state.set(spf.state.Key.NAV_SCROLL_TEMP_POSITION, null);
+          spf.state.set(spf.state.Key.NAV_SCROLL_TEMP_URL, null);
           spf.debug.debug('    scrolling to top');
           window.scroll(0, 0);
           hasScrolled = true;
