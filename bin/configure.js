@@ -197,6 +197,7 @@ function variables(ninja) {
     '--output_wrapper_file $wrapper_js'
   ];
   var bootloader = [
+    '--define "SPF_BOOTLOADER=true"',
     '--closure_entry_point spf.bootloader',
     '--output_wrapper "(function(){%output%})();"'
   ];
