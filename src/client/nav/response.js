@@ -87,6 +87,12 @@ spf.nav.response.parse = function(text, opt_multipart, opt_lastDitch) {
         extra = extra.substring(0, extra.length - lastDitchHalfToken.length);
       }
     }
+    if (spf.config.get('experimental-parse-extract')) {
+      for (var i = 0; i < parts.length; i++) {
+        parts[i] = spf.nav.response.extract(
+            /** @type {spf.SingleResponse} */(parts[i]));
+      }
+    }
     return {
       parts: /** @type {Array.<spf.SingleResponse>} */(parts),
       extra: extra
@@ -98,6 +104,12 @@ spf.nav.response.parse = function(text, opt_multipart, opt_lastDitch) {
       parts = response;
     } else {
       parts = [response];
+    }
+    if (spf.config.get('experimental-parse-extract')) {
+      for (var i = 0; i < parts.length; i++) {
+        parts[i] = spf.nav.response.extract(
+            /** @type {spf.SingleResponse} */(parts[i]));
+      }
     }
     return {
       parts: /** @type {Array.<spf.SingleResponse>} */(parts),
@@ -483,7 +495,32 @@ spf.nav.response.completeAnimation_ = function(data) {
 
 
 /**
- * Parses and extracts resources from an HTML string:
+ * Extracts all resources from HTML in a SPF response.
+ *
+ * @param {spf.SingleResponse} response The SPF response object to extract.
+ * @return {spf.SingleResponse} The response, updated to have resources
+ *     extracted from HTML strings.  This does not create a new object and
+ *     modifies the passed response in-place.
+ */
+spf.nav.response.extract = function(response) {
+  spf.debug.debug('spf.nav.response.extract', response);
+  if (response['head']) {
+    response['head'] = spf.nav.response.extract_(response['head']);
+  }
+  if (response['body']) {
+    for (var id in response['body']) {
+      response['body'][id] = spf.nav.response.extract_(response['body'][id]);
+    }
+  }
+  if (response['foot']) {
+    response['foot'] = spf.nav.response.extract_(response['foot']);
+  }
+  return response;
+};
+
+
+/**
+ * Extracts resources from an HTML string:
  *   - JS: <script> and <script src>
  *   - CSS: <style> and <link rel=stylesheet>
  *
@@ -879,6 +916,8 @@ if (spf.tracing.ENABLED) {
     spf.nav.response.preprocess = spf.tracing.instrument(
         spf.nav.response.preprocess, 'spf.nav.response.preprocess');
 
+    spf.nav.response.extract = spf.tracing.instrument(
+        spf.nav.response.extract, 'spf.nav.response.extract');
     spf.nav.response.extract_ = spf.tracing.instrument(
         spf.nav.response.extract_, 'spf.nav.response.extract_');
 
