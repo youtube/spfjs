@@ -193,19 +193,21 @@ spf.ResponseFragment;
 /**
  * Type definition for a single SPF response object.
  * - attr: Map of Element IDs to maps of attibute names to attribute values
- *      to set on the Elements.
+ *       to set on the Elements.
  * - body: Map of Element IDs to HTML strings containing content with which
- *      to update the Elements.
+ *       to update the Elements.
  * - cacheKey: Key used to cache this response.
  * - cacheType: String of the type of caching to use for this response.
  * - foot: HTML string containing <script> tags of JS to execute.
  * - head: HTML string containing <link> and <style> tags of CSS to install.
+ * - name: String of the general name of this type of response. This will be
+ *       used to generate "from" and "to" CSS classes for animation.
  * - redirect: String of a URL to request instead.
  * - reload: Boolean to indicate the page should be reloaded.
  * - timing: Map of timing attributes to timestamp numbers.
  * - title: String of the new Document title.
  * - url: String of the correct URL for the current request. This will replace
- *      the current URL in history.
+ *       the current URL in history.
  *
  * @typedef {{
  *   attr: (Object.<string, Object.<string, string>>|undefined),
@@ -214,6 +216,7 @@ spf.ResponseFragment;
  *   cacheType: (string|undefined),
  *   foot: (spf.ResponseFragment|undefined),
  *   head: (spf.ResponseFragment|undefined),
+ *   name: (string|undefined),
  *   redirect: (string|undefined),
  *   reload: (boolean|undefined),
  *   timing: (Object.<string, number>|undefined),

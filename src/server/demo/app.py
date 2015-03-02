@@ -110,6 +110,9 @@ class Servlet(object):
         title = str(getattr(content, 'title', ''))
         if title:
             response[spf.ResponseKey.TITLE] = title
+        name = str(getattr(content, 'name', ''))
+        if name:
+            response[spf.ResponseKey.NAME] = name
         attr = json.loads(str(getattr(content, 'attributes', '{}')))
         if attr:
             response[spf.ResponseKey.ATTR] = attr
@@ -167,6 +170,9 @@ class Servlet(object):
             early[spf.ResponseKey.HEAD] = resp.pop(spf.ResponseKey.HEAD)
         if spf.ResponseKey.TITLE in resp:
             early[spf.ResponseKey.TITLE] = resp.pop(spf.ResponseKey.TITLE)
+        if spf.ResponseKey.NAME in resp:
+            # Don't pop the name so that it is present in both parts.
+            early[spf.ResponseKey.NAME] = resp[spf.ResponseKey.NAME]
         # Begin the multipart response.
         yield spf.MultipartToken.BEGIN
         # Send part 1.
