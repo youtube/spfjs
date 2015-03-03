@@ -148,11 +148,7 @@ spf.nav.request.send = function(url, opt_options) {
       headers['X-SPF-Request'] = headerId.replace('__type__', options.type);
       headers['Accept'] = 'application/json';
     }
-    var chunking = {
-      multipart: false,
-      extra: '',
-      complete: []
-    };
+    var chunking = new spf.nav.request.Chunking_();
     var handleHeaders = spf.bind(spf.nav.request.handleHeadersFromXHR_, null,
                                  url, chunking);
     var handleChunk = spf.bind(spf.nav.request.handleChunkFromXHR_, null,
@@ -226,7 +222,7 @@ spf.nav.request.handleResponseFromCache_ = function(url, options, timing,
  * See {@link #send}.
  *
  * @param {string} url The requested URL, without the SPF identifier.
- * @param {Object} chunking Chunking status data.
+ * @param {spf.nav.request.Chunking_} chunking Chunking data.
  * @param {XMLHttpRequest} xhr The XHR of the current request.
  * @private
  */
@@ -245,7 +241,7 @@ spf.nav.request.handleHeadersFromXHR_ = function(url, chunking, xhr) {
  *
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {spf.nav.request.Options} options Configuration options
- * @param {Object} chunking Chunking status data.
+ * @param {spf.nav.request.Chunking_} chunking Chunking data.
  * @param {XMLHttpRequest} xhr The XHR of the current request.
  * @param {string} chunk The current request chunk.
  * @param {boolean=} opt_lastDitch Whether to parse the chunk as the final
@@ -291,7 +287,7 @@ spf.nav.request.handleChunkFromXHR_ = function(url, options, chunking,
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {spf.nav.request.Options} options Configuration options
  * @param {Object} timing Timing data.
- * @param {Object} chunking Chunking status data.
+ * @param {spf.nav.request.Chunking_} chunking Chunking data.
  * @param {XMLHttpRequest} xhr The XHR of the current request.
  * @private
  */
@@ -532,6 +528,34 @@ spf.nav.request.setCacheObject_ = function(cacheKey, response, type) {
   };
   spf.cache.set(cacheKey, cacheValue,  /** @type {number} */ (
       spf.config.get('cache-lifetime')));
+};
+
+
+/**
+ * Container for holding data to track chunking for an SPF request.
+ *
+ * @constructor
+ * @struct
+ * @private
+ */
+spf.nav.request.Chunking_ = function() {
+  /**
+   * Whether the request is multipart.
+   * @type {boolean}
+   */
+  this.multipart = false;
+  /**
+   * Any extra text from a previous chunk that was not successfully
+   * parsed on its own, usually due to an incomplete part split across
+   * chunk boundaries; combined with the text of a current chunk to complete.
+   * @type {string}
+   */
+  this.extra = '';
+  /**
+   * Complete parts that have been successfully parsed.
+   * @type {!Array}
+   */
+  this.complete = [];
 };
 
 
