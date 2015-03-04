@@ -401,6 +401,90 @@ describe('spf.nav.response', function() {
 
   describe('extract', function() {
 
+    it('handles strings', function() {
+      var response = {
+        head: '<script src=foo.js name=foo async></script>' +
+                '<link rel=stylesheet href=foo.css name=foo>',
+        body: {
+          id: '<script name="quatre">window.foo = 4</script>' +
+                '<style name="quatre">.foo { color: red }</style>'
+        },
+        foot: '<script src=bar.js name=bar></script>' +
+                '<link rel=stylesheet href=bar.css name=bar>'
+      };
+      var expected = {
+        head: {
+          scripts: [{url: 'foo.js', text: '', name: 'foo', async: true}],
+          styles: [{url: 'foo.css', text: '', name: 'foo'}],
+          links: [],
+          html: ''
+        },
+        body: {
+          id: {
+            scripts: [
+              {url: '', text: 'window.foo = 4', name: 'quatre', async: false}
+            ],
+            styles: [{url: '', text: '.foo { color: red }', name: 'quatre'}],
+            links: [],
+            html: ''
+          }
+        },
+        foot: {
+          scripts: [{url: 'bar.js', text: '', name: 'bar', async: false}],
+          styles: [{url: 'bar.css', text: '', name: 'bar'}],
+          links: [],
+          html: ''
+        }
+      };
+      var result = spf.nav.response.extract(response);
+      expect(result).toEqual(expected);
+    });
+
+    it('handles objects', function() {
+      var response = {
+        head: {
+          scripts: [{url: 'foo.js', name: 'foo', async: true}],
+          styles: [{url: 'foo.css', name: 'foo'}]
+        },
+        body: {
+          id: {
+            scripts: [{text: 'window.foo = 4', name: 'quatre'}],
+            styles: [{text: '.foo { color: red }', name: 'quatre'}]
+          }
+        },
+        foot: {
+          scripts: [{url: 'bar.js', name: 'bar'}],
+          styles: [{url: 'bar.css', name: 'bar'}]
+        }
+      };
+      var expected = {
+        head: {
+          scripts: [{url: 'foo.js', text: '', name: 'foo', async: true}],
+          styles: [{url: 'foo.css', text: '', name: 'foo'}],
+          links: [],
+          html: ''
+        },
+        body: {
+          id: {
+            scripts: [
+              {url: '', text: 'window.foo = 4', name: 'quatre', async: false}
+            ],
+            styles: [{url: '', text: '.foo { color: red }', name: 'quatre'}],
+            links: [],
+            html: ''
+          }
+        },
+        foot: {
+          scripts: [{url: 'bar.js', text: '', name: 'bar', async: false}],
+          styles: [{url: 'bar.css', text: '', name: 'bar'}],
+          links: [],
+          html: ''
+        }
+      };
+      var result = spf.nav.response.extract(response);
+      expect(result).toEqual(expected);
+    });
+
     it('parses external scripts', function() {
       var string = '<head>' +
         // HTML4 style.
@@ -460,15 +544,15 @@ describe('spf.nav.response', function() {
         // HTML4 style.
         '<link rel="stylesheet" href="foo.css" name="foo">' +
         // HTML4 style with spaces.
-        '<link rel="stylesheet" href = "foo.css" name = "foo">' +
+        '<link rel = "stylesheet" href = "foo.css" name = "foo">' +
         // HTML5 style.
-        '<link rel="stylesheet" href=bar.css name=bar>' +
+        '<link rel=stylesheet href=bar.css name=bar>' +
         // HTML5 style with spaces.
-        '<link rel="stylesheet" href = bar.css name = bar>' +
+        '<link rel = stylesheet  href = bar.css name = bar>' +
         // Single quotes.
         "<link rel='stylesheet' href='baz.css' name='baz'>" +
         // Single quotes with spaces.
-        "<link rel='stylesheet' href = 'baz.css' name = 'baz'>" +
+        "<link rel = 'stylesheet' href = 'baz.css' name = 'baz'>" +
         // Non-matching HTML4 style.
         '<link href="qux.css">' +
         // Non-matching HTML5 style.
