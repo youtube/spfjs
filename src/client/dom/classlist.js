@@ -36,7 +36,9 @@ spf.dom.classlist.get = function(node) {
  * @return {boolean} Whether node has the class.
  */
 spf.dom.classlist.contains = function(node, cls) {
-  if (node.classList) {
+  if (!cls) {
+    return false;
+  } else if (node.classList) {
     return node.classList.contains(cls);
   } else {
     var classes = spf.dom.classlist.get(node);
@@ -57,10 +59,10 @@ spf.dom.classlist.contains = function(node, cls) {
  * @param {string} cls Class name to add.
  */
 spf.dom.classlist.add = function(node, cls) {
-  if (node.classList) {
-    node.classList.add(cls);
-  } else {
-    if (!spf.dom.classlist.contains(node, cls)) {
+  if (cls) {
+    if (node.classList) {
+      node.classList.add(cls);
+    } else if (!spf.dom.classlist.contains(node, cls)) {
       node.className += ' ' + cls;
     }
   }
@@ -74,16 +76,18 @@ spf.dom.classlist.add = function(node, cls) {
  * @param {string} cls Class name to remove.
  */
 spf.dom.classlist.remove = function(node, cls) {
-  if (node.classList) {
-    node.classList.remove(cls);
-  } else {
-    var classes = spf.dom.classlist.get(node);
-    var newClasses = [];
-    for (var i = 0, l = classes.length; i < l; i++) {
-      if (classes[i] != cls) {
-        newClasses.push(classes[i]);
+  if (cls) {
+    if (node.classList) {
+      node.classList.remove(cls);
+    } else {
+      var classes = spf.dom.classlist.get(node);
+      var newClasses = [];
+      for (var i = 0, l = classes.length; i < l; i++) {
+        if (classes[i] != cls) {
+          newClasses.push(classes[i]);
+        }
       }
+      node.className = newClasses.join(' ');
     }
-    node.className = newClasses.join(' ');
   }
 };
