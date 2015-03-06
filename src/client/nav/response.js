@@ -524,22 +524,23 @@ spf.nav.response.extract = function(response) {
  *   - JS: <script> and <script src>
  *   - CSS: <style> and <link rel=stylesheet>
  *
- * @param {string|Object} html The HTML string to parse, or a pre-parsed object.
+ * @param {spf.ResponseFragment} frag The response fragment, either a HTML
+ *     string to parse, or a pre-parsed object.
  * @return {!spf.nav.response.Extraction_}
  * @private
  */
-spf.nav.response.extract_ = function(html) {
+spf.nav.response.extract_ = function(frag) {
   var result = new spf.nav.response.Extraction_();
-  if (!html) {
+  if (!frag) {
     return result;
   }
 
-  // If the html isn't a string, it's a pre-parsed object.  Use the provided
-  // values to populate the result instead.
-  if (!spf.string.isString(html)) {
+  // If the fragment isn't a string, it's a pre-parsed object.  Use the
+  // provided values to populate the result instead.
+  if (!spf.string.isString(frag)) {
     // Add the parsed scripts to the result.
-    if (html['scripts']) {
-      spf.array.each(html['scripts'], function(script) {
+    if (frag['scripts']) {
+      spf.array.each(frag['scripts'], function(script) {
         result.scripts.push({url: script['url'] || '',
                              text: script['text'] || '',
                              name: script['name'] || '',
@@ -547,28 +548,28 @@ spf.nav.response.extract_ = function(html) {
       });
     }
     // Add the parsed styles to the result.
-    if (html['styles']) {
-      spf.array.each(html['styles'], function(style) {
+    if (frag['styles']) {
+      spf.array.each(frag['styles'], function(style) {
         result.styles.push({url: style['url'] || '',
                             text: style['text'] || '',
                             name: style['name'] || ''});
       });
     }
     // Add the parsed links to the result.
-    if (html['links'] && spf.config.get('experimental-preconnect')) {
-      spf.array.each(html['links'], function(link) {
+    if (frag['links'] && spf.config.get('experimental-preconnect')) {
+      spf.array.each(frag['links'], function(link) {
         if (link['rel'] == 'spf-preconnect') {
           result.links.push({url: link['url'] || '',
                              rel: link['rel'] || ''});
         }
       });
     }
-    result.html = html['html'] || '';
+    result.html = frag['html'] || '';
     return result;
   }
 
   // Parse scripts and styles and add them to the result.
-  html = html.replace(spf.nav.response.ElementRegEx.SCRIPT_STYLE,
+  frag = frag.replace(spf.nav.response.ElementRegEx.SCRIPT_STYLE,
       function(full, tag, attr, text) {
         // A script tag can be either an inline or external style.
         // Parse the name, src, and async attributes.
@@ -593,7 +594,7 @@ spf.nav.response.extract_ = function(html) {
       });
 
   // Parse links and add them to the result.
-  html = html.replace(spf.nav.response.ElementRegEx.LINK,
+  frag = frag.replace(spf.nav.response.ElementRegEx.LINK,
       function(full, attr) {
         var rel = attr.match(spf.nav.response.AttributeRegEx.REL);
         rel = rel ? rel[1] : '';
@@ -621,7 +622,7 @@ spf.nav.response.extract_ = function(html) {
       });
 
   // The result html is what's left after parsing.
-  result.html = html;
+  result.html = frag;
 
   return result;
 };
