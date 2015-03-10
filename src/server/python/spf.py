@@ -59,6 +59,7 @@ class ResponseKey(object):
     FOOT = 'foot'
     ATTR = 'attr'
     BODY = 'body'
+    NAME = 'name'
     REDIRECT = 'redirect'
 
 

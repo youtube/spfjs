@@ -19,6 +19,7 @@ goog.require('spf.config');
 goog.require('spf.debug');
 goog.require('spf.dom');
 goog.require('spf.dom.classlist');
+goog.require('spf.dom.dataset');
 goog.require('spf.history');
 goog.require('spf.nav.request');
 goog.require('spf.nav.response');
@@ -750,6 +751,15 @@ spf.nav.handleNavigateSuccess_ = function(options, info, url, response) {
     // queued after existing ones from any ongoing part prcoessing.
     var r = /** @type {spf.SingleResponse} */ (multipart ? {} : response);
     spf.nav.response.process(url, r, info, function() {
+      // After processing is complete, save the name for future use.
+      var name = response['name'] || '';
+      if (multipart) {
+        var parts = response['parts'];
+        for (var i = 0; i < parts.length; i++) {
+          name = parts[i]['name'] || name;
+        }
+      }
+      spf.dom.dataset.set(document.body, 'spfName', name);
       // If this navigation was from history, attempt to scroll to the previous
       // position after all processing is complete.  This should not be done
       // earlier because the prevous position might rely on page width/height

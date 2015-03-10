@@ -17,6 +17,7 @@ goog.require('spf.config');
 goog.require('spf.debug');
 goog.require('spf.dom');
 goog.require('spf.dom.classlist');
+goog.require('spf.dom.dataset');
 goog.require('spf.history');
 goog.require('spf.net.connect');
 goog.require('spf.net.script');
@@ -136,6 +137,8 @@ spf.nav.response.process = function(url, response, opt_info, opt_callback) {
   var isReverse = opt_info && opt_info.reverse;
   var hasPosition = opt_info && !!opt_info.position;
   var hasScrolled = opt_info && opt_info.scrolled;
+
+  var name = response['name'] || '';
 
   // Convert the URL to absolute, to be used for finding the task queue.
   var key = 'process ' + spf.url.absolute(url);
@@ -272,6 +275,7 @@ spf.nav.response.process = function(url, response, opt_info, opt_callback) {
               el,
               extracted.html,
               animationClass,
+              name,
               parseInt(spf.config.get('animation-duration'), 10),
               !!isReverse);
           // Suspend main queue while the animation is running.
@@ -445,6 +449,8 @@ spf.nav.response.preprocess = function(url, response, opt_info, opt_callback) {
 spf.nav.response.prepareAnimation_ = function(data) {
   // Add the start class to put elements in their beginning states.
   spf.dom.classlist.add(data.element, data.dirClass);
+  spf.dom.classlist.add(data.element, data.fromClass);
+  spf.dom.classlist.add(data.element, data.toClass);
   spf.dom.classlist.add(data.element, data.startClass);
   spf.dom.classlist.add(data.element, data.startClassDeprecated);
   // Pack the existing content into a temporary container.
@@ -489,6 +495,8 @@ spf.nav.response.completeAnimation_ = function(data) {
   // Remove the end class to put elements back in normal state.
   spf.dom.classlist.remove(data.element, data.endClass);
   spf.dom.classlist.remove(data.element, data.endClassDeprecated);
+  spf.dom.classlist.remove(data.element, data.fromClass);
+  spf.dom.classlist.remove(data.element, data.toClass);
   spf.dom.classlist.remove(data.element, data.dirClass);
   spf.debug.debug('  process done complete animation', data.element.id);
 };
@@ -796,13 +804,14 @@ spf.nav.response.getCurrentUrl_ = function() {
  * @param {!Element} el The element being updated.
  * @param {string} html The new content for the element.
  * @param {string} cls The animation class name.
+ * @param {string} name The page name.
  * @param {number} duration The animation duration.
  * @param {boolean} reverse Whether this is a "back" animation.
  * @constructor
  * @struct
  * @private
  */
-spf.nav.response.Animation_ = function(el, html, cls, duration, reverse) {
+spf.nav.response.Animation_ = function(el, html, cls, name, duration, reverse) {
   /** @type {!Element} */
   this.element = el;
   /** @type {string} */
@@ -812,8 +821,14 @@ spf.nav.response.Animation_ = function(el, html, cls, duration, reverse) {
   /** @type {boolean} */
   this.reverse = reverse;
 
+  var prevName = spf.dom.dataset.get(document.body, 'spfName') || '';
+
   /** @type {string} */
   this.key = spf.tasks.key(el);
+  /** @type {string} */
+  this.fromClass = prevName && (cls + '-from-' + prevName);
+  /** @type {string} */
+  this.toClass = name && (cls + '-to-' + name);
   /** @type {Element} */
   this.oldEl = null;
   /** @type {string} */

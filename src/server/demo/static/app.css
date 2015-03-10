@@ -109,31 +109,54 @@ html, body {
   left: 0;
   width: 100%;
   height: 100%;
-  -webkit-transition: -webkit-transform 400ms ease, opacity 400ms linear;
-  transition: transform 400ms ease, opacity 400ms linear;
+  -webkit-transition: -webkit-transform 400ms ease, opacity 200ms linear;
+  transition: transform 400ms ease, opacity 200ms linear;
+  will-change: transform, opacity;
 }
 /* Transitions fade-out old and fade-in new */
 .spf-animate-start .spf-animate-old,
 .spf-animate-end   .spf-animate-new {
   opacity: 1;
+  -webkit-transition-delay: 200ms;
+  transition-delay: 200ms;
 }
 .spf-animate-start .spf-animate-new,
 .spf-animate-end   .spf-animate-old {
   opacity: 0;
 }
-/* transitions slide-out old and slide-in new */
+/* By default, no movement, just fade */
 .spf-animate-start .spf-animate-old,
 .spf-animate-end   .spf-animate-new {
   -webkit-transform: translate(0%, 0%);
   transform: translate(0%, 0%);
 }
-.spf-animate-start.spf-animate-forward .spf-animate-new,
-.spf-animate-end.spf-animate-reverse   .spf-animate-old {
+/* Home/Spec -> Demo, slide in from right */
+.spf-animate-from-home.spf-animate-to-demo.spf-animate-start .spf-animate-new,
+.spf-animate-from-spec.spf-animate-to-demo.spf-animate-start .spf-animate-new {
   -webkit-transform: translate(150%, 0%);
   transform: translate(150%, 0%);
+  -webkit-transition-delay: 0ms;
+  transition-delay: 0ms;
 }
-.spf-animate-end.spf-animate-forward   .spf-animate-old,
-.spf-animate-start.spf-animate-reverse .spf-animate-new {
+.spf-animate-from-home.spf-animate-to-demo.spf-animate-end .spf-animate-old,
+.spf-animate-from-spec.spf-animate-to-demo.spf-animate-end .spf-animate-old {
   -webkit-transform: translate(-150%, 0%);
   transform: translate(-150%, 0%);
+  -webkit-transition-delay: 0ms;
+  transition-delay: 0ms;
+}
+/* Demo -> Home/Spec, slide in from left */
+.spf-animate-from-demo.spf-animate-to-home.spf-animate-start .spf-animate-new,
+.spf-animate-from-demo.spf-animate-to-spec.spf-animate-start .spf-animate-new {
+  -webkit-transform: translate(-150%, 0%);
+  transform: translate(-150%, 0%);
+  -webkit-transition-delay: 0ms;
+  transition-delay: 0ms;
+}
+.spf-animate-from-demo.spf-animate-to-home.spf-animate-end .spf-animate-old,
+.spf-animate-from-demo.spf-animate-to-spec.spf-animate-end .spf-animate-old {
+  -webkit-transform: translate(150%, 0%);
+  transform: translate(150%, 0%);
+  -webkit-transition-delay: 0ms;
+  transition-delay: 0ms;
 }
