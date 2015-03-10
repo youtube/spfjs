@@ -143,6 +143,53 @@ spf.EventName = {
 };
 
 
+/** Type definition for a parsed script resource in a SPF response fragment.
+ *
+ * @typedef {{
+ *   url: (string|undefined),
+ *   text: (string|undefined),
+ *   name: (string|undefined),
+ *   async: (boolean|undefined)
+ * }}
+ */
+spf.ScriptResource;
+
+
+/** Type definition for a parsed style resource in a SPF response fragment.
+ *
+ * @typedef {{
+ *   url: (string|undefined),
+ *   text: (string|undefined),
+ *   name: (string|undefined)
+ * }}
+ */
+spf.StyleResource;
+
+
+/** Type definition for a parsed link resource in a SPF response fragment.
+ *
+ * @typedef {{
+ *   url: (string|undefined),
+ *   rel: (string|undefined)
+ * }}
+ */
+spf.LinkResource;
+
+
+/**
+ * Type definition for a fragment of a SPF response.  Either a string of HTML or
+ * an object with the resources parsed out of the HTML.
+ *
+ * @typedef {string|{
+ *   html: (string|undefined),
+ *   scripts: (Array.<spf.ScriptResource>|undefined),
+ *   styles: (Array.<spf.StyleResource>|undefined),
+ *   links: (Array.<spf.LinkResource>|undefined)
+ * }}
+ */
+spf.ResponseFragment;
+
+
 /**
  * Type definition for a single SPF response object.
  * - attr: Map of Element IDs to maps of attibute names to attribute values
@@ -162,11 +209,11 @@ spf.EventName = {
  *
  * @typedef {{
  *   attr: (Object.<string, Object.<string, string>>|undefined),
- *   body: (Object.<string, string>|undefined),
+ *   body: (Object.<string, spf.ResponseFragment>|undefined),
  *   cacheKey: (string|undefined),
  *   cacheType: (string|undefined),
- *   foot: (string|undefined),
- *   head: (string|undefined),
+ *   foot: (spf.ResponseFragment|undefined),
+ *   head: (spf.ResponseFragment|undefined),
  *   redirect: (string|undefined),
  *   reload: (boolean|undefined),
  *   timing: (Object.<string, number>|undefined),
