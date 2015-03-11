@@ -261,19 +261,19 @@ spf.nav.response.process = function(url, response, opt_info, opt_callback) {
           if (htmlHandler) {
             // Suspend main queue for the experimental HTML handler.
             spf.tasks.suspend(key);
-            htmlHandler(extracted.html, el, function() {
+            htmlHandler(extracted['html'], el, function() {
               installScripts();
               // Resume main queue after the experimental HTML handler.
               spf.tasks.resume(key, sync);
             });
           } else {
-            el.innerHTML = extracted.html;
+            el.innerHTML = extracted['html'];
             installScripts();
           }
         } else {
           var animation = new spf.nav.response.Animation_(
               el,
-              extracted.html,
+              extracted['html'],
               animationClass,
               name,
               parseInt(spf.config.get('animation-duration'), 10),
@@ -532,8 +532,9 @@ spf.nav.response.extract = function(response) {
  *   - JS: <script> and <script src>
  *   - CSS: <style> and <link rel=stylesheet>
  *
- * @param {spf.ResponseFragment} frag The response fragment, either a HTML
- *     string to parse, or a pre-parsed object.
+ * @param {spf.ResponseFragment|spf.nav.response.Extraction_} frag The response
+ *     fragment (either a HTML string to parse or a pre-parsed object), or a
+ *     previous extraction result.
  * @return {!spf.nav.response.Extraction_}
  * @private
  */
@@ -549,7 +550,7 @@ spf.nav.response.extract_ = function(frag) {
     // Add the parsed scripts to the result.
     if (frag['scripts']) {
       spf.array.each(frag['scripts'], function(script) {
-        result.scripts.push({url: script['url'] || '',
+        result['scripts'].push({url: script['url'] || '',
                              text: script['text'] || '',
                              name: script['name'] || '',
                              async: script['async'] || false});
@@ -558,7 +559,7 @@ spf.nav.response.extract_ = function(frag) {
     // Add the parsed styles to the result.
     if (frag['styles']) {
       spf.array.each(frag['styles'], function(style) {
-        result.styles.push({url: style['url'] || '',
+        result['styles'].push({url: style['url'] || '',
                             text: style['text'] || '',
                             name: style['name'] || ''});
       });
@@ -567,14 +568,17 @@ spf.nav.response.extract_ = function(frag) {
     if (frag['links'] && spf.config.get('experimental-preconnect')) {
       spf.array.each(frag['links'], function(link) {
         if (link['rel'] == 'spf-preconnect') {
-          result.links.push({url: link['url'] || '',
+          result['links'].push({url: link['url'] || '',
                              rel: link['rel'] || ''});
         }
       });
     }
-    result.html = frag['html'] || '';
+    result['html'] = frag['html'] || '';
     return result;
   }
+
+  // Re-assure the compiler that the fragment is a string at this point.
+  frag = /** @type {string} */ (frag);
 
   // Parse scripts and styles and add them to the result.
   frag = frag.replace(spf.nav.response.ElementRegEx.SCRIPT_STYLE,
@@ -587,14 +591,15 @@ spf.nav.response.extract_ = function(frag) {
           var url = attr.match(spf.nav.response.AttributeRegEx.SRC);
           url = url ? url[1] : '';
           var async = spf.nav.response.AttributeRegEx.ASYNC.test(attr);
-          result.scripts.push({url: url, text: text, name: name, async: async});
+          result['scripts'].push(
+              {url: url, text: text, name: name, async: async});
           return '';
         }
         // A style tag is an inline style.  Parse the name attribute.
         if (tag == 'style') {
           var name = attr.match(spf.nav.response.AttributeRegEx.NAME);
           name = name ? name[1] : '';
-          result.styles.push({url: '', text: text, name: name});
+          result['styles'].push({url: '', text: text, name: name});
           return '';
         }
         // An unexpected tag was matched.  Do nothing.
@@ -613,7 +618,7 @@ spf.nav.response.extract_ = function(frag) {
           name = name ? name[1] : '';
           var url = attr.match(spf.nav.response.AttributeRegEx.HREF);
           url = url ? url[1] : '';
-          result.styles.push({url: url, text: '', name: name});
+          result['styles'].push({url: url, text: '', name: name});
           return '';
         }
         // A rel=spf-preconnect tag indicates early connection.
@@ -622,7 +627,7 @@ spf.nav.response.extract_ = function(frag) {
             spf.config.get('experimental-preconnect')) {
           var url = attr.match(spf.nav.response.AttributeRegEx.HREF);
           url = url ? url[1] : '';
-          result.links.push({url: url, rel: rel});
+          result['links'].push({url: url, rel: rel});
           return '';
         }
         // An unknown link was matched.  Do nothing.
@@ -630,24 +635,24 @@ spf.nav.response.extract_ = function(frag) {
       });
 
   // The result html is what's left after parsing.
-  result.html = frag;
+  result['html'] = frag;
 
   return result;
 };
 
 
 /**
- * Installs scripts that have been parsed from an HTML string.
+ * Installs scripts that have been extracted from an HTML string.
  * See {@link spf.net.script.load}, {@link spf.net.script.eval}, and
  * {@link #extract_}.
  *
- * @param {!spf.nav.response.Extraction_} result The parsed HTML result.
+ * @param {!spf.nav.response.Extraction_} result The extraction result.
  * @param {Function=} opt_callback Callback function to execute after
  *     all scripts are loaded.
  * @private
  */
 spf.nav.response.installScripts_ = function(result, opt_callback) {
-  if (result.scripts.length <= 0) {
+  if (result['scripts'].length <= 0) {
     opt_callback && opt_callback();
     return;
   }
@@ -655,8 +660,8 @@ spf.nav.response.installScripts_ = function(result, opt_callback) {
   var index = -1;
   var next = function() {
     index++;
-    if (index < result.scripts.length) {
-      var item = result.scripts[index];
+    if (index < result['scripts'].length) {
+      var item = result['scripts'][index];
       var fn = function() {};
       if (item.url) {
         if (item.name) {
@@ -686,18 +691,18 @@ spf.nav.response.installScripts_ = function(result, opt_callback) {
 
 
 /**
- * Prefetches scripts that have been parsed from an HTML string.
+ * Prefetches scripts that have been extracted from an HTML string.
  * See {@link spf.net.script.prefetch} and {@link #extract_}.
  *
- * @param {!spf.nav.response.Extraction_} result The parsed HTML result.
+ * @param {!spf.nav.response.Extraction_} result The extraction result.
  * @private
  */
 spf.nav.response.preinstallScripts_ = function(result) {
-  if (result.scripts.length <= 0) {
+  if (result['scripts'].length <= 0) {
     return;
   }
   // Prefetch the scripts.
-  var urls = spf.array.map(result.scripts, function(item) {
+  var urls = spf.array.map(result['scripts'], function(item) {
     return item.url;
   });
   spf.net.script.prefetch(urls);
@@ -705,20 +710,20 @@ spf.nav.response.preinstallScripts_ = function(result) {
 
 
 /**
- * Installs styles that have been parsed from an HTML string.
+ * Installs styles that have been extracted from an HTML string.
  * See {@link spf.net.style.load}, {@link spf.net.style.eval}, and
  * {@link #extract_}.
  *
- * @param {!spf.nav.response.Extraction_} result The parsed HTML result.
+ * @param {!spf.nav.response.Extraction_} result The extraction result.
  * @private
  */
 spf.nav.response.installStyles_ = function(result) {
-  if (result.styles.length <= 0) {
+  if (result['styles'].length <= 0) {
     return;
   }
   // Install the styles.
-  for (var i = 0, l = result.styles.length; i < l; i++) {
-    var item = result.styles[i];
+  for (var i = 0, l = result['styles'].length; i < l; i++) {
+    var item = result['styles'][i];
     if (item.url) {
       if (item.name) {
         spf.net.style.load(item.url, item.name);
@@ -737,18 +742,18 @@ spf.nav.response.installStyles_ = function(result) {
 
 
 /**
- * Prefetches styles that have been parsed from an HTML string.
+ * Prefetches styles that have been extracted from an HTML string.
  * See {@link spf.net.style.prefetch} and {@link #extract_}.
  *
- * @param {!spf.nav.response.Extraction_} result The parsed HTML result.
+ * @param {!spf.nav.response.Extraction_} result The extraction result.
  * @private
  */
 spf.nav.response.preinstallStyles_ = function(result) {
-  if (result.styles.length <= 0) {
+  if (result['styles'].length <= 0) {
     return;
   }
   // Prefetch the styles.
-  var urls = spf.array.map(result.styles, function(item) {
+  var urls = spf.array.map(result['styles'], function(item) {
     return item.url;
   });
   spf.net.style.prefetch(urls);
@@ -756,10 +761,10 @@ spf.nav.response.preinstallStyles_ = function(result) {
 
 
 /**
- * Installs links (i.e. DNS) that have been parsed from an HTML string.
+ * Installs links (i.e. DNS) that have extracted from an HTML string.
  * See {@link spf.net.connect.preconnect} and {@link #extract_}.
  *
- * @param {!spf.nav.response.Extraction_} result The parsed HTML result.
+ * @param {!spf.nav.response.Extraction_} result The extraction result.
  * @private
  */
 spf.nav.response.installLinks_ = function(result) {
@@ -769,18 +774,18 @@ spf.nav.response.installLinks_ = function(result) {
 
 
 /**
- * Prefetches links (i.e. DNS) that have been parsed from an HTML string.
+ * Prefetches links (i.e. DNS) that have been extracted from an HTML string.
  * See {@link spf.net.connect.preconnect} and {@link #extract_}.
  *
- * @param {!spf.nav.response.Extraction_} result The parsed HTML result.
+ * @param {!spf.nav.response.Extraction_} result The extraction result.
  * @private
  */
 spf.nav.response.preinstallLinks_ = function(result) {
-  if (result.links.length <= 0) {
+  if (result['links'].length <= 0) {
     return;
   }
   // Preconnect.
-  var urls = spf.array.map(result.links, function(item) {
+  var urls = spf.array.map(result['links'], function(item) {
     return item.rel == 'spf-preconnect' ? item.url : '';
   });
   spf.net.connect.preconnect(urls);
@@ -854,18 +859,25 @@ spf.nav.response.Animation_ = function(el, html, cls, name, duration, reverse) {
  * A container for holding the results from parsing and extracting resources
  * from an HTML string.  See {@link #extract_}.
  *
+ * Note: This container should be accessed as a dict (obj['foo']) not as a
+ * struct (obj.foo) to ensure consistency when accessing parsed responses
+ * cached by previous versions of SPF.
+ *
  * @constructor
+ * @dict
  * @private
  */
+// TODO(nicksay): Consider a shared interface for spf.nav.response.Extraction_
+// and spf.ResponseFragment.
 spf.nav.response.Extraction_ = function() {
   /** @type {string} */
-  this.html = '';
+  this['html'] = '';
   /** @type {!Array.<{url:string, text:string, name:string, async:boolean}>} */
-  this.scripts = [];
+  this['scripts'] = [];
   /** @type {!Array.<{url:string, text:string, name:string}>} */
-  this.styles = [];
+  this['styles'] = [];
   /** @type {!Array.<{url:string, rel:string}>} */
-  this.links = [];
+  this['links'] = [];
 };
 
 
