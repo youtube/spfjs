@@ -388,41 +388,116 @@ describe('spf.nav', function() {
   describe('isNavigable', function() {
 
 
-    it('allows standard URLs to different pages', function() {
+    it('allows standard to standard across pages', function() {
       var current = window.location.href;
       var url = '/page';
-      var crossDomainUrl = 'https://www.google.com/';
+      var crossDomainUrl = 'https://www.google.com/page';
       expect(spf.nav.isNavigable_(url, current)).toBe(true);
       expect(spf.nav.isNavigable_(crossDomainUrl, current)).toBe(true);
     });
 
 
-    it('allows hash URLs to different pages', function() {
+    it('allows standard to hash across pages', function() {
       var current = window.location.href;
-      var urlWithHash1 = '/page#target';
-      var crossDomainUrlWithHash1 = 'https://www.google.com/#target';
-      var urlWithHash2 = '/page#';
-      var crossDomainUrlWithHash2 = 'https://www.google.com/#';
-      expect(spf.nav.isNavigable_(urlWithHash1, current)).toBe(true);
-      expect(spf.nav.isNavigable_(crossDomainUrlWithHash1, current)).toBe(true);
-      expect(spf.nav.isNavigable_(urlWithHash2, current)).toBe(true);
-      expect(spf.nav.isNavigable_(crossDomainUrlWithHash2, current)).toBe(true);
+      var urlWithTargetHash = '/page#target';
+      var urlWithEmptyHash = '/page#';
+      var crossDomainUrlWithTargetHash = 'https://www.google.com/page#target';
+      var crossDomainUrlWithEmptyHash = 'https://www.google.com/page#';
+      expect(spf.nav.isNavigable_(urlWithTargetHash, current)).toBe(true);
+      expect(spf.nav.isNavigable_(urlWithEmptyHash, current)).toBe(true);
+      expect(spf.nav.isNavigable_(
+                 crossDomainUrlWithTargetHash, current)).toBe(true);
+      expect(spf.nav.isNavigable_(
+                 crossDomainUrlWithEmptyHash, current)).toBe(true);
     });
 
 
-    it('allows standard URLs to same pages', function() {
+    it('allows hash to standard across pages', function() {
+      var current = window.location.href;
+      var currentWithTargetHash = spf.url.absolute(current) + '#target';
+      var currentWithEmptyHash = spf.url.absolute(current) + '#';
+      var url = '/page';
+      var crossDomainUrl = 'https://www.google.com/page';
+      expect(spf.nav.isNavigable_(url, currentWithTargetHash)).toBe(true);
+      expect(spf.nav.isNavigable_(url, currentWithEmptyHash)).toBe(true);
+      expect(spf.nav.isNavigable_(
+                 crossDomainUrl, currentWithTargetHash)).toBe(true);
+      expect(spf.nav.isNavigable_(
+                 crossDomainUrl, currentWithEmptyHash)).toBe(true);
+    });
+
+
+    it('allows hash to hash across pages', function() {
+      var current = window.location.href;
+      var currentWithTargetHash = spf.url.absolute(current) + '#target';
+      var currentWithEmptyHash = spf.url.absolute(current) + '#';
+      var urlWithTargetHash = '/page#target';
+      var urlWithEmptyHash = '/page#';
+      var crossDomainUrlWithTargetHash = 'https://www.google.com/page#target';
+      var crossDomainUrlWithEmptyHash = 'https://www.google.com/page#';
+      expect(spf.nav.isNavigable_(
+                 urlWithTargetHash, currentWithTargetHash)).toBe(true);
+      expect(spf.nav.isNavigable_(
+                 urlWithTargetHash, currentWithEmptyHash)).toBe(true);
+      expect(spf.nav.isNavigable_(
+                 urlWithEmptyHash, currentWithTargetHash)).toBe(true);
+      expect(spf.nav.isNavigable_(
+                 urlWithEmptyHash, currentWithEmptyHash)).toBe(true);
+      expect(spf.nav.isNavigable_(
+                 crossDomainUrlWithTargetHash, currentWithTargetHash)
+             ).toBe(true);
+      expect(spf.nav.isNavigable_(
+                 crossDomainUrlWithTargetHash, currentWithEmptyHash)
+             ).toBe(true);
+      expect(spf.nav.isNavigable_(
+                 crossDomainUrlWithEmptyHash, currentWithTargetHash)
+             ).toBe(true);
+      expect(spf.nav.isNavigable_(
+                 crossDomainUrlWithEmptyHash, currentWithEmptyHash)
+             ).toBe(true);
+    });
+
+
+    it('allows standard to standard for same page', function() {
       var current = window.location.href;
       var url = current;
       expect(spf.nav.isNavigable_(url, current)).toBe(true);
     });
 
 
-    it('denies hash URLs to same pages', function() {
+    it('denies standard to hash for same page', function() {
       var current = window.location.href;
-      var urlWithHash1 = current + '#target';
-      var urlWithHash2 = current + '#';
-      expect(spf.nav.isNavigable_(urlWithHash1, current)).toBe(false);
-      expect(spf.nav.isNavigable_(urlWithHash2, current)).toBe(false);
+      var urlWithTargetHash = spf.url.absolute(current) + '#target';
+      var urlWithEmptyHash = spf.url.absolute(current) + '#';
+      expect(spf.nav.isNavigable_(urlWithTargetHash, current)).toBe(false);
+      expect(spf.nav.isNavigable_(urlWithEmptyHash, current)).toBe(false);
+    });
+
+
+    it('denies hash to standard for same page', function() {
+      var current = window.location.href;
+      var currentWithTargetHash = spf.url.absolute(current) + '#target';
+      var currentWithEmptyHash = spf.url.absolute(current) + '#';
+      var url = current;
+      expect(spf.nav.isNavigable_(url, currentWithTargetHash)).toBe(false);
+      expect(spf.nav.isNavigable_(url, currentWithEmptyHash)).toBe(false);
+    });
+
+
+    it('denies hash to hash for same page', function() {
+      var current = window.location.href;
+      var currentWithTargetHash = spf.url.absolute(current) + '#target';
+      var currentWithEmptyHash = spf.url.absolute(current) + '#';
+      var urlWithTargetHash = currentWithTargetHash;
+      var urlWithEmptyHash = currentWithEmptyHash;
+      expect(spf.nav.isNavigable_(
+                 urlWithTargetHash, currentWithTargetHash)).toBe(false);
+      expect(spf.nav.isNavigable_(
+                 urlWithTargetHash, currentWithEmptyHash)).toBe(false);
+      expect(spf.nav.isNavigable_(
+                 urlWithEmptyHash, currentWithTargetHash)).toBe(false);
+      expect(spf.nav.isNavigable_(
+                 urlWithEmptyHash, currentWithEmptyHash)).toBe(false);
     });
 
 
