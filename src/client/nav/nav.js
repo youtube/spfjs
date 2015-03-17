@@ -253,14 +253,15 @@ spf.nav.isEligible_ = function(url) {
  * @private
  */
 spf.nav.isNavigable_ = function(url, opt_current) {
-  // Check for hash-only URLs and absolute URLs with hashes.
-  // If the URL points to the current page, it is not handled.
-  if (spf.string.contains(url, '#')) {
+  var current = opt_current || window.location.href;
+  // Check for transitions between hash URLs.  If the source or destination
+  // is a hash and the page is the same, navigation is not handled.
+  if (spf.string.contains(url, '#') ||
+      spf.string.contains(current, '#')) {
     var absoluteUrl = spf.url.absolute(url);
-    var current = opt_current || window.location.href;
-    var currentUrl = spf.url.unhash(current);
-    if (currentUrl == absoluteUrl) {
-      spf.debug.debug('    not handling hash-only URL');
+    var absoluteCurrent = spf.url.absolute(current);
+    if (absoluteUrl == absoluteCurrent) {
+      spf.debug.debug('    not handling hash-based navigation');
       return false;
     }
   }
