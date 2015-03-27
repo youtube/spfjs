@@ -9,4 +9,4 @@ title: Multipart Responses
 
 
 
-[start]: ../../start/
+[start]: ../start.md

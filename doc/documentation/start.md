@@ -129,5 +129,5 @@ to dynamic navigation:
 
 
 
-[download the code]: ../../download/
-[downloading]: ../../download/
+[download the code]: ../download.md
+[downloading]: ../download.md

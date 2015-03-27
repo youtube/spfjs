@@ -74,7 +74,7 @@ as well:
 If you need to handle resources being unloaded when a new
 version is detected, (e.g. to dispose event listeners, etc), SPF
 will dispatch events before and after a resource is removed.
-As with those detailed in the [Events][events] documentation,
+As with those detailed in the [Events][] documentation,
 these events are defined in the [API][] as [spf.Event][]
 objects.  The events and their descriptions follow:
 
@@ -100,7 +100,7 @@ consistency with style loading.
 
 
 
-[managed resources]:  ../resources/#managed-resources
-[events]: ../events/
-[API]: ../../api/
-[spf.Event]: ../../api/#spf.event
+[managed resources]:  ./resources.md#managed-resources
+[Events]: ./events.md
+[API]: ../api.md
+[spf.Event]: ../api.md#spf.event
