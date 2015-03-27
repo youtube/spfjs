@@ -46,7 +46,7 @@ branch=$(git symbolic-ref --short HEAD)
 git checkout -q $commit
 
 # Validate the version.
-version=$(bin/name.js --semver)
+version=$(bin/name.js --version)
 if [[ $version == "" ]]; then
   echo "A valid version is needed for the release."
   git checkout -q $branch

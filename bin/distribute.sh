@@ -40,7 +40,7 @@ branch=$(git symbolic-ref --short HEAD)
 git checkout -q $tag
 
 # Validate the version.
-version=$(bin/name.js --semver)
+version=$(bin/name.js --version)
 if [[ $version == "" ]]; then
   echo "A valid version is needed for distribution."
   git checkout -q $branch

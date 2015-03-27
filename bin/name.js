@@ -32,8 +32,9 @@ var $ = {
  */
 var FLAGS = {
   help: 'h',
+  name: 'n',
   path: 'p',
-  semver: 's'
+  version: 'v'
 };
 
 
@@ -45,8 +46,9 @@ var FLAGS = {
  */
 var DESCRIPTIONS = {
   help: 'Show this help message and exit.',
+  name: 'Print just the name.',
   path: 'The path to the "package.json" file to parse.',
-  semver: 'Print just the semver valid version number.'
+  version: 'Print just the version number.'
 };
 
 
@@ -138,12 +140,16 @@ function main(opts, args) {
 
   // Format the output.
   var output;
-  if (opts.semver) {
+  if (opts.version) {
     output = version;
   } else {
-    var name = version.split('.').slice(0, 2).join('');
-    var fmt = (version && name) ? 'SPF %s (v%s)' : 'SPF';
-    output = $.util.format(fmt, name, version);
+    var num = version.split('.').slice(0, 2).join('');
+    var name = $.util.format((num ? '%s %s' : '%s'), 'SPF', num);
+    if (opts.name) {
+      output = name;
+    } else {
+      output = $.util.format((version ? '%s (v%s)' : '%s'), name, version);
+    }
   }
 
   // Print the output to stdout, if needed (for the command-line).

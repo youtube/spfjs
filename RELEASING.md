@@ -74,7 +74,7 @@ repo.
 
 6.  Update the `release` and `version` properties in the
     `web/_config.yml` file to match the output of `bin/name.js`
-    and `bin/name.js --semver` respectively. Commit the change
+    and `bin/name.js --version` respectively. Commit the change
     and send a pull request.
 
 7.  Merge the pull request and push the website. This:
