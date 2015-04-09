@@ -27,6 +27,7 @@ goog.require('spf');
  *      have been received.
  * - onTimeout: optional callback to execute if the XHR times out.  Only called
  *      if a timeout is configured.
+ * - responseType: type to create from the XHR response.
  * - timeoutMs: number of milliseconds after which the request will be timed
  *      out by the client. Default is to allow the browser to handle timeouts.
  *
@@ -36,6 +37,7 @@ goog.require('spf');
  *   onDone: (function(XMLHttpRequest)|undefined),
  *   onHeaders: (function(XMLHttpRequest)|undefined),
  *   onTimeout: (function(XMLHttpRequest)|undefined),
+ *   responseType: (string|undefined),
  *   timeoutMs: (number|undefined)
  * }}
  */
@@ -141,6 +143,14 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
     }
   };
 
+  // If requested, attempt to use the JSON `responseType` to optimize parsing.
+  // If the browser supports `responseType` but not the `"json"` type, then
+  // the property will remain unset.
+  // NOTE: This removes the ability to handle chunked responses on the fly.
+  if ('responseType' in xhr && options.responseType == 'json') {
+    xhr.responseType = 'json';
+  }
+
   // For POST, default to `Content-Type: application/x-www-form-urlencoded`
   // unless a custom header was given.
   var addContentTypeFormUrlEncoded = (method == 'POST');
@@ -183,6 +193,9 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
  * @private
  */
 spf.net.xhr.isChunked_ = function(xhr) {
+  if (xhr.responseType == 'json') {
+    return false;
+  }
   // Determine whether to process chunks as they arrive.
   // This is only possible with chunked transfer encoding.
   // Note: handle Transfer-Encoding header values like:
