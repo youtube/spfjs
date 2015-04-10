@@ -5,7 +5,7 @@ layout: api
 ---
 
 
-The following API reference is for **SPF 21 (v2.1.2)**.
+The following API reference is for **SPF 22 (v2.2.0)**.
 
 
 * * *
