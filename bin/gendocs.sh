@@ -40,7 +40,7 @@ release=$(bin/name.js)
 echo "Found version $version"
 
 
-# Update versions on the Download page.
+# Update the Download doc.
 echo "Updating doc/download.md"
 pattern='\d+\.\d+\.\d+'
 script=$(cat <<END_SCRIPT
@@ -53,12 +53,12 @@ content=$(cat doc/download.md)
 echo "$content" | python -c "$script" > doc/download.md
 
 
-# Update the API.
+# Update the API doc.
 echo "Updating doc/api.md"
 tmpdir=$(mktemp -d 2>/dev/null || mktemp -d -t 'spfjs-gendocs')
 tmpfile="$tmpdir/api.js"
 script=$(cat <<END_SCRIPT
-import sys, re
+import sys
 for line in sys.stdin:
   sys.stdout.write(line)
   if '@fileoverview' in line:
@@ -72,3 +72,20 @@ git cat-file -p "v$version:src/api.js" | python -c "$script" > $tmpfile
     --output doc/
 
 echo "Done"
+
+
+# Update the website.
+echo "Updating web/config.yml"
+script=$(cat <<END_SCRIPT
+import sys
+for line in sys.stdin:
+  if line.startswith('release:'):
+    sys.stdout.write('release: $release\n')
+  elif line.startswith('version:'):
+    sys.stdout.write('version: $version\n')
+  else:
+    sys.stdout.write(line)
+END_SCRIPT
+)
+content=$(cat web/config.yml)
+echo "$content" | python -c "$script" > web/config.yml
