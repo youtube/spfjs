@@ -27,7 +27,7 @@
 <link rel="stylesheet" name="roboto" href="//fonts.googleapis.com/css?family=Roboto:300,600,900|Roboto+Condensed:300,300italic,400,700|Inconsolata:400">
 <link rel="stylesheet" name="wsk" href="/spfjs/assets/vendor/wsk/0.4.0/styles/wsk.css">
 <link rel="stylesheet" name="octicons" href="/spfjs/assets/vendor/octicons/2.1.2/octicons.css">
-<link rel="stylesheet" name="main" href="/spfjs/assets/styles/main.css?t=2015-02-02T16%3A48%3A22-05%3A00">
+<link rel="stylesheet" name="main" href="/spfjs/assets/styles/main.css?t=2015-04-10T17%3A55%3A49-04%3A00">
 
 <!-- end spf head -->
 </head>
@@ -110,7 +110,14 @@
   
     <li>
       
-        <a href="/spfjs/documentation/resources/">Resource Loading</a>
+        <a href="/spfjs/documentation/resources/">Resources</a>
+      
+      
+    </li>
+  
+    <li>
+      
+        <a href="/spfjs/documentation/versioning/">Versioning</a>
       
       
     </li>
@@ -172,21 +179,22 @@
         
       </header>
       <div class="container">
-        <p>In dynamic navigation, SPF updates the page with content from the response.
-SPF will do this processing in the following order:</p>
+        <p>In dynamic navigation, SPF updates the page with content from
+the response. SPF will do this processing in the following
+order:</p>
 
 <ol>
 <li><code>title</code> — Update document title</li>
-<li><code>url</code> — Update document url</li>
-<li><code>head</code> — Install early page-wide JS and CSS</li>
+<li><code>url</code> — Update document URL</li>
+<li><code>head</code> — Install early JS and CSS</li>
 <li><code>attr</code> — Set element attributes</li>
-<li><code>body</code> — Set element content and install element-level JS and CSS</li>
-<li><code>foot</code> — Install late page-wide JS and CSS</li>
+<li><code>body</code> — Set element content and install JS and CSS</li>
+<li><code>foot</code> — Install late JS and CSS</li>
 </ol>
 
 <blockquote>
-<p><strong>Note:</strong> All fields are optional and the commonly needed response values are
-<code>title</code>, <code>head</code>, <code>body</code>, and <code>foot</code>.</p>
+<p><strong>Note:</strong> All fields are optional and the commonly needed
+response values are <code>title</code>, <code>head</code>, <code>body</code>, and <code>foot</code>.</p>
 </blockquote>
 
 <p>A response is typically in the following format:</p>
@@ -208,11 +216,13 @@ SPF will do this processing in the following order:</p>
 <span class="s2">       ...&quot;</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>This pattern follows the general good practice of &quot;styles in the head, scripts
-at the end of the body&quot;.  The &quot;foot&quot; field represents the &quot;end of the body&quot;
-section without requiring developers to create an explicit element.</p>
+<p>This pattern follows the general good practice of &quot;styles in the
+head, scripts at the end of the body&quot;.  The &quot;foot&quot; field
+represents the &quot;end of the body&quot; section without requiring
+developers to create an explicit element.</p>
 
-<p>To update specific element attributes, the response format is as follows:</p>
+<p>To update specific element attributes, the response format is as
+follows:</p>
 <div class="highlight"><pre><code class="language-json" data-lang="json"><span class="p">{</span>
   <span class="nt">&quot;attr&quot;</span><span class="p">:</span> <span class="p">{</span>
     <span class="nt">&quot;DOM ID 1&quot;</span><span class="p">:</span> <span class="p">{</span>
@@ -292,7 +302,7 @@ section without requiring developers to create an explicit element.</p>
 
 <!-- begin spf foot -->
 <script name="spf" src="/spfjs/assets/vendor/spf/2.1.1/spf.js"></script>
-<script name="main" src="/spfjs/assets/scripts/main.js?t=2015-02-02T16%3A48%3A22-05%3A00"></script>
+<script name="main" src="/spfjs/assets/scripts/main.js?t=2015-04-10T17%3A55%3A49-04%3A00"></script>
 
 <script name="analytics">
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

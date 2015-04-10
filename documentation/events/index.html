@@ -27,7 +27,7 @@
 <link rel="stylesheet" name="roboto" href="//fonts.googleapis.com/css?family=Roboto:300,600,900|Roboto+Condensed:300,300italic,400,700|Inconsolata:400">
 <link rel="stylesheet" name="wsk" href="/spfjs/assets/vendor/wsk/0.4.0/styles/wsk.css">
 <link rel="stylesheet" name="octicons" href="/spfjs/assets/vendor/octicons/2.1.2/octicons.css">
-<link rel="stylesheet" name="main" href="/spfjs/assets/styles/main.css?t=2015-02-02T16%3A48%3A22-05%3A00">
+<link rel="stylesheet" name="main" href="/spfjs/assets/styles/main.css?t=2015-04-10T17%3A55%3A49-04%3A00">
 
 <!-- end spf head -->
 </head>
@@ -110,7 +110,14 @@
   
     <li>
       
-        <a href="/spfjs/documentation/resources/">Resource Loading</a>
+        <a href="/spfjs/documentation/resources/">Resources</a>
+      
+      
+    </li>
+  
+    <li>
+      
+        <a href="/spfjs/documentation/versioning/">Versioning</a>
       
       
     </li>
@@ -172,13 +179,14 @@
         
       </header>
       <div class="container">
-        <p>SPF is designed to give developers enough flexibility during navigation to
-both control application logic and provide UI updates for things like progress
-bars.</p>
+        <p>SPF is designed to give developers enough flexibility during
+navigation to both control application logic and provide UI
+updates for things like progress bars.</p>
 
 <h2 id="navigation-life-cycle">Navigation Life Cycle</h2>
 
-<p>A basic event flow diagram follows and a more detailed explanation is below:</p>
+<p>A basic event flow diagram follows and a more detailed
+explanation is below:</p>
 <div class="highlight"><pre><code class="language-text" data-lang="text">       Navigation Life Cycle            Event Dispatched
                     +                                   
                     |                                   
@@ -228,43 +236,48 @@ bars.</p>
 </code></pre></div>
 <h2 id="event-descriptions">Event Descriptions</h2>
 
-<p>All events in the <a href="../../api/">API</a> are defined as <a href="../../api/#spf.event">spf.Event</a> objects.  A list of
-the events and their descriptions follows:</p>
+<p>All events in the <a href="../../api/">API</a> are defined as <a href="../../api/#spf.event">spf.Event</a> objects.
+A list of the events and their descriptions follows:</p>
 
 <p><strong><code>spfclick</code></strong><br>
-Fired when handling a click on a valid link (e.g. one with a valid <code>spf-link</code>
-class or parent element).  Use as an early indication that navigation will
-happen or to provide element-level UI feedback.</p>
+Fired when handling a click on a valid link (e.g. one with a
+valid <code>spf-link</code> class or parent element).  Use as an early
+indication that navigation will happen or to provide element-
+level UI feedback.</p>
 
 <p><strong><code>spfhistory</code></strong><br>
-Fired when handling a <code>popstate</code> history event, indicating the user has gone
-backward or forward; similar to <code>spfclick</code>.</p>
+Fired when handling a <code>popstate</code> history event, indicating the
+user has gone backward or forward; similar to <code>spfclick</code>.</p>
 
 <p><strong><code>spfrequest</code></strong><br>
-Fired before a request for navigation is sent.  Use to handle the beginning of
-navigation and provide global-level UI feedback (i.e. start a progress bar).
-This event is fired before a request is sent for all types of navigation:
-clicks, back/forward, and API calls.  (Note that this event is fired even if a
-response is fetched from cache and no actual network request is made.)</p>
+Fired before a request for navigation is sent.  Use to handle
+the beginning of navigation and provide global-level UI feedback
+(i.e. start a progress bar). This event is fired before a
+request is sent for all types of navigation: clicks,
+back/forward, and API calls.  (Note that this event is fired
+even if a response is fetched from cache and no actual network
+request is made.)</p>
 
 <p><strong><code>spfprocess</code></strong><br>
-Fired when a response has been received, either from the network or from
-cache, before it is processed.  Use to update UI feedback (i.e. advance a
-progress bar) and dispose event listeners before content is updated.</p>
+Fired when a response has been received, either from the network
+or from cache, before it is processed.  Use to update UI
+feedback (i.e. advance a progress bar) and dispose event
+listeners before content is updated.</p>
 
 <p><strong><code>spfdone</code></strong><br>
-Fired after response processing is done.  Use to finalize UI feedback (i.e.
-complete a progress bar) and initialize event listeners after content is
-updated.</p>
+Fired after response processing is done.  Use to finalize UI
+feedback (i.e. complete a progress bar) and initialize event
+listeners after content is updated.</p>
 
 <h2 id="callbacks-and-cancellations">Callbacks and Cancellations</h2>
 
-<p>If manually starting navigation with <a href="../../api/#spf.navigate">spf.navigate</a>, then instead of
-handling events you may pass callbacks in an object that conforms to the
-<a href="../../api/#spf.requestoptions">spf.RequestOptions</a> interface. Almost all events and callbacks can be
-canceled by calling <code>preventDefault</code> or returning <code>false</code>, respectively.  A
-list of the events, their corresponding callbacks, and their cancel action
-follows:</p>
+<p>If manually starting navigation with <a href="../../api/#spf.navigate">spf.navigate</a>, then
+instead of handling events you may pass callbacks in an object
+that conforms to the <a href="../../api/#spf.requestoptions">spf.RequestOptions</a> interface. Almost
+all events and callbacks can be canceled by calling
+<code>preventDefault</code> or returning <code>false</code>, respectively.  A list of
+the events, their corresponding callbacks, and their cancel
+action follows:</p>
 
 <table><thead>
 <tr>
@@ -327,7 +340,7 @@ follows:</p>
   
   
     <a href="/spfjs/documentation/resources/" class="article-nav-link article-nav-link--next">
-      <p class="article-nav-count">Resource Loading</p>
+      <p class="article-nav-count">Resources</p>
       
         <p class="article-nav-description">Manage script and style loading.</p>
       
@@ -373,7 +386,7 @@ follows:</p>
 
 <!-- begin spf foot -->
 <script name="spf" src="/spfjs/assets/vendor/spf/2.1.1/spf.js"></script>
-<script name="main" src="/spfjs/assets/scripts/main.js?t=2015-02-02T16%3A48%3A22-05%3A00"></script>
+<script name="main" src="/spfjs/assets/scripts/main.js?t=2015-04-10T17%3A55%3A49-04%3A00"></script>
 
 <script name="analytics">
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

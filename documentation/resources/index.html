@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>SPF - Resource Loading</title>
+<title>SPF - Resources</title>
 <meta name="description" content="Manage script and style loading.">
 
 <link rel="canonical" href="http://youtube.github.io/spfjs/documentation/resources/">
@@ -27,7 +27,7 @@
 <link rel="stylesheet" name="roboto" href="//fonts.googleapis.com/css?family=Roboto:300,600,900|Roboto+Condensed:300,300italic,400,700|Inconsolata:400">
 <link rel="stylesheet" name="wsk" href="/spfjs/assets/vendor/wsk/0.4.0/styles/wsk.css">
 <link rel="stylesheet" name="octicons" href="/spfjs/assets/vendor/octicons/2.1.2/octicons.css">
-<link rel="stylesheet" name="main" href="/spfjs/assets/styles/main.css?t=2015-02-02T16%3A48%3A22-05%3A00">
+<link rel="stylesheet" name="main" href="/spfjs/assets/styles/main.css?t=2015-04-10T17%3A55%3A49-04%3A00">
 
 <!-- end spf head -->
 </head>
@@ -110,7 +110,14 @@
   
     <li>
       
-        <a href="/spfjs/documentation/resources/">Resource Loading</a>
+        <a href="/spfjs/documentation/resources/">Resources</a>
+      
+      
+    </li>
+  
+    <li>
+      
+        <a href="/spfjs/documentation/versioning/">Versioning</a>
       
       
     </li>
@@ -164,7 +171,7 @@
 
     <article class="g-wide--3 g-wide--last g-medium--2 g-medium--last">
       <header class="page-header container">
-        <h2 class="xxlarge text-divider">Resource Loading</h2>
+        <h2 class="xxlarge text-divider">Resources</h2>
         
           <p class="page-header__excerpt g-wide--push-1 g-wide--pull-1">
             Manage script and style loading.
@@ -172,17 +179,17 @@
         
       </header>
       <div class="container">
-        <p>As briefly mentioned in the <a href="../responses/">Responses overview</a>, when SPF
-processes a response, it will install JS and CSS from the <code>head</code> fragment, any
-of the <code>body</code> fragments, and the <code>foot</code> fragment.  However, SPF has two
-methods of handling scripts and styles: unmanaged and managed.  Both are
-detailed below.</p>
+        <p>As briefly mentioned in the <a href="../responses/">Responses overview</a>,
+when SPF processes a response, it will install JS and CSS from
+the <code>head</code> fragment, any of the <code>body</code> fragments, and the <code>foot</code>
+fragment.  However, SPF has two methods of handling scripts and
+styles: unmanaged and managed.  Both are detailed below.</p>
 
 <h2 id="unmanaged-resources">Unmanaged Resources</h2>
 
-<p>SPF parses each fragment for scripts and styles, extracts them, and executes
-them by appending them to the <code>&lt;head&gt;</code> of the document.  For example, given
-the following response:</p>
+<p>SPF parses each fragment for scripts and styles, extracts them,
+and executes them by appending them to the <code>&lt;head&gt;</code> of the
+document.  For example, given the following response:</p>
 <div class="highlight"><pre><code class="language-json" data-lang="json"><span class="p">{</span>
   <span class="nt">&quot;head&quot;</span><span class="p">:</span> <span class="s2">&quot;</span>
 <span class="s2">    &lt;style&gt;.foo { color: blue }&lt;/style&gt;</span>
@@ -198,45 +205,48 @@ the following response:</p>
 <span class="s2">  &quot;</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>Then, when SPF processes this response, it will do the following steps:</p>
+<p>Then, when SPF processes this response, it will do the following
+steps:</p>
 
 <ol>
-<li> Append <code>&lt;style&gt;.foo { color: blue }&lt;/style&gt;</code> to the document <code>&lt;head&gt;</code> to
-eval the CSS.</li>
-<li> Append <code>&lt;link href=&quot;file.css&quot; rel=&quot;stylesheet&quot;&gt;</code> to the document <code>&lt;head&gt;</code>
-to load the CSS file.</li>
+<li> Append <code>&lt;style&gt;.foo { color: blue }&lt;/style&gt;</code> to the document
+<code>&lt;head&gt;</code> to eval the CSS.</li>
+<li> Append <code>&lt;link href=&quot;file.css&quot; rel=&quot;stylesheet&quot;&gt;</code> to the
+document <code>&lt;head&gt;</code> to load the CSS file.</li>
 <li> Update the element with DOM id <code>element-id-a</code> with the HTML
 <code>Lorem ipsum dolor sit amet</code>.</li>
 <li> Update the element with DOM id <code>element-id-b</code> with the HTML
 <code>consectetur adipisicing elit</code>.</li>
-<li> Append <code>&lt;script src=&quot;file.js&quot;&gt;&lt;/script&gt;</code> to the document <code>&lt;head&gt;</code> to load
-the JS file <strong>and wait for it to complete before continuing</strong>.</li>
-<li> Append <code>&lt;script&gt;alert(&#39;hello&#39;);&lt;/script&gt;</code> to the document <code>&lt;head&gt;</code> to eval
-the JS.</li>
+<li> Append <code>&lt;script src=&quot;file.js&quot;&gt;&lt;/script&gt;</code> to the document
+<code>&lt;head&gt;</code> to load the JS file <strong>and wait for it to complete
+before continuing</strong>.</li>
+<li> Append <code>&lt;script&gt;alert(&#39;hello&#39;);&lt;/script&gt;</code> to the document
+<code>&lt;head&gt;</code> to eval the JS.</li>
 </ol>
 
 <blockquote>
-<p><strong>Note:</strong> SPF will wait for script loading or execution to complete before
-processing.  This matches browser behavior and ensures proper script
-execution order.  (See step 4 above.)  To not wait for script execution,
-add the <code>async</code> attribute:</p>
+<p><strong>Note:</strong> SPF will wait for script loading or execution to
+complete before processing.  This matches browser behavior and
+ensures proper script execution order.  (See step 4 above.)
+To not wait for script execution, add the <code>async</code> attribute:</p>
 <div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;file.js&quot;</span> <span class="na">async</span><span class="nt">&gt;&lt;/script&gt;</span>
 </code></pre></div></blockquote>
 
-<p>As you navigate to and from the page sending this response, these steps will
-be repeated each time.</p>
+<p>As you navigate to and from the page sending this response,
+these steps will be repeated each time.</p>
 
 <h2 id="managed-resources">Managed Resources</h2>
 
-<p>However, a significant benefit of SPF is that only sections of the page
-are updated with each navigation instead of the browser performing a full
-reload.  That
-means — almost certainly — not every script and style needs to be executed or
-loaded during every navigation.</p>
+<p>However, a significant benefit of SPF is that only sections of
+the page are updated with each navigation instead of the browser
+performing a full reload.  That means — almost certainly — not
+every script and style needs to be executed or loaded during
+every navigation.</p>
 
-<p>Consider the following common pattern where two scripts are loaded
-per page: one containing common library code (e.g. jQuery) and a second
-containing page-specific code.   For example, a search page and an item page:</p>
+<p>Consider the following common pattern where two scripts are
+loaded per page: one containing common library code (e.g.
+jQuery) and a second containing page-specific code.   For
+example, a search page and an item page:</p>
 
 <p>Search Page:</p>
 <div class="highlight"><pre><code class="language-html" data-lang="html"><span class="c">&lt;!-- common-library.js provides utility functions --&gt;</span>
@@ -251,13 +261,15 @@ containing page-specific code.   For example, a search page and an item page:</p
 <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;item-page.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
 </code></pre></div>
 <p>As a user navigates from the search page to the item page, the
-<code>common-library.js</code> file does not need to be loaded again, as it&#39;s already
-in the page.  You can instruct SPF to manage this script by giving it a <code>name</code>
-attribute.  Then, when it encounters the script again, it will not reload it:</p>
+<code>common-library.js</code> file does not need to be loaded again, as
+it&#39;s already in the page.  You can instruct SPF to manage this
+script by giving it a <code>name</code> attribute.  Then, when it
+encounters the script again, it will not reload it:</p>
 <div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;script </span><span class="na">name=</span><span class="s">&quot;common&quot;</span> <span class="na">src=</span><span class="s">&quot;common-library.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
 </code></pre></div>
-<p>By applying this to all the scripts, a user can navigate back and forth
-between the two pages and only ever load a given file once:</p>
+<p>By applying this to all the scripts, a user can navigate back
+and forth between the two pages and only ever load a given file
+once:</p>
 
 <p>Search Page:</p>
 <div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;script </span><span class="na">name=</span><span class="s">&quot;common&quot;</span> <span class="na">src=</span><span class="s">&quot;common-library.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
@@ -270,19 +282,19 @@ between the two pages and only ever load a given file once:</p>
 <p>Now, given the following navigation flow:</p>
 <div class="highlight"><pre><code class="language-text" data-lang="text">[ search ]---&gt;[ item ]---&gt;[ search ]---&gt;[ item ]
 </code></pre></div>
-<p>Then, when SPF processes the responses for each page in that flow, it will do
-the following steps:</p>
+<p>Then, when SPF processes the responses for each page in that
+flow, it will do the following steps:</p>
 
 <ol>
 <li> <strong>Navigate to the search page.</strong></li>
-<li> Load the <code>common-library.js</code> JS file and wait for it to complete before
-continuing.</li>
-<li> Load the <code>search-page.js</code> JS file and wait for it to complete before
-continuing.</li>
+<li> Load the <code>common-library.js</code> JS file and wait for it to
+complete before continuing.</li>
+<li> Load the <code>search-page.js</code> JS file and wait for it to
+complete before continuing.</li>
 <li> <strong>Navigate to the item page.</strong></li>
 <li> <em>Skip reloading <code>common-library.js</code>.</em></li>
-<li> Load the <code>item-page.js</code> JS file and wait for it to complete before
-continuing.</li>
+<li> Load the <code>item-page.js</code> JS file and wait for it to complete
+before continuing.</li>
 <li> <strong>Navigate to the search page.</strong></li>
 <li> <em>Skip reloading <code>common-library.js</code>.</em></li>
 <li> <em>Skip reloading <code>search-page.js</code>.</em></li>
@@ -291,13 +303,17 @@ continuing.</li>
 <li><em>Skip reloading <code>item-page.js</code>.</em></li>
 </ol>
 
-<p>Navigation between the two pages now avoids unnecessarily reloading the
-scripts.</p>
+<p>Navigation between the two pages now avoids unnecessarily
+reloading the scripts.</p>
 
 <blockquote>
-<p><strong>Note:</strong> See the <a href="../events/">Events</a> documentation to properly handle
-initialization and disposal of pages during navigation to avoid memory leaks
-and outdated event listeners.</p>
+<p><strong>Note:</strong> See the <a href="../events/">Events</a> documentation to properly
+handle initialization and disposal of pages during navigation
+to avoid memory leaks and outdated event listeners.</p>
+
+<p><strong>Note:</strong> See the <a href="../versioning/">Versioning</a> documentation to
+automatically switch between script and style versions for seamless
+releases.</p>
 </blockquote>
 
       </div>
@@ -320,10 +336,10 @@ and outdated event listeners.</p>
     </a>
   
   
-    <a href="/spfjs/documentation/features/" class="article-nav-link article-nav-link--next">
-      <p class="article-nav-count">Features</p>
+    <a href="/spfjs/documentation/versioning/" class="article-nav-link article-nav-link--next">
+      <p class="article-nav-count">Versioning</p>
       
-        <p class="article-nav-description">Learn about SPF features to enable high performance.</p>
+        <p class="article-nav-description">Automatically update script and style versions.</p>
       
     </a>
   
@@ -367,7 +383,7 @@ and outdated event listeners.</p>
 
 <!-- begin spf foot -->
 <script name="spf" src="/spfjs/assets/vendor/spf/2.1.1/spf.js"></script>
-<script name="main" src="/spfjs/assets/scripts/main.js?t=2015-02-02T16%3A48%3A22-05%3A00"></script>
+<script name="main" src="/spfjs/assets/scripts/main.js?t=2015-04-10T17%3A55%3A49-04%3A00"></script>
 
 <script name="analytics">
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
