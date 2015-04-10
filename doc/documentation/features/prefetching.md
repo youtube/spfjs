@@ -1,5 +1,5 @@
 ---
-title: Caching
+title: Prefetching
 ---
 
 
@@ -9,4 +9,4 @@ title: Caching
 
 
 
-[start]: ../../start/
+[start]: ../start.md

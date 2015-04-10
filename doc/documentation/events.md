@@ -119,7 +119,7 @@ action follows:
 
 
 
-[API]: ../../api/
-[spf.Event]: ../../api/#spf.event
-[spf.navigate]: ../../api/#spf.navigate
-[spf.RequestOptions]: ../../api/#spf.requestoptions
+[API]: ../api.md
+[spf.Event]: ../api.md#spf.event
+[spf.navigate]: ../api.md#spf.navigate
+[spf.RequestOptions]: ../api.md#spf.requestoptions

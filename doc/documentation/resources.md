@@ -159,6 +159,6 @@ reloading the scripts.
 
 
 
-[responses]: ../responses/
-[events]: ../events/
-[versioning]: ../versioning/
+[responses]: ./responses.md
+[events]: ./events.md
+[versioning]: ./versioning.md

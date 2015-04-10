@@ -5,6 +5,7 @@
 
 require "autoprefixer-rails"
 require "fileutils"
+require "find"
 require "json"
 require "pathname"
 require "sass"
@@ -12,18 +13,25 @@ require "tmpdir"
 require "yaml"
 
 
-SITE = "_site"
+# Define paths here relative to this Rakefile.
+BASE = "."
+DOC = "../doc"
 STAGING = "../../spfjs-gh-pages"
-VENDOR = "../bower_components"
-LOCAL = "assets/vendor"
+BOWER_COMPONENTS = "../bower_components"
+NODE_MODULES = "../node_modules"
 
-SITE_INFO = YAML.load_file("_config.yml")
-SITE_RELEASE = SITE_INFO["release"]
-SITE_VERSION = SITE_INFO["version"]
+# Derived paths.
+SITE = "#{BASE}/_site"
+SOURCE = "#{BASE}/_source"
+ASSETS = "#{SOURCE}/assets"
+VENDOR = "#{BOWER_COMPONENTS}"
+BUILD_DEST = Pathname(SITE).relative_path_from(Pathname(SOURCE))
+STAGE_DEST = Pathname(STAGING).relative_path_from(Pathname(SOURCE))
 
+JEKYLL = "bundle exec jekyll"
 begin
-  BOWER = Pathname('../node_modules/bower/bin/bower').realpath
-  JSDOX = Pathname('../node_modules/jsdox/bin/jsdox').realpath
+  BOWER = Pathname("#{NODE_MODULES}/bower/bin/bower").realpath
+  JSDOX = Pathname("#{NODE_MODULES}/jsdox/bin/jsdox").realpath
 rescue
   msg = "Required tools not found; please run the following:\n"
   msg += "    cd .. && npm install"
@@ -36,24 +44,17 @@ BOWER_INFO = JSON.parse(`cd .. && #{BOWER} --offline list --json`)
 SPF = "#{VENDOR}/spf"
 SPF_INFO = BOWER_INFO["dependencies"]["spf"]["pkgMeta"]
 SPF_VERSION = SPF_INFO["version"]
-LOCAL_SPF = "#{LOCAL}/spf/#{SPF_VERSION}"
+LOCAL_SPF = "#{ASSETS}/vendor/spf/#{SPF_VERSION}"
 
 WSK = "#{VENDOR}/web-starter-kit/app"
 WSK_INFO = BOWER_INFO["dependencies"]["web-starter-kit"]["pkgMeta"]
 WSK_VERSION = WSK_INFO["version"]
-LOCAL_WSK = "#{LOCAL}/wsk/#{WSK_VERSION}"
+LOCAL_WSK = "#{ASSETS}/vendor/wsk/#{WSK_VERSION}"
 
 OCTICONS = "#{VENDOR}/octicons/octicons"
 OCTICONS_INFO = BOWER_INFO["dependencies"]["octicons"]["pkgMeta"]
 OCTICONS_VERSION = OCTICONS_INFO["version"]
-LOCAL_OCTICONS = "#{LOCAL}/octicons/#{OCTICONS_VERSION}"
-
-API_SRC = "../src/api.js"
-API_OUT_DIR = "."
-API_OUT = "#{API_OUT_DIR}/api.md"
-API_TMPL_DIR = "_api"
-API_TMPL = Dir.glob("#{API_TMPL_DIR}/*.mustache")
-API_TOC = "_includes/apitoc.md"
+LOCAL_OCTICONS = "#{ASSETS}/vendor/octicons/#{OCTICONS_VERSION}"
 
 AUTOPREFIXER_BROWSERS = [
   "ie >= 10",
@@ -68,9 +69,31 @@ AUTOPREFIXER_BROWSERS = [
 ]
 
 
-css_to_copy = {
+jek_to_symlink = {
+  "#{SOURCE}/_config.yml" => "#{BASE}/config.yml",
+  "#{SOURCE}/_layouts" => "#{BASE}/layouts",
+  "#{SOURCE}/_includes" => "#{BASE}/includes",
+  "#{SOURCE}/_data" => "#{BASE}/data",
+  "#{SOURCE}/_plugins" => "#{BASE}/plugins",
+}
+
+doc_to_symlink = {}
+Find.find(DOC) do |src|
+  unless File.directory?(src)
+    dst = src.sub(DOC, SOURCE)
+    doc_to_symlink[dst] = src
+  end
+end
+
+css_to_symlink = {
   "#{LOCAL_OCTICONS}/octicons.css" => "#{OCTICONS}/octicons.css",
 }
+Find.find("#{BASE}/assets/styles") do |src|
+  unless File.directory?(src)
+    dst = src.sub("#{BASE}/assets", ASSETS)
+    css_to_symlink[dst] = src
+  end
+end
 css_to_build = {
   "#{LOCAL_WSK}/styles/wsk.css" => [
       "#{WSK}/styles/h5bp.css",
@@ -78,7 +101,10 @@ css_to_build = {
       "#{WSK}/styles/main.css",
     ]
 }
-img_to_copy = {
+# Note: WSK font files are not used and instead fonts are linked directly from
+# Google Fonts, but they may be installed locally during development if desired.
+
+img_to_symlink = {
   "#{LOCAL_WSK}/images/icons/icons-hinted.ttf" => "#{WSK}/images/icons/icons-hinted.ttf",
   "#{LOCAL_WSK}/images/icons/icons.eot" => "#{WSK}/images/icons/icons.eot",
   "#{LOCAL_WSK}/images/icons/icons.svg" => "#{WSK}/images/icons/icons.svg",
@@ -90,23 +116,43 @@ img_to_copy = {
   "#{LOCAL_OCTICONS}/octicons.ttf" => "#{OCTICONS}/octicons.ttf",
   "#{LOCAL_OCTICONS}/octicons.woff" => "#{OCTICONS}/octicons.woff",
 }
-# Note: WSK font files are not used and instead fonts are linked directly from
-# Google Fonts, but they may be installed locally during development if desired.
-js_to_copy = {
+Find.find("#{BASE}/assets/images") do |src|
+  unless File.directory?(src)
+    dst = src.sub("#{BASE}/assets", ASSETS)
+    img_to_symlink[dst] = src
+  end
+end
+
+js_to_symlink = {
   "#{LOCAL_SPF}/spf.js" => "#{SPF}/dist/spf.js",
 }
+Find.find("#{BASE}/assets/scripts") do |src|
+  unless File.directory?(src)
+    dst = src.sub("#{BASE}/assets", ASSETS)
+    js_to_symlink[dst] = src
+  end
+end
 
-all_to_copy = css_to_copy.merge(img_to_copy).merge(js_to_copy)
-css_files = css_to_copy.merge(css_to_build).keys
-img_files = img_to_copy.keys
-js_files = js_to_copy.keys
 
-all_to_copy.each do |dst, src|
+all_to_symlink = {}.merge(jek_to_symlink)
+                   .merge(doc_to_symlink)
+                   .merge(css_to_symlink)
+                   .merge(img_to_symlink)
+                   .merge(js_to_symlink)
+jek_files = jek_to_symlink.keys
+doc_files = doc_to_symlink.keys
+css_files = css_to_symlink.merge(css_to_build).keys
+img_files = img_to_symlink.keys
+js_files = js_to_symlink.keys
+
+
+all_to_symlink.each do |dst, src|
   file dst => src do
     dstdir = File.dirname(dst)
     FileUtils.mkdir_p(dstdir) unless File.directory?(dstdir)
-    puts("cp #{src} #{dst}") if verbose == true
-    FileUtils.cp(src, dst)
+    sym = Pathname(src).relative_path_from(Pathname(dstdir)).to_s
+    puts("sym #{dst} -> #{sym}") if verbose == true
+    FileUtils.ln_s(sym, dst)
   end
 end
 
@@ -137,60 +183,40 @@ css_to_build.each do |dst, srcs|
 end
 
 
-api_files = [API_OUT, API_TOC]
-api_srcs = API_TMPL.concat([API_SRC])
-file API_OUT => api_srcs do
-  tmpdir = Dir.mktmpdir()
-  api_tmpfile = "#{tmpdir}/#{File.basename(API_SRC)}"
-  cmd = "git cat-file -p v#{SITE_VERSION}:#{API_SRC} "
-  cmd += "| sed '/@fileoverview/ a\\\n\\ * @version #{SITE_RELEASE}\n' "
-  cmd += "> #{api_tmpfile}"
-  puts(cmd) if verbose == true
-  system(cmd)
-  api_toc_base = File.join(File.dirname(API_TOC), File.basename(API_TOC, '.*'))
-  cmd = "#{JSDOX} #{api_tmpfile} "
-  cmd += "--templateDir #{API_TMPL_DIR} "
-  cmd += "--index #{api_toc_base} "
-  cmd += "--index-sort none "
-  cmd += "--output #{API_OUT_DIR} "
-  puts(cmd) if verbose == true
-  system(cmd)
-end
-file API_TOC => API_OUT
-
-
 # Tasks.
+task :jek => jek_files
+task :doc => doc_files
 task :css => css_files
 task :img => img_files
 task :js => js_files
-task :assets => [:css, :img, :js]
-task :api => api_files
-task :generated => [:api]
+task :source => [:jek, :doc, :css, :img, :js]
 
+JEKYLL_BUILD = "cd #{SOURCE} && #{JEKYLL} build --trace"
+JEKYLL_SERVE = "cd #{SOURCE} && #{JEKYLL} serve --trace --watch"
 
-task :build => [:assets, :generated] do
-  cmd = "bundle exec jekyll build --trace"
+task :build => [:source] do
+  cmd = "#{JEKYLL_BUILD} --destination #{BUILD_DEST}"
   puts(cmd) if verbose == true
   system(cmd)
 end
 
 
-task :serve => [:assets, :generated] do
-  cmd = "bundle exec jekyll serve --watch --trace"
+task :serve => [:source] do
+  cmd = "#{JEKYLL_SERVE} --destination #{BUILD_DEST}"
   puts(cmd) if verbose == true
   system(cmd)
 end
 
 
-task :stage => [:clean, :assets, :generated] do
-  cmd = "bundle exec jekyll build --trace --destination #{STAGING}"
+task :stage => [:clean, :source] do
+  cmd = "#{JEKYLL_BUILD} --destination #{STAGE_DEST}"
   puts(cmd) if verbose == true
   system(cmd)
 end
 
 
 task :clean do
-  clean_paths = [SITE, LOCAL]
+  clean_paths = [SITE, SOURCE]
   puts("rm #{clean_paths}") if verbose == true
   FileUtils.rm_rf(clean_paths)
 end
