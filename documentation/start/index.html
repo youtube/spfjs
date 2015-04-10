@@ -27,7 +27,7 @@
 <link rel="stylesheet" name="roboto" href="//fonts.googleapis.com/css?family=Roboto:300,600,900|Roboto+Condensed:300,300italic,400,700|Inconsolata:400">
 <link rel="stylesheet" name="wsk" href="/spfjs/assets/vendor/wsk/0.4.0/styles/wsk.css">
 <link rel="stylesheet" name="octicons" href="/spfjs/assets/vendor/octicons/2.1.2/octicons.css">
-<link rel="stylesheet" name="main" href="/spfjs/assets/styles/main.css?t=2015-02-02T16%3A48%3A22-05%3A00">
+<link rel="stylesheet" name="main" href="/spfjs/assets/styles/main.css?t=2015-04-10T17%3A55%3A49-04%3A00">
 
 <!-- end spf head -->
 </head>
@@ -110,7 +110,14 @@
   
     <li>
       
-        <a href="/spfjs/documentation/resources/">Resource Loading</a>
+        <a href="/spfjs/documentation/resources/">Resources</a>
+      
+      
+    </li>
+  
+    <li>
+      
+        <a href="/spfjs/documentation/versioning/">Versioning</a>
       
       
     </li>
@@ -178,35 +185,37 @@
 
 <h2 id="optional:-run-the-demo"><em>Optional:</em> Run the demo</h2>
 
-<p>If you cloned the project from GitHub or downloaded the source code, you can run
-the included demo application to see how everything works together in order to
-test out the framework:</p>
+<p>If you cloned the project from GitHub or downloaded the source
+code, you can run the included demo application to see how
+everything works together in order to test out the framework:</p>
 <div class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nb">cd </span>spfjs
 npm install
 npm start
 </code></pre></div>
-<p>You can then open <a href="http://localhost:8080/">http://localhost:8080/</a> in your browser and check out the
-demo.</p>
+<p>You can then open <a href="http://localhost:8080/">http://localhost:8080/</a> in your browser and
+check out the demo.</p>
 
 <blockquote>
-<p><strong>Note:</strong> You will need <code>npm</code> to install the development dependencies and
-<code>python</code> to run the demo application.  You can check if they are installed by
-running the following:</p>
+<p><strong>Note:</strong> You will need <code>npm</code> to install the development
+dependencies and <code>python</code> to run the demo application.  You
+can check if they are installed by running the following:</p>
 <div class="highlight"><pre><code class="language-sh" data-lang="sh">npm --version
 python --version
 </code></pre></div>
-<p>If you need to install <code>npm</code>, go to <a href="https://nodejs.org/">https://nodejs.org/</a> and click &quot;Install&quot;
-to get the installer.  If you need to install <code>python</code>, go to
-<a href="https://www.python.org/">https://www.python.org/</a> and go to &quot;Downloads&quot; to get the installer.</p>
+<p>If you need to install <code>npm</code>, go to <a href="https://nodejs.org/">https://nodejs.org/</a> and
+click &quot;Install&quot; to get the installer.  If you need to install
+<code>python</code>, go to <a href="https://www.python.org/">https://www.python.org/</a> and go to
+&quot;Downloads&quot; to get the installer.</p>
 </blockquote>
 
 <h2 id="enable-spf">Enable SPF</h2>
 
-<p>To add SPF to your site, you need to include the JS file and run <code>spf.init()</code>
-to enable the new functionality.</p>
+<p>To add SPF to your site, you need to include the JS file and run
+<code>spf.init()</code> to enable the new functionality.</p>
 
-<p>After <a href="../../download/">downloading</a> the code, copy the <code>spf.js</code> file to where you
-serve JS files for your site, add the script to your page, and initialize SPF:</p>
+<p>After <a href="../../download/">downloading</a> the code, copy the <code>spf.js</code> file to where
+you serve JS files for your site, add the script to your page,
+and initialize SPF:</p>
 <div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;PATH-TO-YOUR-JS/spf.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
 <span class="nt">&lt;script&gt;</span>
   <span class="nx">spf</span><span class="p">.</span><span class="nx">init</span><span class="p">();</span>
@@ -214,9 +223,10 @@ serve JS files for your site, add the script to your page, and initialize SPF:</
 </code></pre></div>
 <h2 id="send-requests">Send requests</h2>
 
-<p>SPF does not change your site&#39;s navigation automatically and instead uses
-progressive enhancement to enable dynamic navigation for certain links.  Just
-add a <code>spf-link</code> class to an <code>&lt;a&gt;</code> tag to activate SPF.</p>
+<p>SPF does not change your site&#39;s navigation automatically and
+instead uses progressive enhancement to enable dynamic
+navigation for certain links.  Just add a <code>spf-link</code> class to an
+<code>&lt;a&gt;</code> tag to activate SPF.</p>
 
 <p>Go from static navigation:</p>
 <div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">&quot;/destination&quot;</span><span class="nt">&gt;</span>Go!<span class="nt">&lt;/a&gt;</span>
@@ -227,14 +237,17 @@ add a <code>spf-link</code> class to an <code>&lt;a&gt;</code> tag to activate S
 </code></pre></div>
 <h2 id="return-responses">Return responses</h2>
 
-<p>In static navigation, an entire HTML page is sent.  In dynamic navigation, only
-fragments are sent, using JSON as transport.  When SPF sends a request to the
-server, it appends a configurable identifier to the URL so that your server can
-properly handle the request.  (By default, this will be <code>?spf=navigate</code>.)</p>
+<p>In static navigation, an entire HTML page is sent.  In dynamic
+navigation, only fragments are sent, using JSON as transport.
+When SPF sends a request to the server, it appends a
+configurable identifier to the URL so that your server can
+properly handle the request.  (By default, this will be
+<code>?spf=navigate</code>.)</p>
 
-<p>In the following example, a common layout of upper masthead, middle content, and
-lower footer is used.  In dynamic navigation, only the fragment for the middle
-content is sent, since the masthead and footer don&#39;t change.</p>
+<p>In the following example, a common layout of upper masthead,
+middle content, and lower footer is used.  In dynamic
+navigation, only the fragment for the middle content is sent,
+since the masthead and footer don&#39;t change.</p>
 
 <p>Go from static navigation:</p>
 
@@ -330,7 +343,7 @@ content is sent, since the masthead and footer don&#39;t change.</p>
 
 <!-- begin spf foot -->
 <script name="spf" src="/spfjs/assets/vendor/spf/2.1.1/spf.js"></script>
-<script name="main" src="/spfjs/assets/scripts/main.js?t=2015-02-02T16%3A48%3A22-05%3A00"></script>
+<script name="main" src="/spfjs/assets/scripts/main.js?t=2015-04-10T17%3A55%3A49-04%3A00"></script>
 
 <script name="analytics">
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
