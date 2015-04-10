@@ -225,8 +225,7 @@ spf.nav.response.process = function(url, response, opt_info, opt_callback) {
         // Other history navigation requests handle scrolling after all
         // processing is done to avoid jumping to the top and back down to the
         // saved position afterwards.
-        if (isNavigate && !hasPosition && !hasScrolled &&
-            spf.config.get('experimental-scroll-position')) {
+        if (isNavigate && !hasPosition && !hasScrolled) {
           spf.state.set(spf.state.Key.NAV_SCROLL_TEMP_POSITION, null);
           spf.state.set(spf.state.Key.NAV_SCROLL_TEMP_URL, null);
           spf.debug.debug('    scrolling to top');

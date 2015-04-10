@@ -56,10 +56,8 @@ spf.nav.init = function() {
                   spf.nav.handleMouseDown_);
   }
   // Handle scrolls for preventing early scrolling during history changes.
-  if (spf.config.get('experimental-scroll-position')) {
-    document.addEventListener('scroll', spf.nav.handleScroll_, false);
-    spf.state.set(spf.state.Key.NAV_SCROLL_LISTENER, spf.nav.handleScroll_);
-  }
+  document.addEventListener('scroll', spf.nav.handleScroll_, false);
+  spf.state.set(spf.state.Key.NAV_SCROLL_LISTENER, spf.nav.handleScroll_);
 };
 
 
@@ -391,7 +389,7 @@ spf.nav.handleHistory_ = function(url, opt_state) {
   // asynchronous break, avoid this by saving the current page position and
   // scrolling immediately back to it when the browser scrolls early.
   // The proper position will be set once content is updated.
-  if (info.position && spf.config.get('experimental-scroll-position')) {
+  if (info.position) {
     spf.nav.setScrollTempPosition_();
   }
   // Navigate to the URL.
@@ -624,7 +622,7 @@ spf.nav.navigateScroll_ = function(url, info) {
       el.scrollIntoView();
       info.scrolled = true;
     }
-  } else if (!info.scrolled && spf.config.get('experimental-scroll-position')) {
+  } else if (!info.scrolled) {
     spf.debug.debug('    clearing scroll temp position');
     spf.nav.clearScrollTempPosition_();
     spf.debug.debug('    scrolling to top');
