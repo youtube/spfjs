@@ -107,24 +107,7 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
       // Record responseStart time when first byte is received.
       timing['responseStart'] = timing['responseStart'] || spf.now();
       // Determine whether to process chunks as they arrive.
-      // This is only possible with chunked transfer encoding.
-      // Note: handle Transfer-Encoding header values like:
-      //   "chunked"  (standard)
-      //   "Chunked"  (non-standard)
-      //   "chunked, chunked"  (multiple headers sent)
-      var encoding = xhr.getResponseHeader('Transfer-Encoding') || '';
-      chunked = encoding.toLowerCase().indexOf('chunked') > -1;
-      if (!chunked) {
-        // SPDY inherently uses chunked transfer and does not define a header.
-        // Firefox provides a synthetic header which can be used instead.
-        // For Chrome, a non-standard JS function must be used to determine if
-        // the primary document was loaded with SPDY.  If the primary document
-        // was loaded with SPDY, then most likely the XHR will be as well.
-        var firefoxSpdy = xhr.getResponseHeader('X-Firefox-Spdy');
-        var loadTimes = window.chrome && chrome.loadTimes && chrome.loadTimes();
-        var chromeSpdy = loadTimes && loadTimes.wasFetchedViaSpdy;
-        chunked = !!(firefoxSpdy || chromeSpdy);
-      }
+      chunked = spf.net.xhr.isChunked_(xhr);
       if (options.onHeaders) {
         options.onHeaders(xhr);
       }
@@ -158,21 +141,22 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
     }
   };
 
-  var addContentType = (method == 'POST');
-
+  // For POST, default to `Content-Type: application/x-www-form-urlencoded`
+  // unless a custom header was given.
+  var addContentTypeFormUrlEncoded = (method == 'POST');
   if (options.headers) {
     for (var key in options.headers) {
       xhr.setRequestHeader(key, options.headers[key]);
       if ('content-type' == key.toLowerCase()) {
-        addContentType = false;
+        addContentTypeFormUrlEncoded = false;
       }
     }
   }
-
-  if (addContentType) {
+  if (addContentTypeFormUrlEncoded) {
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
   }
 
+  // Set the timer if a timeout value was specified.
   if (options.timeoutMs > 0) {
     timer = setTimeout(function() {
       xhr.abort();
@@ -187,6 +171,37 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
   xhr.send(data);
 
   return xhr;
+};
+
+
+/**
+ * Determines whether to process chunks as they arrive; should be called when
+ * the XHR headers are received.  See {@link #send}.
+ *
+ * @param {XMLHttpRequest} xhr The XHR object being sent.
+ * @return {boolean}
+ * @private
+ */
+spf.net.xhr.isChunked_ = function(xhr) {
+  // Determine whether to process chunks as they arrive.
+  // This is only possible with chunked transfer encoding.
+  // Note: handle Transfer-Encoding header values like:
+  //   "chunked"  (standard)
+  //   "Chunked"  (non-standard)
+  //   "chunked, chunked"  (multiple headers sent)
+  var encoding = xhr.getResponseHeader('Transfer-Encoding') || '';
+  if (encoding.toLowerCase().indexOf('chunked') > -1) {
+    return true;
+  }
+  // SPDY inherently uses chunked transfer and does not define a header.
+  // Firefox provides a synthetic header which can be used instead.
+  // For Chrome, a non-standard JS function must be used to determine if
+  // the primary document was loaded with SPDY.  If the primary document
+  // was loaded with SPDY, then most likely the XHR will be as well.
+  var firefoxSpdy = xhr.getResponseHeader('X-Firefox-Spdy');
+  var loadTimes = window.chrome && chrome.loadTimes && chrome.loadTimes();
+  var chromeSpdy = loadTimes && loadTimes.wasFetchedViaSpdy;
+  return !!(firefoxSpdy || chromeSpdy);
 };
 
 
