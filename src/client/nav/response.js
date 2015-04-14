@@ -89,10 +89,7 @@ spf.nav.response.parse = function(text, opt_multipart, opt_lastDitch) {
       }
     }
     if (spf.config.get('experimental-parse-extract')) {
-      for (var i = 0; i < parts.length; i++) {
-        parts[i] = spf.nav.response.extract(
-            /** @type {spf.SingleResponse} */(parts[i]));
-      }
+      parts = spf.nav.response.extract(parts);
     }
     return {
       parts: /** @type {Array.<spf.SingleResponse>} */(parts),
@@ -100,17 +97,9 @@ spf.nav.response.parse = function(text, opt_multipart, opt_lastDitch) {
     };
   } else {
     var response = JSON.parse(text);
-    var parts;
-    if (typeof response.length == 'number') {
-      parts = response;
-    } else {
-      parts = [response];
-    }
+    var parts = (typeof response.length == 'number') ? response : [response];
     if (spf.config.get('experimental-parse-extract')) {
-      for (var i = 0; i < parts.length; i++) {
-        parts[i] = spf.nav.response.extract(
-            /** @type {spf.SingleResponse} */(parts[i]));
-      }
+      parts = spf.nav.response.extract(parts);
     }
     return {
       parts: /** @type {Array.<spf.SingleResponse>} */(parts),
@@ -506,23 +495,27 @@ spf.nav.response.completeAnimation_ = function(data) {
 /**
  * Extracts all resources from HTML in a SPF response.
  *
- * @param {spf.SingleResponse} response The SPF response object to extract.
- * @return {spf.SingleResponse} The response, updated to have resources
- *     extracted from HTML strings.  This does not create a new object and
- *     modifies the passed response in-place.
+ * @param {T} response The SPF response object to extract.
+ * @return {T} The response, updated to have resources extracted from HTML
+ *     strings.  This does not create a new object and modifies the passed
+ *     response in-place.
+ * @template T
  */
 spf.nav.response.extract = function(response) {
   spf.debug.debug('spf.nav.response.extract', response);
-  if (response['head']) {
-    response['head'] = spf.nav.response.extract_(response['head']);
-  }
-  if (response['body']) {
-    for (var id in response['body']) {
-      response['body'][id] = spf.nav.response.extract_(response['body'][id]);
+  var parts = (typeof response.length == 'number') ? response : [response];
+  for (var i = 0, l = parts.length; i < l; i++) {
+    if (parts[i]['head']) {
+      parts[i]['head'] = spf.nav.response.extract_(parts[i]['head']);
     }
-  }
-  if (response['foot']) {
-    response['foot'] = spf.nav.response.extract_(response['foot']);
+    if (parts[i]['body']) {
+      for (var id in parts[i]['body']) {
+        parts[i]['body'][id] = spf.nav.response.extract_(parts[i]['body'][id]);
+      }
+    }
+    if (parts[i]['foot']) {
+      parts[i]['foot'] = spf.nav.response.extract_(parts[i]['foot']);
+    }
   }
   return response;
 };
