@@ -401,7 +401,7 @@ describe('spf.nav.response', function() {
 
   describe('extract', function() {
 
-    it('handles strings', function() {
+    it('handles strings in single responses', function() {
       var response = {
         head: '<script src=foo.js name=foo async></script>' +
                 '<link rel=stylesheet href=foo.css name=foo>',
@@ -440,7 +440,58 @@ describe('spf.nav.response', function() {
       expect(result).toEqual(expected);
     });
 
-    it('handles objects', function() {
+    it('handles strings in multipart responses', function() {
+      var response = [
+        {
+          head: '<script src=foo.js name=foo async></script>' +
+                  '<link rel=stylesheet href=foo.css name=foo>'
+        },
+        {
+          body: {
+            id: '<script name="quatre">window.foo = 4</script>' +
+                  '<style name="quatre">.foo { color: red }</style>'
+          }
+        },
+        {
+          foot: '<script src=bar.js name=bar></script>' +
+                  '<link rel=stylesheet href=bar.css name=bar>'
+        }
+      ];
+      var expected = [
+        {
+          head: {
+            scripts: [{url: 'foo.js', text: '', name: 'foo', async: true}],
+            styles: [{url: 'foo.css', text: '', name: 'foo'}],
+            links: [],
+            html: ''
+          }
+        },
+        {
+          body: {
+            id: {
+              scripts: [
+                {url: '', text: 'window.foo = 4', name: 'quatre', async: false}
+              ],
+              styles: [{url: '', text: '.foo { color: red }', name: 'quatre'}],
+              links: [],
+              html: ''
+            }
+          }
+        },
+        {
+          foot: {
+            scripts: [{url: 'bar.js', text: '', name: 'bar', async: false}],
+            styles: [{url: 'bar.css', text: '', name: 'bar'}],
+            links: [],
+            html: ''
+          }
+        }
+      ];
+      var result = spf.nav.response.extract(response);
+      expect(result).toEqual(expected);
+    });
+
+    it('handles objects in single responses', function() {
       var response = {
         head: {
           scripts: [{url: 'foo.js', name: 'foo', async: true}],
@@ -481,6 +532,63 @@ describe('spf.nav.response', function() {
           html: ''
         }
       };
+      var result = spf.nav.response.extract(response);
+      expect(result).toEqual(expected);
+    });
+
+    it('handles objects in multipart responses', function() {
+      var response = [
+        {
+          head: {
+            scripts: [{url: 'foo.js', name: 'foo', async: true}],
+            styles: [{url: 'foo.css', name: 'foo'}]
+          }
+        },
+        {
+          body: {
+            id: {
+              scripts: [{text: 'window.foo = 4', name: 'quatre'}],
+              styles: [{text: '.foo { color: red }', name: 'quatre'}]
+            }
+          }
+        },
+        {
+          foot: {
+            scripts: [{url: 'bar.js', name: 'bar'}],
+            styles: [{url: 'bar.css', name: 'bar'}]
+          }
+        }
+      ];
+      var expected = [
+        {
+          head: {
+            scripts: [{url: 'foo.js', text: '', name: 'foo', async: true}],
+            styles: [{url: 'foo.css', text: '', name: 'foo'}],
+            links: [],
+            html: ''
+          }
+        },
+        {
+          body: {
+            id: {
+              scripts: [
+                {url: '', text: 'window.foo = 4', name: 'quatre', async: false}
+              ],
+              styles: [{url: '', text: '.foo { color: red }', name: 'quatre'}],
+              links: [],
+              html: ''
+            }
+          }
+        },
+        {
+          foot: {
+            scripts: [{url: 'bar.js', text: '', name: 'bar', async: false}],
+            styles: [{url: 'bar.css', text: '', name: 'bar'}],
+            links: [],
+            html: ''
+          }
+        }
+      ];
       var result = spf.nav.response.extract(response);
       expect(result).toEqual(expected);
     });
