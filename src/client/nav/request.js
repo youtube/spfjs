@@ -12,6 +12,7 @@
 goog.provide('spf.nav.request');
 
 goog.require('spf');
+goog.require('spf.array');
 goog.require('spf.cache');
 goog.require('spf.config');
 goog.require('spf.debug');
@@ -217,9 +218,9 @@ spf.nav.request.handleResponseFromCache_ = function(url, options, timing,
   }
   if (options.onPart && response['type'] == 'multipart') {
     var parts = response['parts'];
-    for (var i = 0; i < parts.length; i++) {
-      options.onPart(url, parts[i]);
-    }
+    spf.array.each(parts, function(part) {
+      options.onPart(url, part);
+    });
   }
   spf.nav.request.done_(url, options, timing, response, updateCache);
 };
@@ -278,10 +279,10 @@ spf.nav.request.handleChunkFromXHR_ = function(url, options, chunking,
     return;
   }
   if (options.onPart) {
-    for (var i = 0; i < parsed.parts.length; i++) {
-      spf.debug.debug('    parsed part', parsed.parts[i]);
-      options.onPart(url, parsed.parts[i]);
-    }
+    spf.array.each(parsed.parts, function(part) {
+      spf.debug.debug('    parsed part', part);
+      options.onPart(url, part);
+    });
   }
   chunking.complete = chunking.complete.concat(parsed.parts);
   chunking.extra = parsed.extra;
@@ -372,9 +373,7 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
       }
       return;
     }
-    parts = (typeof xhr.response.length == 'number') ?
-        xhr.response :
-        [xhr.response];
+    parts = spf.array.toArray(xhr.response);
     if (spf.config.get('experimental-parse-extract')) {
       parts = spf.nav.response.extract(parts);
     }
@@ -411,12 +410,11 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
   var response;
   if (parts.length > 1) {
     var cacheType;
-    for (var i = 0, l = parts.length; i < l; i++) {
-      var part = parts[i];
+    spf.array.each(parts, function(part) {
       if (part['cacheType']) {
         cacheType = part['cacheType'];
       }
-    }
+    });
     response = /** @type {spf.MultipartResponse} */ ({
       'parts': parts,
       'type': 'multipart'
@@ -531,18 +529,22 @@ spf.nav.request.getCacheObject_ = function(cacheKey, opt_current) {
   }
   keys.push(cacheKey);
 
-  for (var i = 0, l = keys.length; i < l; i++) {
-    var cached = spf.cache.get(keys[i]);
+  var cacheValue = null;
 
-    if (cached) {
-      return {
-        key: keys[i],
-        response: cached['response'],
-        type: cached['type']
+  // Find the first cached object and break loop early when found.
+  spf.array.some(keys, function(key) {
+    var obj = spf.cache.get(key);
+    if (obj) {
+      cacheValue = {
+        key: key,
+        response: obj['response'],
+        type: obj['type']
       };
     }
-  }
-  return null;
+    return !!obj;
+  });
+
+  return cacheValue;
 };
 
 

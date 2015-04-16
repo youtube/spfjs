@@ -101,6 +101,48 @@ describe('spf.array', function() {
 
   });
 
+  describe('some', function() {
+
+    var cast = function(x) { return !!x; };
+    var invert = function(x) { return !x; };
+
+    it('handles testing', function() {
+      var a = [true, true, true, true];
+      expect(spf.array.some(a, cast)).toBe(true);
+      expect(spf.array.some(a, invert)).toBe(false);
+      a = [false, false, false, false];
+      expect(spf.array.some(a, cast)).toBe(false);
+      expect(spf.array.some(a, invert)).toBe(true);
+      a = [false, true, false, true];
+      expect(spf.array.some(a, cast)).toBe(true);
+      expect(spf.array.some(a, invert)).toBe(true);
+    });
+
+    it('handles empty arrays', function() {
+      var a = new Array(100);
+      expect(spf.array.some(a, cast)).toBe(false);
+      expect(spf.array.some(a, invert)).toBe(false);
+    });
+
+    it('handles sparse arrays', function() {
+      // Setting values.
+      var a = new Array(100);
+      a[25] = true;
+      expect(spf.array.some(a, cast)).toBe(true);
+      expect(spf.array.some(a, invert)).toBe(false);
+      a[50] = false;
+      expect(spf.array.some(a, cast)).toBe(true);
+      expect(spf.array.some(a, invert)).toBe(true);
+      // Deleting values.
+      var a = [true, true, true, true];
+      delete a[1];
+      delete a[3];
+      expect(spf.array.some(a, cast)).toBe(true);
+      expect(spf.array.some(a, invert)).toBe(false);
+    });
+
+  });
+
   describe('filter', function() {
 
     var greaterThanOne = function(x) { return x > 1; };

@@ -786,9 +786,9 @@ spf.nav.handleNavigateSuccess_ = function(options, info, url, response) {
       var name = response['name'] || '';
       if (multipart) {
         var parts = response['parts'];
-        for (var i = 0; i < parts.length; i++) {
-          name = parts[i]['name'] || name;
-        }
+        spf.array.each(parts, function(part) {
+          name = part['name'] || name;
+        });
       }
       spf.dom.dataset.set(document.body, 'spfName', name);
       // If this navigation was from history, attempt to scroll to the previous
@@ -1267,10 +1267,11 @@ spf.nav.process = function(response, opt_callback) {
   };
   if (multipart) {
     var parts = response['parts'];
-    for (var i = 0; i < parts.length; i++) {
-      var fn = spf.bind(done, null, i, parts.length - 1);
-      spf.nav.response.process(url, parts[i], null, fn);
-    }
+    var max = parts.length - 1;
+    spf.array.each(parts, function(part, index) {
+      var fn = spf.bind(done, null, index, max);
+      spf.nav.response.process(url, part, null, fn);
+    });
   } else {
     response = /** @type {spf.SingleResponse} */ (response);
     var fn = spf.bind(done, null, 0, 0);

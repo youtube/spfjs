@@ -11,6 +11,7 @@
 
 goog.provide('spf.url');
 
+goog.require('spf.array');
 goog.require('spf.config');
 goog.require('spf.string');
 
@@ -220,14 +221,13 @@ spf.url.appendParameters = function(url, parameters) {
 spf.url.removeParameters = function(url, parameters) {
   var result = spf.string.partition(url, '#');
   url = result[0];
-  for (var i = 0; i < parameters.length; i++) {
-    var param = parameters[i];
+  spf.array.each(parameters, function(param) {
     // Strip all parameters matching the param key.
     var regex = new RegExp('([?&])' + param + '(?:=[^&]*)?(?:(?=[&])|$)', 'g');
     url = url.replace(regex, function(_, delim) {
       return delim == '?' ? delim : '';
     });
-  }
+  });
   // Remove an unecessary trailing question marks.
   if (spf.string.endsWith(url, '?')) {
     url = url.slice(0, -1);

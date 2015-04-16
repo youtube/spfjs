@@ -97,7 +97,8 @@ spf.nav.response.parse = function(text, opt_multipart, opt_lastDitch) {
     };
   } else {
     var response = JSON.parse(text);
-    var parts = (typeof response.length == 'number') ? response : [response];
+
+    var parts = spf.array.toArray(response);
     if (spf.config.get('experimental-parse-extract')) {
       parts = spf.nav.response.extract(parts);
     }
@@ -503,20 +504,20 @@ spf.nav.response.completeAnimation_ = function(data) {
  */
 spf.nav.response.extract = function(response) {
   spf.debug.debug('spf.nav.response.extract', response);
-  var parts = (typeof response.length == 'number') ? response : [response];
-  for (var i = 0, l = parts.length; i < l; i++) {
-    if (parts[i]['head']) {
-      parts[i]['head'] = spf.nav.response.extract_(parts[i]['head']);
+  var parts = spf.array.toArray(response);
+  spf.array.each(parts, function(part) {
+    if (part['head']) {
+      part['head'] = spf.nav.response.extract_(part['head']);
     }
-    if (parts[i]['body']) {
-      for (var id in parts[i]['body']) {
-        parts[i]['body'][id] = spf.nav.response.extract_(parts[i]['body'][id]);
+    if (part['body']) {
+      for (var id in part['body']) {
+        part['body'][id] = spf.nav.response.extract_(part['body'][id]);
       }
     }
-    if (parts[i]['foot']) {
-      parts[i]['foot'] = spf.nav.response.extract_(parts[i]['foot']);
+    if (part['foot']) {
+      part['foot'] = spf.nav.response.extract_(part['foot']);
     }
-  }
+  });
   return response;
 };
 
@@ -716,8 +717,7 @@ spf.nav.response.installStyles_ = function(result) {
     return;
   }
   // Install the styles.
-  for (var i = 0, l = result['styles'].length; i < l; i++) {
-    var item = result['styles'][i];
+  spf.array.each(result['styles'], function(item) {
     if (item.url) {
       if (item.name) {
         spf.net.style.load(item.url, item.name);
@@ -731,7 +731,7 @@ spf.nav.response.installStyles_ = function(result) {
         spf.net.style.exec(item.text);
       }
     }
-  }
+  });
 };
 
 
@@ -885,12 +885,9 @@ spf.nav.response.CAN_ANIMATE_ = (function() {
     return true;
   }
   var prefixes = ['webkit', 'Moz', 'Ms', 'O', 'Khtml'];
-  for (var i = 0, l = prefixes.length; i < l; i++) {
-    if (prefixes[i] + 'Transition' in testEl.style) {
-      return true;
-    }
-  }
-  return false;
+  return spf.array.some(prefixes, function(prefix) {
+    return prefix + 'Transition' in testEl.style;
+  });
 })();
 
 

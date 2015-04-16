@@ -71,6 +71,32 @@ spf.array.every = function(arr, fn, opt_obj) {
 
 
 /**
+ * Compatible Array#some implementation.
+ *
+ * @param {Array.<ITEM>|spf.array.ArrayLike} arr The array.
+ * @param {?function(this:THIS, ITEM, number, ?) : boolean} fn The function to
+ *   execute for each item.  The function is executed with three arguments:
+ *   the item value, the item index, and the array; it should return true
+ *   or false.
+ * @param {THIS=} opt_obj The value to use as "this" in the function.
+ * @return {boolean} Whether the result of any execution was truthy.
+ * @template THIS, ITEM
+ */
+spf.array.some = function(arr, fn, opt_obj) {
+  // When built for the bootloader, optimize for size over speed.
+  if (!SPF_BOOTLOADER && arr.some) {
+    return arr.some(fn, opt_obj);
+  }
+  for (var i = 0, l = arr.length; i < l; i++) {
+    if (i in arr && fn.call(opt_obj, arr[i], i, arr)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+
+/**
  * Compatible Array#filter implementation.
  *
  * @param {Array.<ITEM>|spf.array.ArrayLike} arr The array.

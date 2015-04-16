@@ -12,6 +12,8 @@
 
 goog.provide('spf.dom.classlist');
 
+goog.require('spf.array');
+
 
 /**
  * Returns an array of class names on a node.
@@ -42,12 +44,9 @@ spf.dom.classlist.contains = function(node, cls) {
     return node.classList.contains(cls);
   } else {
     var classes = spf.dom.classlist.get(node);
-    for (var i = 0, l = classes.length; i < l; i++) {
-      if (classes[i] == cls) {
-        return true;
-      }
-    }
-    return false;
+    return spf.array.some(classes, function(item) {
+      return item == cls;
+    });
   }
 };
 
@@ -81,12 +80,9 @@ spf.dom.classlist.remove = function(node, cls) {
       node.classList.remove(cls);
     } else {
       var classes = spf.dom.classlist.get(node);
-      var newClasses = [];
-      for (var i = 0, l = classes.length; i < l; i++) {
-        if (classes[i] != cls) {
-          newClasses.push(classes[i]);
-        }
-      }
+      var newClasses = spf.array.filter(classes, function(item) {
+        return item != cls;
+      });
       node.className = newClasses.join(' ');
     }
   }
