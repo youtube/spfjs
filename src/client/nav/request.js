@@ -163,6 +163,14 @@ spf.nav.request.send = function(url, opt_options) {
       onDone: handleComplete,
       onTimeout: handleComplete
     };
+    // As an advanced option, allow XHR requests to enforce JSON responses.
+    // This can make response parsing more efficient by reducing contention on
+    // the main thread (especially for very large responses), but as a
+    // side-effect, it removes the ability to parse chunked multipart responses
+    // on-the-fly.
+    if (spf.config.get('advanced-response-type-json')) {
+      xhrOpts.responseType = 'json';
+    }
     var xhr;
     if (options.method == 'POST') {
       xhr = spf.net.xhr.post(requestUrl, options.postData, xhrOpts);
@@ -293,8 +301,13 @@ spf.nav.request.handleChunkFromXHR_ = function(url, options, chunking,
  */
 spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
                                                   chunking, xhr) {
-  spf.debug.debug('nav.request.handleCompleteFromXHR_ ',
-                  url, {'extra': chunking.extra, 'complete': xhr.responseText});
+  if (xhr.responseType == 'json') {
+    spf.debug.debug('nav.request.handleCompleteFromXHR_ ', url, xhr.response);
+  } else {
+    spf.debug.debug('nav.request.handleCompleteFromXHR_ ', url,
+                    {'extra': chunking.extra, 'complete': xhr.responseText});
+  }
+
   // Record the timing information from the XHR.
   if (xhr['timing']) {
     for (var t in xhr['timing']) {
@@ -347,22 +360,43 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
                                           xhr, '', true);
     }
   }
-  // Always attempt a full parse with error handling.
-  // A multipart response parsed on-the-fly via chunking may be invalid JSON if
-  // the response is truncated early.  (If truncated just after a token,
-  // the chunking.extra value will be empty and no additional chunk parsing
-  // will be done, but the overall response will stil be invalid.)
+
   var parts;
-  try {
-    var parsed = spf.nav.response.parse(xhr.responseText);
-    parts = parsed.parts;
-  } catch (err) {
-    spf.debug.debug('    JSON parse failed');
-    if (options.onError) {
-      options.onError(url, err);
+  if (xhr.responseType == 'json') {
+    // If using the JSON `responseType`, parsing is complete and no chunking
+    // has been handled on-the-fly.
+    if (!xhr.response) {
+      spf.debug.debug('    JSON parse failed');
+      if (options.onError) {
+        options.onError(url, new Error('JSON response parsing failed'));
+      }
+      return;
     }
-    return;
+    parts = (typeof xhr.response.length == 'number') ?
+        xhr.response :
+        [xhr.response];
+    if (spf.config.get('experimental-parse-extract')) {
+      parts = spf.nav.response.extract(parts);
+    }
+  } else {
+    // Otherwise, parsing may need to be done.  Always attempt a full parse with
+    // error handling. A multipart response parsed on-the-fly via chunking may
+    // be invalid JSON if the response is truncated early.  (If truncated just
+    // after a token, the chunking.extra value will be empty and no additional
+    // chunk parsing will be done, but the overall response will stil be
+    // invalid.)
+    try {
+      var parsed = spf.nav.response.parse(xhr.responseText);
+      parts = parsed.parts;
+    } catch (err) {
+      spf.debug.debug('    JSON parse failed');
+      if (options.onError) {
+        options.onError(url, err);
+      }
+      return;
+    }
   }
+
   if (options.onPart && parts.length > 1) {
     // Only execute callbacks for parts that have not already been processed.
     // In case there is an edge case where some parts were parsed on-the-fly
