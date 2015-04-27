@@ -153,7 +153,7 @@ spf.nav.request.send = function(url, opt_options) {
     var handleHeaders = spf.bind(spf.nav.request.handleHeadersFromXHR_, null,
                                  url, chunking);
     var handleChunk = spf.bind(spf.nav.request.handleChunkFromXHR_, null,
-                               url, options, chunking);
+                               url, options, timing, chunking);
     var handleComplete = spf.bind(spf.nav.request.handleCompleteFromXHR_, null,
                                   url, options, timing, chunking);
     var xhrOpts = {
@@ -219,6 +219,11 @@ spf.nav.request.handleResponseFromCache_ = function(url, options, timing,
   if (options.onPart && response['type'] == 'multipart') {
     var parts = response['parts'];
     spf.array.each(parts, function(part) {
+      if (!part['timing']) {
+        part['timing'] = {};
+      }
+      part['timing']['spfCached'] = !!timing['spfCached'];
+      part['timing']['spfPrefetched'] = !!timing['spfPrefetched'];
       options.onPart(url, part);
     });
   }
@@ -250,6 +255,7 @@ spf.nav.request.handleHeadersFromXHR_ = function(url, chunking, xhr) {
  *
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {spf.nav.request.Options} options Configuration options
+ * @param {Object} timing Timing data.
  * @param {spf.nav.request.Chunking_} chunking Chunking data.
  * @param {XMLHttpRequest} xhr The XHR of the current request.
  * @param {string} chunk The current request chunk.
@@ -257,7 +263,7 @@ spf.nav.request.handleHeadersFromXHR_ = function(url, chunking, xhr) {
  *     one, potentially handling malformed but valid responses.
  * @private
  */
-spf.nav.request.handleChunkFromXHR_ = function(url, options, chunking,
+spf.nav.request.handleChunkFromXHR_ = function(url, options, timing, chunking,
                                                xhr, chunk, opt_lastDitch) {
   spf.debug.debug('nav.request.handleChunkFromXHR_ ',
                   url, {'extra': chunking.extra, 'chunk': chunk});
@@ -281,6 +287,11 @@ spf.nav.request.handleChunkFromXHR_ = function(url, options, chunking,
   if (options.onPart) {
     spf.array.each(parsed.parts, function(part) {
       spf.debug.debug('    parsed part', part);
+      if (!part['timing']) {
+        part['timing'] = {};
+      }
+      part['timing']['spfCached'] = !!timing['spfCached'];
+      part['timing']['spfPrefetched'] = !!timing['spfPrefetched'];
       options.onPart(url, part);
     });
   }
@@ -357,7 +368,7 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
     chunking.extra = spf.string.trim(chunking.extra);
     if (chunking.extra) {
       // If extra content exists, parse it as a last-ditch effort.
-      spf.nav.request.handleChunkFromXHR_(url, options, chunking,
+      spf.nav.request.handleChunkFromXHR_(url, options, timing, chunking,
                                           xhr, '', true);
     }
   }
@@ -404,7 +415,13 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
     // the number of chunks processed here should be 0.
     for (var i = chunking.complete.length; i < parts.length; i++) {
       spf.debug.debug('    parsed part', parts[i]);
-      options.onPart(url, parts[i]);
+      var part = parts[i];
+      if (!part['timing']) {
+        part['timing'] = {};
+      }
+      part['timing']['spfCached'] = !!timing['spfCached'];
+      part['timing']['spfPrefetched'] = !!timing['spfPrefetched'];
+      options.onPart(url, part);
     }
   }
   var response;
