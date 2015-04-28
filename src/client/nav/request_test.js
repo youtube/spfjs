@@ -18,6 +18,9 @@ goog.require('spf.url');
 describe('spf.nav.request', function() {
 
   var MOCK_DELAY = 10;
+  var EXPECTED_TIMING = {'spfCached': false, 'spfPrefetched': false};
+  var EXPECTED_PARTS = [{'foo': 'FOO', 'timing': EXPECTED_TIMING},
+                        {'bar': 'BAR', 'timing': EXPECTED_TIMING}];
   var IGNORED_KEYS = ['cacheKey', 'timing'];
   var options;
   var createFakeRegularXHR = function(xhrText, isMultipart) {
@@ -308,7 +311,7 @@ describe('spf.nav.request', function() {
     it('regular: multipart', function() {
       var url = '/page';
       var res = {
-        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        parts: EXPECTED_PARTS,
         type: 'multipart'
       };
       var text = '[\r\n{"foo": "FOO"},\r\n{"bar": "BAR"}]\r\n';
@@ -378,7 +381,7 @@ describe('spf.nav.request', function() {
     it('regular: multipart sent as single', function() {
       var url = '/page';
       var res = {
-        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        parts: EXPECTED_PARTS,
         type: 'multipart'
       };
       var text = '[\r\n{"foo": "FOO"},\r\n{"bar": "BAR"}]\r\n';
@@ -449,7 +452,7 @@ describe('spf.nav.request', function() {
     it('regular: multipart missing tokens', function() {
       var url = '/page';
       var res = {
-        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        parts: EXPECTED_PARTS,
         type: 'multipart'
       };
       var text = '[{"foo": "FOO"}, {"bar": "BAR"}]';
@@ -496,7 +499,7 @@ describe('spf.nav.request', function() {
     it('regular: multipart missing tokens sent as single', function() {
       var url = '/page';
       var res = {
-        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        parts: EXPECTED_PARTS,
         type: 'multipart'
       };
      var text = '[{"foo": "FOO"}, {"bar": "BAR"}]';
@@ -696,7 +699,7 @@ describe('spf.nav.request', function() {
     it('chunked: multipart sent as single', function() {
       var url = '/page';
       var res = {
-        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        parts: EXPECTED_PARTS,
         type: 'multipart'
       };
       var text = '[\r\n{"foo": "FOO"},\r\n{"bar": "BAR"}]\r\n';
@@ -767,7 +770,7 @@ describe('spf.nav.request', function() {
     it('chunked: multipart missing begin token', function() {
       var url = '/page';
       var res = {
-        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        parts: EXPECTED_PARTS,
         type: 'multipart'
       };
       var text = '[{"foo": "FOO"},\r\n{"bar": "BAR"}]\r\n';
@@ -815,7 +818,7 @@ describe('spf.nav.request', function() {
     it('chunked: multipart missing tokens', function() {
       var url = '/page';
       var res = {
-        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        parts: EXPECTED_PARTS,
         type: 'multipart'
       };
       var text = '[{"foo": "FOO"}, {"bar": "BAR"}]';
@@ -862,7 +865,7 @@ describe('spf.nav.request', function() {
     it('chunked: multipart missing tokens sent as single', function() {
       var url = '/page';
       var res = {
-        parts: [{'foo': 'FOO'}, {'bar': 'BAR'}],
+        parts: EXPECTED_PARTS,
         type: 'multipart'
       };
       var text = '[{"foo": "FOO"}, {"bar": "BAR"}]';
