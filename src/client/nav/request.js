@@ -384,10 +384,7 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
       }
       return;
     }
-    parts = spf.array.toArray(xhr.response);
-    if (spf.config.get('experimental-parse-extract')) {
-      parts = spf.nav.response.extract(parts);
-    }
+    parts = spf.nav.response.extract(spf.array.toArray(xhr.response));
   } else {
     // Otherwise, parsing may need to be done.  Always attempt a full parse with
     // error handling. A multipart response parsed on-the-fly via chunking may
