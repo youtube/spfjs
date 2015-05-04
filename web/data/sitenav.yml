@@ -35,10 +35,10 @@
     - path: events/
     - path: resources/
     - path: versioning/
+    - path: caching/
     - path: features/
       description: Learn about SPF features to enable high performance.
       children:
-        - path: caching/
         - path: multipart/
         - path: prefetching/
 - path: api/
