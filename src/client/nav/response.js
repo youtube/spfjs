@@ -88,20 +88,14 @@ spf.nav.response.parse = function(text, opt_multipart, opt_lastDitch) {
         extra = extra.substring(0, extra.length - lastDitchHalfToken.length);
       }
     }
-    if (spf.config.get('experimental-parse-extract')) {
-      parts = spf.nav.response.extract(parts);
-    }
+    parts = spf.nav.response.extract(parts);
     return {
       parts: /** @type {Array.<spf.SingleResponse>} */(parts),
       extra: extra
     };
   } else {
     var response = JSON.parse(text);
-
-    var parts = spf.array.toArray(response);
-    if (spf.config.get('experimental-parse-extract')) {
-      parts = spf.nav.response.extract(parts);
-    }
+    var parts = spf.nav.response.extract(spf.array.toArray(response));
     return {
       parts: /** @type {Array.<spf.SingleResponse>} */(parts),
       extra: ''
@@ -506,16 +500,18 @@ spf.nav.response.extract = function(response) {
   spf.debug.debug('spf.nav.response.extract', response);
   var parts = spf.array.toArray(response);
   spf.array.each(parts, function(part) {
-    if (part['head']) {
-      part['head'] = spf.nav.response.extract_(part['head']);
-    }
-    if (part['body']) {
-      for (var id in part['body']) {
-        part['body'][id] = spf.nav.response.extract_(part['body'][id]);
+    if (part) {
+      if (part['head']) {
+        part['head'] = spf.nav.response.extract_(part['head']);
       }
-    }
-    if (part['foot']) {
-      part['foot'] = spf.nav.response.extract_(part['foot']);
+      if (part['body']) {
+        for (var id in part['body']) {
+          part['body'][id] = spf.nav.response.extract_(part['body'][id]);
+        }
+      }
+      if (part['foot']) {
+        part['foot'] = spf.nav.response.extract_(part['foot']);
+      }
     }
   });
   return response;
