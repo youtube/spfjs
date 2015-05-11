@@ -389,14 +389,18 @@ spf.net.resource.discover = function(type) {
  *
  * @param {spf.net.resource.Type} type Type of the resource.
  * @param {string} url URL of the resource.
+ * @param {boolean=} opt_force Whether to force fetching the resource even if
+ *     it has already been fetched before; useful for preconnect when the
+ *     connection keep-alive is shorter than repeat attempt intervals.
  */
-spf.net.resource.prefetch = function(type, url) {
+spf.net.resource.prefetch = function(type, url, opt_force) {
   if (!url) {
     return;
   }
   url = spf.net.resource.canonicalize(type, url);
-  // If the element is already loaded on the page, skip.
-  if (spf.net.resource.status.get(type, url)) {
+  // Skip fetching if the element is already loaded on the page, unless
+  // opt_force is specified.
+  if (!opt_force && spf.net.resource.status.get(type, url)) {
     return;
   }
   var label = spf.net.resource.label(url);
@@ -410,8 +414,9 @@ spf.net.resource.prefetch = function(type, url) {
       spf.tasks.run(key, true);
     });
   } else {
-    // If the resource is already prefetched, return.
-    if (el.contentWindow.document.getElementById(id)) {
+    // Return if the resource is already prefetched, unless opt_force is
+    // specified.
+    if (!opt_force && el.contentWindow.document.getElementById(id)) {
       return;
     }
   }
@@ -440,8 +445,17 @@ spf.net.resource.prefetch_ = function(el, type, url, id, group) {
   var isJS = type == spf.net.resource.Type.JS;
   var isCSS = type == spf.net.resource.Type.CSS;
   var doc = el.contentWindow.document;
+  // If an element with a given id already exists, remove it before prefetching
+  // the resource to avoid growing the overall DOM size.  Since `prefetch`
+  // already checks for the element's existence before calling this method,
+  // this is to prevent repeated calls with `opt_force` from always generating
+  // new nodes.
+  var fetchEl = doc.getElementById(id);
+  if (fetchEl) {
+    fetchEl.parentNode.removeChild(fetchEl);
+  }
   if (isJS) {
-    var fetchEl = doc.createElement('object');
+    fetchEl = doc.createElement('object');
     if (spf.net.resource.IS_IE) {
       // IE needs a <script> in order to complete the request, but
       // fortunately will not execute it unless in the DOM.  Attempting to
@@ -457,11 +471,16 @@ spf.net.resource.prefetch_ = function(el, type, url, id, group) {
     doc.body.appendChild(fetchEl);
   } else if (isCSS) {
     // Stylesheets can be prefetched in the same way as loaded.
-    var fetchEl = spf.net.resource.create(type, url, null, doc, group);
+    fetchEl = spf.net.resource.create(type, url, null, doc, group);
     fetchEl.id = id;
   } else {
     // For establishing a preconnection, use an image request.
-    var fetchEl = doc.createElement('img');
+    fetchEl = doc.createElement('img');
+    if (spf.net.resource.IS_IE) {
+      // IE needs page-level cache busting to properly re-request images, but
+      // not network-level.  Use URL hashes to trick it into re-sending.
+      url = url + '#' + spf.now();
+    }
     fetchEl.src = url;
     fetchEl.id = id;
     doc.body.appendChild(fetchEl);
@@ -596,7 +615,10 @@ spf.net.resource.canonicalize = function(type, url) {
           url = url.replace(p, paths[p]);
         }
       }
-      url = url.indexOf('.' + type) < 0 ? url + '.' + type : url;
+      // Images don't have a standard extension format.
+      if (type != spf.net.resource.Type.IMG) {
+        url = url.indexOf('.' + type) < 0 ? url + '.' + type : url;
+      }
       url = spf.url.absolute(url);
     } else if (index == 0) {
       // Protocol-Relative URL: "//" found at start.
