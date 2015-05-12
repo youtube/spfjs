@@ -4,7 +4,8 @@
 // See the LICENSE file for details.
 
 /**
- * @fileoverview Functions for handling connections (i.e. pre-resolving DNS).
+ * @fileoverview Functions for handling connections (i.e. pre-resolving DNS
+ * and establishing the TCP AND TLS handshake).
  *
  * @author nicksay@google.com (Alex Nicksay)
  */
@@ -18,8 +19,7 @@ goog.require('spf.tracing');
 
 /**
  * Preconnects to a URL.
- * Use to both resolve DNS and establish a socket connections before requests
- * are made.
+ * Use to both resolve DNS and establish connections before requests are made.
  *
  * @param {string|Array.<string>} urls One or more URLs to preconnect.
  */
@@ -29,7 +29,11 @@ spf.net.connect.preconnect = function(urls) {
   // Convert to an array if needed.
   urls = spf.array.toArray(urls);
   spf.array.each(urls, function(url) {
-    spf.net.resource.prefetch(type, url);
+    // When preconnecting, always fetch the image and make the request.
+    // This is necessary to consistenly establish connections to repeat
+    // URLs when the keep-alive time is shorter than the interval between
+    // attempts.
+    spf.net.resource.prefetch(type, url, true);  // Force repeat fetching.
   });
 };
 
