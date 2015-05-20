@@ -109,7 +109,14 @@ spf.nav.request.send = function(url, opt_options) {
     // cache response is returned asynchronously.
     var handleCache = spf.bind(spf.nav.request.handleResponseFromCache_, null,
                                url, options, timing, cached.key, response);
-    setTimeout(handleCache, 0);
+    // However, when WebKit browsers are in a background tab, setTimeout calls
+    // are deprioritized to execute with a 1s delay.  Experimentally handle
+    // the cache response synchronously.
+    if (spf.config.get('experimental-sync-response-cache')) {
+      handleCache();
+    } else {
+      setTimeout(handleCache, 0);
+    }
     // Return null because no XHR is made.
     return null;
   } else {
