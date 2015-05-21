@@ -349,26 +349,54 @@ footer {
 /*** home ***/
 
 .stage {
-  height: 320px;
+  height: 300px;
   background: #4E5A92 url(../images/bg-990x320.jpg) no-repeat center center;
   background-size: cover;
   color: #FFFFFF;
   text-align: center;
 }
-.stage h1 {
+.stage a {
+  color: #FFFFFF;
+  text-decoration: none;
+}
+.stage a:hover,
+.stage a:focus,
+.stage a:active {
+  text-decoration: underline;
+}
+.stage h1,
+.stage p {
   position: relative;
-  top: 80px;
+}
+.stage h1 {
+  top: 22px;
   padding: 150px 0 0 0;
   background: url(../images/logo-white-150x150.png) no-repeat top center;
   font-family: 'Roboto', 'Roboto Condensed', 'Helvetica', 'Arial', sans-serif;
   font-weight: 300;
+  line-height: 1.1;
   text-transform: uppercase;
+}
+.stage h1 abbr,
+.stage h1 span {
+    display: block;
 }
 .stage h1 abbr {
   font-weight: 700;
 }
 .stage h1 span {
-  display: none;
+  font-size: 20px;
+}
+.stage p {
+  line-height: 2;
+}
+@media screen and (min-width: 800px) {
+  .stage {
+    height: 360px;
+  }
+  .stage h1 span {
+    font-size: 42px;
+  }
 }
 @media screen and (min-width: 990px) {
   .stage {
@@ -378,22 +406,32 @@ footer {
     color: #FFFFFF;
     text-align: left;
   }
-  .stage h1 {
-    position: relative;
+  .stage h1,
+  .stage p {
     top: 140px;
-    padding: 0 15px 100px 15px;
+    padding: 0 15px;
+  }
+  .stage h1 {
+    height: 280px;
     background: url(../images/logo-white-280x280.png) no-repeat center right;
     line-height: 1;
     font-size: 40px;
   }
   .stage h1 abbr,
   .stage h1 span {
-    display: block;
     width: 25%;
   }
   .stage h1 abbr {
     font-weight: 900;
     font-size: 80px;
+  }
+  .stage p {
+    text-align: right;
+  }
+  .stage p a {
+    display: inline-block;
+    width: 244px;
+    text-align: center;
   }
 }
 
