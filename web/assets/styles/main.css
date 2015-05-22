@@ -357,24 +357,18 @@ footer {
 }
 .stage a {
   color: #FFFFFF;
-  text-decoration: none;
-}
-.stage a:hover,
-.stage a:focus,
-.stage a:active {
-  text-decoration: underline;
 }
 .stage h1,
 .stage p {
   position: relative;
+  top: 22px;
 }
 .stage h1 {
-  top: 22px;
   padding: 150px 0 0 0;
   background: url(../images/logo-white-150x150.png) no-repeat top center;
   font-family: 'Roboto', 'Roboto Condensed', 'Helvetica', 'Arial', sans-serif;
   font-weight: 300;
-  line-height: 1.1;
+  line-height: 1;
   text-transform: uppercase;
 }
 .stage h1 abbr,
@@ -388,6 +382,7 @@ footer {
   font-size: 20px;
 }
 .stage p {
+  padding: 0;
   line-height: 2;
 }
 @media screen and (min-width: 800px) {
@@ -409,10 +404,10 @@ footer {
   .stage h1,
   .stage p {
     top: 140px;
-    padding: 0 15px;
   }
   .stage h1 {
     height: 280px;
+    padding: 0 15px;
     background: url(../images/logo-white-280x280.png) no-repeat center right;
     line-height: 1;
     font-size: 40px;
@@ -427,11 +422,25 @@ footer {
   }
   .stage p {
     text-align: right;
+    margin-top: -290px;
   }
   .stage p a {
     display: inline-block;
-    width: 244px;
+    width: 280px;
+    padding: 290px 15px 0;
     text-align: center;
+    /* mimic nav links */
+    transition: background-color 0.2s ease-out;
+  }
+  .stage p a:hover {
+    background-color: rgba(255,255,255,0.2);
+  }
+  .stage p a:focus {
+    background-color: rgba(255,255,255,0.3);
+    outline: 0;
+  }
+  .stage p a:active {
+    background-color: rgba(255,255,255,0.4);
   }
 }
 
