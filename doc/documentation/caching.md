@@ -26,7 +26,7 @@ previously cached response, whereas "history" navigation will.
 This means that your server will receive requests for every link
 click, for example, but not for back button uses.  However, if
 the `cache-unified` config value is set to `true`, then SPF will
-use an available cache response for all navigation.  This will
+use an available cache response for all navigations.  This will
 mean that your server will not receive requests for link clicks
 that are to previously visited pages, just like for back button
 presses.
@@ -36,7 +36,7 @@ prefetched response in the local cache as eligible for one "new"
 navigation.  After that one use, the cached response will only
 be eligible for "history" navigation.  However, if the
 `cache-unified` config value is set to `true`, then the
-prefetched response will be available for all navigation like
+prefetched response will be available for all navigations like
 other cached responses.
 
 
