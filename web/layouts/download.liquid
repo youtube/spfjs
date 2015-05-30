@@ -4,6 +4,19 @@ layout: base
 
 <main class="clear">
 
+  {% assign page__url = page.url | replace:'index.html','' %}
+
+  <nav class="toc g-wide--1 g-medium--1">
+    {% if page.toc != "" and page.toc != nil %}
+      <div class="pagetoc">
+        <p class="toc__title">
+          <a href="{{ site.baseurl }}{{ page__url }}">{{ page.title }}</a>
+        </p>
+        {{ page.toc }}
+      </div>
+    {% endif %}
+  </nav>
+
   <header class="page-header container">
     <h2 class="xxlarge text-divider">{{ page.title }}</h2>
     <p class="page-header__excerpt g-wide--push-1 g-wide--pull-1">

@@ -549,13 +549,64 @@ footer {
 
 /*** pages ***/
 
-main nav {
+.toc {
   margin-top: 0;
 }
 /* hide the toc sidebar on narrow viewports */
 @media screen and (max-width: 619px) {
-  main > nav {
+  .toc {
     display: none;
+  }
+}
+@media screen and (max-width: 1219px) {
+  .download .toc {
+    display: none
+  }
+}
+
+.pagetoc .toc__title,
+.pagetoc ul {
+  font-size: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 13px;
+}
+.pagetoc li {
+  padding-left: 0;
+}
+.pagetoc li::before {
+  display: none;
+}
+
+/* expand the layout on wide viewports */
+@media screen and (min-width: 1220px) {
+  .toc {
+    margin-left: -22.2%;
+    margin-right: 0;
+  }
+  article.g-wide--3,
+  section.g-wide--3 {
+    width: 99.9%;
+    margin-left: 0;
+  }
+  .pagetoc {
+    position: fixed;
+    top: 60px;
+    right: 0;
+    width: 18.5%;
+    margin-right: 0;
+  }
+  .pagetoc .toc__title,
+  .toc .pagetoc ul {
+    padding-left: 3.7%;
+    max-width: 190px;
+  }
+  .pagetoc .toc__title {
+    padding-top: 29px;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+  }
+  .toc .pagetoc > ul {
+    margin-bottom: 1.3em
   }
 }
 
@@ -578,6 +629,8 @@ main nav {
 .toc__list li {
   padding-left: 1.5em;
 }
+
+
 
 .guides-list__item {
   margin-right: auto; /* left-align the flex boxes */
@@ -606,6 +659,8 @@ main nav {
   clear: both;
   padding-top: 6em;
   overflow: hidden;
+  max-width: 70%;
+  margin: auto;
 }
 .feedback footer {
   border: 1px solid #D7DBEC;
