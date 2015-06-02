@@ -5,10 +5,10 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>SPF - Multipart Responses</title>
-<meta name="description" content="A lightweight JS framework for fast navigation and page updates from YouTube">
+<title>SPF - Caching</title>
+<meta name="description" content="Custom response caching for greater application flexibility.">
 
-<link rel="canonical" href="http://youtube.github.io/spfjs/documentation/features/multipart/">
+<link rel="canonical" href="http://youtube.github.io/spfjs/documentation/caching/">
 
 <!-- Add to homescreen for Chrome on Android -->
 <meta name="mobile-web-app-capable" content="yes">
@@ -171,15 +171,107 @@
 
     <article class="g-wide--3 g-wide--last g-medium--2 g-medium--last">
       <header class="page-header container">
-        <h2 class="xxlarge text-divider">Multipart Responses</h2>
+        <h2 class="xxlarge text-divider">Caching</h2>
+        
+          <p class="page-header__excerpt g-wide--push-1 g-wide--pull-1">
+            Custom response caching for greater application flexibility.
+          </p>
         
       </header>
       <div class="container">
-        <blockquote>
-<p>We will be adding documentation and code samples to explain and demonstrate
-this functionality in coming weeks.  In the meantime, please
-<a href="../../start/">get started</a> with SPF.</p>
-</blockquote>
+        <p>When building a complex web application, sometimes you want more
+flexibility than standard HTTP based caching in order to best
+balance your application logic with performance.  SPF provides
+a local configurable response cache that you can adjust as
+needed.</p>
+
+<h2 id="when-the-cache-is-used">When the cache is used</h2>
+
+<p>Before making a request, SPF checks the local cache to see if a
+valid cached response is available for the requested URL.  If
+one is found, then it will be used instead of sending a request
+over the network.  If not, after the response is received, SPF
+will place that response in the local cache for future use.</p>
+
+<p>By default, SPF uses a caching model that matches the
+back-forward cache in browsers: &quot;new&quot; navigation will not use a
+previously cached response, whereas &quot;history&quot; navigation will.
+This means that your server will receive requests for every link
+click, for example, but not for back button uses.  However, if
+the <code>cache-unified</code> config value is set to <code>true</code>, then SPF will
+use an available cache response for all navigation.  This will
+mean that your server will not receive requests for link clicks
+that are to previously visited pages, just like for back button
+presses.</p>
+
+<p>When <a href="../prefetching/">prefetching</a> responses, by default, SPF will place a
+prefetched response in the local cache as eligible for one &quot;new&quot;
+navigation.  After that one use, the cached response will only
+be eligible for &quot;history&quot; navigation.  However, if the
+<code>cache-unified</code> config value is set to <code>true</code>, then the
+prefetched response will be available for all navigation like
+other cached responses.</p>
+
+<h2 id="configuring-the-cache">Configuring the cache</h2>
+
+<p>You may configure the cache using parameters to control the
+total number and lifetime of entries in the cache.  Increasing
+these settings will increase the chance of finding a valid,
+cached response and also consume more memory in the browser.
+Conversely, decreasing these settings will decrease the chance
+of finding a valid cached response and also consume less memory
+in the browser.  A list of the configuration parameters and
+their descriptions follows:</p>
+
+<p><strong><code>cache-lifetime</code></strong><br>
+The maximum time in milliseconds a cache entry is considered
+valid.  Defaults to <code>600000</code> (10 minutes).</p>
+
+<p><strong><code>cache-max</code></strong><br>
+The maximum number of total cache entries.  Defaults to <code>50</code>.</p>
+
+<p><strong><code>cache-unified</code></strong><br>
+Whether to unify all cache responses instead of separating them
+by use (e.g. history, prefetching). Defaults to <code>false</code>.</p>
+
+<h2 id="automatic-garbage-collection">Automatic garbage collection</h2>
+
+<p>The cache performs automatic garbage collection by removing
+entries at two times:</p>
+
+<ol>
+<li><p>If a requested entry is found but it is expired according to
+the configured lifetime, the entry is removed from the cache
+instead of being used.</p></li>
+<li><p>Each time a new entry is added, the
+cache does asynchronous garbage collection.  This garbage
+collection first removes all expired entries, then if needed, it
+removes entries in the cache that exceed the configured maximum
+size with a least-recently-used (LRU) policy.</p></li>
+</ol>
+
+<h2 id="manually-adjusting-the-cache">Manually adjusting the cache</h2>
+
+<p>Sometimes you might need to manually remove an entry from the
+cache.  For example, a user might take an action on the page
+that changes it, and you would like future requests to reflect
+that action; by making the next request the server, the response
+will stay in sync.</p>
+
+<p>Each <a href="../../events/#event-descriptions">spfdone</a> event specifies a <code>cacheKey</code> attribute in the
+<a href="../../../api/#spf.singleresponse">response object</a>.  You can use this <code>cacheKey</code> to reference a
+specific cache entry when calling API functions that manipulate
+the cache.  A list of API functions and their descriptions
+follow:</p>
+
+<p><strong><code>spf.cache.remove(key)</code></strong><br>
+Removes an entry from the cache.  Pass a <code>cacheKey</code> from a
+response object to reference the entry you wish to remove.  See
+also the API reference for <a href="../../../api/#spf.cache.remove">spf.cache.remove</a>.</p>
+
+<p><strong><code>spf.cache.clear()</code></strong><br>
+Removes all entries from the cache.  See also the API reference
+for <a href="../../../api/#spf.cache.clear">spf.cache.clear</a>.</p>
 
       </div>
       
@@ -193,16 +285,18 @@ this functionality in coming weeks.  In the meantime, please
 
 <nav class="article-nav">
   
-    <a href="/spfjs/documentation/features/" class="article-nav-link article-nav-link--prev">
-      <p class="article-nav-count">Features</p>
+    <a href="/spfjs/documentation/versioning/" class="article-nav-link article-nav-link--prev">
+      <p class="article-nav-count">Versioning</p>
       
-        <p class="article-nav-description">Learn about SPF features to enable high performance.</p>
+        <p class="article-nav-description">Automatically update script and style versions.</p>
       
     </a>
   
   
-    <a href="/spfjs/documentation/features/prefetching/" class="article-nav-link article-nav-link--next">
-      <p class="article-nav-count">Prefetching</p>
+    <a href="/spfjs/documentation/features/" class="article-nav-link article-nav-link--next">
+      <p class="article-nav-count">Features</p>
+      
+        <p class="article-nav-description">Learn about SPF features to enable high performance.</p>
       
     </a>
   
