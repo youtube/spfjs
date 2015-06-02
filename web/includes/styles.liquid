@@ -1,4 +1,4 @@
 <link rel="stylesheet" name="roboto" href="//fonts.googleapis.com/css?family=Roboto:300,600,900|Roboto+Condensed:300,300italic,400,700|Inconsolata:400">
 <link rel="stylesheet" name="wsk" href="{{ site.baseurl }}/assets/vendor/wsk/0.4.0/styles/wsk.css">
 <link rel="stylesheet" name="octicons" href="{{ site.baseurl }}/assets/vendor/octicons/2.1.2/octicons.css">
-<link rel="stylesheet" name="main" href="{{ site.baseurl }}/assets/styles/main.css?t={{ site.time | date_to_xmlschema | cgi_escape }}">
+<link rel="stylesheet" name="main" href="{{ site.baseurl }}{{ '/assets/styles/main.css' | md5_cgi_url }}">
