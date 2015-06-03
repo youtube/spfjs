@@ -1,2 +1,2 @@
 <script name="spf" src="{{ site.baseurl }}/assets/vendor/spf/2.1.1/spf.js"></script>
-<script name="main" src="{{ site.baseurl }}/assets/scripts/main.js?t={{ site.time | date_to_xmlschema | cgi_escape }}"></script>
+<script name="main" src="{{ site.baseurl }}{{ '/assets/scripts/main.js' | md5_cgi_url }}"></script>
