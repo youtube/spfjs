@@ -590,6 +590,7 @@ footer {
   }
   .pagetoc {
     position: fixed;
+    z-index: 1;
     top: 60px;
     right: 0;
     width: 18.5%;
@@ -675,10 +676,6 @@ footer {
 .api hr {
   margin-top: 60px;
 }
-.api h2,
-.api h3 {
-  padding-top: 60px;
-}
 .api .container p,
 .api .container ul,
 .api .container ol {
@@ -687,6 +684,14 @@ footer {
 .api .container li p {
   padding-top: 0;
 }
+
+
+/* h2/h3 scroll targets need to accommodate the navbar */
+article h2[id],
+article h3[id] {
+  padding-top: 80px;
+}
+
 
 
 /*** fonts ***/
