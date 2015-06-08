@@ -114,6 +114,9 @@ spf.nav.request.send = function(url, opt_options) {
     // the cache response synchronously.
     if (spf.config.get('experimental-sync-response-cache')) {
       handleCache();
+    } else if (spf.config.get('experimental-sync-response-cache-background') &&
+               document.hidden) {
+      handleCache();
     } else {
       setTimeout(handleCache, 0);
     }
