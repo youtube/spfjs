@@ -403,6 +403,13 @@ spf.net.resource.prefetch = function(type, url, opt_force) {
   if (!opt_force && spf.net.resource.status.get(type, url)) {
     return;
   }
+  // If opt_force is specified, tracking whether the element exists is unneeded,
+  // and if prefetching an image (e.g. for URL preconnection), the standard DOM
+  // logic is also unneeded.  In this case, use the simpler/faster Image object.
+  if (opt_force && type == spf.net.resource.Type.IMG) {
+    spf.net.resource.preconnect_(url);
+    return;
+  }
   var label = spf.net.resource.label(url);
   var id = spf.net.resource.key(type, label);
   var key = spf.net.resource.key(type, 'prefetch');
@@ -487,6 +494,24 @@ spf.net.resource.prefetch_ = function(el, type, url, id, group) {
   }
 };
 
+
+/**
+ * See {@link #prefetch}.
+ *
+ * @param {string} url URL of the resource.
+ * @private
+ */
+spf.net.resource.preconnect_ = function(url) {
+  // For establishing a preconnection, use an image request.  When the DOM logic
+  // is not needed to track status, use the simpler/faster object approach.
+  var img = new Image();
+  if (spf.net.resource.IS_IE) {
+    // IE needs page-level cache busting to properly re-request images, but
+    // not network-level.  Use URL hashes to trick it into re-sending.
+    url = url + '#' + spf.now();
+  }
+  img.src = url;
+};
 
 
 /**
