@@ -6,9 +6,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>SPF - Prefetching</title>
-<meta name="description" content="A lightweight JS framework for fast navigation and page updates from YouTube">
+<meta name="description" content="Prefetch responses before they're requested.">
 
-<link rel="canonical" href="http://youtube.github.io/spfjs/documentation/features/prefetching/">
+<link rel="canonical" href="http://youtube.github.io/spfjs/documentation/prefetching/">
 
 <!-- Add to homescreen for Chrome on Android -->
 <meta name="mobile-web-app-capable" content="yes">
@@ -134,6 +134,13 @@
   
     <li>
       
+        <a href="/spfjs/documentation/prefetching/">Prefetching</a>
+      
+      
+    </li>
+  
+    <li>
+      
         <a href="/spfjs/documentation/features/">Features</a>
       
       
@@ -151,13 +158,6 @@
       
     </li>
   
-    <li>
-      
-        <a href="/spfjs/documentation/features/prefetching/">Prefetching</a>
-      
-      
-    </li>
-  
 </ol>
 
       
@@ -167,6 +167,21 @@
 
 
     
+      <div class="pagetoc">
+        <p class="toc__title">
+          <a href="/spfjs/documentation/prefetching/">Prefetching</a>
+        </p>
+        <ul>
+<li>
+<a href="#prefetching-requests">Prefetching requests</a>
+</li>
+<li>
+<a href="#prefetching-resources">Prefetching resources</a>
+</li>
+</ul>
+
+      </div>
+    
   </nav>
 
   
@@ -175,13 +190,82 @@
       <header class="page-header container">
         <h2 class="xxlarge text-divider">Prefetching</h2>
         
+          <p class="page-header__excerpt g-wide--push-1 g-wide--pull-1">
+            Prefetch responses before they're requested.
+          </p>
+        
       </header>
       <div class="container">
-        <blockquote>
-<p>We will be adding documentation and code samples to explain and demonstrate
-this functionality in coming weeks.  In the meantime, please
-<a href="../../start/">get started</a> with SPF.</p>
-</blockquote>
+        <p>SPF is designed to enable fast navigation, and the best way to
+speed up a navigation request is to not make it all.
+Prefetching allows you to fetch responses before they are
+requested and store them in the <a href="../caching/">local cache</a> until they are
+needed.  You can also prefetch <a href="../resources/">scripts and styles</a>
+to prime the browser cache.</p>
+
+<h2 id="prefetching-requests">Prefetching requests</h2>
+
+<p>Prefetching a response is done by calling the <a href="../../api/#spf.prefetch">spf.prefetch</a>
+function, which behaves nearly identically to <a href="../../api/#spf.navigate">spf.navigate</a>
+and accepts the same <a href="../events/#callbacks-and%E2%80%94cancellations">callbacks and cancellations</a> when passed
+an object that conforms to the <a href="../../api/#spf.requestoptions">spf.RequestOptions</a> interface.
+A list of callbacks follows:</p>
+
+<table><thead>
+<tr>
+<th style="text-align: left">Callback</th>
+<th style="text-align: left">State</th>
+<th style="text-align: left">Cancel</th>
+</tr>
+</thead><tbody>
+<tr>
+<td style="text-align: left"><code>onRequest</code></td>
+<td style="text-align: left">Started; Sending Prefetch</td>
+<td style="text-align: left">Abort</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>onProcess</code></td>
+<td style="text-align: left">Processing; Response Received</td>
+<td style="text-align: left">Abort</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>onDone</code></td>
+<td style="text-align: left">Done</td>
+<td style="text-align: left"></td>
+</tr>
+</tbody></table>
+
+<p>When SPF sends the prefetch request to the server, it will
+append the configurable identifier to the URL in the same manner
+as navigation; by default, this value will be <code>?spf=prefetch</code>.</p>
+
+<p>When the prefetched response has been received, SPF will place
+it in the local cache as eligible for one &quot;new&quot; navigation.
+After that one use, the cached response will only be eligible
+for &quot;history&quot; navigation.  However, if the <code>cache-unified</code>
+config value is set to <code>true</code>, then the prefetched response will
+be available for all navigations like other cached responses.
+For more information, see <a href="../caching/#when-the-cache-is-used">when the cache is used</a>.</p>
+
+<h2 id="prefetching-resources">Prefetching resources</h2>
+
+<p>When SPF processes a prefetched response, it will prefetch any
+<a href="../resources/">resources</a> to ensure the browser cache is primed.  Fetching
+JS and CSS files before they are needed makes future navigation
+faster.</p>
+
+<p>To manually prefetch resources, the following API functions can
+be used:</p>
+
+<p><strong><code>spf.script.prefetch(urls)</code></strong><br>
+Prefetches one or more scripts; the scripts will be requested
+but not loaded.  See also the API reference for
+<a href="../../api/#spf.script.prefetch">spf.script.prefetch</a>.</p>
+
+<p><strong><code>spf.style.prefetch(urls)</code></strong><br>
+Prefetches one or more stylesheets; the stylesheets will be
+requested but not loaded.  See also the API reference for
+<a href="../../api/#spf.style.prefetch">spf.style.prefetch</a>.</p>
 
       </div>
       
@@ -195,13 +279,20 @@ this functionality in coming weeks.  In the meantime, please
 
 <nav class="article-nav">
   
-    <a href="/spfjs/documentation/features/multipart/" class="article-nav-link article-nav-link--prev">
-      <p class="article-nav-count">Multipart Responses</p>
+    <a href="/spfjs/documentation/caching/" class="article-nav-link article-nav-link--prev">
+      <p class="article-nav-count">Caching</p>
+      
+        <p class="article-nav-description">Custom response caching for greater application flexibility.</p>
       
     </a>
   
   
-    <span class="article-nav-link"></span>
+    <a href="/spfjs/documentation/features/" class="article-nav-link article-nav-link--next">
+      <p class="article-nav-count">Features</p>
+      
+        <p class="article-nav-description">Learn about SPF features to enable high performance.</p>
+      
+    </a>
   
 </nav>
 

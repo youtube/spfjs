@@ -134,6 +134,13 @@
   
     <li>
       
+        <a href="/spfjs/documentation/prefetching/">Prefetching</a>
+      
+      
+    </li>
+  
+    <li>
+      
         <a href="/spfjs/documentation/features/">Features</a>
       
       
@@ -147,13 +154,6 @@
     <li>
       
         <a href="/spfjs/documentation/features/multipart/">Multipart Responses</a>
-      
-      
-    </li>
-  
-    <li>
-      
-        <a href="/spfjs/documentation/features/prefetching/">Prefetching</a>
       
       
     </li>
@@ -222,7 +222,7 @@ previously cached response, whereas &quot;history&quot; navigation will.
 This means that your server will receive requests for every link
 click, for example, but not for back button uses.  However, if
 the <code>cache-unified</code> config value is set to <code>true</code>, then SPF will
-use an available cache response for all navigation.  This will
+use an available cache response for all navigations.  This will
 mean that your server will not receive requests for link clicks
 that are to previously visited pages, just like for back button
 presses.</p>
@@ -232,7 +232,7 @@ prefetched response in the local cache as eligible for one &quot;new&quot;
 navigation.  After that one use, the cached response will only
 be eligible for &quot;history&quot; navigation.  However, if the
 <code>cache-unified</code> config value is set to <code>true</code>, then the
-prefetched response will be available for all navigation like
+prefetched response will be available for all navigations like
 other cached responses.</p>
 
 <h2 id="configuring-the-cache">Configuring the cache</h2>
@@ -316,10 +316,10 @@ for <a href="../../../api/#spf.cache.clear">spf.cache.clear</a>.</p>
     </a>
   
   
-    <a href="/spfjs/documentation/features/" class="article-nav-link article-nav-link--next">
-      <p class="article-nav-count">Features</p>
+    <a href="/spfjs/documentation/prefetching/" class="article-nav-link article-nav-link--next">
+      <p class="article-nav-count">Prefetching</p>
       
-        <p class="article-nav-description">Learn about SPF features to enable high performance.</p>
+        <p class="article-nav-description">Prefetch responses before they're requested.</p>
       
     </a>
   
