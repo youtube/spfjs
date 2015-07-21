@@ -13,6 +13,7 @@ goog.provide('spf.nav.request');
 
 goog.require('spf');
 goog.require('spf.array');
+goog.require('spf.async');
 goog.require('spf.cache');
 goog.require('spf.config');
 goog.require('spf.debug');
@@ -110,9 +111,10 @@ spf.nav.request.send = function(url, opt_options) {
     var handleCache = spf.bind(spf.nav.request.handleResponseFromCache_, null,
                                url, options, timing, cached.key, response);
     // However, when WebKit browsers are in a background tab, setTimeout calls
-    // are deprioritized to execute with a 1s delay.  Experimentally handle
-    // the cache response synchronously.
-    if (spf.config.get('experimental-sync-response-cache')) {
+    // are deprioritized to execute with a 1s delay.  Experimentally avoid this.
+    if (spf.config.get('experimental-defer-response-cache')) {
+      spf.async.defer(handleCache);
+    } else if (spf.config.get('experimental-sync-response-cache')) {
       handleCache();
     } else if (spf.config.get('experimental-sync-response-cache-background') &&
                document.hidden) {
