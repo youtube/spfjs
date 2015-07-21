@@ -52,6 +52,8 @@ spf.state.set = function(key, value) {
  * @enum {string}
  */
 spf.state.Key = {
+  ASYNC_DEFERS: 'async-defers',
+  ASYNC_LISTENER: 'async-listener',
   CACHE_COUNTER: 'cache-counter',
   CACHE_MAX: 'cache-max',
   CACHE_STORAGE: 'cache-storage',

@@ -117,6 +117,20 @@ spf.now = function() {
 
 
 /**
+ * Gets a UID.
+ *
+ * @return {number} A unique number.
+ */
+spf.uid = function() {
+  // Special case to not use spf.state directly to avoid circular dependencies.
+  var state = (window['_spf_state'] = window['_spf_state'] || {});
+  var uid = parseInt(state['uid'], 10) || 0;
+  uid++;
+  return (state['uid'] = uid);
+};
+
+
+/**
  * An empty no-op function.
  */
 spf.nullFunction = function() {};
