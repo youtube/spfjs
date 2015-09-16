@@ -8,6 +8,7 @@
  */
 
 goog.require('spf');
+goog.require('spf.async');
 goog.require('spf.cache');
 goog.require('spf.nav.request');
 goog.require('spf.net.xhr');
@@ -16,6 +17,10 @@ goog.require('spf.url');
 
 
 describe('spf.nav.request', function() {
+
+  // Jasmine supports a mock clock for setTimeout, but postMessage support isn't
+  // easily handled.  Instead, disable use of postMessage for tests.
+  spf.async.POSTMESSAGE_SUPPORTED_ = false;
 
   var MOCK_DELAY = 10;
   var EXPECTED_TIMING = {'spfCached': false, 'spfPrefetched': false};
