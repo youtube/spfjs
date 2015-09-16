@@ -146,7 +146,6 @@ function variables(ninja) {
     '--jscomp_error ambiguousFunctionDecl',
     '--jscomp_error checkEventfulObjectDisposal',
     '--jscomp_error checkRegExp',
-    '--jscomp_error checkStructDictInheritance',
     '--jscomp_error checkTypes',
     '--jscomp_error checkVars',
     '--jscomp_error const',
