@@ -556,7 +556,7 @@ spf.nav.response.extract_ = function(frag) {
       });
     }
     // Add the parsed links to the result.
-    if (frag['links'] && spf.config.get('experimental-preconnect')) {
+    if (frag['links']) {
       spf.array.each(frag['links'], function(link) {
         if (link['rel'] == 'spf-preconnect') {
           result['links'].push({url: link['url'] || '',
@@ -614,8 +614,7 @@ spf.nav.response.extract_ = function(frag) {
         }
         // A rel=spf-preconnect tag indicates early connection.
         // Parse the href attribute.
-        if (rel == 'spf-preconnect' &&
-            spf.config.get('experimental-preconnect')) {
+        if (rel == 'spf-preconnect') {
           var url = attr.match(spf.nav.response.AttributeRegEx.HREF);
           url = url ? url[1] : '';
           result['links'].push({url: url, rel: rel});
