@@ -580,7 +580,7 @@ function main() {
   targets(ninja);
   aliases(ninja);
   ninja.save('build.ninja');
-  $.util.puts('Wrote build.ninja');
+  console.log('Wrote build.ninja');
 }
 
 
