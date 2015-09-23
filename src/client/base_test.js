@@ -82,8 +82,8 @@ describe('spf', function() {
       pass: function() { return 'pass'; },
       fail: function() { throw err; }
     };
-    spyOn(foo, 'pass').andCallThrough();
-    spyOn(foo, 'fail').andCallThrough();
+    spyOn(foo, 'pass').and.callThrough();
+    spyOn(foo, 'fail').and.callThrough();
     expect(spf.execute(foo.pass)).toEqual('pass');
     expect(foo.pass).toHaveBeenCalled();
     expect(spf.execute(foo.fail)).toEqual(err);

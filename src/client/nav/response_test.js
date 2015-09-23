@@ -437,6 +437,9 @@ describe('spf.nav.response', function() {
         }
       };
       var result = spf.nav.response.extract(response);
+      // Jasmine 2's toEqual has problems comparing prototype-based properties
+      // with non-prototype ones.  Round-trip through JSON to work around it.
+      result = JSON.parse(JSON.stringify(result));
       expect(result).toEqual(expected);
     });
 
@@ -488,6 +491,9 @@ describe('spf.nav.response', function() {
         }
       ];
       var result = spf.nav.response.extract(response);
+      // Jasmine 2's toEqual has problems comparing prototype-based properties
+      // with non-prototype ones.  Round-trip through JSON to work around it.
+      result = JSON.parse(JSON.stringify(result));
       expect(result).toEqual(expected);
     });
 
@@ -533,6 +539,9 @@ describe('spf.nav.response', function() {
         }
       };
       var result = spf.nav.response.extract(response);
+      // Jasmine 2's toEqual has problems comparing prototype-based properties
+      // with non-prototype ones.  Round-trip through JSON to work around it.
+      result = JSON.parse(JSON.stringify(result));
       expect(result).toEqual(expected);
     });
 
@@ -590,6 +599,9 @@ describe('spf.nav.response', function() {
         }
       ];
       var result = spf.nav.response.extract(response);
+      // Jasmine 2's toEqual has problems comparing prototype-based properties
+      // with non-prototype ones.  Round-trip through JSON to work around it.
+      result = JSON.parse(JSON.stringify(result));
       expect(result).toEqual(expected);
     });
 
@@ -711,7 +723,7 @@ describe('spf.nav.response', function() {
     var currentUrl = 'http://www.youtube.com/watch?v=1';
 
     beforeEach(function() {
-      spyOn(spf.nav.response, 'getCurrentUrl_').andReturn(currentUrl);
+      spyOn(spf.nav.response, 'getCurrentUrl_').and.returnValue(currentUrl);
       spyOn(spf.history, 'replace');
     });
 

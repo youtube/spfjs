@@ -91,17 +91,19 @@ describe('spf.nav', function() {
 
   beforeEach(function() {
     spyOn(spf.history, 'add');
-    spyOn(spf.history, 'replace').andCallFake(fakeHistoryReplace);
+    spyOn(spf.history, 'replace').and.callFake(fakeHistoryReplace);
     if (!document.addEventListener) {
       document.addEventListener = jasmine.createSpy('addEventListener');
     }
 
     spf.nav.init();
-    jasmine.Clock.useMock();
+
+    jasmine.clock().install();
   });
 
 
   afterEach(function() {
+    jasmine.clock().uninstall();
     spf.nav.dispose();
     spf.config.clear();
     spf.state.values_ = {};
@@ -114,14 +116,14 @@ describe('spf.nav', function() {
     it('prefetches a page', function() {
       var url = '/page';
       var fake = createFakeRequest({'foobar': true});
-      spyOn(spf.nav.request, 'send').andCallFake(fake);
+      spyOn(spf.nav.request, 'send').and.callFake(fake);
 
       var absoluteUrl = spf.url.absolute(url);
       spf.nav.prefetch(url);
       var prefetches = spf.nav.prefetches_();
       expect(prefetches[absoluteUrl]).toBeTruthy();
 
-      jasmine.Clock.tick(MOCK_DELAY + 1);
+      jasmine.clock().tick(MOCK_DELAY + 1);
       expect(prefetches[absoluteUrl]).not.toBeTruthy();
     });
 
@@ -131,7 +133,7 @@ describe('spf.nav', function() {
 
       var url = '/page';
       var fake = createFakeRequest({'foobar': true});
-      spyOn(spf.nav.request, 'send').andCallFake(fake);
+      spyOn(spf.nav.request, 'send').and.callFake(fake);
 
 
       var absoluteUrl = spf.url.absolute(url);
@@ -139,60 +141,60 @@ describe('spf.nav', function() {
       spf.nav.navigate(url);
       expect(spf.state.get(spf.state.Key.NAV_PROMOTE)).toEqual(url);
 
-      jasmine.Clock.tick(MOCK_DELAY + 1);
+      jasmine.clock().tick(MOCK_DELAY + 1);
       expect(spf.nav.handleNavigateSuccess_).toHaveBeenCalled();
     });
 
 
     it('prefetch singlepart response with redirects', function() {
-      spyOn(spf.nav, 'prefetch_').andCallThrough();
+      spyOn(spf.nav, 'prefetch_').and.callThrough();
 
       var url = '/page';
       var url2 = '/page2';
       var fake = createFakeRequest({'redirect': url2});
-      spyOn(spf.nav.request, 'send').andCallFake(fake);
+      spyOn(spf.nav.request, 'send').and.callFake(fake);
 
       var absoluteUrl = spf.url.absolute(url);
       spf.nav.prefetch(url);
 
-      jasmine.Clock.tick(MOCK_DELAY + 1);
-      expect(spf.nav.prefetch_.calls[1].args[0]).toEqual(url2);
-      expect(spf.nav.prefetch_.calls.length).toEqual(2);
+      jasmine.clock().tick(MOCK_DELAY + 1);
+      expect(spf.nav.prefetch_.calls.argsFor(1)[0]).toEqual(url2);
+      expect(spf.nav.prefetch_.calls.count()).toEqual(2);
     });
 
 
     it('prefetch multipart response with redirects', function() {
-      spyOn(spf.nav, 'prefetch_').andCallThrough();
+      spyOn(spf.nav, 'prefetch_').and.callThrough();
 
       var url = '/page';
       var url2 = '/page2';
       var fake = createFakeRequest({'redirect': url2}, {'foobar': true});
-      spyOn(spf.nav.request, 'send').andCallFake(fake);
+      spyOn(spf.nav.request, 'send').and.callFake(fake);
 
       var absoluteUrl = spf.url.absolute(url);
       spf.nav.prefetch(url);
 
-      jasmine.Clock.tick(2 * MOCK_DELAY + 1);
-      expect(spf.nav.prefetch_.calls[1].args[0]).toEqual(url2);
-      expect(spf.nav.prefetch_.calls.length).toEqual(2);
+      jasmine.clock().tick(2 * MOCK_DELAY + 1);
+      expect(spf.nav.prefetch_.calls.argsFor(1)[0]).toEqual(url2);
+      expect(spf.nav.prefetch_.calls.count()).toEqual(2);
     });
 
 
     it('promotes a prefetch with redirects', function() {
-      spyOn(spf.nav, 'prefetch').andCallThrough();
+      spyOn(spf.nav, 'prefetch').and.callThrough();
       spyOn(spf.nav, 'handleNavigateSuccess_');
 
       var url = '/page';
       var url2 = '/page2';
       var fake = createFakeRequest({'redirect': url2}, {'foobar': true});
-      spyOn(spf.nav.request, 'send').andCallFake(fake);
+      spyOn(spf.nav.request, 'send').and.callFake(fake);
 
       var absoluteUrl = spf.url.absolute(url);
       spf.nav.prefetch(url);
-      jasmine.Clock.tick(MOCK_DELAY + 1);
+      jasmine.clock().tick(MOCK_DELAY + 1);
       spf.nav.navigate(url);
 
-      jasmine.Clock.tick(MOCK_DELAY + 1);
+      jasmine.clock().tick(MOCK_DELAY + 1);
       expect(spf.nav.handleNavigateSuccess_).toHaveBeenCalled();
     });
 
@@ -202,7 +204,7 @@ describe('spf.nav', function() {
 
       var url = '/page';
       var fake = createFakeRequest({'foobar': true}, null, true);
-      spyOn(spf.nav.request, 'send').andCallFake(fake);
+      spyOn(spf.nav.request, 'send').and.callFake(fake);
 
 
       var absoluteUrl = spf.url.absolute(url);
@@ -210,7 +212,7 @@ describe('spf.nav', function() {
       spf.nav.navigate(url);
       expect(spf.state.get(spf.state.Key.NAV_PROMOTE)).toEqual(url);
 
-      jasmine.Clock.tick(MOCK_DELAY + 1);
+      jasmine.clock().tick(MOCK_DELAY + 1);
       expect(spf.nav.handleNavigateError_).toHaveBeenCalled();
     });
   });
@@ -219,7 +221,7 @@ describe('spf.nav', function() {
   describe('handleClick', function() {
 
 
-    beforeEach(function(argument) {
+    beforeEach(function() {
       spyOn(spf.nav, 'navigate_');
     });
 
@@ -259,7 +261,7 @@ describe('spf.nav', function() {
 
     it('ignores click with nolink class', function() {
       var evt = createFakeBrowserEvent();
-      spyOn(spf.nav, 'getAncestorWithNoLinkClass_').andCallFake(objFunc);
+      spyOn(spf.nav, 'getAncestorWithNoLinkClass_').and.callFake(objFunc);
       spf.config.set('nolink-class', 'NOLINK_CLASS');
 
       spf.nav.handleClick_(evt);
@@ -271,8 +273,8 @@ describe('spf.nav', function() {
 
     it('ignores click without href', function() {
       var evt = createFakeBrowserEvent();
-      spyOn(spf.nav, 'getAncestorWithHref_').andCallFake(nullFunc);
-      spyOn(spf.nav, 'getAncestorWithLinkClass_').andCallFake(objFunc);
+      spyOn(spf.nav, 'getAncestorWithHref_').and.callFake(nullFunc);
+      spyOn(spf.nav, 'getAncestorWithLinkClass_').and.callFake(objFunc);
 
       spf.nav.handleClick_(evt);
 
@@ -284,7 +286,7 @@ describe('spf.nav', function() {
 
     it('ignores click without link class', function() {
       var evt = createFakeBrowserEvent();
-      spyOn(spf.nav, 'getAncestorWithLinkClass_').andCallFake(nullFunc);
+      spyOn(spf.nav, 'getAncestorWithLinkClass_').and.callFake(nullFunc);
 
       spf.nav.handleClick_(evt);
 
@@ -296,10 +298,10 @@ describe('spf.nav', function() {
 
     it('ignores click if not eligible', function() {
       var evt = createFakeBrowserEvent();
-      spyOn(spf.nav, 'getAncestorWithHref_').andCallFake(function() {
+      spyOn(spf.nav, 'getAncestorWithHref_').and.callFake(function() {
           return {href: evt.target.href}; });
-      spyOn(spf.nav, 'getAncestorWithLinkClass_').andCallFake(objFunc);
-      spyOn(spf.nav, 'isEligible_').andCallFake(falseFunc);
+      spyOn(spf.nav, 'getAncestorWithLinkClass_').and.callFake(objFunc);
+      spyOn(spf.nav, 'isEligible_').and.callFake(falseFunc);
 
       spf.nav.handleClick_(evt);
 
@@ -311,15 +313,15 @@ describe('spf.nav', function() {
 
     it('handles spf click', function() {
       var evt = createFakeBrowserEvent();
-      spyOn(spf.nav, 'getAncestorWithHref_').andCallFake(function() {
+      spyOn(spf.nav, 'getAncestorWithHref_').and.callFake(function() {
           return {href: evt.target.href}; });
-      spyOn(spf.nav, 'getAncestorWithLinkClass_').andCallFake(objFunc);
+      spyOn(spf.nav, 'getAncestorWithLinkClass_').and.callFake(objFunc);
 
       spf.nav.handleClick_(evt);
 
       expect(evt.defaultPrevented).toEqual(true);
       expect(spf.nav.navigate_).toHaveBeenCalled();
-      expect(spf.nav.navigate_.calls[0].args[0]).toEqual(evt.target.href);
+      expect(spf.nav.navigate_.calls.argsFor(0)[0]).toEqual(evt.target.href);
     });
 
 
@@ -514,19 +516,19 @@ describe('spf.nav', function() {
         return;
       }
 
-      spyOn(spf.nav, 'navigate_').andCallThrough();
+      spyOn(spf.nav, 'navigate_').and.callThrough();
 
       var url = '/page';
       var url2 = '/page2';
       var fake = createFakeRequest({'redirect': url2});
-      spyOn(spf.nav.request, 'send').andCallFake(fake);
+      spyOn(spf.nav.request, 'send').and.callFake(fake);
 
       var absoluteUrl = spf.url.absolute(url);
       spf.nav.navigate(url);
 
-      jasmine.Clock.tick(MOCK_DELAY + 1);
-      expect(spf.nav.navigate_.calls[1].args[0]).toEqual(url2);
-      expect(spf.nav.navigate_.calls.length).toEqual(2);
+      jasmine.clock().tick(MOCK_DELAY + 1);
+      expect(spf.nav.navigate_.calls.argsFor(1)[0]).toEqual(url2);
+      expect(spf.nav.navigate_.calls.count()).toEqual(2);
     });
 
 
@@ -537,19 +539,19 @@ describe('spf.nav', function() {
         return;
       }
 
-      spyOn(spf.nav, 'navigate_').andCallThrough();
+      spyOn(spf.nav, 'navigate_').and.callThrough();
 
       var url = '/page';
       var url2 = '/page2';
       var fake = createFakeRequest({'redirect': url2}, {'foobar': true});
-      spyOn(spf.nav.request, 'send').andCallFake(fake);
+      spyOn(spf.nav.request, 'send').and.callFake(fake);
 
       var absoluteUrl = spf.url.absolute(url);
       spf.nav.navigate(url);
 
-      jasmine.Clock.tick(2 * MOCK_DELAY + 1);
-      expect(spf.nav.navigate_.calls[1].args[0]).toEqual(url2);
-      expect(spf.nav.navigate_.calls.length).toEqual(2);
+      jasmine.clock().tick(2 * MOCK_DELAY + 1);
+      expect(spf.nav.navigate_.calls.argsFor(1)[0]).toEqual(url2);
+      expect(spf.nav.navigate_.calls.count()).toEqual(2);
     });
 
 
@@ -563,9 +565,9 @@ describe('spf.nav', function() {
 
 
     it('dispatches an event', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var proceed = spf.nav.dispatchError_(url, err);
-      var evtName = spf.dispatch.calls[0].args[0];
+      var evtName = spf.dispatch.calls.argsFor(0)[0];
       expect(spf.dispatch).toHaveBeenCalled();
       expect(evtName).toEqual(spf.EventName.ERROR);
       expect(proceed).toBe(true);
@@ -573,7 +575,7 @@ describe('spf.nav', function() {
 
 
     it('dispatches an event and propagates cancellation', function() {
-      spyOn(spf, 'dispatch').andReturn(false);
+      spyOn(spf, 'dispatch').and.returnValue(false);
       var proceed = spf.nav.dispatchError_(url, err);
       expect(spf.dispatch).toHaveBeenCalled();
       expect(proceed).toBe(false);
@@ -590,7 +592,7 @@ describe('spf.nav', function() {
 
 
     it('executes a callback and propagates cancellation', function() {
-      var fn = jasmine.createSpy('fn').andReturn(false);
+      var fn = jasmine.createSpy('fn').and.returnValue(false);
       var proceed = spf.nav.dispatchError_(url, err,
                                            {'onError': fn});
       expect(fn).toHaveBeenCalled();
@@ -599,7 +601,7 @@ describe('spf.nav', function() {
 
 
     it('does not dispatch an event if events are skipped', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var fn = jasmine.createSpy('fn');
       var proceed = spf.nav.dispatchError_(url, err,
                                            {'onError': fn}, true);
@@ -610,8 +612,8 @@ describe('spf.nav', function() {
 
 
     it('does not dispatch an event if a callback is canceled', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
-      var fn = jasmine.createSpy('fn').andReturn(false);
+      spyOn(spf, 'dispatch').and.callThrough();
+      var fn = jasmine.createSpy('fn').and.returnValue(false);
       var proceed = spf.nav.dispatchError_(url, err,
                                            {'onError': fn});
       expect(spf.dispatch).not.toHaveBeenCalled();
@@ -621,12 +623,12 @@ describe('spf.nav', function() {
 
 
     it('passes the same data to both events and callbacks', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var fn = jasmine.createSpy('fn');
       var proceed = spf.nav.dispatchError_(url, err,
                                            {'onError': fn});
-      var evtData = spf.dispatch.calls[0].args[1];
-      var fnData = fn.calls[0].args[0];
+      var evtData = spf.dispatch.calls.argsFor(0)[1];
+      var fnData = fn.calls.argsFor(0)[0];
       expect(evtData).toEqual(fnData);
       expect(proceed).toBe(true);
     });
@@ -640,9 +642,9 @@ describe('spf.nav', function() {
     var url = '/page';
 
     it('dispatches an event', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       spf.nav.dispatchReload_(url);
-      var evtName = spf.dispatch.calls[0].args[0];
+      var evtName = spf.dispatch.calls.argsFor(0)[0];
       expect(spf.dispatch).toHaveBeenCalled();
       expect(evtName).toEqual(spf.EventName.RELOAD);
     });
@@ -658,9 +660,9 @@ describe('spf.nav', function() {
 
 
     it('dispatches an event', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var proceed = spf.nav.dispatchClick_(url, target);
-      var evtName = spf.dispatch.calls[0].args[0];
+      var evtName = spf.dispatch.calls.argsFor(0)[0];
       expect(spf.dispatch).toHaveBeenCalled();
       expect(evtName).toEqual(spf.EventName.CLICK);
       expect(proceed).toBe(true);
@@ -668,7 +670,7 @@ describe('spf.nav', function() {
 
 
     it('dispatches an event and propagates cancellation', function() {
-      spyOn(spf, 'dispatch').andReturn(false);
+      spyOn(spf, 'dispatch').and.returnValue(false);
       var proceed = spf.nav.dispatchClick_(url, target);
       expect(spf.dispatch).toHaveBeenCalled();
       expect(proceed).toBe(false);
@@ -684,9 +686,9 @@ describe('spf.nav', function() {
 
 
     it('dispatches an event', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var proceed = spf.nav.dispatchHistory_(url);
-      var evtName = spf.dispatch.calls[0].args[0];
+      var evtName = spf.dispatch.calls.argsFor(0)[0];
       expect(spf.dispatch).toHaveBeenCalled();
       expect(evtName).toEqual(spf.EventName.HISTORY);
       expect(proceed).toBe(true);
@@ -694,7 +696,7 @@ describe('spf.nav', function() {
 
 
     it('dispatches an event and propagates cancellation', function() {
-      spyOn(spf, 'dispatch').andReturn(false);
+      spyOn(spf, 'dispatch').and.returnValue(false);
       var proceed = spf.nav.dispatchHistory_(url);
       expect(spf.dispatch).toHaveBeenCalled();
       expect(proceed).toBe(false);
@@ -712,9 +714,9 @@ describe('spf.nav', function() {
 
 
     it('dispatches an event', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var proceed = spf.nav.dispatchRequest_(url, referer, previous);
-      var evtName = spf.dispatch.calls[0].args[0];
+      var evtName = spf.dispatch.calls.argsFor(0)[0];
       expect(spf.dispatch).toHaveBeenCalled();
       expect(evtName).toEqual(spf.EventName.REQUEST);
       expect(proceed).toBe(true);
@@ -722,7 +724,7 @@ describe('spf.nav', function() {
 
 
     it('dispatches an event and propagates cancellation', function() {
-      spyOn(spf, 'dispatch').andReturn(false);
+      spyOn(spf, 'dispatch').and.returnValue(false);
       var proceed = spf.nav.dispatchRequest_(url, referer, previous);
       expect(spf.dispatch).toHaveBeenCalled();
       expect(proceed).toBe(false);
@@ -739,7 +741,7 @@ describe('spf.nav', function() {
 
 
     it('executes a callback and propagates cancellation', function() {
-      var fn = jasmine.createSpy('fn').andReturn(false);
+      var fn = jasmine.createSpy('fn').and.returnValue(false);
       var proceed = spf.nav.dispatchRequest_(url, referer, previous,
                                              {'onRequest': fn});
       expect(fn).toHaveBeenCalled();
@@ -748,7 +750,7 @@ describe('spf.nav', function() {
 
 
     it('does not dispatch an event if events are skipped', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var fn = jasmine.createSpy('fn');
       var proceed = spf.nav.dispatchRequest_(url, referer, previous,
                                              {'onRequest': fn}, true);
@@ -759,8 +761,8 @@ describe('spf.nav', function() {
 
 
     it('does not dispatch an event if a callback is canceled', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
-      var fn = jasmine.createSpy('fn').andReturn(false);
+      spyOn(spf, 'dispatch').and.callThrough();
+      var fn = jasmine.createSpy('fn').and.returnValue(false);
       var proceed = spf.nav.dispatchRequest_(url, referer, previous,
                                              {'onRequest': fn});
       expect(spf.dispatch).not.toHaveBeenCalled();
@@ -770,12 +772,12 @@ describe('spf.nav', function() {
 
 
     it('passes the same data to both events and callbacks', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var fn = jasmine.createSpy('fn');
       var proceed = spf.nav.dispatchRequest_(url, referer, previous,
                                              {'onRequest': fn});
-      var evtData = spf.dispatch.calls[0].args[1];
-      var fnData = fn.calls[0].args[0];
+      var evtData = spf.dispatch.calls.argsFor(0)[1];
+      var fnData = fn.calls.argsFor(0)[0];
       expect(evtData).toEqual(fnData);
       expect(proceed).toBe(true);
     });
@@ -791,9 +793,9 @@ describe('spf.nav', function() {
 
 
     it('dispatches an event', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var proceed = spf.nav.dispatchPartProcess_(url, partial);
-      var evtName = spf.dispatch.calls[0].args[0];
+      var evtName = spf.dispatch.calls.argsFor(0)[0];
       expect(spf.dispatch).toHaveBeenCalled();
       expect(evtName).toEqual(spf.EventName.PART_PROCESS);
       expect(proceed).toBe(true);
@@ -801,7 +803,7 @@ describe('spf.nav', function() {
 
 
     it('dispatches an event and propagates cancellation', function() {
-      spyOn(spf, 'dispatch').andReturn(false);
+      spyOn(spf, 'dispatch').and.returnValue(false);
       var proceed = spf.nav.dispatchPartProcess_(url, partial);
       expect(spf.dispatch).toHaveBeenCalled();
       expect(proceed).toBe(false);
@@ -818,7 +820,7 @@ describe('spf.nav', function() {
 
 
     it('executes a callback and propagates cancellation', function() {
-      var fn = jasmine.createSpy('fn').andReturn(false);
+      var fn = jasmine.createSpy('fn').and.returnValue(false);
       var proceed = spf.nav.dispatchPartProcess_(url, partial,
                                                  {'onPartProcess': fn});
       expect(fn).toHaveBeenCalled();
@@ -827,7 +829,7 @@ describe('spf.nav', function() {
 
 
     it('does not dispatch an event if events are skipped', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var fn = jasmine.createSpy('fn');
       var proceed = spf.nav.dispatchPartProcess_(url, partial,
                                                  {'onPartProcess': fn}, true);
@@ -838,8 +840,8 @@ describe('spf.nav', function() {
 
 
     it('does not dispatch an event if a callback is canceled', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
-      var fn = jasmine.createSpy('fn').andReturn(false);
+      spyOn(spf, 'dispatch').and.callThrough();
+      var fn = jasmine.createSpy('fn').and.returnValue(false);
       var proceed = spf.nav.dispatchPartProcess_(url, partial,
                                                  {'onPartProcess': fn});
       expect(spf.dispatch).not.toHaveBeenCalled();
@@ -849,12 +851,12 @@ describe('spf.nav', function() {
 
 
     it('passes the same data to both events and callbacks', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var fn = jasmine.createSpy('fn');
       var proceed = spf.nav.dispatchPartProcess_(url, partial,
                                                  {'onPartProcess': fn});
-      var evtData = spf.dispatch.calls[0].args[1];
-      var fnData = fn.calls[0].args[0];
+      var evtData = spf.dispatch.calls.argsFor(0)[1];
+      var fnData = fn.calls.argsFor(0)[0];
       expect(evtData).toEqual(fnData);
       expect(proceed).toBe(true);
     });
@@ -870,9 +872,9 @@ describe('spf.nav', function() {
 
 
     it('dispatches an event', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var proceed = spf.nav.dispatchPartDone_(url, partial);
-      var evtName = spf.dispatch.calls[0].args[0];
+      var evtName = spf.dispatch.calls.argsFor(0)[0];
       expect(spf.dispatch).toHaveBeenCalled();
       expect(evtName).toEqual(spf.EventName.PART_DONE);
       expect(proceed).toBe(true);
@@ -880,7 +882,7 @@ describe('spf.nav', function() {
 
 
     it('dispatches an event and propagates cancellation', function() {
-      spyOn(spf, 'dispatch').andReturn(false);
+      spyOn(spf, 'dispatch').and.returnValue(false);
       var proceed = spf.nav.dispatchPartDone_(url, partial);
       expect(spf.dispatch).toHaveBeenCalled();
       expect(proceed).toBe(false);
@@ -897,7 +899,7 @@ describe('spf.nav', function() {
 
 
     it('executes a callback and propagates cancellation', function() {
-      var fn = jasmine.createSpy('fn').andReturn(false);
+      var fn = jasmine.createSpy('fn').and.returnValue(false);
       var proceed = spf.nav.dispatchPartDone_(url, partial,
                                               {'onPartDone': fn});
       expect(fn).toHaveBeenCalled();
@@ -906,7 +908,7 @@ describe('spf.nav', function() {
 
 
     it('does not dispatch an event if events are skipped', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var fn = jasmine.createSpy('fn');
       var proceed = spf.nav.dispatchPartDone_(url, partial,
                                               {'onPartDone': fn}, true);
@@ -917,8 +919,8 @@ describe('spf.nav', function() {
 
 
     it('does not dispatch an event if a callback is canceled', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
-      var fn = jasmine.createSpy('fn').andReturn(false);
+      spyOn(spf, 'dispatch').and.callThrough();
+      var fn = jasmine.createSpy('fn').and.returnValue(false);
       var proceed = spf.nav.dispatchPartDone_(url, partial,
                                               {'onPartDone': fn});
       expect(spf.dispatch).not.toHaveBeenCalled();
@@ -928,12 +930,12 @@ describe('spf.nav', function() {
 
 
     it('passes the same data to both events and callbacks', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var fn = jasmine.createSpy('fn');
       var proceed = spf.nav.dispatchPartDone_(url, partial,
                                               {'onPartDone': fn});
-      var evtData = spf.dispatch.calls[0].args[1];
-      var fnData = fn.calls[0].args[0];
+      var evtData = spf.dispatch.calls.argsFor(0)[1];
+      var fnData = fn.calls.argsFor(0)[0];
       expect(evtData).toEqual(fnData);
       expect(proceed).toBe(true);
     });
@@ -949,9 +951,9 @@ describe('spf.nav', function() {
 
 
     it('dispatches an event', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var proceed = spf.nav.dispatchProcess_(url, response);
-      var evtName = spf.dispatch.calls[0].args[0];
+      var evtName = spf.dispatch.calls.argsFor(0)[0];
       expect(spf.dispatch).toHaveBeenCalled();
       expect(evtName).toEqual(spf.EventName.PROCESS);
       expect(proceed).toBe(true);
@@ -959,7 +961,7 @@ describe('spf.nav', function() {
 
 
     it('dispatches an event and propagates cancellation', function() {
-      spyOn(spf, 'dispatch').andReturn(false);
+      spyOn(spf, 'dispatch').and.returnValue(false);
       var proceed = spf.nav.dispatchProcess_(url, response);
       expect(spf.dispatch).toHaveBeenCalled();
       expect(proceed).toBe(false);
@@ -976,7 +978,7 @@ describe('spf.nav', function() {
 
 
     it('executes a callback and propagates cancellation', function() {
-      var fn = jasmine.createSpy('fn').andReturn(false);
+      var fn = jasmine.createSpy('fn').and.returnValue(false);
       var proceed = spf.nav.dispatchProcess_(url, response,
                                              {'onProcess': fn});
       expect(fn).toHaveBeenCalled();
@@ -985,7 +987,7 @@ describe('spf.nav', function() {
 
 
     it('does not dispatch an event if events are skipped', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var fn = jasmine.createSpy('fn');
       var proceed = spf.nav.dispatchProcess_(url, response,
                                              {'onProcess': fn}, true);
@@ -996,8 +998,8 @@ describe('spf.nav', function() {
 
 
     it('does not dispatch an event if a callback is canceled', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
-      var fn = jasmine.createSpy('fn').andReturn(false);
+      spyOn(spf, 'dispatch').and.callThrough();
+      var fn = jasmine.createSpy('fn').and.returnValue(false);
       var proceed = spf.nav.dispatchProcess_(url, response,
                                              {'onProcess': fn});
       expect(spf.dispatch).not.toHaveBeenCalled();
@@ -1007,12 +1009,12 @@ describe('spf.nav', function() {
 
 
     it('passes the same data to both events and callbacks', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var fn = jasmine.createSpy('fn');
       var proceed = spf.nav.dispatchProcess_(url, response,
                                              {'onProcess': fn});
-      var evtData = spf.dispatch.calls[0].args[1];
-      var fnData = fn.calls[0].args[0];
+      var evtData = spf.dispatch.calls.argsFor(0)[1];
+      var fnData = fn.calls.argsFor(0)[0];
       expect(evtData).toEqual(fnData);
       expect(proceed).toBe(true);
     });
@@ -1028,9 +1030,9 @@ describe('spf.nav', function() {
 
 
     it('dispatches an event', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var proceed = spf.nav.dispatchDone_(url, response);
-      var evtName = spf.dispatch.calls[0].args[0];
+      var evtName = spf.dispatch.calls.argsFor(0)[0];
       expect(spf.dispatch).toHaveBeenCalled();
       expect(evtName).toEqual(spf.EventName.DONE);
       expect(proceed).toBe(true);
@@ -1038,7 +1040,7 @@ describe('spf.nav', function() {
 
 
     it('dispatches an event and propagates cancellation', function() {
-      spyOn(spf, 'dispatch').andReturn(false);
+      spyOn(spf, 'dispatch').and.returnValue(false);
       var proceed = spf.nav.dispatchDone_(url, response);
       expect(spf.dispatch).toHaveBeenCalled();
       expect(proceed).toBe(false);
@@ -1055,7 +1057,7 @@ describe('spf.nav', function() {
 
 
     it('executes a callback and propagates cancellation', function() {
-      var fn = jasmine.createSpy('fn').andReturn(false);
+      var fn = jasmine.createSpy('fn').and.returnValue(false);
       var proceed = spf.nav.dispatchDone_(url, response,
                                           {'onDone': fn});
       expect(fn).toHaveBeenCalled();
@@ -1064,7 +1066,7 @@ describe('spf.nav', function() {
 
 
     it('does not dispatch an event if events are skipped', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var fn = jasmine.createSpy('fn');
       var proceed = spf.nav.dispatchDone_(url, response,
                                           {'onDone': fn}, true);
@@ -1075,8 +1077,8 @@ describe('spf.nav', function() {
 
 
     it('does not dispatch an event if a callback is canceled', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
-      var fn = jasmine.createSpy('fn').andReturn(false);
+      spyOn(spf, 'dispatch').and.callThrough();
+      var fn = jasmine.createSpy('fn').and.returnValue(false);
       var proceed = spf.nav.dispatchDone_(url, response,
                                           {'onDone': fn});
       expect(spf.dispatch).not.toHaveBeenCalled();
@@ -1086,12 +1088,12 @@ describe('spf.nav', function() {
 
 
     it('passes the same data to both events and callbacks', function() {
-      spyOn(spf, 'dispatch').andCallThrough();
+      spyOn(spf, 'dispatch').and.callThrough();
       var fn = jasmine.createSpy('fn');
       var proceed = spf.nav.dispatchDone_(url, response,
                                           {'onDone': fn});
-      var evtData = spf.dispatch.calls[0].args[1];
-      var fnData = fn.calls[0].args[0];
+      var evtData = spf.dispatch.calls.argsFor(0)[1];
+      var fnData = fn.calls.argsFor(0)[0];
       expect(evtData).toEqual(fnData);
       expect(proceed).toBe(true);
     });

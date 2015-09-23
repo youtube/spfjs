@@ -15,6 +15,7 @@
   </script>
   <script src="jasmine.js"></script>
   <script src="jasmine-html.js"></script>
+  <script src="jasmine-boot.js"></script>
 
   <script src="manifest.js"></script>
 </head>
@@ -26,12 +27,6 @@
           expect(window.errors).toEqual(0);
         });
       });
-      var reporter = new jasmine.HtmlReporter();
-      var env = jasmine.getEnv();
-      env.updateInterval = 1000;
-      env.addReporter(reporter);
-      env.specFilter = function(s) { return reporter.specFilter(s); };
-      env.execute();
     })();
   </script>
 </body>
