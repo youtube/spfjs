@@ -35,6 +35,17 @@ function waitFor(testFx, onReady, timeOutMillis) {
         }, 100); //< repeat check every 100ms
 };
 
+/**
+ * Exits without triggering "Unsafe javascript attempt" output.  See
+ * {@link https://github.com/ariya/phantomjs/issues/12697}
+ *
+ * @param page the Page object
+ * @param code the exit code
+ */
+function exit(code) {
+    setTimeout(function(){ phantom.exit(code); }, 0);
+    phantom.onError = function(){};
+}
 
 if (system.args.length !== 2) {
     console.log('Usage: run-jasmine2.js URL');
@@ -87,7 +98,7 @@ page.open(system.args[1], function(status){
                   return 0;
                 }
             });
-            phantom.exit(exitCode);
+            exit(exitCode);
         });
     }
 });
