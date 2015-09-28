@@ -94,16 +94,16 @@ cli.parse = function() {
  */
 cli.help = function() {
   var program = $.path.basename(process.argv[1]);
-  $.util.puts($.util.format(
+  console.log($.util.format(
       'Usage: %s [options]', program));
-  $.util.puts('');
+  console.log('');
   wrap = $.wordwrap(8, 78);
-  $.util.puts('Options:');
+  console.log('Options:');
   for (var flag in FLAGS) {
-    $.util.puts($.util.format('--%s, -%s', flag, FLAGS[flag]));
-    $.util.puts(wrap(DESCRIPTIONS[flag]));
+    console.log($.util.format('--%s, -%s', flag, FLAGS[flag]));
+    console.log(wrap(DESCRIPTIONS[flag]));
     if (flag in DEFAULTS) {
-      $.util.puts(wrap('Default: ' + DEFAULTS[flag]));
+      console.log(wrap('Default: ' + DEFAULTS[flag]));
     }
   }
 };
@@ -154,7 +154,7 @@ function main(opts, args) {
 
   // Print the output to stdout, if needed (for the command-line).
   if (cli.active) {
-    $.util.puts(output);
+    console.log(output);
   }
 
   // Return the output (for the module).
