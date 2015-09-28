@@ -69,7 +69,7 @@ describe('spf.net.script', function() {
 
 
   beforeEach(function() {
-    jasmine.Clock.useMock();
+    jasmine.clock().install();
 
 
     spf.state.values_ = {};
@@ -87,17 +87,22 @@ describe('spf.net.script', function() {
       four: jasmine.createSpy('four')
     };
 
-    spyOn(spf.net.resource, 'load').andCallThrough();
-    spyOn(spf.net.resource, 'unload').andCallThrough();
-    spyOn(spf.net.resource, 'create').andCallFake(fakes.resource.create);
-    spyOn(spf.net.resource, 'destroy').andCallFake(fakes.resource.destroy);
+    spyOn(spf.net.resource, 'load').and.callThrough();
+    spyOn(spf.net.resource, 'unload').and.callThrough();
+    spyOn(spf.net.resource, 'create').and.callFake(fakes.resource.create);
+    spyOn(spf.net.resource, 'destroy').and.callFake(fakes.resource.destroy);
     spyOn(spf.net.resource, 'prefetch');
 
-    spyOn(spf.url, 'absolute').andCallFake(fakes.url.absolute);
+    spyOn(spf.url, 'absolute').and.callFake(fakes.url.absolute);
 
     for (var i = 1; i < 9; i++) {
       window['_global_' + i + '_'] = undefined;
     }
+  });
+
+
+  afterEach(function() {
+    jasmine.clock().uninstall();
   });
 
 
@@ -177,61 +182,61 @@ describe('spf.net.script', function() {
       spf.net.script.ready(undefined, callbacks.one);
       spf.net.script.ready(null, callbacks.one);
       spf.net.script.ready('', callbacks.one);
-      expect(callbacks.one.calls.length).toEqual(3);
+      expect(callbacks.one.calls.count()).toEqual(3);
       spf.net.script.ready([], callbacks.two);
       spf.net.script.ready([null, undefined, ''], callbacks.two);
-      expect(callbacks.two.calls.length).toEqual(2);
+      expect(callbacks.two.calls.count()).toEqual(2);
     });
 
     it('waits to execute callbacks on a single dependency', function() {
       // Check pre-ready.
       spf.net.script.ready('my:foo', callbacks.one);
-      expect(callbacks.one.calls.length).toEqual(0);
+      expect(callbacks.one.calls.count()).toEqual(0);
       // Load.
       spf.net.script.load('foo.js', 'my:foo');
-      jasmine.Clock.tick(1);
+      jasmine.clock().tick(1);
       // Check post-ready.
-      expect(callbacks.one.calls.length).toEqual(1);
+      expect(callbacks.one.calls.count()).toEqual(1);
       // Check again.
       spf.net.script.ready('my:foo', callbacks.two);
-      expect(callbacks.one.calls.length).toEqual(1);
-      expect(callbacks.two.calls.length).toEqual(1);
+      expect(callbacks.one.calls.count()).toEqual(1);
+      expect(callbacks.two.calls.count()).toEqual(1);
       spf.net.script.ready('my:foo', callbacks.two);
-      expect(callbacks.one.calls.length).toEqual(1);
-      expect(callbacks.two.calls.length).toEqual(2);
+      expect(callbacks.one.calls.count()).toEqual(1);
+      expect(callbacks.two.calls.count()).toEqual(2);
     });
 
     it('waits to execute callbacks on multiple dependencies', function() {
       spf.net.script.ready('my:foo', callbacks.one);
       spf.net.script.ready('bar', callbacks.two);
       spf.net.script.ready(['my:foo', 'bar'], callbacks.three);
-      expect(callbacks.one.calls.length).toEqual(0);
-      expect(callbacks.two.calls.length).toEqual(0);
-      expect(callbacks.three.calls.length).toEqual(0);
+      expect(callbacks.one.calls.count()).toEqual(0);
+      expect(callbacks.two.calls.count()).toEqual(0);
+      expect(callbacks.three.calls.count()).toEqual(0);
       // Load first.
       spf.net.script.load('foo.js', 'my:foo');
-      jasmine.Clock.tick(1);
+      jasmine.clock().tick(1);
       // Check.
-      expect(callbacks.one.calls.length).toEqual(1);
-      expect(callbacks.two.calls.length).toEqual(0);
-      expect(callbacks.three.calls.length).toEqual(0);
+      expect(callbacks.one.calls.count()).toEqual(1);
+      expect(callbacks.two.calls.count()).toEqual(0);
+      expect(callbacks.three.calls.count()).toEqual(0);
       // Load second.
       spf.net.script.load('bar.js', 'bar');
-      jasmine.Clock.tick(1);
+      jasmine.clock().tick(1);
       // Check.
-      expect(callbacks.one.calls.length).toEqual(1);
-      expect(callbacks.two.calls.length).toEqual(1);
-      expect(callbacks.three.calls.length).toEqual(1);
+      expect(callbacks.one.calls.count()).toEqual(1);
+      expect(callbacks.two.calls.count()).toEqual(1);
+      expect(callbacks.three.calls.count()).toEqual(1);
       // Check again.
       spf.net.script.ready('bar', callbacks.two);
-      expect(callbacks.one.calls.length).toEqual(1);
-      expect(callbacks.two.calls.length).toEqual(2);
-      expect(callbacks.three.calls.length).toEqual(1);
+      expect(callbacks.one.calls.count()).toEqual(1);
+      expect(callbacks.two.calls.count()).toEqual(2);
+      expect(callbacks.three.calls.count()).toEqual(1);
       spf.net.script.ready(['my:foo', 'bar'], callbacks.three);
       spf.net.script.ready(['my:foo', 'bar'], callbacks.three);
-      expect(callbacks.one.calls.length).toEqual(1);
-      expect(callbacks.two.calls.length).toEqual(2);
-      expect(callbacks.three.calls.length).toEqual(3);
+      expect(callbacks.one.calls.count()).toEqual(1);
+      expect(callbacks.two.calls.count()).toEqual(2);
+      expect(callbacks.three.calls.count()).toEqual(3);
     });
 
     it('ignores empty dependencies while ' +
@@ -240,53 +245,53 @@ describe('spf.net.script', function() {
       spf.net.script.ready('bar', callbacks.two);
       // Insert some empty dependencies to make sure it still works.
       spf.net.script.ready(['', 'my:foo', null, 'bar'], callbacks.three);
-      expect(callbacks.one.calls.length).toEqual(0);
-      expect(callbacks.two.calls.length).toEqual(0);
-      expect(callbacks.three.calls.length).toEqual(0);
+      expect(callbacks.one.calls.count()).toEqual(0);
+      expect(callbacks.two.calls.count()).toEqual(0);
+      expect(callbacks.three.calls.count()).toEqual(0);
       // Load first.
       spf.net.script.load('foo.js', 'my:foo');
-      jasmine.Clock.tick(1);
+      jasmine.clock().tick(1);
       // Check.
-      expect(callbacks.one.calls.length).toEqual(1);
-      expect(callbacks.two.calls.length).toEqual(0);
-      expect(callbacks.three.calls.length).toEqual(0);
+      expect(callbacks.one.calls.count()).toEqual(1);
+      expect(callbacks.two.calls.count()).toEqual(0);
+      expect(callbacks.three.calls.count()).toEqual(0);
       // Load second.
       spf.net.script.load('bar.js', 'bar');
-      jasmine.Clock.tick(1);
+      jasmine.clock().tick(1);
       // Check.
-      expect(callbacks.one.calls.length).toEqual(1);
-      expect(callbacks.two.calls.length).toEqual(1);
-      expect(callbacks.three.calls.length).toEqual(1);
+      expect(callbacks.one.calls.count()).toEqual(1);
+      expect(callbacks.two.calls.count()).toEqual(1);
+      expect(callbacks.three.calls.count()).toEqual(1);
       // Check again.
       spf.net.script.ready('bar', callbacks.two);
-      expect(callbacks.one.calls.length).toEqual(1);
-      expect(callbacks.two.calls.length).toEqual(2);
-      expect(callbacks.three.calls.length).toEqual(1);
+      expect(callbacks.one.calls.count()).toEqual(1);
+      expect(callbacks.two.calls.count()).toEqual(2);
+      expect(callbacks.three.calls.count()).toEqual(1);
       // Insert some empty dependencies to make sure it still works.
       spf.net.script.ready(['my:foo', 'bar', undefined, ''], callbacks.three);
       spf.net.script.ready(['my:foo', 'bar'], callbacks.three);
-      expect(callbacks.one.calls.length).toEqual(1);
-      expect(callbacks.two.calls.length).toEqual(2);
-      expect(callbacks.three.calls.length).toEqual(3);
+      expect(callbacks.one.calls.count()).toEqual(1);
+      expect(callbacks.two.calls.count()).toEqual(2);
+      expect(callbacks.three.calls.count()).toEqual(3);
     });
 
     it('executes require for missing dependencies', function() {
       spf.net.script.ready('my:foo', null, callbacks.one);
-      expect(callbacks.one.calls.length).toEqual(1);
-      expect(callbacks.one.mostRecentCall.args[0]).toEqual(['my:foo']);
+      expect(callbacks.one.calls.count()).toEqual(1);
+      expect(callbacks.one.calls.mostRecent().args[0]).toEqual(['my:foo']);
       // Load first.
       spf.net.script.load('foo.js', 'my:foo');
       spf.net.script.ready(['my:foo', 'bar'], null, callbacks.one);
-      jasmine.Clock.tick(1);
-      expect(callbacks.one.calls.length).toEqual(2);
-      expect(callbacks.one.mostRecentCall.args[0]).toEqual(['bar']);
+      jasmine.clock().tick(1);
+      expect(callbacks.one.calls.count()).toEqual(2);
+      expect(callbacks.one.calls.mostRecent().args[0]).toEqual(['bar']);
       // Load second.
       spf.net.script.load('bar.js', 'bar');
       spf.net.script.ready(['a', 'my:foo', 'b', 'bar', 'c'],
                                null, callbacks.one);
-      jasmine.Clock.tick(1);
-      expect(callbacks.one.calls.length).toEqual(3);
-      expect(callbacks.one.mostRecentCall.args[0]).toEqual(['a', 'b', 'c']);
+      jasmine.clock().tick(1);
+      expect(callbacks.one.calls.count()).toEqual(3);
+      expect(callbacks.one.calls.mostRecent().args[0]).toEqual(['a', 'b', 'c']);
     });
 
   });
@@ -305,23 +310,23 @@ describe('spf.net.script', function() {
       spf.net.script.ready('bar', callbacks.two);
       // Register first.
       spf.net.script.done('foo');
-      expect(callbacks.one.calls.length).toEqual(1);
-      expect(callbacks.two.calls.length).toEqual(0);
+      expect(callbacks.one.calls.count()).toEqual(1);
+      expect(callbacks.two.calls.count()).toEqual(0);
       // Register second.
       spf.net.script.done('bar');
-      expect(callbacks.one.calls.length).toEqual(1);
-      expect(callbacks.two.calls.length).toEqual(1);
+      expect(callbacks.one.calls.count()).toEqual(1);
+      expect(callbacks.two.calls.count()).toEqual(1);
       // Repeat.
       spf.net.script.ready('foo', callbacks.one);
       spf.net.script.ready('bar', callbacks.two);
-      expect(callbacks.one.calls.length).toEqual(2);
-      expect(callbacks.two.calls.length).toEqual(2);
+      expect(callbacks.one.calls.count()).toEqual(2);
+      expect(callbacks.two.calls.count()).toEqual(2);
       // Extra.
       spf.net.script.done('foo');
       spf.net.script.done('foo');
       spf.net.script.done('bar');
-      expect(callbacks.one.calls.length).toEqual(2);
-      expect(callbacks.two.calls.length).toEqual(2);
+      expect(callbacks.one.calls.count()).toEqual(2);
+      expect(callbacks.two.calls.count()).toEqual(2);
     });
 
   });
@@ -333,7 +338,7 @@ describe('spf.net.script', function() {
       spf.net.script.ready('foo', callbacks.one);
       spf.net.script.ignore('foo', callbacks.one);
       spf.net.script.done('foo');
-      expect(callbacks.one.calls.length).toEqual(0);
+      expect(callbacks.one.calls.count()).toEqual(0);
     });
 
     it('does not execute callbacks for multiple dependencies', function() {
@@ -343,7 +348,7 @@ describe('spf.net.script', function() {
       spf.net.script.done('a');
       spf.net.script.done('b');
       spf.net.script.done('c');
-      expect(callbacks.one.calls.length).toEqual(0);
+      expect(callbacks.one.calls.count()).toEqual(0);
     });
 
   });
@@ -352,7 +357,7 @@ describe('spf.net.script', function() {
   describe('require', function() {
 
     it('loads declared dependencies', function() {
-      spyOn(spf.net.script, 'ready').andCallThrough();
+      spyOn(spf.net.script, 'ready').and.callThrough();
       spf.net.script.declare({
         'foo': null,
         'a': 'foo',
@@ -360,29 +365,29 @@ describe('spf.net.script', function() {
         'bar': ['a', 'b']
       });
       spf.net.script.require('bar', callbacks.one);
-      jasmine.Clock.tick(1);
+      jasmine.clock().tick(1);
       // Check ready ordering.
-      expect(spf.net.script.ready.calls.length).toEqual(4);
-      expect(spf.net.script.ready.calls[0].args[0]).toEqual(['bar']);
-      expect(spf.net.script.ready.calls[1].args[0]).toEqual(['a', 'b']);
-      expect(spf.net.script.ready.calls[2].args[0]).toEqual(['foo']);
-      expect(spf.net.script.ready.calls[3].args[0]).toEqual(['foo']);
+      expect(spf.net.script.ready.calls.count()).toEqual(4);
+      expect(spf.net.script.ready.calls.argsFor(0)[0]).toEqual(['bar']);
+      expect(spf.net.script.ready.calls.argsFor(1)[0]).toEqual(['a', 'b']);
+      expect(spf.net.script.ready.calls.argsFor(2)[0]).toEqual(['foo']);
+      expect(spf.net.script.ready.calls.argsFor(3)[0]).toEqual(['foo']);
       // Check load ordering.
       var result = spf.array.map(nodes, function(a) { return a.src; });
       expect(result).toEqual(['//test/foo.js', '//test/a.js',
                               '//test/b.js', '//test/bar.js']);
       // Check callback.
-      expect(callbacks.one.calls.length).toEqual(1);
+      expect(callbacks.one.calls.count()).toEqual(1);
       // Repeat callback.
       spf.net.script.require('bar', callbacks.one);
-      expect(spf.net.script.ready.calls.length).toEqual(5);
-      expect(spf.net.script.ready.calls[4].args[0]).toEqual(['bar']);
-      expect(callbacks.one.calls.length).toEqual(2);
+      expect(spf.net.script.ready.calls.count()).toEqual(5);
+      expect(spf.net.script.ready.calls.argsFor(4)[0]).toEqual(['bar']);
+      expect(callbacks.one.calls.count()).toEqual(2);
       // No callback.
       spf.net.script.require('bar');
-      expect(spf.net.script.ready.calls.length).toEqual(6);
-      expect(spf.net.script.ready.calls[5].args[0]).toEqual(['bar']);
-      expect(callbacks.one.calls.length).toEqual(2);
+      expect(spf.net.script.ready.calls.count()).toEqual(6);
+      expect(spf.net.script.ready.calls.argsFor(5)[0]).toEqual(['bar']);
+      expect(callbacks.one.calls.count()).toEqual(2);
     });
 
     it('loads declared dependencies with path', function() {
@@ -394,13 +399,13 @@ describe('spf.net.script', function() {
         'bar': ['a', 'b']
       });
       spf.net.script.require('bar', callbacks.one);
-      jasmine.Clock.tick(1);
+      jasmine.clock().tick(1);
       // Check load ordering.
       var result = spf.array.map(nodes, function(a) { return a.src; });
       expect(result).toEqual(['//test/dir/foo.js', '//test/dir/a.js',
                               '//test/dir/b.js', '//test/dir/bar.js']);
       // Check callback.
-      expect(callbacks.one.calls.length).toEqual(1);
+      expect(callbacks.one.calls.count()).toEqual(1);
     });
 
     it('loads declared dependencies with urls', function() {
@@ -416,13 +421,13 @@ describe('spf.net.script', function() {
         'bar': 'one.js'
       });
       spf.net.script.require('bar', callbacks.one);
-      jasmine.Clock.tick(1);
+      jasmine.clock().tick(1);
       // Check load ordering.
       var result = spf.array.map(nodes, function(a) { return a.src; });
       expect(result).toEqual(['//test/sbb.js', '//test/n.js',
                               '//test/o.js', '//test/one.js']);
       // Check callback.
-      expect(callbacks.one.calls.length).toEqual(1);
+      expect(callbacks.one.calls.count()).toEqual(1);
     });
 
     it('loads declared dependencies with path and urls', function() {
@@ -439,13 +444,13 @@ describe('spf.net.script', function() {
         'bar': 'one.js'
       });
       spf.net.script.require('bar', callbacks.one);
-      jasmine.Clock.tick(1);
+      jasmine.clock().tick(1);
       // Check load ordering.
       var result = spf.array.map(nodes, function(a) { return a.src; });
       expect(result).toEqual(['//test/dir/sbb.js', '//test/dir/n.js',
                               '//test/dir/o.js', '//test/dir/one.js']);
       // Check callback.
-      expect(callbacks.one.calls.length).toEqual(1);
+      expect(callbacks.one.calls.count()).toEqual(1);
     });
 
   });

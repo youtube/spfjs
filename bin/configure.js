@@ -120,7 +120,7 @@ function variables(ninja) {
   ninja.assign('jscompiler_jar',
                'bower_components/closure-compiler/compiler.jar');
   ninja.assign('jasmine_js',
-               'third-party/phantomjs/examples/run-jasmine.js');
+               'third-party/phantomjs/examples/run-jasmine2.js');
   ninja.assign('gjslint_py',
                'node_modules/closure-linter-wrapper/tools/gjslint.py')
   ninja.assign('fixjsstyle_py',
@@ -375,17 +375,22 @@ function targets(ninja) {
 
   ninja.edge('$builddir/test/jasmine.css')
       .using('symlink')
-      .from('bower_components/jasmine/lib/jasmine-1.3.1/jasmine.css')
+      .from('bower_components/jasmine-core/lib/jasmine-core/jasmine.css')
       .assign('prefix', '../../');
 
   ninja.edge('$builddir/test/jasmine.js')
       .using('symlink')
-      .from('bower_components/jasmine/lib/jasmine-1.3.1/jasmine.js')
+      .from('bower_components/jasmine-core/lib/jasmine-core/jasmine.js')
       .assign('prefix', '../../');
 
   ninja.edge('$builddir/test/jasmine-html.js')
       .using('symlink')
-      .from('bower_components/jasmine/lib/jasmine-1.3.1/jasmine-html.js')
+      .from('bower_components/jasmine-core/lib/jasmine-core/jasmine-html.js')
+      .assign('prefix', '../../');
+
+  ninja.edge('$builddir/test/jasmine-boot.js')
+      .using('symlink')
+      .from('bower_components/jasmine-core/lib/jasmine-core/boot.js')
       .assign('prefix', '../../');
 
   ninja.edge('$builddir/test/runner.html')
@@ -395,7 +400,8 @@ function targets(ninja) {
             '$builddir/test/manifest.js',
             '$builddir/test/jasmine.css',
             '$builddir/test/jasmine.js',
-            '$builddir/test/jasmine-html.js'
+            '$builddir/test/jasmine-html.js',
+            '$builddir/test/jasmine-boot.js'
           ]))
       .assign('prefix', '../../');
 

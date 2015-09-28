@@ -82,20 +82,20 @@ describe('spf.pubsub', function() {
     // Two subscriptions.
     spf.pubsub.publish('foo');
     spf.pubsub.publish('bar');
-    expect(callbacks.one.calls.length).toEqual(1);
-    expect(callbacks.two.calls.length).toEqual(1);
+    expect(callbacks.one.calls.count()).toEqual(1);
+    expect(callbacks.two.calls.count()).toEqual(1);
     // One subscription.
     spf.pubsub.unsubscribe('foo', callbacks.one);
     spf.pubsub.publish('foo');
     spf.pubsub.publish('bar');
-    expect(callbacks.one.calls.length).toEqual(1);
-    expect(callbacks.two.calls.length).toEqual(2);
+    expect(callbacks.one.calls.count()).toEqual(1);
+    expect(callbacks.two.calls.count()).toEqual(2);
     // No subscriptions.
     spf.pubsub.unsubscribe('foo', callbacks.two);
     spf.pubsub.publish('foo');
     spf.pubsub.publish('bar');
-    expect(callbacks.one.calls.length).toEqual(1);
-    expect(callbacks.two.calls.length).toEqual(2);
+    expect(callbacks.one.calls.count()).toEqual(1);
+    expect(callbacks.two.calls.count()).toEqual(2);
   });
 
   it('flush', function() {
@@ -103,15 +103,15 @@ describe('spf.pubsub', function() {
     spf.pubsub.subscribe('foo', callbacks.two);
     // Two subscriptions.
     spf.pubsub.flush('foo');
-    expect(callbacks.one.calls.length).toEqual(1);
-    expect(callbacks.two.calls.length).toEqual(1);
+    expect(callbacks.one.calls.count()).toEqual(1);
+    expect(callbacks.two.calls.count()).toEqual(1);
     expect(subs['foo'] || []).not.toContain(callbacks.one);
     expect(subs['foo'] || []).not.toContain(callbacks.two);
     // No subscriptions.
     spf.pubsub.flush('foo');
     spf.pubsub.flush('bar');
-    expect(callbacks.one.calls.length).toEqual(1);
-    expect(callbacks.two.calls.length).toEqual(1);
+    expect(callbacks.one.calls.count()).toEqual(1);
+    expect(callbacks.two.calls.count()).toEqual(1);
   });
 
   it('rename', function() {
@@ -119,13 +119,13 @@ describe('spf.pubsub', function() {
     spf.pubsub.subscribe('foo', callbacks.one);
     spf.pubsub.subscribe('foo', callbacks.two);
     spf.pubsub.publish('foo');
-    expect(callbacks.one.calls.length).toEqual(1);
-    expect(callbacks.two.calls.length).toEqual(1);
+    expect(callbacks.one.calls.count()).toEqual(1);
+    expect(callbacks.two.calls.count()).toEqual(1);
     // Rename.
     spf.pubsub.rename('foo', 'bar');
     spf.pubsub.publish('bar');
-    expect(callbacks.one.calls.length).toEqual(2);
-    expect(callbacks.two.calls.length).toEqual(2);
+    expect(callbacks.one.calls.count()).toEqual(2);
+    expect(callbacks.two.calls.count()).toEqual(2);
     expect(subs['foo'] || []).not.toContain(callbacks.one);
     expect(subs['foo'] || []).not.toContain(callbacks.two);
     expect(subs['bar'] || []).toContain(callbacks.one);
