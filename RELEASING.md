@@ -72,15 +72,22 @@ repo.
 
 5.  Publish the release.
 
-6.  Update the `release` and `version` properties in the
-    `web/_config.yml` file to match the output of `bin/name.js`
-    and `bin/name.js --version` respectively. Commit the change
-    and send a pull request.
+6.  Run `bin/gendocs.sh`.  This:
 
-7.  Merge the pull request and push the website. This:
+    - updates the `release` and `version` properties in the
+      `web/_config.yml` file to match the output of
+      `bin/name.js` and `bin/name.js --version` respectively.
+    - updates the `doc/api.md` and `doc/download.md`, the
+      sources for the [API][] and [Download][] pages.
 
-    - updates the [API][] and [Download][] pages to match the
-      new version
+7.  Commit the change, titling it
+    "Update documentation for vX.Y.Z".
+
+8.  Send a pull request with the change.
+
+9.  Merge the pull request.
+
+10. Push the website.
 
 
 ## Announce the new version
