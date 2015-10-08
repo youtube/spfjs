@@ -23,6 +23,6 @@ guidelines:
 
 [MIT License]: http://opensource.org/licenses/MIT
 [File a bug]: https://github.com/youtube/spfjs/issues
-[individual]: https://developers.google.com/open-source/cla/individual
-[corporation]: https://developers.google.com/open-source/cla/corporate
+[individual]: https://cla.developers.google.com/about/google-individual
+[corporation]: https://cla.developers.google.com/about/google-corporate
 [Google JavaScript Style]: http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml
