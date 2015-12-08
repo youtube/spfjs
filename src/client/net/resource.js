@@ -300,8 +300,8 @@ spf.net.resource.create = function(type, url, opt_callback, opt_document,
     // reload it in-place to prevent changing the order of the cascade.
     // It is only reloaded it in-place if it already exists in the head,
     // otherwise the new element is appended.
-    var prevEl = opt_prevUrl && spf.net.resource.find(type, opt_prevUrl,
-        targetEl);
+    var prevEl = opt_prevUrl ?
+        spf.net.resource.find(type, opt_prevUrl, targetEl) : null;
     if (prevEl) {
       targetEl.insertBefore(el, prevEl);
     } else {
@@ -331,19 +331,20 @@ spf.net.resource.destroy = function(type, url, opt_document) {
 
 
 /**
- * Finds a previously created element that was appended to the document.
+ * Finds a previously created element.
  * See {@link #create}.
  *
  * @param {spf.net.resource.Type} type Type of the resource.
  * @param {string} url URL of the resource.
- * @param {Document=} opt_document Optional document to use.
+ * @param {(Document|Element)=} opt_root Optional document or element to
+ *     search in.
  * @return {!Node|undefined} The found element, or undefined if not found.
  */
-spf.net.resource.find = function(type, url, opt_document) {
+spf.net.resource.find = function(type, url, opt_root) {
   var label = spf.net.resource.label(url);
   var cls = spf.net.resource.key(type, label);
   var selector = '.' + cls;
-  var els = spf.dom.query(selector, opt_document);
+  var els = spf.dom.query(selector, opt_root);
   return els[0];
 };
 

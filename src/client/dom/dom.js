@@ -15,19 +15,19 @@ goog.require('spf');
 
 
 /**
- * Gets document nodes matching a selector.
+ * Gets nodes matching a selector.
  *
  * Note: IE8 does not support CSS3 selectors, and unsupported browsers will
  * return an empty Array.
  *
  * @param {string} selector Selector to match.
- * @param {Document=} opt_document Optional document to query.
+ * @param {(Document|Element)=} opt_root Optional document or element to query.
  * @return {Array.<Node>|NodeList} nodes Matching nodes.
  */
-spf.dom.query = function(selector, opt_document) {
-  var doc = opt_document || document;
-  if (doc.querySelectorAll) {
-    return doc.querySelectorAll(selector);
+spf.dom.query = function(selector, opt_root) {
+  var root = opt_root || document;
+  if (root.querySelectorAll) {
+    return root.querySelectorAll(selector);
   }
   return [];
 };
