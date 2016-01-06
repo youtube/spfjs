@@ -155,6 +155,13 @@ spf.dom.setAttributes = function(element, attributes) {
       element.style.cssText = value;
     } else {
       element.setAttribute(name, value);
+      // Updating the "value" attribute of an input via `el.setAttribute` does
+      // not change what is displayed, and assigning directly via `el.value` is
+      // needed.  But, _only_ updating via `el.value` means that calls to
+      // `el.getAttribute` will return the original value.  So, do both.
+      if (name == 'value') {
+        element[name] = value;
+      }
     }
   }
 };
