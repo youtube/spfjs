@@ -914,6 +914,10 @@ spf.nav.reload = function(url, reason, opt_err) {
       url = spf.url.appendParameters(url, params);
     }
     window.location.href = url;
+    // If the new url contains a hash and the path is the same for both the new
+    // and the old urls, then just assigning to `location.href` is not enough to
+    // trigger a reload.  Explicitly call `location.reload()` to be sure.
+    window.location.reload();
   }, 0);
 };
 
