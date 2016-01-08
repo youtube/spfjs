@@ -476,13 +476,13 @@ describe('spf.nav', function() {
     });
 
 
-    it('denies hash to standard for same page', function() {
+    it('allows hash to standard for same page', function() {
       var current = window.location.href;
       var currentWithTargetHash = spf.url.absolute(current) + '#target';
       var currentWithEmptyHash = spf.url.absolute(current) + '#';
       var url = current;
-      expect(spf.nav.isNavigable_(url, currentWithTargetHash)).toBe(false);
-      expect(spf.nav.isNavigable_(url, currentWithEmptyHash)).toBe(false);
+      expect(spf.nav.isNavigable_(url, currentWithTargetHash)).toBe(true);
+      expect(spf.nav.isNavigable_(url, currentWithEmptyHash)).toBe(true);
     });
 
 

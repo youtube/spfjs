@@ -252,10 +252,9 @@ spf.nav.isEligible_ = function(url) {
  */
 spf.nav.isNavigable_ = function(url, opt_current) {
   var current = opt_current || window.location.href;
-  // Check for transitions between hash URLs.  If the source or destination
-  // is a hash and the page is the same, navigation is not handled.
-  if (spf.string.contains(url, '#') ||
-      spf.string.contains(current, '#')) {
+  // Check for transitions between hash URLs.  If the destination
+  // contains a hash and the page is the same, navigation is not handled.
+  if (spf.string.contains(url, '#')) {
     var absoluteUrl = spf.url.absolute(url);
     var absoluteCurrent = spf.url.absolute(current);
     if (absoluteUrl == absoluteCurrent) {
@@ -896,13 +895,13 @@ spf.nav.reload = function(url, reason, opt_err) {
     logReason += ' Message: ' + err;
   }
   spf.nav.dispatchReload_(url, logReason);
+  var current = window.location.href;
   // If the url has already changed, clear its entry to prevent browser
   // inconsistency with history management for 301 responses on reloads. Chrome
   // will identify that the starting url was the same, and replace the current
   // history state, whereas Firefox will set a new state with the post 301
   // value.
-  if (spf.config.get('experimental-remove-history') &&
-      window.location.href == url) {
+  if (spf.config.get('experimental-remove-history') && current == url) {
     spf.history.removeCurrentEntry();
   }
   // Delay the reload until after the history state has had time to clear.
@@ -914,10 +913,16 @@ spf.nav.reload = function(url, reason, opt_err) {
       url = spf.url.appendParameters(url, params);
     }
     window.location.href = url;
-    // If the new url contains a hash and the path is the same for both the new
-    // and the old urls, then just assigning to `location.href` is not enough to
-    // trigger a reload.  Explicitly call `location.reload()` to be sure.
-    window.location.reload();
+    // If the new url only differs by a hash then just assigning to
+    // `location.href` is not enough to trigger a reload.  If this is the case,
+    // explicitly calling `location.reload()` is required, but it can't be done
+    // every time because an immediate call to `location.reload()` will cancel
+    // the navgation started by the assignment to `location.href`.  The
+    // `isNavigable_` function checks for hash-based navgiation that won't
+    // trigger, so use it here to determine whether to call `location.reload()`.
+    if (!spf.nav.isNavigable_(url, current)) {
+      window.location.reload();
+    }
   }, 0);
 };
 
