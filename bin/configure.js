@@ -223,7 +223,7 @@ function rules(ninja) {
           '&& java -jar $jscompiler_jar $flags $in >> $out',
           '|| (rm $out; false)'
         ].join(' '),
-    jsdist: 'cat $in | sed "2 s/SPF/$name_and_ver/" > $out',
+    jsdist: 'cat $in | sed "1 s/SPF/$name_and_ver/" > $out',
     jslint: 'python $gjslint_py $flags $in',
     jsfix: 'python $fixjsstyle_py $flags $in',
     manifest: [
