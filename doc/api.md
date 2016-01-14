@@ -5,7 +5,7 @@ layout: api
 ---
 
 
-The following API reference is for **SPF 23 (v2.3.0)**.
+The following API reference is for **SPF 23 (v2.3.1)**.
 
 
 * * *
