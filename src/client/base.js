@@ -111,9 +111,19 @@ spf.dispatch = function(name, opt_detail) {
  * @return {number} An integer value representing the number of milliseconds
  *     between midnight, January 1, 1970 and the current time.
  */
-spf.now = function() {
-  return (new Date()).getTime();
-};
+spf.now = (function() {
+  if (window.performance && window.performance.timing &&
+      window.performance.now) {
+    return function() {
+      var navigationStart = window.performance.timing.navigationStart;
+      var sinceNavigationStart = Math.floor(window.performance.now());
+      return navigationStart + sinceNavigationStart;
+    };
+  }
+  return function() {
+    return (new Date()).getTime();
+  };
+})();
 
 
 /**
