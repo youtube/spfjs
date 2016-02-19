@@ -235,6 +235,13 @@ spf.RequestOptions;
 
 
 /**
+ * Optional map of headers to send with the request.
+ * @type {Object.<string>|undefined}
+ */
+spf.RequestOptions.prototype.experimental_headers;
+
+
+/**
  * Optional method with which to send the request; defaults to "GET".
  * @type {string|undefined}
  */

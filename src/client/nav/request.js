@@ -27,6 +27,7 @@ goog.require('spf.url');
 /**
  * Type definition for the configuration options for an SPF request.
  * - method: optional method with which to send the request; defaults to "GET".
+ * - headers: optional map of headers to send with the request.
  * - onPart: optional callback to execute with the parts of a multipart
  *       response.  The first argumet is the requested URL; the second argument
  *       is the partial response object.  If valid
@@ -53,6 +54,7 @@ goog.require('spf.url');
  *
  * @typedef {{
  *   method: (string|undefined),
+ *   headers: (Object.<string>|undefined),
  *   onPart: (function(string, spf.SingleResponse)|undefined),
  *   onError: (function(string, (Error|boolean))|undefined),
  *   onSuccess: (function(string,
@@ -119,6 +121,20 @@ spf.nav.request.send = function(url, opt_options) {
   } else {
     spf.debug.debug('    sending XHR');
     var headers = {};
+    // Set headers provided by global config first.
+    var configHeaders = /** @type {Object.<string>} */ (
+      spf.config.get('experimental-request-headers'));
+    if (configHeaders) {
+      for (var key in configHeaders) {
+        headers[key] = configHeaders[key];
+      }
+    }
+    // Set headers provided by options second, to allow overrides.
+    if (options.headers) {
+      for (var key in options.headers) {
+        headers[key] = options.headers[key];
+      }
+    }
     // Compare against "undefined" to allow empty referrer values in history.
     if (options.referer != undefined) {
       headers['X-SPF-Referer'] = options.referer;
