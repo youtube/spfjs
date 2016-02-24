@@ -273,6 +273,7 @@ spf.MultipartResponse;
 
 /**
  * Type definition for the configuration options for requesting a URL.
+ * - experimental_headers: optional map of headers to send with the request.
  * - method: optional method with which to send the request; defaults to "GET".
  * - onDone: optional callback when either repsonse is done being processed.
  * - onError: optional callback if an error occurs.
@@ -286,6 +287,7 @@ spf.MultipartResponse;
  *       is set to "POST".
  *
  * @typedef {{
+ *   experimental_headers: (Object.<string>|undefined),
  *   method: (string|undefined),
  *   onDone: (function(spf.EventDetail)|undefined),
  *   onError: (function(spf.EventDetail)|undefined),
