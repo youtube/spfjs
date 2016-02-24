@@ -108,16 +108,17 @@ spf.dispatch = function(name, opt_detail) {
 /**
  * Gets the current timestamp.
  *
- * @return {number} An integer value representing the number of milliseconds
- *     between midnight, January 1, 1970 and the current time.
+ * @return {number} A value representing the number of milliseconds
+ *     between midnight, January 1, 1970 and the current time.  On browsers
+ *     that support DOMHighResTimestamp, this value is a floating point number;
+ *     otherwise, it is an integer.
  */
 spf.now = (function() {
   if (window.performance && window.performance.timing &&
-      window.performance.now) {
+      window.performance.now && window['__spf_experimental_now']) {
     return function() {
-      var navigationStart = window.performance.timing.navigationStart;
-      var sinceNavigationStart = Math.floor(window.performance.now());
-      return navigationStart + sinceNavigationStart;
+      return (window.performance.timing.navigationStart +
+              window.performance.now());
     };
   }
   return function() {
