@@ -126,20 +126,27 @@ spf.nav.request.send = function(url, opt_options) {
       spf.config.get('experimental-request-headers'));
     if (configHeaders) {
       for (var key in configHeaders) {
-        headers[key] = configHeaders[key];
+        var value = configHeaders[key];
+        // Treat undefined and null values as equivalent to an empty string.
+        // Note that undefined == null.
+        headers[key] = (value == null) ? '' : value;
       }
     }
     // Set headers provided by options second, to allow overrides.
     if (options.headers) {
       for (var key in options.headers) {
-        headers[key] = options.headers[key];
+        var value = options.headers[key];
+        // Treat undefined and null values as equivalent to an empty string.
+        // Note that undefined == null.
+        headers[key] = (value == null) ? '' : value;
       }
     }
-    // Compare against "undefined" to allow empty referrer values in history.
-    if (options.referer != undefined) {
+    // Allow empty referrer values in history.
+    // Note that undefined == null.
+    if (options.referer != null) {
       headers['X-SPF-Referer'] = options.referer;
     }
-    if (options.current) {
+    if (options.current != null) {
       headers['X-SPF-Previous'] = options.current;
     }
     // As an advanced option, allow request identification via a header.  This
