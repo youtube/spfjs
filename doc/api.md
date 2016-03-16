@@ -5,7 +5,7 @@ layout: api
 ---
 
 
-The following API reference is for **SPF 23 (v2.3.1)**.
+The following API reference is for **SPF 23 (v2.3.2)**.
 
 
 * * *
@@ -173,6 +173,8 @@ The string "multipart".
 Definition for options when requesting a URL.
 
 **Attributes**  
+`experimental_headers: Object.<string> | undefined`  
+Optional map of headers to send with the request.  
 `method: string | undefined`  
 Optional method with which to send the request; defaults to "GET".  
 `onError: function | undefined`  
