@@ -115,7 +115,7 @@ spf.dispatch = function(name, opt_detail) {
  */
 spf.now = (function() {
   if (window.performance && window.performance.timing &&
-      window.performance.now && window['__spf_experimental_now']) {
+      window.performance.now) {
     return function() {
       return (window.performance.timing.navigationStart +
               window.performance.now());
