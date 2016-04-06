@@ -715,6 +715,59 @@ describe('spf.nav.response', function() {
       expect(result.html).toBe(expected.html);
     });
 
+    it('inject only script type javascript', function() {
+      var string = '<head>' +
+        '<script src="bar.js" name="bar" async></script>' +
+        '<script name="quatre">window.foo = 1</script>' +
+        '<script type="application/javascript">window.foo = 2</script>' +
+        '<script>window.foo = 3</script>' +
+        '<script type="text/javascript">window.foo = 4</script>' +
+        '<script type="application/ecmascript">window.foo = 5</script>' +
+        '<script type="text/ecmascript">window.foo = 6</script>' +
+        '<script type="application/x-javascript">window.foo = 7</script>' +
+        '<script type="application/json">{"foo":"bar"}</script>' +
+        '</head>';
+      var expected = {
+        scripts: [
+          {url: 'bar.js', text: '', name: 'bar', async: true},
+          {url: '', text: 'window.foo = 1', name: 'quatre', async: false},
+          {url: '', text: 'window.foo = 2', name: '', async: false},
+          {url: '', text: 'window.foo = 3', name: '', async: false},
+          {url: '', text: 'window.foo = 4', name: '', async: false},
+          {url: '', text: 'window.foo = 5', name: '', async: false},
+          {url: '', text: 'window.foo = 6', name: '', async: false},
+          {url: '', text: 'window.foo = 7', name: '', async: false}
+        ],
+        html: '<head>' +
+          '<script type="application/json">{"foo":"bar"}</script>' +
+          '</head>'
+      };
+
+      var result = spf.nav.response.extract_(string);
+      expect(result.scripts).toEqual(expected.scripts);
+      expect(result.html).toBe(expected.html);
+    });
+
+    it('inject only style type css', function() {
+      var string = '<head>' +
+        '<style name="quatre">.foo { color: red }</style>' +
+        '<style name="vingt" type="text/css">.foo { color: blue }</style>' +
+        '<style name="dix" type="text/less">.foo { color: green }</style>' +
+        '</head>';
+        var expected = {
+          styles: [
+            {url: '', text: '.foo { color: red }', name: 'quatre'},
+            {url: '', text: '.foo { color: blue }', name: 'vingt'}
+          ],
+          html: '<head>' +
+            '<style name="dix" type="text/less">.foo { color: green }</style>' +
+            '</head>'
+        };
+
+        var result = spf.nav.response.extract_(string);
+        expect(result.styles).toEqual(expected.styles);
+        expect(result.html).toBe(expected.html);
+    });
   });
 
 
