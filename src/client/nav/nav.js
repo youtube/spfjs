@@ -1270,7 +1270,14 @@ spf.nav.handleLoadRedirect_ = function(isPrefetch, options, info, redirectUrl) {
  *     the `response`.
  */
 spf.nav.process = function(response, opt_callback) {
-  var url = window.location.href;
+  var url = response.url ? response.url : window.location.href;
+  var options = null;
+  if (response.url) {
+    options = new spf.nav.Info({
+      type: 'navigate'
+    });
+  }
+
   var multipart = response['type'] == 'multipart';
   var done = function(index, max, _, resp) {
     if (index == max && opt_callback) {
@@ -1282,15 +1289,14 @@ spf.nav.process = function(response, opt_callback) {
     var max = parts.length - 1;
     spf.array.each(parts, function(part, index) {
       var fn = spf.bind(done, null, index, max);
-      spf.nav.response.process(url, part, null, fn);
+      spf.nav.response.process(url, part, options, fn);
     });
   } else {
     response = /** @type {spf.SingleResponse} */ (response);
     var fn = spf.bind(done, null, 0, 0);
-    spf.nav.response.process(url, response, null, fn);
+    spf.nav.response.process(url, response, options, fn);
   }
 };
-
 
 /**
  * Dispatches the "error" event with the following custom event detail:
