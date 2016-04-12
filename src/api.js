@@ -404,6 +404,11 @@ spf.EventDetail.prototype.referer;
  */
 spf.EventDetail.prototype.response;
 
+/**
+ * A complete XMLHttpRequest object; defined for "onError" events.
+ * @type {XMLHttpRequest|undefined}
+ */
+spf.EventDetail.prototype.xhr;
 
 /**
  * The target element of a click; defined for "spfclick" events.

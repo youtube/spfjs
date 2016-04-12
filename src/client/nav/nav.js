@@ -673,14 +673,15 @@ spf.nav.navigateAddHistory_ = function(url, referer, handleError) {
  * @param {spf.RequestOptions} options Request options object.
  * @param {string} url The requested URL, without the SPF identifier.
  * @param {Error} err The Error object.
+ * @param {XMLHttpRequest=} opt_xhr The XMLHttpRequest for current error
  * @private
  */
-spf.nav.handleNavigateError_ = function(options, url, err) {
+spf.nav.handleNavigateError_ = function(options, url, err, opt_xhr) {
   spf.debug.warn('navigate error', '(url=', url, ')');
   spf.state.set(spf.state.Key.NAV_REQUEST, null);
   // Ignore the error if the "error" event is canceled, but otherwise,
   // reload the page.
-  if (!spf.nav.dispatchError_(url, err, options)) {
+  if (!spf.nav.dispatchError_(url, err, options, undefined, opt_xhr)) {
     return;
   }
   spf.nav.reload(url, spf.nav.ReloadReason.ERROR, err);
@@ -1305,11 +1306,13 @@ spf.nav.process = function(response, opt_callback) {
  * @param {?spf.RequestOptions=} opt_options Optional request options object.
  * @param {boolean=} opt_noEvents Whether to skip the event and only execute the
  *     callback; for use with load and prefetch requests.
+ * @param {XMLHttpRequest=} opt_xhr The XMLHttpRequest for current error
  * @return {boolean} False if the event was canceled.
  * @private
  */
-spf.nav.dispatchError_ = function(url, err, opt_options, opt_noEvents) {
-  var detail = {'url': url, 'err': err};
+spf.nav.dispatchError_ = function(url, err, opt_options, opt_noEvents,
+                                  opt_xhr) {
+  var detail = {'url': url, 'err': err, 'xhr': opt_xhr};
   var options = opt_options || /** @type {spf.RequestOptions} */ ({});
   var fn = options[spf.nav.Callback.ERROR];
   var proceed = spf.nav.callback(fn, detail);
