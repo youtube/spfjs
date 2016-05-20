@@ -38,7 +38,8 @@ goog.require('spf.url');
  *       argument is the requested URL; the second argument is the Error that
  *       occurred. If the type of request is "navigate", the second argument
  *       might be false if the request was canceled in response to the global
- *       "navigate-received" callback.
+ *       "navigate-received" callback. The third argument is the XMLHttpRequest
+ *       object for error
  * - onSuccess: optional callback to execute if the request succeeds.  The first
  *       argument is the requested URL; the second is the response object.  The
  *       response object will be either a complete single response object or
@@ -56,7 +57,9 @@ goog.require('spf.url');
  *   method: (string|undefined),
  *   headers: (Object.<string>|undefined),
  *   onPart: (function(string, spf.SingleResponse)|undefined),
- *   onError: (function(string, (Error|boolean))|undefined),
+ *   onError: (function(string,
+ *                   (Error|boolean),
+ *                   (XMLHttpRequest|null|undefined))|undefined),
  *   onSuccess: (function(string,
  *                   (spf.SingleResponse|spf.MultipartResponse))|undefined),
  *   postData: spf.net.xhr.PostData,
@@ -307,7 +310,7 @@ spf.nav.request.handleChunkFromXHR_ = function(url, options, timing, chunking,
     spf.debug.debug('    JSON parse failed', text);
     xhr.abort();
     if (options.onError) {
-      options.onError(url, err);
+      options.onError(url, err, xhr);
     }
     return;
   }
@@ -407,7 +410,7 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
     if (!xhr.response) {
       spf.debug.debug('    JSON parse failed');
       if (options.onError) {
-        options.onError(url, new Error('JSON response parsing failed'));
+        options.onError(url, new Error('JSON response parsing failed'), xhr);
       }
       return;
     }
@@ -425,7 +428,7 @@ spf.nav.request.handleCompleteFromXHR_ = function(url, options, timing,
     } catch (err) {
       spf.debug.debug('    JSON parse failed');
       if (options.onError) {
-        options.onError(url, err);
+        options.onError(url, err, xhr);
       }
       return;
     }
