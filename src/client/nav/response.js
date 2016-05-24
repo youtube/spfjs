@@ -582,16 +582,30 @@ spf.nav.response.extract_ = function(frag) {
           var url = attr.match(spf.nav.response.AttributeRegEx.SRC);
           url = url ? url[1] : '';
           var async = spf.nav.response.AttributeRegEx.ASYNC.test(attr);
-          result['scripts'].push(
-              {url: url, text: text, name: name, async: async});
-          return '';
+          var type = spf.nav.response.AttributeRegEx.TYPE.exec(attr);
+          var inject = !type || spf.string.contains(type[1], '/javascript') ||
+              spf.string.contains(type[1], '/x-javascript') ||
+              spf.string.contains(type[1], '/ecmascript');
+          if (inject) {
+            result['scripts'].push(
+                {url: url, text: text, name: name, async: async});
+            return '';
+          } else {
+            return full;
+          }
         }
         // A style tag is an inline style.  Parse the name attribute.
         if (tag == 'style') {
           var name = attr.match(spf.nav.response.AttributeRegEx.NAME);
           name = name ? name[1] : '';
-          result['styles'].push({url: '', text: text, name: name});
-          return '';
+          var type = spf.nav.response.AttributeRegEx.TYPE.exec(attr);
+          var inject = !type || spf.string.contains(type[1], 'text/css');
+          if (inject) {
+            result['styles'].push({url: '', text: text, name: name});
+            return '';
+          } else {
+            return full;
+          }
         }
         // An unexpected tag was matched.  Do nothing.
         return full;
@@ -906,7 +920,8 @@ spf.nav.response.AttributeRegEx = {
   HREF: /(?:\s|^)href\s*=\s*["']?([^\s"']+)/i,
   NAME: /(?:\s|^)name\s*=\s*["']?([^\s"']+)/i,
   REL: /(?:\s|^)rel\s*=\s*["']?([^\s"']+)/i,
-  SRC: /(?:\s|^)src\s*=\s*["']?([^\s"']+)/i
+  SRC: /(?:\s|^)src\s*=\s*["']?([^\s"']+)/i,
+  TYPE: /(?:\s|^)type\s*=\s*["']([^"']+)["']/i
 };
 
 
