@@ -30,27 +30,28 @@ if [[ $npm_jsdox == "" ]]; then
   exit 1
 fi
 
-# From here on out, exit immediately on any error.
-set -o errexit
-
 
 # Get the current verison.
 version=$(bin/name.js --version)
 release=$(bin/name.js)
-echo "Found version $version"
+echo "Updating documentation for version $version"
 
 
-# Update the Download doc.
-echo "Updating doc/download.md"
-pattern='\d+\.\d+\.\d+'
-script=$(cat <<END_SCRIPT
-import sys, re
-for line in sys.stdin:
-  sys.stdout.write(re.sub('$pattern', '$version', line))
-END_SCRIPT
-)
-content=$(cat doc/download.md)
-echo "$content" | python -c "$script" > doc/download.md
+# Validate the tag.
+object=$(git cat-file -t "v$version" 2> /dev/null)
+if [[ $object == "tag" ]]; then
+  tag="v$version"
+elif [[ $1 == "--head" ]]; then
+  tag="HEAD"
+else
+  echo "A valid git tag wasn't found for v$version."
+  echo "Pass the --head flag to update from the latest commit instead."
+  exit 1
+fi
+
+
+# From here on out, exit immediately on any error.
+set -o errexit
 
 
 # Update the API doc.
@@ -65,13 +66,26 @@ for line in sys.stdin:
     sys.stdout.write(' * @version $release\n')
 END_SCRIPT
 )
-git cat-file -p "v$version:src/api.js" | python -c "$script" > $tmpfile
+git cat-file -p "$tag:src/api.js" | python -c "$script" > $tmpfile
 ./node_modules/jsdox/bin/jsdox $tmpfile \
     --templateDir web/api \
     --index web/includes/apitoc --index-sort none \
     --output doc/
 
 echo "Done"
+
+
+# Update the Download doc.
+echo "Updating doc/download.md"
+pattern='\d+\.\d+\.\d+'
+script=$(cat <<END_SCRIPT
+import sys, re
+for line in sys.stdin:
+  sys.stdout.write(re.sub('$pattern', '$version', line))
+END_SCRIPT
+)
+content=$(cat doc/download.md)
+echo "$content" | python -c "$script" > doc/download.md
 
 
 # Update the website.
