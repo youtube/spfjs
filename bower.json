@@ -1,14 +1,18 @@
 {
   "name": "spf",
-  "version": "2.3.2",
   "description": "A lightweight JS framework for fast navigation and page updates from YouTube",
+  "main": "dist/spf.js",
+  "moduleType": [
+    "amd",
+    "globals",
+    "node"
+  ],
   "license": "MIT",
   "homepage": "https://github.com/youtube/spfjs",
   "repository": {
     "type": "git",
     "url": "https://github.com/youtube/spfjs.git"
   },
-  "main": "dist/spf.js",
   "ignore": [
     "**/.*",
     "bower_components",
