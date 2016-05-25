@@ -126,7 +126,7 @@ spf.nav.request.send = function(url, opt_options) {
     var headers = {};
     // Set headers provided by global config first.
     var configHeaders = /** @type {Object.<string>} */ (
-      spf.config.get('experimental-request-headers'));
+      spf.config.get('request-headers'));
     if (configHeaders) {
       for (var key in configHeaders) {
         var value = configHeaders[key];

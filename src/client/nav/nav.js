@@ -571,7 +571,7 @@ spf.nav.navigateSendRequest_ = function(url, options, info) {
 
   var xhr = spf.nav.request.send(url, {
     method: options['method'],
-    headers: options['experimental_headers'],
+    headers: options['headers'],
     onPart: handlePart,
     onError: handleError,
     onSuccess: handleSuccess,
@@ -978,7 +978,7 @@ spf.nav.load_ = function(url, options, info) {
 
   spf.nav.request.send(url, {
     method: options['method'],
-    headers: options['experimental_headers'],
+    headers: options['headers'],
     onPart: handlePart,
     onError: handleError,
     onSuccess: handleSuccess,
@@ -1036,7 +1036,7 @@ spf.nav.prefetch_ = function(url, options, info) {
 
   var xhr = spf.nav.request.send(url, {
     method: options['method'],
-    headers: options['experimental_headers'],
+    headers: options['headers'],
     onPart: handlePart,
     onError: handleError,
     onSuccess: handleSuccess,
