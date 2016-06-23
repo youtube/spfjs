@@ -129,7 +129,7 @@
       
     </header>
     <div class="container">
-      <p>The following API reference is for <strong>SPF 23 (v2.3.2)</strong>.</p>
+      <p>The following API reference is for <strong>SPF 24 (v2.4.0)</strong>.</p>
 
 <hr>
 
@@ -288,7 +288,7 @@ The string &quot;multipart&quot;.  </p>
 Definition for options when requesting a URL.</p>
 
 <p><strong>Attributes</strong><br>
-<code>experimental_headers: Object.&lt;string&gt; | undefined</code><br>
+<code>headers: Object.&lt;string&gt; | undefined</code><br>
 Optional map of headers to send with the request.<br>
 <code>method: string | undefined</code><br>
 Optional method with which to send the request; defaults to &quot;GET&quot;.<br>
@@ -373,6 +373,8 @@ The URL of the previous page; defined for &quot;spfhistory&quot; and
 A complete SPF response; defined for &quot;spfprocess&quot; events as a single
 response and for &quot;spfdone&quot; events as either a single or multipart
 response (see <a href="#spf.singleresponse">spf.SingleResponse</a> and <a href="#spf.multipartresponse">spf.MultipartResponse</a>.<br>
+<code>xhr: XMLHttpRequest | undefined</code><br>
+A complete XMLHttpRequest object; defined for &quot;onError&quot; events.<br>
 <code>target: Element | undefined</code><br>
 The target element of a click; defined for &quot;spfclick&quot; events.<br>
 <code>url: string | undefined</code><br>
