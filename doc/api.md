@@ -5,7 +5,7 @@ layout: api
 ---
 
 
-The following API reference is for **SPF 23 (v2.3.2)**.
+The following API reference is for **SPF 24 (v2.4.0)**.
 
 
 * * *
@@ -173,7 +173,7 @@ The string "multipart".
 Definition for options when requesting a URL.
 
 **Attributes**  
-`experimental_headers: Object.<string> | undefined`  
+`headers: Object.<string> | undefined`  
 Optional map of headers to send with the request.  
 `method: string | undefined`  
 Optional method with which to send the request; defaults to "GET".  
@@ -260,6 +260,8 @@ The URL of the previous page; defined for "spfhistory" and
 A complete SPF response; defined for "spfprocess" events as a single
 response and for "spfdone" events as either a single or multipart
 response (see [spf.SingleResponse](#spf.singleresponse) and [spf.MultipartResponse](#spf.multipartresponse).  
+`xhr: XMLHttpRequest | undefined`  
+A complete XMLHttpRequest object; defined for "onError" events.  
 `target: Element | undefined`  
 The target element of a click; defined for "spfclick" events.  
 `url: string | undefined`  
