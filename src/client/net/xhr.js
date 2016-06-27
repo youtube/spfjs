@@ -153,7 +153,7 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
 
   // For POST, default to `Content-Type: application/x-www-form-urlencoded`
   // unless a custom header was given.
-  var addContentTypeFormUrlEncoded = (method == 'POST');
+  var addContentTypeFormUrlEncoded = (method == 'POST' && !(data instanceof FormData));
   if (options.headers) {
     for (var key in options.headers) {
       xhr.setRequestHeader(key, options.headers[key]);
