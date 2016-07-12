@@ -2,6 +2,7 @@
 
 [![Version][]](https://badge.fury.io/js/spf)
 [![Status][]](https://travis-ci.org/youtube/spfjs)
+[![InlineDocs][]](https://inch-ci.org/github/youtube/spfjs)
 
 
 Structured Page Fragments — or SPF for short — is a lightweight
@@ -188,3 +189,4 @@ Copyright 2012-2016 Google, Inc.
 [SPF]: https://youtube.github.io/spfjs/assets/images/banner-728x388.jpg
 [Version]: https://badge.fury.io/js/spf.svg
 [Status]: https://secure.travis-ci.org/youtube/spfjs.svg?branch=master
+[InlineDocs]: https://inch-ci.org/github/youtube/spfjs.svg?branch=master
