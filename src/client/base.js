@@ -285,6 +285,7 @@ spf.MultipartResponse;
  * - onRequest: optional callback when a request will be made.
  * - postData: optional data to send with a request.  Only used if the method
  *       is set to "POST".
+ * - withCredentials: optional flag to send credentials if true.
  *
  * @typedef {{
  *   headers: (Object.<string>|undefined),
@@ -295,7 +296,8 @@ spf.MultipartResponse;
  *   onPartProcess: (function(spf.EventDetail)|undefined),
  *   onProcess: (function(spf.EventDetail)|undefined),
  *   onRequest: (function(spf.EventDetail)|undefined),
- *   postData: (ArrayBuffer|Blob|Document|FormData|null|string|undefined)
+ *   postData: (ArrayBuffer|Blob|Document|FormData|null|string|undefined),
+ *   withCredentials: (boolean|undefined)
  * }}
  */
 spf.RequestOptions;

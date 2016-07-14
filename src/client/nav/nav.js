@@ -983,7 +983,8 @@ spf.nav.load_ = function(url, options, info) {
     onError: handleError,
     onSuccess: handleSuccess,
     postData: options['postData'],
-    type: info.type
+    type: info.type,
+    withCredentials: options['withCredentials']
   });
 };
 

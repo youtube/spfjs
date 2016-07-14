@@ -52,6 +52,7 @@ goog.require('spf.url');
  *       alter the URL identifier and XHR header and used to determine whether
  *       the global "navigation received" callback is executed; defaults to
  *       "request".
+ * - withCredentials: optional flag to send credentials if true.
  *
  * @typedef {{
  *   method: (string|undefined),
@@ -65,7 +66,8 @@ goog.require('spf.url');
  *   postData: spf.net.xhr.PostData,
  *   current: (string|null|undefined),
  *   referer: (string|null|undefined),
- *   type: (string|undefined)
+ *   type: (string|undefined),
+ *   withCredentials: (boolean|undefined)
  * }}
  */
 spf.nav.request.Options;
@@ -194,6 +196,11 @@ spf.nav.request.send = function(url, opt_options) {
       onDone: handleComplete,
       onTimeout: handleComplete
     };
+
+    if (options.withCredentials) {
+      xhrOpts.withCredentials = options.withCredentials;
+    }
+
     // As an advanced option, allow XHR requests to enforce JSON responses.
     // This can make response parsing more efficient by reducing contention on
     // the main thread (especially for very large responses), but as a

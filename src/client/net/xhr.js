@@ -30,6 +30,7 @@ goog.require('spf');
  * - responseType: type to create from the XHR response.
  * - timeoutMs: number of milliseconds after which the request will be timed
  *      out by the client. Default is to allow the browser to handle timeouts.
+ * - withCredentials: optional flag to send credentials if true.
  *
  * @typedef {{
  *   headers: (Object.<string>|undefined),
@@ -38,7 +39,8 @@ goog.require('spf');
  *   onHeaders: (function(XMLHttpRequest)|undefined),
  *   onTimeout: (function(XMLHttpRequest)|undefined),
  *   responseType: (string|undefined),
- *   timeoutMs: (number|undefined)
+ *   timeoutMs: (number|undefined),
+ *   withCredentials: (boolean|undefined)
  * }}
  */
 spf.net.xhr.Options;
@@ -149,6 +151,10 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
   // NOTE: This removes the ability to handle chunked responses on the fly.
   if ('responseType' in xhr && options.responseType == 'json') {
     xhr.responseType = 'json';
+  }
+
+  if (options.withCredentials) {
+    xhr.withCredentials = options.withCredentials;
   }
 
   // For POST, default to `Content-Type: application/x-www-form-urlencoded`
