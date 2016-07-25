@@ -61,7 +61,11 @@ git checkout -b version-$version
 # Update package.json
 echo "Updating package.json"
 npm --no-git-tag-version version $version
-echo "Commiting package.json changes..."
+echo "Updating src/license.js"
+cp src/license.js src/license.js.tmp
+cat src/license.js.tmp | sed "s/$current/$version/g" > src/license.js
+rm src/license.js.tmp
+echo "Commiting package.json and src/license.js changes..."
 git commit -a -m "Mark v$version for release"
 
 # Update documentatation
