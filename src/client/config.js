@@ -55,7 +55,13 @@ spf.config.init = function(opt_config) {
   var config = opt_config || {};
   // Set primary configs; each has a default.
   for (var key in spf.config.defaults) {
-    var value = (key in config) ? config[key] : spf.config.defaults[key];
+    // config is already define with spf.config, keep define values
+    if (spf.config.has(key)) {
+      var value = (key in config) ? config[key] : spf.config.get(key);
+    } else {
+      var value = (key in config) ? config[key] : spf.config.defaults[key];
+    }
+
     spf.config.set(key, value);
   }
   // Set advanced and experimental configs; none have defaults.
