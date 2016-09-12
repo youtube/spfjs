@@ -326,6 +326,13 @@ spf.RequestOptions.prototype.postData;
 
 
 /**
+ * Optional flag to configure the XHR to send withCredentials or not.
+ * @type {boolean|undefined}
+ */
+spf.RequestOptions.prototype.withCredentials;
+
+
+/**
  * Definition of CustomEvents dispatched by SPF.
  * @interface
  * @extends {CustomEvent}
