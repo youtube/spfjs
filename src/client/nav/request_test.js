@@ -920,7 +920,7 @@ describe('spf.nav.request', function() {
     it('regular: single, navigation timing', function() {
       var url = '/page';
       var text = '{}';
-      var startTime = new Date().getTime() - 1;
+      var startTime = spf.now() - 1;
       var fake = createFakeRegularXHR(text);
       spf.net.xhr.get = jasmine.createSpy('xhr.get').and.callFake(fake);
 
@@ -938,7 +938,7 @@ describe('spf.nav.request', function() {
     it('cached: single, navigation timing', function() {
       var url = '/page';
       var res = {'foo': 'FOO', 'bar': 'BAR'};
-      var startTime = new Date().getTime() - 1;
+      var startTime = spf.now() - 1;
 
       var cacheKey = 'prefetch ' + spf.url.absolute(url);
       var cacheObject = {
