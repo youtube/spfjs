@@ -7,6 +7,7 @@
  * @fileoverview URL manipulation functions.
  *
  * @author nicksay@google.com (Alex Nicksay)
+ * @suppress {missingProperties}
  */
 
 goog.provide('spf.url');
