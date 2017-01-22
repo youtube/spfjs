@@ -5,7 +5,7 @@ layout: api
 ---
 
 
-The following API reference is for **SPF 24 (v2.4.0)**.
+The following API reference is for **SPF 24 (v2.4.3)**.
 
 
 * * *
@@ -219,6 +219,8 @@ to the callback will be an object that conforms to the
 [spf.Event](#spf.event)).  
 `postData: ArrayBuffer | Blob | Document | FormData | null | string | undefined`  
 Optional data to send with the request.  Only used if the method is "POST".  
+`withCredentials: boolean | undefined`  
+Optional flag to configure the XHR to send withCredentials or not.  
 
 
 ### spf.Event

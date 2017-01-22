@@ -9,8 +9,8 @@ baseurl: /spfjs
 title: SPF
 description: A lightweight JS framework for fast navigation and page updates from YouTube
 
-release: SPF 24 (v2.4.0)
-version: 2.4.0
+release: SPF 24 (v2.4.3)
+version: 2.4.3
 
 exclude:
   - Gemfile
