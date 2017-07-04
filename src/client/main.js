@@ -116,6 +116,13 @@ spf.main.extra_ = {
     // * Clear all entries.
     'clear': spf.cache.clear
   },
+  'history': {
+    // History API.
+    // * Add a history entry.
+    'add': spf.history.add,
+    // * Replace the current history entry
+    'replace': spf.history.replace
+  },
   'script': {
     // The bootloader API.
     // * Load scripts.

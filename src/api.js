@@ -489,6 +489,52 @@ spf.cache.clear = function() {};
 
 
 /**
+ * Namespace for history handling functions.
+ * @namespace
+ */
+spf.history = {};
+
+
+/**
+ * Add a history entry.
+ *
+ * @param {?string=} opt_url The URL associated with this entry to display in
+ *     the browser.  This can be either a relative or an absolute URL, and if
+ *     omitted, the current browser URL will be used.
+ * @param {Object=} opt_state The state object associated with this history
+ *     entry.  When the user returns to this entry, the "state" property of the
+ *     event will contain a copy of this object.
+ * @param {boolean=} opt_doCallback Whether to do the history event callback.
+ * @throws {Error} If the state object is too large. For example, Firefox will
+ *     pass the object to JSON.stringify and impose a 640k character limit.
+ * @throws {Error} If the URL is not in the same domain, a SECURITY_ERR
+ *     (code == 18) is thrown.
+ * @throws {Error} If window.history.pushState is not a function.
+ */
+spf.history.add = function(opt_url, opt_state, opt_doCallback) {};
+
+
+/**
+ * Replace the current history entry, merging any newly provided state values
+ * with existing ones.
+ *
+ * @param {?string=} opt_url The URL associated with this entry to display in
+ *     the browser.  This can be either a relative or an absolute URL, and if
+ *     omitted, the current browser URL will be used.
+ * @param {Object=} opt_state The state object associated with this history
+ *     entry.  When the user returns to this entry, the "state" property of the
+ *     event will contain a copy of this object.
+ * @param {boolean=} opt_doCallback Whether to do the history event callback.
+ * @throws {Error} If the state object is too large. For example, Firefox will
+ *     pass the object to JSON.stringify and impose a 640k character limit.
+ * @throws {Error} If the URL is not in the same domain, a SECURITY_ERR
+ *     (code == 18) is thrown.
+ * @throws {Error} If window.history.replaceState is not a function.
+ */
+spf.history.replace = function(opt_url, opt_state, opt_doCallback) {};
+
+
+/**
  * Namespace for script-loading functions.
  * @namespace
  */
