@@ -21,7 +21,7 @@ describe('spf.cache', function() {
     time = { advance: 0 };
     spf.__now = spf.now;
     spf.now = function() {
-      return (+new Date()) + time.advance;
+      return (new Date()).getTime() + time.advance;
     };
     // Reset.
     storage = spf.cache.storage_();
