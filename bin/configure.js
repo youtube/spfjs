@@ -165,7 +165,6 @@ function variables(ninja) {
     '--jscomp_error missingProvide',
     '--jscomp_error missingRequire',
     '--jscomp_error missingReturn',
-    '--jscomp_error newCheckTypes',
     '--jscomp_error nonStandardJsDocs',
     '--jscomp_error suspiciousCode',
     '--jscomp_error strictModuleDepCheck',
