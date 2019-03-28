@@ -213,14 +213,25 @@ spf.net.xhr.isChunked_ = function(xhr) {
   if (encoding.toLowerCase().indexOf('chunked') > -1) {
     return true;
   }
+
+  // Replace deprecated chrome.loadTimes()
+  function wasFetchedViaSpdy() {
+    // SPDY is deprecated in favor of HTTP/2, but this implementation returns
+    // true for HTTP/2 or HTTP2+QUIC/39 as well.
+    if (window.PerformanceNavigationTiming) {
+      const ntEntry = performance.getEntriesByType('navigation')[0];
+      return ['h2', 'hq'].includes(ntEntry.nextHopProtocol);
+    }
+  }
+
   // SPDY inherently uses chunked transfer and does not define a header.
   // Firefox provides a synthetic header which can be used instead.
   // For Chrome, a non-standard JS function must be used to determine if
   // the primary document was loaded with SPDY.  If the primary document
   // was loaded with SPDY, then most likely the XHR will be as well.
   var firefoxSpdy = xhr.getResponseHeader('X-Firefox-Spdy');
-  var loadTimes = window.chrome && chrome.loadTimes && chrome.loadTimes();
-  var chromeSpdy = loadTimes && loadTimes.wasFetchedViaSpdy;
+  var loadTimes = window.chrome && chrome.loadTimes;
+  var chromeSpdy = loadTimes && wasFetchedViaSpdy();
   return !!(firefoxSpdy || chromeSpdy);
 };
 
