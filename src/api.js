@@ -644,12 +644,12 @@ spf.style = {};
 
 /**
  * Loads a stylesheet asynchronously and defines a name to use for dependency
- * management and unloading.  See {@link spf.script.unload} to remove previously
+ * management and unloading.  See {@link spf.style.unload} to remove previously
  * loaded stylesheets.
  *
  * - Subsequent calls to load the same URL will not reload the stylesheet.  To
- *   reload a stylesheet, unload it first with {@link spf.script.unload}.  To
- *   unconditionally load a stylesheet, see {@link spf.script.get}.
+ *   reload a stylesheet, unload it first with {@link spf.style.unload}.  To
+ *   unconditionally load a stylesheet, see {@link spf.style.get}.
  *
  * - A name must be specified to identify the same stylesheet at different URLs.
  *   (For example, "main-A.css" and "main-B.css" are both "main".)  When a name
@@ -672,7 +672,7 @@ spf.style.load = function(url, name, opt_fn) {};
 
 
 /**
- * Unloads a stylesheet identified by name.  See {@link spf.script.load}.
+ * Unloads a stylesheet identified by name.  See {@link spf.style.load}.
  *
  * @param {string} name Name of the stylesheet.
  */
@@ -683,7 +683,7 @@ spf.style.unload = function(name) {};
  * Unconditionally loads a stylesheet by dynamically creating an element and
  * appending it to the document without regard for whether it has been loaded
  * before. A stylesheet directly loaded by this method cannot be unloaded by
- * name.  Compare to {@link spf.script.load}.
+ * name.  Compare to {@link spf.style.load}.
  *
  * @param {string} url URL of the stylesheet to load.
  */
@@ -703,7 +703,7 @@ spf.style.path = function(paths) {};
 /**
  * Prefetchs one or more stylesheets; the stylesheets will be requested but not
  * loaded. Use to prime the browser cache and avoid needing to request the
- * stylesheet when subsequently loaded.  See {@link spf.script.load}.
+ * stylesheet when subsequently loaded.  See {@link spf.style.load}.
  *
  * @param {string|Array.<string>} urls One or more stylesheet URLs to prefetch.
  */
