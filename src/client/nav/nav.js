@@ -919,8 +919,8 @@ spf.nav.reload = function(url, reason, opt_err) {
     // `location.href` is not enough to trigger a reload.  If this is the case,
     // explicitly calling `location.reload()` is required, but it can't be done
     // every time because an immediate call to `location.reload()` will cancel
-    // the navgation started by the assignment to `location.href`.  The
-    // `isNavigable_` function checks for hash-based navgiation that won't
+    // the navigation started by the assignment to `location.href`.  The
+    // `isNavigable_` function checks for hash-based navigation that won't
     // trigger, so use it here to determine whether to call `location.reload()`.
     if (!spf.nav.isNavigable_(url, current)) {
       window.location.reload();
