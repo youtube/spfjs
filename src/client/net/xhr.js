@@ -12,6 +12,7 @@
 goog.provide('spf.net.xhr');
 
 goog.require('spf');
+goog.require('spf.config');
 
 
 /**
@@ -202,6 +203,9 @@ spf.net.xhr.send = function(method, url, data, opt_options) {
 spf.net.xhr.isChunked_ = function(xhr) {
   if (xhr.responseType == 'json') {
     return false;
+  }
+  if (spf.config.get('assume-all-json-requests-chunked')){
+    return true;
   }
   // Determine whether to process chunks as they arrive.
   // This is only possible with chunked transfer encoding.
