@@ -74,11 +74,14 @@ function requirements() {
   var required = $.semver('1.7.0');
   $.childProcess.exec('java -version', function(error, stdout, stderr) {
     if (error || !stderr) {
-      $.util.error([
-            'Unable to get java version.',
-            'Please install java before building.',
-          ].join('\n'));
+      console.error([
+        'Unable to get java version.',
+        'Please install java before building.',
+      ].join('\n'));
       process.exit(1);
+    }
+    if (process.env.SKIP_JAVA_VERSION_CHECK) {
+      return;
     }
     var version;
     var installed;
@@ -88,10 +91,12 @@ function requirements() {
       installed = $.semver.parse(version.replace('_', '-'));
     } catch (ex) {}
     if (!installed || installed < required) {
-      $.util.error($.util.format([
+      console.error($.util.format(
+          [
             'Installed java version "%s" is less than the required "%s".',
             'Please upgrade java before building.'
-          ].join('\n'), installed, required));
+          ].join('\n'),
+          installed, required));
       process.exit(1);
     }
   });

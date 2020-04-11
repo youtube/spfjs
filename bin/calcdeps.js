@@ -349,7 +349,7 @@ deps.build = function(infos) {
     // Add each provided namespace from that file to the map.
     info.provides.forEach(function(ns) {
       if (ns in hash) {
-        $.util.error($.util.format(
+        console.error($.util.format(
             'Duplicate provide for "%s" in %s and %s.',
             ns, info.path, hash[ns].path));
         process.exit(1);
@@ -377,7 +377,7 @@ deps.build = function(infos) {
 deps.resolve = function(info, hash, ordered, seen) {
   info.requires.forEach(function(ns) {
     if (!(ns in hash)) {
-      $.util.error($.util.format(
+      console.error($.util.format(
           'Missing provide for "%s" required by %s.',
           ns, info.path));
       process.exit(1);
@@ -409,13 +409,13 @@ deps.order = function(hash, inputs) {
     if (tests.isNS(input)) {
       var ns = NAMESPACE_REGEX.exec(input)[1];
       if (!(ns in hash)) {
-        $.util.error($.util.format('Missing input namespace "%s".', ns));
+        console.error($.util.format('Missing input namespace "%s".', ns));
         process.exit(1);
       }
       info = hash[ns];
     } else {
       if (!(input in hash)) {
-        $.util.error($.util.format('Missing input file "%s".', input));
+        console.error($.util.format('Missing input file "%s".', input));
         process.exit(1);
       }
       info = hash[input];
@@ -532,7 +532,7 @@ function main(opts, args) {
   } else if (opts.mode == 'concat') {
     output = infos.map(function(info) { return info.content; }).join('\n');
   } else {
-    $.util.error('Unknown output mode');
+    console.error('Unknown output mode');
     process.exit(1);
   }
 
