@@ -1,5 +1,7 @@
 language: node_js
   - 0.10
+env:
+  - SKIP_JAVA_VERSION_CHECK=true
 install:
   - npm install
 before_script:
