@@ -11,6 +11,8 @@
   "bugs": {
     "url": "https://github.com/youtube/spfjs/issues"
   },
+  "main": "dist/spf.js",
+  "module": "dist/spf.js",
   "scripts": {
     "prepublish": "bower install && bin/configure.js",
     "build": "ninja",
