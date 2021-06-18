@@ -29,6 +29,16 @@ spf.init = function(opt_config) {};
 
 
 /**
+ * Set global configuration without initialization.
+ *
+ * @param {string} key The configuration key.
+ * @param {string} value The configuration value.
+ * @return {spf.config.Value} The configuration value.
+ */
+spf.config = function(key, value) {};
+
+
+/**
  * Disposes SPF.
  */
 spf.dispose = function() {};

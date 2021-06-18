@@ -40,6 +40,18 @@ spf.main.init = function(opt_config) {
 
 
 /**
+ * Set global configuration without initialization.
+ *
+ * @param {string} key The configuration key.
+ * @param {string} value The configuration value.
+ * @return {spf.config.Value} The configuration value.
+ */
+spf.main.config = function(key, value) {
+  return spf.config.set(key, value);
+};
+
+
+/**
  * Checks to see if SPF can be initialized.
  *
  * @return {boolean}
@@ -101,6 +113,7 @@ spf.main.discover_();
 /** @private {!Object} */
 spf.main.api_ = {
   'init': spf.main.init,
+  'config': spf.main.config,
   'dispose': spf.main.dispose,
   'navigate': spf.nav.navigate,
   'load': spf.nav.load,
