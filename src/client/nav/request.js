@@ -134,7 +134,7 @@ spf.nav.request.send = function(url, opt_options) {
         var value = configHeaders[key];
         // Treat undefined and null values as equivalent to an empty string.
         // Note that undefined == null.
-        headers[key] = (value == null) ? '' : value;
+        headers[key] = (value == null) ? '' : String(value);
       }
     }
     // Set headers provided by options second, to allow overrides.
@@ -143,7 +143,7 @@ spf.nav.request.send = function(url, opt_options) {
         var value = options.headers[key];
         // Treat undefined and null values as equivalent to an empty string.
         // Note that undefined == null.
-        headers[key] = (value == null) ? '' : value;
+        headers[key] = (value == null) ? '' : String(value);
       }
     }
     // Allow empty referrer values in history.
