@@ -13,8 +13,7 @@
 /**
  * The top-level SPF namespace.
  * @namespace
- * @suppress {duplicate}
- * @noalias
+ * @suppress {duplicate,strictMissingProperties}
  */
 var spf = {};
 
