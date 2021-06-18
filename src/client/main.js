@@ -47,7 +47,7 @@ spf.main.init = function(opt_config) {
  */
 spf.main.canInit_ = function() {
   return !!(typeof window.history.pushState == 'function' ||
-      spf.history.getIframe().contentWindow.history.pushState);
+      spf.history.getIframe().history.pushState);
 };
 
 

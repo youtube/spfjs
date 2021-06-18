@@ -41,7 +41,8 @@ spf.config.defaults = {
   'navigate-lifetime': 24 * 60 * 60 * 1000,  // 1 day session lifetime (ms).
   'reload-identifier': null,  // Always a param, no '?' needed.
   'request-timeout': 0,  // No request timeout.
-  'url-identifier': '?spf=__type__'
+  'url-identifier': '?spf=__type__',
+  'use-iframe': true
 };
 
 
