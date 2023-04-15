@@ -15,7 +15,7 @@ GEM
     colorator (0.1)
     execjs (2.2.2)
     fast-stemmer (1.0.2)
-    ffi (1.9.6)
+    ffi (1.15.5)
     hitimes (1.2.2)
     jekyll (2.5.2)
       classifier-reborn (~> 2.0)
